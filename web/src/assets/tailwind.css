@@ -11,6 +11,9 @@
   --breakpoint-lg: 992px;
   --breakpoint-xl: 1200px;
   --breakpoint-2xl: 1920px;
+
+  --default-font-family: 'Lato', sans-serif;
+  --font-family-sans: 'Lato', sans-serif;
 }
 
 /*
@@ -28,5 +31,14 @@
   ::backdrop,
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
+  }
+
+  :root {
+    --default-font-family: 'Lato', sans-serif;
+  }
+
+  html,
+  body {
+    font-family: 'Lato', sans-serif;
   }
 }
