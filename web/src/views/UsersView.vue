@@ -14,7 +14,6 @@ import Dropdown from 'primevue/dropdown'
 import MultiSelect from 'primevue/multiselect'
 import ToggleSwitch from 'primevue/toggleswitch'
 import ProgressSpinner from 'primevue/progressspinner'
-import AppLayout from '@/components/layout/AppLayout.vue'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/stores/auth'
 import { useUsernameAvailability } from '@/composables/useUsernameAvailability'
@@ -317,176 +316,174 @@ async function saveEditedUser() {
 </script>
 
 <template>
-  <AppLayout>
-    <div class="users-page">
-      <div class="page-header">
-        <h1 class="page-title">{{ t('users.title') }}</h1>
-        <div class="header-actions">
-          <Button icon="pi pi-plus" :label="t('users.addUser')" @click="openAddUserDialog" />
-          <Button
-            icon="pi pi-refresh"
-            :label="t('users.refresh')"
-            severity="secondary"
-            outlined
-            @click="loadUsers"
-            :loading="userStore.loading"
-          />
-        </div>
+  <div class="users-page">
+    <div class="page-header">
+      <h1 class="page-title">{{ t('users.title') }}</h1>
+      <div class="header-actions">
+        <Button icon="pi pi-plus" :label="t('users.addUser')" @click="openAddUserDialog" />
+        <Button
+          icon="pi pi-refresh"
+          :label="t('users.refresh')"
+          severity="secondary"
+          outlined
+          @click="loadUsers"
+          :loading="userStore.loading"
+        />
       </div>
+    </div>
 
-      <Card class="filter-card">
-        <template #content>
-          <div class="filter-bar">
-            <div class="filter-item">
-              <label for="statusFilter">{{ t('users.filters.status') }}</label>
-              <Dropdown
-                id="statusFilter"
-                v-model="statusFilter"
-                :options="filterStatusOptions"
-                optionLabel="label"
-                optionValue="value"
-                :placeholder="t('users.filters.allStatuses')"
-                :disabled="showDeleted"
-                @change="onStatusFilterChange"
-                class="filter-dropdown"
-              />
-            </div>
-            <div class="filter-item toggle-item">
-              <label for="showDeleted">{{ t('users.filters.showDeleted') }}</label>
-              <ToggleSwitch
-                inputId="showDeleted"
-                v-model="showDeleted"
-                @change="onDeletedToggleChange"
-              />
-            </div>
+    <Card class="filter-card">
+      <template #content>
+        <div class="filter-bar">
+          <div class="filter-item">
+            <label for="statusFilter">{{ t('users.filters.status') }}</label>
+            <Dropdown
+              id="statusFilter"
+              v-model="statusFilter"
+              :options="filterStatusOptions"
+              optionLabel="label"
+              optionValue="value"
+              :placeholder="t('users.filters.allStatuses')"
+              :disabled="showDeleted"
+              @change="onStatusFilterChange"
+              class="filter-dropdown"
+            />
           </div>
-        </template>
-      </Card>
+          <div class="filter-item toggle-item">
+            <label for="showDeleted">{{ t('users.filters.showDeleted') }}</label>
+            <ToggleSwitch
+              inputId="showDeleted"
+              v-model="showDeleted"
+              @change="onDeletedToggleChange"
+            />
+          </div>
+        </div>
+      </template>
+    </Card>
 
-      <Card>
-        <template #content>
-          <DataTable
-            :value="displayedUsers"
-            :loading="userStore.loading"
-            :paginator="true"
-            v-model:rows="rows"
-            v-model:first="first"
-            :totalRecords="displayedTotal"
-            :lazy="true"
-            @page="onPageChange"
-            :rowsPerPageOptions="[5, 10, 25, 50]"
-            dataKey="id"
-            stripedRows
-            scrollable
-          >
-            <template #empty>
-              <div class="text-center p-4">
-                {{ showDeleted ? t('users.empty.deleted') : t('users.empty.active') }}
+    <Card>
+      <template #content>
+        <DataTable
+          :value="displayedUsers"
+          :loading="userStore.loading"
+          :paginator="true"
+          v-model:rows="rows"
+          v-model:first="first"
+          :totalRecords="displayedTotal"
+          :lazy="true"
+          @page="onPageChange"
+          :rowsPerPageOptions="[5, 10, 25, 50]"
+          dataKey="id"
+          stripedRows
+          scrollable
+        >
+          <template #empty>
+            <div class="text-center p-4">
+              {{ showDeleted ? t('users.empty.deleted') : t('users.empty.active') }}
+            </div>
+          </template>
+
+          <Column field="email" :header="t('users.columns.email')" sortable>
+            <template #body="{ data }">
+              <div class="user-email">
+                <span>{{ data.email }}</span>
+                <Tag
+                  v-if="data.id === authStore.user?.id"
+                  :value="t('users.you')"
+                  severity="secondary"
+                  class="ml-2"
+                />
               </div>
             </template>
+          </Column>
 
-            <Column field="email" :header="t('users.columns.email')" sortable>
-              <template #body="{ data }">
-                <div class="user-email">
-                  <span>{{ data.email }}</span>
-                  <Tag
-                    v-if="data.id === authStore.user?.id"
-                    :value="t('users.you')"
-                    severity="secondary"
-                    class="ml-2"
-                  />
-                </div>
-              </template>
-            </Column>
+          <Column :header="t('users.columns.name')">
+            <template #body="{ data }">
+              {{
+                data.firstName || data.lastName
+                  ? `${data.firstName || ''} ${data.lastName || ''}`.trim()
+                  : '-'
+              }}
+            </template>
+          </Column>
 
-            <Column :header="t('users.columns.name')">
-              <template #body="{ data }">
-                {{
-                  data.firstName || data.lastName
-                    ? `${data.firstName || ''} ${data.lastName || ''}`.trim()
-                    : '-'
-                }}
-              </template>
-            </Column>
-
-            <Column field="roles" :header="t('users.columns.roles')">
-              <template #body="{ data }">
-                <div class="role-tags">
-                  <Tag
-                    v-for="role in data.roles"
-                    :key="role"
-                    :value="role"
-                    :severity="getRoleSeverity(role)"
-                    class="role-tag"
-                  />
-                </div>
-              </template>
-            </Column>
-
-            <Column field="status" :header="t('users.columns.status')">
-              <template #body="{ data }">
+          <Column field="roles" :header="t('users.columns.roles')">
+            <template #body="{ data }">
+              <div class="role-tags">
                 <Tag
-                  :value="
-                    showDeleted
-                      ? t('users.status.deleted')
-                      : t(`users.status.${data.status.toLowerCase()}`)
-                  "
-                  :severity="showDeleted ? 'danger' : getStatusSeverity(data.status)"
+                  v-for="role in data.roles"
+                  :key="role"
+                  :value="role"
+                  :severity="getRoleSeverity(role)"
+                  class="role-tag"
                 />
-              </template>
-            </Column>
+              </div>
+            </template>
+          </Column>
 
-            <Column field="createdAt" :header="t('users.columns.createdAt')">
-              <template #body="{ data }">
-                {{ formatDate(data.createdAt) }}
-              </template>
-            </Column>
+          <Column field="status" :header="t('users.columns.status')">
+            <template #body="{ data }">
+              <Tag
+                :value="
+                  showDeleted
+                    ? t('users.status.deleted')
+                    : t(`users.status.${data.status.toLowerCase()}`)
+                "
+                :severity="showDeleted ? 'danger' : getStatusSeverity(data.status)"
+              />
+            </template>
+          </Column>
 
-            <Column :header="t('users.columns.actions')" style="width: 180px">
-              <template #body="{ data }">
-                <div class="action-buttons" v-if="!showDeleted">
-                  <Button
-                    icon="pi pi-pencil"
-                    severity="info"
-                    text
-                    rounded
-                    @click="openEditUserDialog(data)"
-                    v-tooltip.top="t('users.tooltips.edit')"
-                  />
-                  <Button
-                    icon="pi pi-key"
-                    severity="warning"
-                    text
-                    rounded
-                    @click="confirmResetPassword(data)"
-                    v-tooltip.top="t('users.tooltips.resetPassword')"
-                  />
-                  <Button
-                    icon="pi pi-trash"
-                    severity="danger"
-                    text
-                    rounded
-                    @click="confirmDelete(data)"
-                    :disabled="data.id === authStore.user?.id"
-                    v-tooltip.top="t('users.tooltips.delete')"
-                  />
-                </div>
-                <div class="action-buttons" v-else>
-                  <Button
-                    icon="pi pi-refresh"
-                    severity="success"
-                    text
-                    rounded
-                    @click="restoreUser(data)"
-                    v-tooltip.top="t('users.tooltips.restore')"
-                  />
-                </div>
-              </template>
-            </Column>
-          </DataTable>
-        </template>
-      </Card>
-    </div>
+          <Column field="createdAt" :header="t('users.columns.createdAt')">
+            <template #body="{ data }">
+              {{ formatDate(data.createdAt) }}
+            </template>
+          </Column>
+
+          <Column :header="t('users.columns.actions')" style="width: 180px">
+            <template #body="{ data }">
+              <div class="action-buttons" v-if="!showDeleted">
+                <Button
+                  icon="pi pi-pencil"
+                  severity="info"
+                  text
+                  rounded
+                  @click="openEditUserDialog(data)"
+                  v-tooltip.top="t('users.tooltips.edit')"
+                />
+                <Button
+                  icon="pi pi-key"
+                  severity="warning"
+                  text
+                  rounded
+                  @click="confirmResetPassword(data)"
+                  v-tooltip.top="t('users.tooltips.resetPassword')"
+                />
+                <Button
+                  icon="pi pi-trash"
+                  severity="danger"
+                  text
+                  rounded
+                  @click="confirmDelete(data)"
+                  :disabled="data.id === authStore.user?.id"
+                  v-tooltip.top="t('users.tooltips.delete')"
+                />
+              </div>
+              <div class="action-buttons" v-else>
+                <Button
+                  icon="pi pi-refresh"
+                  severity="success"
+                  text
+                  rounded
+                  @click="restoreUser(data)"
+                  v-tooltip.top="t('users.tooltips.restore')"
+                />
+              </div>
+            </template>
+          </Column>
+        </DataTable>
+      </template>
+    </Card>
 
     <!-- Add User Dialog -->
     <Dialog
@@ -718,7 +715,7 @@ async function saveEditedUser() {
         />
       </template>
     </Dialog>
-  </AppLayout>
+  </div>
 </template>
 
 <style scoped>

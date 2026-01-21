@@ -4,13 +4,14 @@ import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura'
 import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
+import StyleClass from 'primevue/styleclass'
 
 import App from './App.vue'
 import router from './router'
 import i18n from './i18n'
 
-import 'primeicons/primeicons.css'
-import './assets/main.css'
+import '@/assets/tailwind.css'
+import '@/assets/styles.scss'
 
 const app = createApp(App)
 
@@ -21,11 +22,13 @@ app.use(PrimeVue, {
   theme: {
     preset: Aura,
     options: {
-      darkModeSelector: '.dark-mode'
+      darkModeSelector: '.app-dark'
     }
   }
 })
 app.use(ToastService)
 app.use(ConfirmationService)
+
+app.directive('styleclass', StyleClass)
 
 app.mount('#app')

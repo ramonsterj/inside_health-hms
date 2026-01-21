@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { tokenStorage } from '@/utils/tokenStorage'
+import AppLayout from '@/layout/AppLayout.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -9,6 +10,7 @@ const router = createRouter({
       path: '/',
       redirect: '/dashboard'
     },
+    // Guest routes (no layout wrapper)
     {
       path: '/login',
       name: 'login',
@@ -21,35 +23,41 @@ const router = createRouter({
       component: () => import('@/views/auth/RegisterView.vue'),
       meta: { guest: true }
     },
+    // Authenticated routes (with AppLayout)
     {
-      path: '/dashboard',
-      name: 'dashboard',
-      component: () => import('@/views/DashboardView.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/profile',
-      name: 'profile',
-      component: () => import('@/views/ProfileView.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/users',
-      name: 'users',
-      component: () => import('@/views/UsersView.vue'),
-      meta: { requiresAuth: true, requiresAdmin: true }
-    },
-    {
-      path: '/roles',
-      name: 'roles',
-      component: () => import('@/views/RolesView.vue'),
-      meta: { requiresAuth: true, requiresAdmin: true }
-    },
-    {
-      path: '/audit-logs',
-      name: 'audit-logs',
-      component: () => import('@/views/AuditLogsView.vue'),
-      meta: { requiresAuth: true, requiresAdmin: true }
+      path: '/',
+      component: AppLayout,
+      meta: { requiresAuth: true },
+      children: [
+        {
+          path: 'dashboard',
+          name: 'dashboard',
+          component: () => import('@/views/DashboardView.vue')
+        },
+        {
+          path: 'profile',
+          name: 'profile',
+          component: () => import('@/views/ProfileView.vue')
+        },
+        {
+          path: 'users',
+          name: 'users',
+          component: () => import('@/views/UsersView.vue'),
+          meta: { requiresAdmin: true }
+        },
+        {
+          path: 'roles',
+          name: 'roles',
+          component: () => import('@/views/RolesView.vue'),
+          meta: { requiresAdmin: true }
+        },
+        {
+          path: 'audit-logs',
+          name: 'audit-logs',
+          component: () => import('@/views/AuditLogsView.vue'),
+          meta: { requiresAdmin: true }
+        }
+      ]
     },
     {
       path: '/:pathMatch(.*)*',

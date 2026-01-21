@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Card from 'primevue/card'
-import AppLayout from '@/components/layout/AppLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const { t } = useI18n()
@@ -24,66 +23,64 @@ const displayName = computed(() => {
 </script>
 
 <template>
-  <AppLayout>
-    <div class="dashboard">
-      <h1 class="dashboard-title">{{ greeting }}, {{ displayName }}!</h1>
+  <div class="dashboard">
+    <h1 class="dashboard-title">{{ greeting }}, {{ displayName }}!</h1>
 
-      <div class="dashboard-grid">
-        <Card class="dashboard-card">
-          <template #title>
-            <i class="pi pi-user" style="margin-right: 0.5rem"></i>
-            {{ t('dashboard.cards.profile.title') }}
-          </template>
-          <template #content>
-            <p>{{ t('dashboard.cards.profile.description') }}</p>
-          </template>
-          <template #footer>
-            <router-link :to="{ name: 'profile' }" class="card-link">
-              {{ t('dashboard.cards.profile.link') }} <i class="pi pi-arrow-right"></i>
-            </router-link>
-          </template>
-        </Card>
+    <div class="dashboard-grid">
+      <Card class="dashboard-card">
+        <template #title>
+          <i class="pi pi-user" style="margin-right: 0.5rem"></i>
+          {{ t('dashboard.cards.profile.title') }}
+        </template>
+        <template #content>
+          <p>{{ t('dashboard.cards.profile.description') }}</p>
+        </template>
+        <template #footer>
+          <router-link :to="{ name: 'profile' }" class="card-link">
+            {{ t('dashboard.cards.profile.link') }} <i class="pi pi-arrow-right"></i>
+          </router-link>
+        </template>
+      </Card>
 
-        <Card v-if="authStore.isAdmin" class="dashboard-card">
-          <template #title>
-            <i class="pi pi-users" style="margin-right: 0.5rem"></i>
-            {{ t('dashboard.cards.users.title') }}
-          </template>
-          <template #content>
-            <p>{{ t('dashboard.cards.users.description') }}</p>
-          </template>
-          <template #footer>
-            <router-link :to="{ name: 'users' }" class="card-link">
-              {{ t('dashboard.cards.users.link') }} <i class="pi pi-arrow-right"></i>
-            </router-link>
-          </template>
-        </Card>
+      <Card v-if="authStore.isAdmin" class="dashboard-card">
+        <template #title>
+          <i class="pi pi-users" style="margin-right: 0.5rem"></i>
+          {{ t('dashboard.cards.users.title') }}
+        </template>
+        <template #content>
+          <p>{{ t('dashboard.cards.users.description') }}</p>
+        </template>
+        <template #footer>
+          <router-link :to="{ name: 'users' }" class="card-link">
+            {{ t('dashboard.cards.users.link') }} <i class="pi pi-arrow-right"></i>
+          </router-link>
+        </template>
+      </Card>
 
-        <Card class="dashboard-card info-card">
-          <template #title>
-            <i class="pi pi-info-circle" style="margin-right: 0.5rem"></i>
-            {{ t('dashboard.cards.accountInfo.title') }}
-          </template>
-          <template #content>
-            <div class="info-list">
-              <div class="info-item">
-                <span class="info-label">{{ t('dashboard.cards.accountInfo.email') }}</span>
-                <span class="info-value">{{ authStore.user?.email }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">{{ t('dashboard.cards.accountInfo.roles') }}</span>
-                <span class="info-value">{{ authStore.user?.roles?.join(', ') || '-' }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">{{ t('dashboard.cards.accountInfo.status') }}</span>
-                <span class="info-value">{{ authStore.user?.status }}</span>
-              </div>
+      <Card class="dashboard-card info-card">
+        <template #title>
+          <i class="pi pi-info-circle" style="margin-right: 0.5rem"></i>
+          {{ t('dashboard.cards.accountInfo.title') }}
+        </template>
+        <template #content>
+          <div class="info-list">
+            <div class="info-item">
+              <span class="info-label">{{ t('dashboard.cards.accountInfo.email') }}</span>
+              <span class="info-value">{{ authStore.user?.email }}</span>
             </div>
-          </template>
-        </Card>
-      </div>
+            <div class="info-item">
+              <span class="info-label">{{ t('dashboard.cards.accountInfo.roles') }}</span>
+              <span class="info-value">{{ authStore.user?.roles?.join(', ') || '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">{{ t('dashboard.cards.accountInfo.status') }}</span>
+              <span class="info-value">{{ authStore.user?.status }}</span>
+            </div>
+          </div>
+        </template>
+      </Card>
     </div>
-  </AppLayout>
+  </div>
 </template>
 
 <style scoped>

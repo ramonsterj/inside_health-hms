@@ -9,7 +9,6 @@ import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 import InputNumber from 'primevue/inputnumber'
-import AppLayout from '@/components/layout/AppLayout.vue'
 import { useAuditStore } from '@/stores/audit'
 import { AuditAction, type AuditLog } from '@/types/audit'
 
@@ -136,196 +135,186 @@ function getChangedFields(oldValues: string | null, newValues: string | null): s
 </script>
 
 <template>
-  <AppLayout>
-    <div class="audit-logs-page">
-      <div class="page-header">
-        <h1 class="page-title">{{ t('auditLogs.title') }}</h1>
-        <Button
-          icon="pi pi-refresh"
-          :label="t('auditLogs.refresh')"
-          severity="secondary"
-          outlined
-          @click="loadLogs"
-          :loading="auditStore.loading"
-        />
-      </div>
+  <div class="audit-logs-page">
+    <div class="page-header">
+      <h1 class="page-title">{{ t('auditLogs.title') }}</h1>
+      <Button
+        icon="pi pi-refresh"
+        :label="t('auditLogs.refresh')"
+        severity="secondary"
+        outlined
+        @click="loadLogs"
+        :loading="auditStore.loading"
+      />
+    </div>
 
-      <!-- Filters -->
-      <Card class="filters-card">
-        <template #content>
-          <div class="filters-row">
-            <div class="filter-item">
-              <label id="label-filter-action">{{ t('auditLogs.filters.action') }}</label>
-              <Select
-                v-model="selectedAction"
-                :options="actionOptions"
-                optionLabel="label"
-                optionValue="value"
-                :placeholder="t('auditLogs.filters.allActions')"
-                class="filter-select"
-                aria-labelledby="label-filter-action"
-              />
-            </div>
-            <div class="filter-item">
-              <label id="label-filter-entity-type">{{ t('auditLogs.filters.entityType') }}</label>
-              <Select
-                v-model="selectedEntityType"
-                :options="entityTypeOptions"
-                optionLabel="label"
-                optionValue="value"
-                :placeholder="t('auditLogs.filters.allEntities')"
-                class="filter-select"
-                aria-labelledby="label-filter-entity-type"
-              />
-            </div>
-            <div class="filter-item">
-              <label id="label-filter-user-id">{{ t('auditLogs.filters.userId') }}</label>
-              <InputNumber
-                v-model="selectedUserId"
-                :placeholder="t('auditLogs.filters.anyUser')"
-                class="filter-input"
-                :useGrouping="false"
-                aria-labelledby="label-filter-user-id"
-              />
-            </div>
-            <div class="filter-actions">
-              <Button
-                :label="t('auditLogs.filters.apply')"
-                icon="pi pi-filter"
-                @click="applyFilters"
-                :loading="auditStore.loading"
-              />
-              <Button
-                :label="t('auditLogs.filters.clear')"
-                icon="pi pi-filter-slash"
-                severity="secondary"
-                outlined
-                @click="clearFilters"
-              />
-            </div>
-          </div>
-        </template>
-      </Card>
-
-      <!-- Data Table -->
-      <Card>
-        <template #content>
-          <DataTable
-            v-model:expandedRows="expandedRows"
-            :value="auditStore.logs"
-            :loading="auditStore.loading"
-            :paginator="true"
-            v-model:rows="rows"
-            v-model:first="first"
-            :totalRecords="auditStore.totalLogs"
-            :lazy="true"
-            @page="onPageChange"
-            :rowsPerPageOptions="[10, 25, 50, 100]"
-            dataKey="id"
-            stripedRows
-            scrollable
-          >
-            <template #empty>
-              <div class="text-center p-4">{{ t('auditLogs.empty') }}</div>
-            </template>
-
-            <Column expander style="width: 3rem" />
-
-            <Column field="id" :header="t('auditLogs.columns.id')" style="width: 80px" />
-
-            <Column field="timestamp" :header="t('auditLogs.columns.timestamp')" sortable>
-              <template #body="{ data }">
-                {{ formatTimestamp(data.timestamp) }}
-              </template>
-            </Column>
-
-            <Column field="action" :header="t('auditLogs.columns.action')" style="width: 100px">
-              <template #body="{ data }">
-                <Tag
-                  :value="t(`auditLogs.actions.${data.action}`)"
-                  :severity="getActionSeverity(data.action)"
-                />
-              </template>
-            </Column>
-
-            <Column field="entityType" :header="t('auditLogs.columns.entity')" style="width: 120px">
-              <template #body="{ data }">
-                <span class="entity-badge">{{ data.entityType }}</span>
-              </template>
-            </Column>
-
-            <Column
-              field="entityId"
-              :header="t('auditLogs.columns.entityId')"
-              style="width: 100px"
+    <!-- Filters -->
+    <Card class="filters-card">
+      <template #content>
+        <div class="filters-row">
+          <div class="filter-item">
+            <label id="label-filter-action">{{ t('auditLogs.filters.action') }}</label>
+            <Select
+              v-model="selectedAction"
+              :options="actionOptions"
+              optionLabel="label"
+              optionValue="value"
+              :placeholder="t('auditLogs.filters.allActions')"
+              class="filter-select"
+              aria-labelledby="label-filter-action"
             />
+          </div>
+          <div class="filter-item">
+            <label id="label-filter-entity-type">{{ t('auditLogs.filters.entityType') }}</label>
+            <Select
+              v-model="selectedEntityType"
+              :options="entityTypeOptions"
+              optionLabel="label"
+              optionValue="value"
+              :placeholder="t('auditLogs.filters.allEntities')"
+              class="filter-select"
+              aria-labelledby="label-filter-entity-type"
+            />
+          </div>
+          <div class="filter-item">
+            <label id="label-filter-user-id">{{ t('auditLogs.filters.userId') }}</label>
+            <InputNumber
+              v-model="selectedUserId"
+              :placeholder="t('auditLogs.filters.anyUser')"
+              class="filter-input"
+              :useGrouping="false"
+              aria-labelledby="label-filter-user-id"
+            />
+          </div>
+          <div class="filter-actions">
+            <Button
+              :label="t('auditLogs.filters.apply')"
+              icon="pi pi-filter"
+              @click="applyFilters"
+              :loading="auditStore.loading"
+            />
+            <Button
+              :label="t('auditLogs.filters.clear')"
+              icon="pi pi-filter-slash"
+              severity="secondary"
+              outlined
+              @click="clearFilters"
+            />
+          </div>
+        </div>
+      </template>
+    </Card>
 
-            <Column field="username" :header="t('auditLogs.columns.user')">
-              <template #body="{ data }">
-                <span v-if="data.username">{{ data.username }}</span>
-                <span v-else-if="data.userId" class="text-muted">ID: {{ data.userId }}</span>
-                <span v-else class="text-muted">{{ t('auditLogs.system') }}</span>
-              </template>
-            </Column>
+    <!-- Data Table -->
+    <Card>
+      <template #content>
+        <DataTable
+          v-model:expandedRows="expandedRows"
+          :value="auditStore.logs"
+          :loading="auditStore.loading"
+          :paginator="true"
+          v-model:rows="rows"
+          v-model:first="first"
+          :totalRecords="auditStore.totalLogs"
+          :lazy="true"
+          @page="onPageChange"
+          :rowsPerPageOptions="[10, 25, 50, 100]"
+          dataKey="id"
+          stripedRows
+          scrollable
+        >
+          <template #empty>
+            <div class="text-center p-4">{{ t('auditLogs.empty') }}</div>
+          </template>
 
-            <Column
-              field="ipAddress"
-              :header="t('auditLogs.columns.ipAddress')"
-              style="width: 140px"
-            >
-              <template #body="{ data }">
-                {{ data.ipAddress || '-' }}
-              </template>
-            </Column>
+          <Column expander style="width: 3rem" />
 
-            <Column :header="t('auditLogs.columns.changes')" style="width: 150px">
-              <template #body="{ data }">
-                <div v-if="data.action === 'UPDATE'" class="changed-fields">
-                  <Tag
-                    v-for="field in getChangedFields(data.oldValues, data.newValues).slice(0, 3)"
-                    :key="field"
-                    :value="field"
-                    severity="secondary"
-                    class="field-tag"
-                  />
-                  <span
-                    v-if="getChangedFields(data.oldValues, data.newValues).length > 3"
-                    class="more-fields"
-                  >
-                    {{
-                      t('auditLogs.moreFields', {
-                        count: getChangedFields(data.oldValues, data.newValues).length - 3
-                      })
-                    }}
-                  </span>
+          <Column field="id" :header="t('auditLogs.columns.id')" style="width: 80px" />
+
+          <Column field="timestamp" :header="t('auditLogs.columns.timestamp')" sortable>
+            <template #body="{ data }">
+              {{ formatTimestamp(data.timestamp) }}
+            </template>
+          </Column>
+
+          <Column field="action" :header="t('auditLogs.columns.action')" style="width: 100px">
+            <template #body="{ data }">
+              <Tag
+                :value="t(`auditLogs.actions.${data.action}`)"
+                :severity="getActionSeverity(data.action)"
+              />
+            </template>
+          </Column>
+
+          <Column field="entityType" :header="t('auditLogs.columns.entity')" style="width: 120px">
+            <template #body="{ data }">
+              <span class="entity-badge">{{ data.entityType }}</span>
+            </template>
+          </Column>
+
+          <Column field="entityId" :header="t('auditLogs.columns.entityId')" style="width: 100px" />
+
+          <Column field="username" :header="t('auditLogs.columns.user')">
+            <template #body="{ data }">
+              <span v-if="data.username">{{ data.username }}</span>
+              <span v-else-if="data.userId" class="text-muted">ID: {{ data.userId }}</span>
+              <span v-else class="text-muted">{{ t('auditLogs.system') }}</span>
+            </template>
+          </Column>
+
+          <Column field="ipAddress" :header="t('auditLogs.columns.ipAddress')" style="width: 140px">
+            <template #body="{ data }">
+              {{ data.ipAddress || '-' }}
+            </template>
+          </Column>
+
+          <Column :header="t('auditLogs.columns.changes')" style="width: 150px">
+            <template #body="{ data }">
+              <div v-if="data.action === 'UPDATE'" class="changed-fields">
+                <Tag
+                  v-for="field in getChangedFields(data.oldValues, data.newValues).slice(0, 3)"
+                  :key="field"
+                  :value="field"
+                  severity="secondary"
+                  class="field-tag"
+                />
+                <span
+                  v-if="getChangedFields(data.oldValues, data.newValues).length > 3"
+                  class="more-fields"
+                >
+                  {{
+                    t('auditLogs.moreFields', {
+                      count: getChangedFields(data.oldValues, data.newValues).length - 3
+                    })
+                  }}
+                </span>
+              </div>
+              <span v-else class="text-muted">-</span>
+            </template>
+          </Column>
+
+          <!-- Expanded Row Content -->
+          <template #expansion="{ data }">
+            <div class="expansion-content">
+              <div class="json-panels">
+                <div v-if="data.oldValues" class="json-panel">
+                  <h4>{{ t('auditLogs.expansion.oldValues') }}</h4>
+                  <pre class="json-display">{{ formatJson(data.oldValues) }}</pre>
                 </div>
-                <span v-else class="text-muted">-</span>
-              </template>
-            </Column>
-
-            <!-- Expanded Row Content -->
-            <template #expansion="{ data }">
-              <div class="expansion-content">
-                <div class="json-panels">
-                  <div v-if="data.oldValues" class="json-panel">
-                    <h4>{{ t('auditLogs.expansion.oldValues') }}</h4>
-                    <pre class="json-display">{{ formatJson(data.oldValues) }}</pre>
-                  </div>
-                  <div v-if="data.newValues" class="json-panel">
-                    <h4>{{ t('auditLogs.expansion.newValues') }}</h4>
-                    <pre class="json-display">{{ formatJson(data.newValues) }}</pre>
-                  </div>
-                  <div v-if="!data.oldValues && !data.newValues" class="no-data">
-                    {{ t('auditLogs.expansion.noData') }}
-                  </div>
+                <div v-if="data.newValues" class="json-panel">
+                  <h4>{{ t('auditLogs.expansion.newValues') }}</h4>
+                  <pre class="json-display">{{ formatJson(data.newValues) }}</pre>
+                </div>
+                <div v-if="!data.oldValues && !data.newValues" class="no-data">
+                  {{ t('auditLogs.expansion.noData') }}
                 </div>
               </div>
-            </template>
-          </DataTable>
-        </template>
-      </Card>
-    </div>
-  </AppLayout>
+            </div>
+          </template>
+        </DataTable>
+      </template>
+    </Card>
+  </div>
 </template>
 
 <style scoped>

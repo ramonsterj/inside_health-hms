@@ -12,7 +12,6 @@ import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Checkbox from 'primevue/checkbox'
-import AppLayout from '@/components/layout/AppLayout.vue'
 import { useRoleStore } from '@/stores/role'
 import type { Role, CreateRoleRequest, UpdateRoleRequest } from '@/types'
 
@@ -220,113 +219,111 @@ function getPermissionGroupLabel(resource: string): string {
 </script>
 
 <template>
-  <AppLayout>
-    <div class="roles-page">
-      <div class="page-header">
-        <h1 class="page-title">{{ t('roles.title') }}</h1>
-        <div class="header-actions">
-          <Button icon="pi pi-plus" :label="t('roles.addRole')" @click="openAddRoleDialog" />
-          <Button
-            icon="pi pi-refresh"
-            :label="t('roles.refresh')"
-            severity="secondary"
-            outlined
-            @click="loadRoles"
-            :loading="roleStore.loading"
-          />
-        </div>
+  <div class="roles-page">
+    <div class="page-header">
+      <h1 class="page-title">{{ t('roles.title') }}</h1>
+      <div class="header-actions">
+        <Button icon="pi pi-plus" :label="t('roles.addRole')" @click="openAddRoleDialog" />
+        <Button
+          icon="pi pi-refresh"
+          :label="t('roles.refresh')"
+          severity="secondary"
+          outlined
+          @click="loadRoles"
+          :loading="roleStore.loading"
+        />
       </div>
+    </div>
 
-      <Card>
-        <template #content>
-          <DataTable
-            :value="roleStore.roles"
-            :loading="roleStore.loading"
-            dataKey="id"
-            stripedRows
-            scrollable
-          >
-            <template #empty>
-              <div class="text-center p-4">
-                {{ t('roles.empty') }}
+    <Card>
+      <template #content>
+        <DataTable
+          :value="roleStore.roles"
+          :loading="roleStore.loading"
+          dataKey="id"
+          stripedRows
+          scrollable
+        >
+          <template #empty>
+            <div class="text-center p-4">
+              {{ t('roles.empty') }}
+            </div>
+          </template>
+
+          <Column field="code" :header="t('roles.columns.code')" sortable>
+            <template #body="{ data }">
+              <code class="role-code">{{ data.code }}</code>
+            </template>
+          </Column>
+
+          <Column field="name" :header="t('roles.columns.name')" sortable />
+
+          <Column field="description" :header="t('roles.columns.description')">
+            <template #body="{ data }">
+              {{ data.description || '-' }}
+            </template>
+          </Column>
+
+          <Column field="permissions" :header="t('roles.columns.permissions')">
+            <template #body="{ data }">
+              <Tag
+                :value="data.permissions.length.toString()"
+                :severity="data.permissions.length > 0 ? 'info' : 'secondary'"
+              />
+            </template>
+          </Column>
+
+          <Column field="isSystem" :header="t('roles.columns.system')" style="width: 100px">
+            <template #body="{ data }">
+              <Tag
+                v-if="data.isSystem"
+                :value="t('roles.badges.system')"
+                severity="warn"
+                icon="pi pi-lock"
+              />
+              <Tag v-else :value="t('roles.badges.custom')" severity="secondary" />
+            </template>
+          </Column>
+
+          <Column :header="t('roles.columns.actions')" style="width: 150px">
+            <template #body="{ data }">
+              <div class="action-buttons">
+                <Button
+                  icon="pi pi-pencil"
+                  severity="info"
+                  text
+                  rounded
+                  @click="openEditRoleDialog(data)"
+                  :disabled="data.isSystem"
+                  v-tooltip.top="
+                    data.isSystem ? t('roles.tooltips.systemRole') : t('roles.tooltips.edit')
+                  "
+                />
+                <Button
+                  icon="pi pi-key"
+                  severity="warning"
+                  text
+                  rounded
+                  @click="openPermissionsDialog(data)"
+                  v-tooltip.top="t('roles.tooltips.permissions')"
+                />
+                <Button
+                  icon="pi pi-trash"
+                  severity="danger"
+                  text
+                  rounded
+                  @click="confirmDelete(data)"
+                  :disabled="data.isSystem"
+                  v-tooltip.top="
+                    data.isSystem ? t('roles.tooltips.systemRole') : t('roles.tooltips.delete')
+                  "
+                />
               </div>
             </template>
-
-            <Column field="code" :header="t('roles.columns.code')" sortable>
-              <template #body="{ data }">
-                <code class="role-code">{{ data.code }}</code>
-              </template>
-            </Column>
-
-            <Column field="name" :header="t('roles.columns.name')" sortable />
-
-            <Column field="description" :header="t('roles.columns.description')">
-              <template #body="{ data }">
-                {{ data.description || '-' }}
-              </template>
-            </Column>
-
-            <Column field="permissions" :header="t('roles.columns.permissions')">
-              <template #body="{ data }">
-                <Tag
-                  :value="data.permissions.length.toString()"
-                  :severity="data.permissions.length > 0 ? 'info' : 'secondary'"
-                />
-              </template>
-            </Column>
-
-            <Column field="isSystem" :header="t('roles.columns.system')" style="width: 100px">
-              <template #body="{ data }">
-                <Tag
-                  v-if="data.isSystem"
-                  :value="t('roles.badges.system')"
-                  severity="warn"
-                  icon="pi pi-lock"
-                />
-                <Tag v-else :value="t('roles.badges.custom')" severity="secondary" />
-              </template>
-            </Column>
-
-            <Column :header="t('roles.columns.actions')" style="width: 150px">
-              <template #body="{ data }">
-                <div class="action-buttons">
-                  <Button
-                    icon="pi pi-pencil"
-                    severity="info"
-                    text
-                    rounded
-                    @click="openEditRoleDialog(data)"
-                    :disabled="data.isSystem"
-                    v-tooltip.top="
-                      data.isSystem ? t('roles.tooltips.systemRole') : t('roles.tooltips.edit')
-                    "
-                  />
-                  <Button
-                    icon="pi pi-key"
-                    severity="warning"
-                    text
-                    rounded
-                    @click="openPermissionsDialog(data)"
-                    v-tooltip.top="t('roles.tooltips.permissions')"
-                  />
-                  <Button
-                    icon="pi pi-trash"
-                    severity="danger"
-                    text
-                    rounded
-                    @click="confirmDelete(data)"
-                    :disabled="data.isSystem"
-                    v-tooltip.top="
-                      data.isSystem ? t('roles.tooltips.systemRole') : t('roles.tooltips.delete')
-                    "
-                  />
-                </div>
-              </template>
-            </Column>
-          </DataTable>
-        </template>
-      </Card>
-    </div>
+          </Column>
+        </DataTable>
+      </template>
+    </Card>
 
     <!-- Add Role Dialog -->
     <Dialog
@@ -507,7 +504,7 @@ function getPermissionGroupLabel(resource: string): string {
         />
       </template>
     </Dialog>
-  </AppLayout>
+  </div>
 </template>
 
 <style scoped>
