@@ -17,6 +17,16 @@ body {
 
 a {
   text-decoration: none;
+
+  // Only apply link colors to actual text links, not PrimeVue components or layout elements
+  &:not([class*='p-']):not(.layout-topbar-logo):not(.layout-menuitem-link) {
+    color: var(--link-color);
+    transition: color var(--transition-duration);
+
+    &:hover {
+      color: var(--link-hover-color);
+    }
+  }
 }
 
 .layout-wrapper {

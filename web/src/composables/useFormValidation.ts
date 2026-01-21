@@ -2,7 +2,7 @@ import { useForm, useField } from 'vee-validate'
 import type { GenericObject } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import type { ZodSchema, ZodTypeDef } from 'zod'
-import { computed } from 'vue'
+import { computed, reactive, watch } from 'vue'
 
 /**
  * Composable for form validation using VeeValidate + Zod.
@@ -33,17 +33,51 @@ export function useFormValidation<TInput, TOutput extends GenericObject>(
 ) {
   const typedSchema = toTypedSchema(schema)
 
-  const { handleSubmit, errors, values, resetForm, validate, meta } = useForm<TOutput>({
-    validationSchema: typedSchema,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    initialValues: initialValues as any
-  })
+  const { handleSubmit, errors, values, resetForm, validate, meta, setFieldValue } =
+    useForm<TOutput>({
+      validationSchema: typedSchema,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      initialValues: initialValues as any
+    })
 
   const isValid = computed(() => meta.value.valid)
   const isDirty = computed(() => meta.value.dirty)
 
+  // Create a reactive proxy that syncs with VeeValidate's values
+  // This allows v-model binding while respecting VeeValidate's validation
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const form = reactive({ ...(initialValues as any) }) as TOutput
+
+  // Sync form changes to VeeValidate
+  watch(
+    () => ({ ...form }),
+    newValues => {
+      Object.keys(newValues).forEach(key => {
+        if (values[key as keyof TOutput] !== newValues[key as keyof TOutput]) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setFieldValue(key as any, newValues[key as keyof TOutput])
+        }
+      })
+    },
+    { deep: true }
+  )
+
+  // Sync VeeValidate values back to form (e.g., after resetForm)
+  watch(
+    values,
+    newValues => {
+      Object.keys(newValues).forEach(key => {
+        if (form[key as keyof TOutput] !== newValues[key as keyof TOutput]) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ;(form as any)[key] = newValues[key as keyof TOutput]
+        }
+      })
+    },
+    { deep: true }
+  )
+
   return {
-    form: values,
+    form,
     errors,
     isValid,
     isDirty,
