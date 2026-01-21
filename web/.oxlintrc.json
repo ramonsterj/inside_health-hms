@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "rules": {
+    "no-debugger": "error",
+    "no-empty": "warn",
+    "no-empty-pattern": "error",
+    "eqeqeq": "warn",
+    "no-array-constructor": "error",
+    "no-caller": "error",
+    "no-eval": "error",
+    "no-new-wrappers": "error"
+  },
+  "ignorePatterns": ["dist/**", "node_modules/**"]
+}

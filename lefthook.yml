@@ -1,0 +1,59 @@
+# Lefthook configuration for hms
+# https://github.com/evilmartians/lefthook
+
+min_version: 1.6.0
+
+pre-commit:
+  parallel: true
+  commands:
+    # Backend checks
+    detekt:
+      root: api/
+      glob: "**/*.kt"
+      run: ./gradlew detekt --daemon
+
+    compile-kotlin:
+      root: api/
+      glob: "**/*.kt"
+      run: ./gradlew compileKotlin --daemon
+
+    # Frontend checks
+    eslint:
+      root: web/
+      glob: "**/*.{vue,ts,tsx,js}"
+      run: npm run lint
+
+    oxlint:
+      root: web/
+      glob: "**/*.{vue,ts,tsx,js}"
+      run: npm run lint:oxlint
+
+    prettier:
+      root: web/
+      glob: "**/*.{vue,ts,tsx,js,json,css,scss}"
+      run: npm run format:check
+
+    typescript:
+      root: web/
+      glob: "**/*.{vue,ts,tsx}"
+      run: npx vue-tsc --noEmit
+
+pre-push:
+  commands:
+    # Backend - full build includes compile, detekt, and tests
+    build-backend:
+      root: api/
+      run: ./gradlew build --daemon
+
+    # Frontend - full build includes type-check and vite build
+    build-frontend:
+      root: web/
+      run: npm run build
+
+    # Optional: Uncomment to run frontend unit tests on push
+    # test-frontend:
+    #   root: web/
+    #   run: npm run test:run
+    #
+    # Note: E2E tests (npm run test:e2e) are too slow for git hooks.
+    # Run them in CI/CD instead.

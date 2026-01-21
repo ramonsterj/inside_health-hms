@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <!--
+    OWASP Dependency-Check Suppressions
+
+    Use this file to suppress false positives or accepted risks.
+    Documentation: https://jeremylong.github.io/DependencyCheck/general/suppression.html
+
+    Example suppression:
+    <suppress>
+        <notes><![CDATA[
+        This is a false positive. The vulnerability CVE-XXXX-XXXXX
+        does not apply because we don't use the affected functionality.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.example/.*$</packageUrl>
+        <cve>CVE-XXXX-XXXXX</cve>
+    </suppress>
+
+    Suppress by GAV (Group/Artifact/Version):
+    <suppress>
+        <notes><![CDATA[Accepted risk - mitigated by input validation]]></notes>
+        <gav regex="true">^org\.example:library:.*$</gav>
+        <vulnerabilityName>CVE-XXXX-XXXXX</vulnerabilityName>
+    </suppress>
+    -->
+
+    <!-- Add your suppressions below -->
+
+    <!-- False positive: detekt-rules is misidentified as Apache Beam/Flink/Spark -->
+    <suppress>
+        <notes><![CDATA[
+        False positive. The detekt-rules SNAPSHOT jar is incorrectly identified as
+        Apache Beam, Flink, and Spark components. Detekt is a static analysis tool
+        for Kotlin and has no relation to these Apache projects.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/dev\.detekt/detekt-rules@.*$</packageUrl>
+        <cve>CVE-2023-22946</cve>
+        <cve>CVE-2018-17190</cve>
+        <cve>CVE-2022-33891</cve>
+        <cve>CVE-2023-32007</cve>
+        <cve>CVE-2021-38296</cve>
+        <cve>CVE-2025-55039</cve>
+        <cve>CVE-2024-23945</cve>
+        <cve>CVE-2022-31777</cve>
+    </suppress>
+
+</suppressions>

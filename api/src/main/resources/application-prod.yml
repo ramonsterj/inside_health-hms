@@ -1,0 +1,31 @@
+# Production Profile Configuration
+# Overrides application.yml for production deployment
+# Activate with: spring.profiles.active=prod
+
+spring:
+  jpa:
+    properties:
+      hibernate:
+        format_sql: false  # No formatting overhead in production
+
+logging:
+  level:
+    root: WARN
+    com.insidehealthgt.hms: INFO  # Less verbose in production
+    org.springframework.security: WARN
+    org.hibernate: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics  # Minimal endpoints in prod
+  endpoint:
+    health:
+      show-details: never  # Hide health details from public
+
+springdoc:
+  swagger-ui:
+    enabled: false  # Disable Swagger UI in production
+  api-docs:
+    enabled: false  # Disable OpenAPI docs in production

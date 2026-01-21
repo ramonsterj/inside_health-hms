@@ -1,0 +1,39 @@
+# Gitleaks configuration
+# https://github.com/gitleaks/gitleaks
+
+title = "Gitleaks Config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allowlist for known safe patterns"
+paths = [
+    '''node_modules''',
+    '''\.gradle''',
+    '''build''',
+    '''dist''',
+    '''\.idea''',
+    '''package-lock\.json''',
+    '''gradle\.lockfile''',
+]
+
+# Example: Allow test files with fake credentials
+# regexTarget = "match"
+# regexes = [
+#     '''FAKE_.*_KEY''',
+# ]
+
+# Specific file allowlists
+# [[allowlist.commits]]
+# description = "Initial commit with placeholder values"
+# regexes = ['''placeholder''']
+
+# Custom rules can be added here
+# [[rules]]
+# id = "custom-api-key"
+# description = "Custom API Key Pattern"
+# regex = '''custom_api_key_[a-zA-Z0-9]{32}'''
+# secretGroup = 0
+# entropy = 3.5
+# keywords = ["custom_api_key"]

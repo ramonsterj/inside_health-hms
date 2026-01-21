@@ -1,0 +1,27 @@
+# Development Profile Configuration
+# Overrides application.yml for local development
+# Activate with: spring.profiles.active=dev
+
+spring:
+  jpa:
+    show-sql: true  # Show SQL queries in console for debugging
+
+logging:
+  level:
+    com.insidehealthgt.hms: TRACE  # Verbose application logging
+    org.hibernate.SQL: DEBUG  # Show SQL statements
+    org.hibernate.orm.jdbc.bind: TRACE  # Show SQL parameter binding
+    org.springframework.security: DEBUG  # Debug auth issues
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,beans,mappings  # More endpoints for debugging
+  endpoint:
+    health:
+      show-details: always  # Full health details in dev
+
+springdoc:
+  swagger-ui:
+    enabled: true  # Ensure Swagger UI is available

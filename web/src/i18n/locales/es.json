@@ -1,0 +1,403 @@
+{
+  "common": {
+    "appName": "Inside Health",
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "actions": "Acciones",
+    "yes": "Si",
+    "no": "No",
+    "confirm": "Confirmar",
+    "success": "Exito",
+    "error": "Error",
+    "warning": "Advertencia",
+    "info": "Informacion",
+    "close": "Cerrar",
+    "back": "Atras",
+    "next": "Siguiente",
+    "submit": "Enviar",
+    "reset": "Restablecer"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "users": "Usuarios",
+    "roles": "Roles",
+    "auditLogs": "Registros de Auditoria",
+    "profile": "Perfil",
+    "logout": "Cerrar Sesion"
+  },
+  "auth": {
+    "login": {
+      "title": "Bienvenido de Nuevo",
+      "subtitle": "Inicia sesion en tu cuenta",
+      "identifier": "Correo o Usuario",
+      "identifierPlaceholder": "Ingresa tu correo o usuario",
+      "password": "Contrasena",
+      "passwordPlaceholder": "Ingresa tu contrasena",
+      "submit": "Iniciar Sesion",
+      "noAccount": "No tienes una cuenta?",
+      "createOne": "Crea una",
+      "success": "Bienvenido de nuevo!",
+      "successDetail": "Has iniciado sesion exitosamente.",
+      "failed": "Error de Inicio de Sesion",
+      "failedDetail": "Error al iniciar sesion. Verifica tus credenciales."
+    },
+    "register": {
+      "title": "Crear Cuenta",
+      "subtitle": "Comienza con tu cuenta gratuita",
+      "username": "Nombre de Usuario",
+      "usernamePlaceholder": "Elige un nombre de usuario",
+      "firstName": "Nombre",
+      "firstNamePlaceholder": "Nombre",
+      "lastName": "Apellido",
+      "lastNamePlaceholder": "Apellido",
+      "email": "Correo Electronico",
+      "emailPlaceholder": "Ingresa tu correo electronico",
+      "password": "Contrasena",
+      "passwordPlaceholder": "Crea una contrasena",
+      "confirmPassword": "Confirmar Contrasena",
+      "confirmPasswordPlaceholder": "Confirma tu contrasena",
+      "submit": "Crear Cuenta",
+      "hasAccount": "Ya tienes una cuenta?",
+      "signIn": "Inicia sesion",
+      "success": "Cuenta Creada",
+      "successDetail": "Bienvenido! Tu cuenta se ha creado exitosamente.",
+      "failed": "Error de Registro",
+      "failedDetail": "Error en el registro. Por favor intenta de nuevo."
+    },
+    "forgotPassword": "Olvidaste tu contrasena?",
+    "resetPassword": "Restablecer Contrasena"
+  },
+  "dashboard": {
+    "title": "Panel",
+    "welcome": "Bienvenido, {name}!",
+    "welcomeDefault": "Bienvenido!",
+    "greeting": {
+      "morning": "Buenos dias",
+      "afternoon": "Buenas tardes",
+      "evening": "Buenas noches"
+    },
+    "cards": {
+      "profile": {
+        "title": "Tu Perfil",
+        "description": "Administra tu informacion personal y configuracion de cuenta.",
+        "link": "Ver Perfil"
+      },
+      "users": {
+        "title": "Gestion de Usuarios",
+        "description": "Ver y administrar todos los usuarios del sistema.",
+        "link": "Administrar Usuarios"
+      },
+      "accountInfo": {
+        "title": "Informacion de Cuenta",
+        "email": "Correo",
+        "roles": "Roles",
+        "status": "Estado"
+      }
+    }
+  },
+  "profile": {
+    "title": "Configuracion del Perfil",
+    "personalInfo": "Informacion Personal",
+    "changePassword": "Cambiar Contrasena",
+    "preferences": "Preferencias",
+    "email": "Correo Electronico",
+    "emailHint": "El correo electronico no se puede cambiar",
+    "username": "Nombre de Usuario",
+    "usernameHint": "El nombre de usuario no se puede cambiar",
+    "firstName": "Nombre",
+    "firstNamePlaceholder": "Ingresa tu nombre",
+    "lastName": "Apellido",
+    "lastNamePlaceholder": "Ingresa tu apellido",
+    "currentPassword": "Contrasena Actual",
+    "currentPasswordPlaceholder": "Ingresa la contrasena actual",
+    "newPassword": "Nueva Contrasena",
+    "newPasswordPlaceholder": "Ingresa la nueva contrasena",
+    "confirmPassword": "Confirmar Nueva Contrasena",
+    "confirmPasswordPlaceholder": "Confirma la nueva contrasena",
+    "saveChanges": "Guardar Cambios",
+    "changePasswordBtn": "Cambiar Contrasena",
+    "updateSuccess": "Perfil Actualizado",
+    "updateSuccessDetail": "Tu perfil se ha actualizado exitosamente.",
+    "updateFailed": "Error de Actualizacion",
+    "passwordSuccess": "Contrasena Cambiada",
+    "passwordSuccessDetail": "Tu contrasena se ha cambiado exitosamente.",
+    "passwordFailed": "Error al Cambiar Contrasena",
+    "language": "Idioma",
+    "languageHint": "Selecciona tu idioma preferido"
+  },
+  "users": {
+    "title": "Gestion de Usuarios",
+    "addUser": "Agregar Usuario",
+    "createUser": "Crear Usuario",
+    "editUser": "Editar Usuario",
+    "deleteUser": "Eliminar Usuario",
+    "deleteConfirm": "Estas seguro de que deseas eliminar a {email}?",
+    "deleteConfirmHeader": "Confirmar Eliminacion",
+    "deleteSuccess": "Usuario Eliminado",
+    "deleteSuccessDetail": "{email} ha sido eliminado.",
+    "deleteFailed": "Error al Eliminar",
+    "cannotDeleteSelf": "No puedes eliminar tu propia cuenta.",
+    "notAllowed": "No Permitido",
+    "restoreUser": "Restaurar Usuario",
+    "restoreSuccess": "Usuario Restaurado",
+    "restoreSuccessDetail": "{email} ha sido restaurado.",
+    "restoreFailed": "Error al Restaurar",
+    "resetPassword": "Restablecer Contrasena",
+    "resetPasswordConfirm": "Estas seguro de que deseas restablecer la contrasena de {email}?",
+    "resetPasswordSuccess": "Contrasena Restablecida Exitosamente",
+    "resetPasswordSuccessDetail": "La contrasena se ha restablecido. Contrasena temporal: {password}",
+    "resetPasswordFailed": "Error al Restablecer",
+    "temporaryPasswordNote": "Por favor comparte esta contrasena de forma segura con el usuario. Debera cambiarla despues de iniciar sesion.",
+    "temporaryPasswordLabel": "La contrasena temporal para este usuario es:",
+    "refresh": "Actualizar",
+    "copied": "Copiado",
+    "copiedToClipboard": "Contrasena copiada al portapapeles",
+    "done": "Listo",
+    "you": "Tu",
+    "createSuccess": "Usuario Creado",
+    "createSuccessDetail": "El usuario {email} ha sido creado.",
+    "createFailed": "Error al Crear",
+    "updateSuccess": "Usuario Actualizado",
+    "updateSuccessDetail": "El usuario se ha actualizado exitosamente.",
+    "updateFailed": "Error al Actualizar",
+    "addUserDialog": {
+      "title": "Agregar Nuevo Usuario",
+      "username": "Nombre de Usuario",
+      "usernamePlaceholder": "Ingresa nombre de usuario",
+      "email": "Correo Electronico",
+      "emailPlaceholder": "Ingresa correo electronico",
+      "password": "Contrasena",
+      "passwordPlaceholder": "Ingresa contrasena (min 8 caracteres)",
+      "firstName": "Nombre",
+      "firstNamePlaceholder": "Nombre",
+      "lastName": "Apellido",
+      "lastNamePlaceholder": "Apellido",
+      "roles": "Roles",
+      "rolesPlaceholder": "Selecciona roles",
+      "status": "Estado",
+      "statusPlaceholder": "Selecciona estado"
+    },
+    "editUserDialog": {
+      "title": "Editar Usuario",
+      "firstName": "Nombre",
+      "firstNamePlaceholder": "Nombre",
+      "lastName": "Apellido",
+      "lastNamePlaceholder": "Apellido",
+      "roles": "Roles",
+      "rolesPlaceholder": "Selecciona roles",
+      "status": "Estado",
+      "statusPlaceholder": "Selecciona estado"
+    },
+    "filters": {
+      "status": "Estado",
+      "allStatuses": "Todos los Estados",
+      "showDeleted": "Mostrar Usuarios Eliminados"
+    },
+    "columns": {
+      "username": "Usuario",
+      "email": "Correo",
+      "name": "Nombre",
+      "status": "Estado",
+      "roles": "Roles",
+      "createdAt": "Creado",
+      "actions": "Acciones"
+    },
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "suspended": "Suspendido",
+      "deleted": "Eliminado"
+    },
+    "roles": {
+      "admin": "Administrador",
+      "user": "Usuario"
+    },
+    "tabs": {
+      "active": "Usuarios Activos",
+      "deleted": "Usuarios Eliminados"
+    },
+    "empty": {
+      "active": "No se encontraron usuarios con los filtros actuales.",
+      "deleted": "No se encontraron usuarios eliminados."
+    },
+    "tooltips": {
+      "edit": "Editar usuario",
+      "resetPassword": "Restablecer contrasena",
+      "delete": "Eliminar usuario",
+      "restore": "Restaurar usuario"
+    }
+  },
+  "roles": {
+    "title": "Gestion de Roles",
+    "addRole": "Agregar Rol",
+    "editRole": "Editar Rol",
+    "managePermissions": "Gestionar Permisos",
+    "deleteRole": "Eliminar Rol",
+    "deleteConfirm": "Estas seguro de que deseas eliminar el rol \"{name}\"?",
+    "deleteConfirmHeader": "Confirmar Eliminacion",
+    "systemRoleWarning": "Los roles del sistema no se pueden modificar ni eliminar.",
+    "refresh": "Actualizar",
+    "columns": {
+      "code": "Codigo",
+      "name": "Nombre",
+      "description": "Descripcion",
+      "permissions": "Permisos",
+      "system": "Sistema",
+      "actions": "Acciones"
+    },
+    "addDialog": {
+      "title": "Agregar Nuevo Rol",
+      "code": "Codigo",
+      "codePlaceholder": "ej., GESTOR_CONTENIDO",
+      "codeHint": "Solo letras mayusculas, numeros y guiones bajos",
+      "name": "Nombre",
+      "namePlaceholder": "ej., Gestor de Contenido",
+      "description": "Descripcion",
+      "descriptionPlaceholder": "Describe el proposito del rol",
+      "permissions": "Permisos Iniciales",
+      "permissionsPlaceholder": "Selecciona permisos (opcional)"
+    },
+    "editDialog": {
+      "title": "Editar Rol",
+      "code": "Codigo",
+      "codeHint": "El codigo no se puede cambiar",
+      "name": "Nombre",
+      "namePlaceholder": "Nombre del rol",
+      "description": "Descripcion",
+      "descriptionPlaceholder": "Describe el proposito del rol"
+    },
+    "permissionsDialog": {
+      "title": "Gestionar Permisos para {role}",
+      "selectAll": "Seleccionar Todo",
+      "deselectAll": "Deseleccionar Todo",
+      "noPermissions": "No hay permisos disponibles"
+    },
+    "permissionGroups": {
+      "user": "Gestion de Usuarios",
+      "role": "Gestion de Roles",
+      "audit": "Auditoria"
+    },
+    "badges": {
+      "system": "Sistema",
+      "custom": "Personalizado"
+    },
+    "empty": "No se encontraron roles.",
+    "messages": {
+      "createSuccess": "Rol Creado",
+      "createSuccessDetail": "El rol \"{name}\" ha sido creado.",
+      "createFailed": "Error al Crear",
+      "updateSuccess": "Rol Actualizado",
+      "updateSuccessDetail": "El rol se ha actualizado exitosamente.",
+      "updateFailed": "Error al Actualizar",
+      "deleteSuccess": "Rol Eliminado",
+      "deleteSuccessDetail": "El rol \"{name}\" ha sido eliminado.",
+      "deleteFailed": "Error al Eliminar",
+      "permissionsSuccess": "Permisos Actualizados",
+      "permissionsSuccessDetail": "Los permisos para \"{role}\" han sido actualizados.",
+      "permissionsFailed": "Error al Actualizar"
+    },
+    "tooltips": {
+      "edit": "Editar rol",
+      "permissions": "Gestionar permisos",
+      "delete": "Eliminar rol",
+      "systemRole": "Los roles del sistema no se pueden modificar"
+    },
+    "validation": {
+      "codeRequired": "El codigo del rol es requerido",
+      "codeFormat": "El codigo debe comenzar con una letra y contener solo letras mayusculas, numeros y guiones bajos",
+      "codeMin": "El codigo debe tener al menos 2 caracteres",
+      "codeMax": "El codigo debe tener como maximo 50 caracteres",
+      "nameRequired": "El nombre del rol es requerido",
+      "nameMax": "El nombre debe tener como maximo 255 caracteres"
+    }
+  },
+  "auditLogs": {
+    "title": "Registros de Auditoria",
+    "refresh": "Actualizar",
+    "filters": {
+      "action": "Accion",
+      "entityType": "Tipo de Entidad",
+      "userId": "ID de Usuario",
+      "allActions": "Todas las Acciones",
+      "allEntities": "Todas las Entidades",
+      "anyUser": "Cualquier Usuario",
+      "apply": "Aplicar",
+      "clear": "Limpiar"
+    },
+    "columns": {
+      "id": "ID",
+      "timestamp": "Fecha y Hora",
+      "user": "Usuario",
+      "action": "Accion",
+      "entity": "Entidad",
+      "entityType": "Tipo de Entidad",
+      "entityId": "ID de Entidad",
+      "ipAddress": "Direccion IP",
+      "changes": "Cambios",
+      "details": "Detalles"
+    },
+    "actions": {
+      "CREATE": "Crear",
+      "UPDATE": "Actualizar",
+      "DELETE": "Eliminar",
+      "LOGIN": "Iniciar Sesion",
+      "LOGOUT": "Cerrar Sesion"
+    },
+    "expansion": {
+      "oldValues": "Valores Anteriores",
+      "newValues": "Valores Nuevos",
+      "noData": "No hay datos adicionales disponibles."
+    },
+    "empty": "No se encontraron registros de auditoria.",
+    "system": "Sistema",
+    "moreFields": "+{count} mas",
+    "loadFailed": "Error al cargar registros de auditoria"
+  },
+  "validation": {
+    "required": "{field} es requerido",
+    "email": "Formato de correo electronico invalido",
+    "minLength": "{field} debe tener al menos {min} caracteres",
+    "maxLength": "{field} debe tener como maximo {max} caracteres",
+    "passwordMatch": "Las contrasenas no coinciden",
+    "username": {
+      "required": "El nombre de usuario es requerido",
+      "min": "El nombre de usuario debe tener al menos 3 caracteres",
+      "max": "El nombre de usuario debe tener como maximo 50 caracteres",
+      "available": "Nombre de usuario disponible",
+      "taken": "El nombre de usuario ya esta en uso",
+      "checking": "Verificando disponibilidad..."
+    },
+    "emailField": {
+      "required": "El correo electronico es requerido",
+      "invalid": "Formato de correo electronico invalido"
+    },
+    "password": {
+      "required": "La contrasena es requerida",
+      "min": "La contrasena debe tener al menos 8 caracteres",
+      "current": "La contrasena actual es requerida",
+      "new": "La nueva contrasena es requerida",
+      "confirm": "Por favor confirma tu contrasena"
+    },
+    "name": {
+      "max": "El nombre debe tener como maximo 100 caracteres"
+    }
+  },
+  "errors": {
+    "generic": "Ha ocurrido un error. Por favor intenta de nuevo.",
+    "network": "Error de red. Por favor verifica tu conexion.",
+    "unauthorized": "No estas autorizado para realizar esta accion.",
+    "notFound": "El recurso solicitado no fue encontrado.",
+    "serverError": "Error del servidor. Por favor intenta mas tarde.",
+    "sessionExpired": "Tu sesion ha expirado. Por favor inicia sesion de nuevo."
+  },
+  "locale": {
+    "en": "Ingles",
+    "es": "Espanol"
+  }
+}
