@@ -1,11 +1,14 @@
 package com.insidehealthgt.hms.exception
 
+import com.insidehealthgt.hms.dto.response.DuplicatePatientData
+import com.insidehealthgt.hms.dto.response.DuplicatePatientResponse
 import com.insidehealthgt.hms.dto.response.ErrorDetails
 import com.insidehealthgt.hms.dto.response.ErrorResponse
 import com.insidehealthgt.hms.service.MessageService
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.AuthenticationException
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
 @RestControllerAdvice
+@Suppress("TooManyFunctions")
 class GlobalExceptionHandler(private val messageService: MessageService) {
 
     private val logger = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
@@ -123,6 +127,20 @@ class GlobalExceptionHandler(private val messageService: MessageService) {
             )
     }
 
+    @ExceptionHandler(DuplicatePatientException::class)
+    fun handleDuplicatePatient(ex: DuplicatePatientException): ResponseEntity<DuplicatePatientResponse> {
+        logger.debug("Duplicate patient detected: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(
+                DuplicatePatientResponse(
+                    success = false,
+                    message = ex.message ?: "Potential duplicate patient found",
+                    data = DuplicatePatientData(potentialDuplicates = ex.potentialDuplicates),
+                ),
+            )
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidationErrors(ex: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
         val details = ex.bindingResult.fieldErrors
@@ -138,6 +156,21 @@ class GlobalExceptionHandler(private val messageService: MessageService) {
                         code = "VALIDATION_ERROR",
                         message = messageService.errorValidation(),
                         details = details,
+                    ),
+                ),
+            )
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleHttpMessageNotReadable(ex: HttpMessageNotReadableException): ResponseEntity<ErrorResponse> {
+        logger.debug("Invalid request body: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(
+                ErrorResponse(
+                    error = ErrorDetails(
+                        code = "INVALID_REQUEST_BODY",
+                        message = messageService.errorBadRequest(),
                     ),
                 ),
             )

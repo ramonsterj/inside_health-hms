@@ -1,6 +1,6 @@
 # Re-index Project
 
-Re-index the kotlin-spring-template project using LEANN for semantic code search.
+Re-index the inside-health-hms project using LEANN for semantic code search.
 
 Run the following command:
 

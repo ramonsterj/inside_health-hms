@@ -26,3 +26,15 @@ class InvalidCredentialsException(message: String = "Invalid email or password")
 
 @ResponseStatus(HttpStatus.FORBIDDEN)
 class AccountDisabledException(message: String = "Account is not active") : RuntimeException(message)
+
+@ResponseStatus(HttpStatus.CONFLICT)
+class DuplicatePatientException(message: String, val potentialDuplicates: List<DuplicatePatientInfo>) :
+    RuntimeException(message)
+
+data class DuplicatePatientInfo(
+    val id: Long,
+    val firstName: String,
+    val lastName: String,
+    val age: Int,
+    val idDocumentNumber: String?,
+)

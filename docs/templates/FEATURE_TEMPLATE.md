@@ -192,6 +192,14 @@ export const createResourceSchema = z.object({
 - [ ] Error handling implemented
 - [ ] ESLint/oxlint passes
 - [ ] i18n keys added for all user-facing text
+- [ ] Unit tests written and passing (Vitest)
+
+### E2E Tests (Playwright)
+- [ ] Happy path flows tested (create, view, edit, delete as applicable)
+- [ ] Permission/authorization flows tested (allowed and denied scenarios)
+- [ ] Form validation errors displayed correctly
+- [ ] Error handling flows tested (404, 500, network errors)
+- [ ] i18n verified (if applicable)
 
 ### General
 - [ ] API contract documented
@@ -207,12 +215,12 @@ export const createResourceSchema = z.object({
 
 - [ ] **[CLAUDE.md](../../CLAUDE.md)**
   - Add new feature to "Implemented Features" if applicable
-- [ ] **[ARCHITECTURE.md](../../ARCHITECTURE.md)** (if exists)
+- [ ] **[ARCHITECTURE.md](../architecture/ARCHITECTURE.md)** (if exists)
   - Update if architectural patterns changed
 
 ### Review for Consistency
 
-- [ ] **[README.md](../../README.md)**
+- [ ] **[README.md](../../web/README.md)**
   - Check if setup instructions need updates
 
 ### Code Documentation
@@ -226,6 +234,6 @@ export const createResourceSchema = z.object({
 
 ## Related Docs/Commits/Issues
 
-- Related feature: [Link to related feature doc]
-- GitHub Issue: [#XXX](link)
-- Design discussion: [Link to Claude session or other discussion]
+- Related feature: `[Link to related feature doc]`
+- GitHub Issue: `#XXX - add link here`
+- Design discussion: `[Link to Claude session or other discussion]`

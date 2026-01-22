@@ -56,6 +56,31 @@ const router = createRouter({
           name: 'audit-logs',
           component: () => import('@/views/AuditLogsView.vue'),
           meta: { requiresAdmin: true }
+        },
+        // Patient routes
+        {
+          path: 'patients',
+          name: 'patients',
+          component: () => import('@/views/patients/PatientsView.vue'),
+          meta: { requiresPermission: 'patient:read' }
+        },
+        {
+          path: 'patients/new',
+          name: 'patient-create',
+          component: () => import('@/views/patients/PatientFormView.vue'),
+          meta: { requiresPermission: 'patient:create' }
+        },
+        {
+          path: 'patients/:id',
+          name: 'patient-detail',
+          component: () => import('@/views/patients/PatientDetailView.vue'),
+          meta: { requiresPermission: 'patient:read' }
+        },
+        {
+          path: 'patients/:id/edit',
+          name: 'patient-edit',
+          component: () => import('@/views/patients/PatientFormView.vue'),
+          meta: { requiresPermission: 'patient:update' }
         }
       ]
     },
@@ -97,6 +122,11 @@ router.beforeEach(async (to, _from, next) => {
     return next({ name: 'dashboard' })
   }
 
+  // Permission-based routes - redirect to dashboard if user lacks permission
+  if (to.meta.requiresPermission && !authStore.hasPermission(to.meta.requiresPermission)) {
+    return next({ name: 'dashboard' })
+  }
+
   next()
 })
 
@@ -108,5 +138,6 @@ declare module 'vue-router' {
     guest?: boolean
     requiresAuth?: boolean
     requiresAdmin?: boolean
+    requiresPermission?: string
   }
 }

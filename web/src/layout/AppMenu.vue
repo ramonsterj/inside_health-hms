@@ -23,20 +23,20 @@ const authStore = useAuthStore()
 const model = computed<MenuItem[]>(() => {
   const items: MenuItem[] = [
     {
-      label: 'Home',
+      label: 'nav.home',
       items: [
         {
-          label: 'Dashboard',
+          label: 'nav.dashboard',
           icon: 'pi pi-fw pi-home',
           to: '/dashboard'
         }
       ]
     },
     {
-      label: 'Account',
+      label: 'nav.account',
       items: [
         {
-          label: 'Profile',
+          label: 'nav.profile',
           icon: 'pi pi-fw pi-user',
           to: '/profile'
         }
@@ -44,23 +44,37 @@ const model = computed<MenuItem[]>(() => {
     }
   ]
 
+  // Clinical section - visible to users with patient permissions
+  if (authStore.hasPermission('patient:read')) {
+    items.push({
+      label: 'nav.clinical',
+      items: [
+        {
+          label: 'nav.patients',
+          icon: 'pi pi-fw pi-id-card',
+          to: '/patients'
+        }
+      ]
+    })
+  }
+
   // Admin section - only visible to admins
   if (authStore.isAdmin) {
     items.push({
-      label: 'Administration',
+      label: 'nav.administration',
       items: [
         {
-          label: 'Users',
+          label: 'nav.users',
           icon: 'pi pi-fw pi-users',
           to: '/users'
         },
         {
-          label: 'Roles',
+          label: 'nav.roles',
           icon: 'pi pi-fw pi-shield',
           to: '/roles'
         },
         {
-          label: 'Audit Logs',
+          label: 'nav.auditLogs',
           icon: 'pi pi-fw pi-history',
           to: '/audit-logs'
         }
@@ -75,7 +89,7 @@ const model = computed<MenuItem[]>(() => {
 <template>
   <ul class="layout-menu">
     <template v-for="(item, i) in model" :key="item.label || i">
-      <AppMenuItem v-if="!item.separator" :item="item" :index="i" />
+      <AppMenuItem v-if="!item.separator" :item="item" :root="true" />
       <li v-if="item.separator" class="menu-separator"></li>
     </template>
   </ul>

@@ -10,7 +10,7 @@ import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import MultiSelect from 'primevue/multiselect'
 import ToggleSwitch from 'primevue/toggleswitch'
 import ProgressSpinner from 'primevue/progressspinner'
@@ -337,7 +337,7 @@ async function saveEditedUser() {
         <div class="filter-bar">
           <div class="filter-item">
             <label for="statusFilter">{{ t('users.filters.status') }}</label>
-            <Dropdown
+            <Select
               id="statusFilter"
               v-model="statusFilter"
               :options="filterStatusOptions"
@@ -585,7 +585,7 @@ async function saveEditedUser() {
         </div>
         <div class="form-field">
           <label for="status">{{ t('users.addUserDialog.status') }}</label>
-          <Dropdown
+          <Select
             id="status"
             v-model="newUser.status"
             :options="statusOptions"
@@ -689,7 +689,7 @@ async function saveEditedUser() {
         </div>
         <div class="form-field">
           <label for="editStatus">{{ t('users.editUserDialog.status') }}</label>
-          <Dropdown
+          <Select
             id="editStatus"
             v-model="editUser.status"
             :options="statusOptions"
