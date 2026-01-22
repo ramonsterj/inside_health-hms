@@ -106,16 +106,22 @@ Example: `/qa_check docs/features/user-profile.md`
     - Integration tests cover API endpoints
     - Unit tests cover service logic
 
-14. **Frontend tests** (if applicable):
-    - Run `cd web && npm run test` (if configured)
+14. **Frontend tests**:
+    - Run `cd web && npm run test:run` for unit tests
     - Component tests exist for new components
     - Store tests exist for new stores
 
-15. **Fix all failures**: If tests fail, fix them and re-run until all pass
+15. **Frontend E2E tests** (MANDATORY for frontend features):
+    - Identify E2E test files related to the feature (check `web/e2e/` directory)
+    - Run `cd web && npm run test:e2e` to execute all E2E tests
+    - If feature-specific E2E tests exist, ensure they pass
+    - Verify E2E tests cover the main user flows from the acceptance criteria
+
+16. **Fix all failures**: If tests fail, fix them and re-run until all pass
 
 ### Phase 7: Final Validation
 
-16. Run all checks one final time:
+17. Run all checks one final time:
     ```bash
     # Backend
     cd api && ./gradlew clean build -x test  # Compile check
@@ -126,16 +132,18 @@ Example: `/qa_check docs/features/user-profile.md`
     cd web && npm run type-check             # TypeScript
     cd web && npm run lint                   # ESLint
     cd web && npm run build                  # Build check
+    cd web && npm run test:run               # Unit tests
+    cd web && npm run test:e2e               # E2E tests
     ```
 
 ### Phase 8: Feature Acceptance
 
-17. **Acceptance criteria validation**:
+18. **Acceptance criteria validation**:
     - Review each acceptance criterion from the feature doc
     - Verify each criterion is met by the implementation
     - Check all items in the feature doc's QA Checklist
 
-18. **Project convention compliance**:
+19. **Project convention compliance**:
     - [ ] Entities extend `BaseEntity`
     - [ ] Soft deletes use `@SQLRestriction`
     - [ ] Controllers use DTOs (request/response)
@@ -147,7 +155,7 @@ Example: `/qa_check docs/features/user-profile.md`
 
 ### Phase 9: Summary
 
-19. Provide a comprehensive summary:
+20. Provide a comprehensive summary:
     - **Files reviewed**: List of all modified files checked
     - **Issues found**: Categorized by severity (critical/warning/info)
     - **Issues fixed**: What was corrected during the review

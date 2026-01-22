@@ -380,7 +380,7 @@ import com.{yourcompany}.{yourproject}.{YourProject}Application
 
 ### Changing the UI Theme
 
-PrimeVue themes are configured in `web/src/main.ts`. See [PrimeVue Theming](https://primevue.org/theming/) for options.
+PrimeVue themes are configured in `web/src/main.ts`. See [PrimeVue Theming](https://primevue.org/theming/styled/) for options.
 
 ### Adding New Entities
 

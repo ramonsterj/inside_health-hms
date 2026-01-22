@@ -19,6 +19,13 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!user.value && tokenStorage.hasTokens())
   const isAdmin = computed(() => user.value?.roles?.includes('ADMIN') ?? false)
 
+  function hasPermission(permission: string): boolean {
+    if (!user.value) return false
+    // Admins have all permissions
+    if (user.value.roles?.includes('ADMIN')) return true
+    return user.value.permissions?.includes(permission) ?? false
+  }
+
   async function login(credentials: LoginRequest): Promise<void> {
     loading.value = true
     try {
@@ -131,6 +138,7 @@ export const useAuthStore = defineStore('auth', () => {
     loading,
     isAuthenticated,
     isAdmin,
+    hasPermission,
     login,
     register,
     refreshToken,

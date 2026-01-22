@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useLayout } from '@/layout/composables/layout'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { MenuItem } from './AppMenu.vue'
 
 // Enable recursive component self-reference
@@ -8,6 +9,7 @@ defineOptions({
   name: 'AppMenuItem'
 })
 
+const { t } = useI18n()
 const { layoutState, isDesktop } = useLayout()
 
 const props = defineProps<{
@@ -58,9 +60,9 @@ const onMouseEnter = () => {
 </script>
 
 <template>
-  <li :class="{ 'layout-root-menuitem': root !== false, 'active-menuitem': isActive }">
-    <div v-if="root !== false && item.visible !== false" class="layout-menuitem-root-text">
-      {{ item.label }}
+  <li :class="{ 'layout-root-menuitem': root, 'active-menuitem': isActive }">
+    <div v-if="root && item.visible !== false" class="layout-menuitem-root-text">
+      {{ t(item.label) }}
     </div>
     <a
       v-if="(!item.to || item.items) && item.visible !== false"
@@ -72,7 +74,7 @@ const onMouseEnter = () => {
       @mouseenter="onMouseEnter"
     >
       <i :class="item.icon" class="layout-menuitem-icon" />
-      <span class="layout-menuitem-text">{{ item.label }}</span>
+      <span class="layout-menuitem-text">{{ t(item.label) }}</span>
       <i class="pi pi-fw pi-angle-down layout-submenu-toggler" v-if="item.items" />
     </a>
     <router-link
@@ -85,11 +87,11 @@ const onMouseEnter = () => {
       @mouseenter="onMouseEnter"
     >
       <i :class="item.icon" class="layout-menuitem-icon" />
-      <span class="layout-menuitem-text">{{ item.label }}</span>
+      <span class="layout-menuitem-text">{{ t(item.label) }}</span>
       <i class="pi pi-fw pi-angle-down layout-submenu-toggler" v-if="item.items" />
     </router-link>
     <Transition v-if="item.items && item.visible !== false" name="layout-submenu">
-      <ul v-show="root !== false ? true : isActive" class="layout-submenu">
+      <ul v-show="root || isActive" class="layout-submenu">
         <AppMenuItem
           v-for="child in item.items"
           :key="child.label + '_' + (child.to || child.path)"
