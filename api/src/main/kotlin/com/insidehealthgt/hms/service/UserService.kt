@@ -4,9 +4,11 @@ import com.insidehealthgt.hms.config.I18nConfig
 import com.insidehealthgt.hms.dto.request.AdminUpdateUserRequest
 import com.insidehealthgt.hms.dto.request.ChangePasswordRequest
 import com.insidehealthgt.hms.dto.request.CreateUserRequest
+import com.insidehealthgt.hms.dto.request.PhoneNumberRequest
 import com.insidehealthgt.hms.dto.request.UpdateUserRequest
 import com.insidehealthgt.hms.dto.response.UserResponse
 import com.insidehealthgt.hms.entity.User
+import com.insidehealthgt.hms.entity.UserPhoneNumber
 import com.insidehealthgt.hms.entity.UserStatus
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ConflictException
@@ -38,8 +40,14 @@ class UserService(
         .orElseThrow { ResourceNotFoundException("User not found with id: $id") }
 
     @Transactional(readOnly = true)
-    fun findByIdWithRoles(id: Long): User = userRepository.findByIdWithRolesAndPermissions(id)
-        ?: throw ResourceNotFoundException("User not found with id: $id")
+    fun findByIdWithRoles(id: Long): User {
+        val user = userRepository.findByIdWithRolesAndPermissions(id)
+            ?: throw ResourceNotFoundException("User not found with id: $id")
+        // Force initialization of lazy-loaded phoneNumbers collection within the transaction.
+        // Accessing .size triggers Hibernate to load the collection before the session closes.
+        user.phoneNumbers.size
+        return user
+    }
 
     @Transactional(readOnly = true)
     fun findByEmail(email: String): User = userRepository.findByEmail(email)
@@ -56,11 +64,21 @@ class UserService(
     }
 
     @Transactional(readOnly = true)
-    fun findAll(pageable: Pageable, status: UserStatus? = null): Page<UserResponse> {
-        val users = if (status != null) {
-            userRepository.findByStatus(status, pageable)
-        } else {
+    fun findAll(
+        pageable: Pageable,
+        status: UserStatus? = null,
+        search: String? = null,
+        roleCode: String? = null,
+    ): Page<UserResponse> {
+        val users = if (status == null && search == null && roleCode == null) {
             userRepository.findAll(pageable)
+        } else {
+            userRepository.findWithFilters(
+                status?.name,
+                roleCode,
+                search,
+                pageable,
+            )
         }
         return users.map { UserResponse.from(it) }
     }
@@ -87,6 +105,7 @@ class UserService(
         }
 
         user.passwordHash = passwordEncoder.encode(request.newPassword)!!
+        user.mustChangePassword = false
         userRepository.save(user)
     }
 
@@ -130,8 +149,10 @@ class UserService(
             passwordHash = passwordEncoder.encode(request.password)!!,
             firstName = request.firstName,
             lastName = request.lastName,
+            salutation = request.salutation,
             status = request.status ?: UserStatus.ACTIVE,
             emailVerified = request.emailVerified ?: false,
+            mustChangePassword = true,
         )
 
         // Assign roles
@@ -139,6 +160,9 @@ class UserService(
         val roles = roleRepository.findAllByCodeIn(roleCodes)
         validateRoleCodes(roleCodes, roles.map { it.code })
         user.roles.addAll(roles)
+
+        // Add phone numbers
+        addPhoneNumbers(user, request.phoneNumbers)
 
         val savedUser = userRepository.save(user)
         return UserResponse.from(savedUser)
@@ -150,6 +174,7 @@ class UserService(
 
         request.firstName?.let { user.firstName = it }
         request.lastName?.let { user.lastName = it }
+        request.salutation?.let { user.salutation = it }
         request.status?.let { user.status = it }
         request.emailVerified?.let { user.emailVerified = it }
 
@@ -161,6 +186,15 @@ class UserService(
             user.roles.addAll(roles)
         }
 
+        // Update phone numbers if provided (replace all)
+        request.phoneNumbers?.let { phoneNumbers ->
+            if (phoneNumbers.isEmpty()) {
+                throw BadRequestException("At least one phone number is required")
+            }
+            user.phoneNumbers.clear()
+            addPhoneNumbers(user, phoneNumbers)
+        }
+
         val savedUser = userRepository.save(user)
         return UserResponse.from(savedUser)
     }
@@ -170,6 +204,7 @@ class UserService(
         val user = findById(id)
         val password = newPassword ?: generateRandomPassword()
         user.passwordHash = passwordEncoder.encode(password)!!
+        user.mustChangePassword = true
         userRepository.save(user)
         return password
     }
@@ -221,5 +256,23 @@ class UserService(
         val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%"
         val random = SecureRandom()
         return (1..length).map { chars[random.nextInt(chars.length)] }.joinToString("")
+    }
+
+    private fun addPhoneNumbers(user: User, phoneNumbers: List<PhoneNumberRequest>) {
+        // Ensure only one primary phone number
+        var hasPrimary = false
+        phoneNumbers.forEach { request ->
+            val phone = UserPhoneNumber(
+                phoneNumber = request.phoneNumber,
+                phoneType = request.phoneType,
+                isPrimary = if (request.isPrimary && !hasPrimary) {
+                    hasPrimary = true
+                    true
+                } else {
+                    false
+                },
+            )
+            user.addPhoneNumber(phone)
+        }
     }
 }

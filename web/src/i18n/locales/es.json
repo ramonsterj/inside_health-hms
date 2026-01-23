@@ -81,7 +81,13 @@
       "failedDetail": "Error en el registro. Por favor intenta de nuevo."
     },
     "forgotPassword": "Olvidaste tu contrasena?",
-    "resetPassword": "Restablecer Contrasena"
+    "resetPassword": "Restablecer Contrasena",
+    "changePassword": "Cambiar Contrasena",
+    "currentPassword": "Contrasena Actual",
+    "newPassword": "Nueva Contrasena",
+    "confirmNewPassword": "Confirmar Nueva Contrasena",
+    "passwordChangeRequired": "Debe cambiar su contrasena antes de continuar",
+    "passwordChanged": "Contrasena cambiada exitosamente"
   },
   "dashboard": {
     "title": "Panel",
@@ -207,7 +213,9 @@
     "filters": {
       "status": "Estado",
       "allStatuses": "Todos los Estados",
-      "showDeleted": "Mostrar Usuarios Eliminados"
+      "showDeleted": "Mostrar Usuarios Eliminados",
+      "search": "Buscar",
+      "searchPlaceholder": "Buscar por nombre, correo o usuario..."
     },
     "columns": {
       "username": "Usuario",
@@ -241,6 +249,43 @@
       "resetPassword": "Restablecer contrasena",
       "delete": "Eliminar usuario",
       "restore": "Restaurar usuario"
+    }
+  },
+  "user": {
+    "salutation": "Saludo",
+    "salutations": {
+      "SR": "Sr.",
+      "SRA": "Sra.",
+      "SRTA": "Srta.",
+      "DR": "Dr.",
+      "DRA": "Dra.",
+      "MR": "Mr.",
+      "MRS": "Mrs.",
+      "MISS": "Miss"
+    },
+    "phoneNumbers": "Telefonos",
+    "phoneNumber": "Numero de Telefono",
+    "phoneType": "Tipo",
+    "phoneTypes": {
+      "MOBILE": "Movil",
+      "PRACTICE": "Consultorio",
+      "HOME": "Casa",
+      "WORK": "Trabajo",
+      "OTHER": "Otro"
+    },
+    "addPhoneNumber": "Agregar Telefono",
+    "removePhoneNumber": "Eliminar",
+    "primaryPhone": "Principal",
+    "noPhoneNumbers": "No se han agregado telefonos",
+    "confirmPassword": "Confirmar Contrasena",
+    "filterByRole": "Filtrar por Rol",
+    "allRoles": "Todos los Roles",
+    "mustChangePassword": "Debe cambiar contrasena en proximo inicio",
+    "password": {
+      "mismatch": "Las contrasenas no coinciden",
+      "minLength": "La contrasena debe tener al menos 8 caracteres",
+      "currentRequired": "La contrasena actual es requerida",
+      "mustBeDifferent": "La nueva contrasena debe ser diferente a la actual"
     }
   },
   "roles": {
@@ -464,6 +509,13 @@
     },
     "name": {
       "max": "El nombre debe tener como maximo 100 caracteres"
+    },
+    "phone": {
+      "required": "Se requiere al menos un numero de telefono",
+      "number": {
+        "required": "El numero de telefono es requerido",
+        "max": "El numero de telefono debe tener como maximo 20 caracteres"
+      }
     }
   },
   "errors": {

@@ -1,8 +1,11 @@
 package com.insidehealthgt.hms.dto.request
 
+import com.insidehealthgt.hms.entity.Salutation
 import com.insidehealthgt.hms.entity.UserStatus
+import jakarta.validation.Valid
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Size
 
 data class CreateUserRequest(
@@ -24,9 +27,15 @@ data class CreateUserRequest(
     @field:Size(max = 100, message = "{validation.lastName.max}")
     val lastName: String? = null,
 
+    val salutation: Salutation? = null,
+
     val roleCodes: List<String> = emptyList(),
 
     val status: UserStatus? = null,
 
     val emailVerified: Boolean? = null,
+
+    @field:Valid
+    @field:NotEmpty(message = "{validation.phone.required}")
+    val phoneNumbers: List<PhoneNumberRequest>,
 )

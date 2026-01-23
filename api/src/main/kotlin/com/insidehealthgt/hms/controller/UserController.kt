@@ -72,8 +72,10 @@ class UserController(private val userService: UserService, private val messageSe
     fun listUsers(
         @PageableDefault(size = 20) pageable: Pageable,
         @RequestParam(required = false) status: UserStatus?,
+        @RequestParam(required = false) search: String?,
+        @RequestParam(required = false) roleCode: String?,
     ): ResponseEntity<ApiResponse<Page<UserResponse>>> {
-        val users = userService.findAll(pageable, status)
+        val users = userService.findAll(pageable, status, search, roleCode)
         return ResponseEntity.ok(ApiResponse.success(users))
     }
 

@@ -81,7 +81,13 @@
       "failedDetail": "Registration failed. Please try again."
     },
     "forgotPassword": "Forgot your password?",
-    "resetPassword": "Reset Password"
+    "resetPassword": "Reset Password",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "passwordChangeRequired": "You must change your password before continuing",
+    "passwordChanged": "Password changed successfully"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -207,7 +213,9 @@
     "filters": {
       "status": "Status",
       "allStatuses": "All Statuses",
-      "showDeleted": "Show Deleted Users"
+      "showDeleted": "Show Deleted Users",
+      "search": "Search",
+      "searchPlaceholder": "Search by name, email, or username..."
     },
     "columns": {
       "username": "Username",
@@ -241,6 +249,40 @@
       "resetPassword": "Reset password",
       "delete": "Delete user",
       "restore": "Restore user"
+    }
+  },
+  "user": {
+    "salutation": "Salutation",
+    "salutations": {
+      "DR": "Dr.",
+      "DRA": "Dr. (F)",
+      "MR": "Mr.",
+      "MRS": "Mrs.",
+      "MISS": "Miss"
+    },
+    "phoneNumbers": "Phone Numbers",
+    "phoneNumber": "Phone Number",
+    "phoneType": "Type",
+    "phoneTypes": {
+      "MOBILE": "Mobile",
+      "PRACTICE": "Practice",
+      "HOME": "Home",
+      "WORK": "Work",
+      "OTHER": "Other"
+    },
+    "addPhoneNumber": "Add Phone",
+    "removePhoneNumber": "Remove",
+    "primaryPhone": "Primary",
+    "noPhoneNumbers": "No phone numbers added",
+    "confirmPassword": "Confirm Password",
+    "filterByRole": "Filter by Role",
+    "allRoles": "All Roles",
+    "mustChangePassword": "Must change password on next login",
+    "password": {
+      "mismatch": "Passwords do not match",
+      "minLength": "Password must be at least 8 characters",
+      "currentRequired": "Current password is required",
+      "mustBeDifferent": "New password must be different from current password"
     }
   },
   "roles": {
@@ -464,6 +506,13 @@
     },
     "name": {
       "max": "Name must be at most 100 characters"
+    },
+    "phone": {
+      "required": "At least one phone number is required",
+      "number": {
+        "required": "Phone number is required",
+        "max": "Phone number must be at most 20 characters"
+      }
     }
   },
   "errors": {

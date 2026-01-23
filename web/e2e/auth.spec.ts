@@ -29,8 +29,7 @@ test.describe('Authentication', () => {
     // Check submit button
     await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible()
 
-    // Check register link
-    await expect(page.getByRole('link', { name: 'Create one' })).toBeVisible()
+    // Note: Public registration has been removed (FR7), so no register link exists
   })
 
   test('shows validation errors for empty form submission', async ({ page }) => {
@@ -43,15 +42,7 @@ test.describe('Authentication', () => {
     await expect(page.getByText(/required/i).first()).toBeVisible()
   })
 
-  test('navigates to register page', async ({ page }) => {
-    await page.goto('/login')
-
-    // Click the register link
-    await page.getByRole('link', { name: 'Create one' }).click()
-
-    // Should navigate to register
-    await expect(page).toHaveURL(/\/register/)
-  })
+  // Note: Public registration has been removed (FR7), so register page test is no longer applicable
 
   test('preserves redirect query param', async ({ page }) => {
     // Try to access a protected page

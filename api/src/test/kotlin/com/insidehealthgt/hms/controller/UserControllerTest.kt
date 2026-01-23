@@ -2,7 +2,6 @@ package com.insidehealthgt.hms.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.insidehealthgt.hms.TestcontainersConfiguration
-import com.insidehealthgt.hms.dto.request.RegisterRequest
 import com.insidehealthgt.hms.dto.request.UpdateUserRequest
 import com.insidehealthgt.hms.dto.response.ApiResponse
 import com.insidehealthgt.hms.dto.response.AuthResponse
@@ -54,43 +53,33 @@ class UserControllerTest {
     fun setUp() {
         userRepository.deleteAll()
 
-        // Register regular user
-        val userResponse = registerAndGetToken("user@example.com", "password123")
-        userToken = userResponse.accessToken
+        // Create regular user (with permissions loaded)
+        val userRole = roleRepository.findByCodeWithPermissions("USER")!!
+        val regularUser = User(
+            username = "user",
+            email = "user@example.com",
+            passwordHash = passwordEncoder.encode("password123")!!,
+            firstName = "Regular",
+            lastName = "User",
+            mustChangePassword = false,
+        )
+        regularUser.roles.add(userRole)
+        userRepository.save(regularUser)
+        userToken = loginAndGetToken("user@example.com", "password123").accessToken
 
-        // Create admin user directly
-        val adminRole = roleRepository.findByCode("ADMIN")!!
+        // Create admin user (with permissions loaded)
+        val adminRole = roleRepository.findByCodeWithPermissions("ADMIN")!!
         val adminUser = User(
             username = "admin",
             email = "admin@example.com",
             passwordHash = passwordEncoder.encode("admin123")!!,
             firstName = "Admin",
             lastName = "User",
+            mustChangePassword = false,
         )
         adminUser.roles.add(adminRole)
         userRepository.save(adminUser)
-        val adminResponse = loginAndGetToken("admin@example.com", "admin123")
-        adminToken = adminResponse.accessToken
-    }
-
-    private fun registerAndGetToken(email: String, password: String): AuthResponse {
-        val username = email.substringBefore("@")
-        val request = RegisterRequest(username = username, email = email, password = password)
-        val result = mockMvc.perform(
-            post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        val responseType = objectMapper.typeFactory.constructParametricType(
-            ApiResponse::class.java,
-            AuthResponse::class.java,
-        )
-        val response: ApiResponse<AuthResponse> = objectMapper.readValue(
-            result.response.contentAsString,
-            responseType,
-        )
-        return response.data!!
+        adminToken = loginAndGetToken("admin@example.com", "admin123").accessToken
     }
 
     private fun loginAndGetToken(email: String, password: String): AuthResponse {

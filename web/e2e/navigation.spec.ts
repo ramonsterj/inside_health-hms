@@ -21,13 +21,12 @@ test.describe('Navigation', () => {
     await expect(page).toHaveURL(/\/login/)
   })
 
-  test('guest routes (login/register) are accessible without auth', async ({ page }) => {
+  test('login page is accessible without auth', async ({ page }) => {
     await page.goto('/login')
     await expect(page).toHaveURL(/\/login/)
-
-    await page.goto('/register')
-    await expect(page).toHaveURL(/\/register/)
   })
+
+  // Note: Public registration has been removed (FR7), so /register route no longer exists
 })
 
 test.describe('Navigation with mock auth', () => {

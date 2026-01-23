@@ -4,9 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.insidehealthgt.hms.TestcontainersConfiguration
 import com.insidehealthgt.hms.dto.request.ForgotPasswordRequest
 import com.insidehealthgt.hms.dto.request.LoginRequest
-import com.insidehealthgt.hms.dto.request.RegisterRequest
 import com.insidehealthgt.hms.dto.request.ResetPasswordRequest
+import com.insidehealthgt.hms.entity.User
 import com.insidehealthgt.hms.repository.PasswordResetTokenRepository
+import com.insidehealthgt.hms.repository.RoleRepository
 import com.insidehealthgt.hms.repository.UserRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -15,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -38,12 +40,30 @@ class PasswordResetControllerTest {
     private lateinit var userRepository: UserRepository
 
     @Autowired
+    private lateinit var roleRepository: RoleRepository
+
+    @Autowired
     private lateinit var passwordResetTokenRepository: PasswordResetTokenRepository
+
+    @Autowired
+    private lateinit var passwordEncoder: PasswordEncoder
 
     @BeforeEach
     fun setUp() {
         passwordResetTokenRepository.deleteAll()
         userRepository.deleteAll()
+    }
+
+    private fun createUser(username: String, email: String, password: String): User {
+        val userRole = roleRepository.findByCode("USER")!!
+        val user = User(
+            username = username,
+            email = email,
+            passwordHash = passwordEncoder.encode(password)!!,
+            mustChangePassword = false,
+        )
+        user.roles.add(userRole)
+        return userRepository.save(user)
     }
 
     @Test
@@ -62,7 +82,7 @@ class PasswordResetControllerTest {
 
     @Test
     fun `forgot-password should create token for existing user`() {
-        registerUser("resetuser", "reset@example.com", "password123")
+        createUser("resetuser", "reset@example.com", "password123")
 
         val request = ForgotPasswordRequest(email = "reset@example.com")
 
@@ -108,7 +128,7 @@ class PasswordResetControllerTest {
 
     @Test
     fun `forgot-password should invalidate previous tokens`() {
-        registerUser("resetuser2", "reset2@example.com", "password123")
+        createUser("resetuser2", "reset2@example.com", "password123")
 
         val request = ForgotPasswordRequest(email = "reset2@example.com")
 
@@ -133,7 +153,7 @@ class PasswordResetControllerTest {
 
     @Test
     fun `reset-password should update password with valid token`() {
-        registerUser("resetuser3", "reset3@example.com", "oldpassword")
+        createUser("resetuser3", "reset3@example.com", "oldpassword")
 
         mockMvc.perform(
             post("/api/auth/forgot-password")
@@ -206,7 +226,7 @@ class PasswordResetControllerTest {
 
     @Test
     fun `reset-password should fail with already used token`() {
-        registerUser("resetuser4", "reset4@example.com", "oldpassword")
+        createUser("resetuser4", "reset4@example.com", "oldpassword")
 
         mockMvc.perform(
             post("/api/auth/forgot-password")
@@ -230,18 +250,5 @@ class PasswordResetControllerTest {
         )
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.error.code").value("INVALID_TOKEN"))
-    }
-
-    private fun registerUser(username: String, email: String, password: String) {
-        val registerRequest = RegisterRequest(
-            username = username,
-            email = email,
-            password = password,
-        )
-        mockMvc.perform(
-            post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(registerRequest)),
-        )
     }
 }

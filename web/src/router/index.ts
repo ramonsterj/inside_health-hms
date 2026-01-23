@@ -17,11 +17,12 @@ const router = createRouter({
       component: () => import('@/views/auth/LoginView.vue'),
       meta: { guest: true }
     },
+    // Force password change route (requires auth, but no layout)
     {
-      path: '/register',
-      name: 'register',
-      component: () => import('@/views/auth/RegisterView.vue'),
-      meta: { guest: true }
+      path: '/auth/change-password',
+      name: 'forcePasswordChange',
+      component: () => import('@/views/auth/ForcePasswordChangeView.vue'),
+      meta: { requiresAuth: true, forcePasswordChange: true }
     },
     // Authenticated routes (with AppLayout)
     {
@@ -117,6 +118,11 @@ router.beforeEach(async (to, _from, next) => {
     return next({ name: 'login', query: { redirect: to.fullPath } })
   }
 
+  // Force password change - redirect to change password page if user must change password
+  if (isAuthenticated && authStore.mustChangePassword && !to.meta.forcePasswordChange) {
+    return next({ name: 'forcePasswordChange' })
+  }
+
   // Admin routes - redirect to dashboard if not admin
   if (to.meta.requiresAdmin && !authStore.isAdmin) {
     return next({ name: 'dashboard' })
@@ -139,5 +145,6 @@ declare module 'vue-router' {
     requiresAuth?: boolean
     requiresAdmin?: boolean
     requiresPermission?: string
+    forcePasswordChange?: boolean
   }
 }
