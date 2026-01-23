@@ -281,6 +281,7 @@ class GlobalExceptionHandler {
 - ✅ vue-i18n for internationalization
 - ✅ VeeValidate + Zod for form validation
 - ✅ Axios with auth interceptors
+- ✅ Session expiration handling with modal notification, redirect preservation, and proactive token monitoring
 - ✅ Vitest for unit testing (happy-dom, @vue/test-utils, @pinia/testing)
 - ✅ Playwright for E2E testing
 
@@ -347,4 +348,4 @@ See **ARCHITECTURE.md** for full documentation, **VERSION_UPDATES.md** for versi
 
 ---
 
-**Last Updated**: January 20, 2026
+**Last Updated**: January 23, 2026

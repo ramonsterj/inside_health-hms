@@ -66,12 +66,16 @@ export function useFormValidation<TInput, TOutput extends GenericObject>(
   watch(
     values,
     newValues => {
+      // Safe: keys come from Object.keys() which only returns own enumerable properties,
+      // and both form and newValues are controlled objects created within this composable
+      /* eslint-disable security/detect-object-injection */
       Object.keys(newValues).forEach(key => {
-        if (form[key as keyof TOutput] !== newValues[key as keyof TOutput]) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(form as any)[key] = newValues[key as keyof TOutput]
+        const typedKey = key as keyof TOutput
+        if (form[typedKey] !== newValues[typedKey]) {
+          Reflect.set(form, key, newValues[typedKey])
         }
       })
+      /* eslint-enable security/detect-object-injection */
     },
     { deep: true }
   )

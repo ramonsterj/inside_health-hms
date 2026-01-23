@@ -87,7 +87,12 @@
     "newPassword": "New Password",
     "confirmNewPassword": "Confirm New Password",
     "passwordChangeRequired": "You must change your password before continuing",
-    "passwordChanged": "Password changed successfully"
+    "passwordChanged": "Password changed successfully",
+    "sessionExpired": {
+      "title": "Session Expired",
+      "message": "Your session has expired due to inactivity. Please log in again to continue.",
+      "loginButton": "Log In"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
