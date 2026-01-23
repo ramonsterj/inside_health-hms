@@ -48,12 +48,24 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  async function fetchUsers(page = 0, size = 10, status: UserStatus | null = null): Promise<void> {
+  async function fetchUsers(
+    page = 0,
+    size = 10,
+    status: UserStatus | null = null,
+    search: string | null = null,
+    roleCode: string | null = null
+  ): Promise<void> {
     loading.value = true
     try {
       const params: Record<string, unknown> = { page, size }
       if (status !== null) {
         params.status = status
+      }
+      if (search !== null && search.trim() !== '') {
+        params.search = search.trim()
+      }
+      if (roleCode !== null && roleCode !== '') {
+        params.roleCode = roleCode
       }
       const response = await api.get<ApiResponse<PageResponse<User>>>('/users', { params })
       if (response.data.success && response.data.data) {

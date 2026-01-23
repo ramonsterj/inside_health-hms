@@ -6,11 +6,11 @@ import { useLocaleStore } from '@/stores/locale'
 import type {
   User,
   LoginRequest,
-  RegisterRequest,
   ApiResponse,
   AuthResponse,
   UsernameAvailabilityResponse
 } from '@/types'
+import type { ForceChangePasswordFormData } from '@/validation/user'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
@@ -18,6 +18,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!user.value && tokenStorage.hasTokens())
   const isAdmin = computed(() => user.value?.roles?.includes('ADMIN') ?? false)
+  const mustChangePassword = computed(() => user.value?.mustChangePassword ?? false)
 
   function hasPermission(permission: string): boolean {
     if (!user.value) return false
@@ -45,19 +46,23 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function register(data: RegisterRequest): Promise<void> {
+  async function changePasswordForced(data: ForceChangePasswordFormData): Promise<void> {
     loading.value = true
     try {
-      const response = await api.post<ApiResponse<AuthResponse>>('/auth/register', data)
+      const response = await api.put<ApiResponse<User>>('/users/me/password', {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword
+      })
       if (response.data.success && response.data.data) {
-        const { accessToken, refreshToken, user: userData } = response.data.data
-        tokenStorage.setTokens(accessToken, refreshToken)
-        user.value = userData
-        // Initialize locale from user's stored preference (will be null for new users)
-        const localeStore = useLocaleStore()
-        localeStore.initFromUser(userData.localePreference)
+        // Update user with mustChangePassword = false
+        user.value = response.data.data
+      } else if (response.data.success) {
+        // If no user data returned, just update the flag locally
+        if (user.value) {
+          user.value = { ...user.value, mustChangePassword: false }
+        }
       } else {
-        throw new Error(response.data.message || 'Registration failed')
+        throw new Error(response.data.message || 'Password change failed')
       }
     } finally {
       loading.value = false
@@ -138,9 +143,10 @@ export const useAuthStore = defineStore('auth', () => {
     loading,
     isAuthenticated,
     isAdmin,
+    mustChangePassword,
     hasPermission,
     login,
-    register,
+    changePasswordForced,
     refreshToken,
     logout,
     fetchCurrentUser,

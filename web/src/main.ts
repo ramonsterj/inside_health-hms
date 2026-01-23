@@ -6,6 +6,7 @@ import Nora from '@primeuix/themes/nora'
 import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
 import StyleClass from 'primevue/styleclass'
+import Tooltip from 'primevue/tooltip'
 
 import App from './App.vue'
 import router from './router'
@@ -81,5 +82,6 @@ app.use(ToastService)
 app.use(ConfirmationService)
 
 app.directive('styleclass', StyleClass)
+app.directive('tooltip', Tooltip)
 
 app.mount('#app')

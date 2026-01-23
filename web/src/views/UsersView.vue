@@ -16,15 +16,22 @@ import ToggleSwitch from 'primevue/toggleswitch'
 import ProgressSpinner from 'primevue/progressspinner'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/stores/auth'
+import { useRoleStore } from '@/stores/role'
 import { useUsernameAvailability } from '@/composables/useUsernameAvailability'
-import type { User, CreateUserRequest, AdminUpdateUserRequest } from '@/types'
-import { UserStatus } from '@/types'
+import { usePhoneNumberList } from '@/composables/usePhoneNumberList'
+import PhoneNumberInput from '@/components/users/PhoneNumberInput.vue'
+import type { User, CreateUserRequest, AdminUpdateUserRequest, PhoneNumberRequest } from '@/types'
+import { UserStatus, Salutation, PhoneType } from '@/types'
+
+// Constants
+const SEARCH_DEBOUNCE_MS = 300
 
 const { t } = useI18n()
 const toast = useToast()
 const confirm = useConfirm()
 const userStore = useUserStore()
 const authStore = useAuthStore()
+const roleStore = useRoleStore()
 
 const first = ref(0)
 const rows = ref(10)
@@ -32,6 +39,9 @@ const rows = ref(10)
 // Filter state
 const statusFilter = ref<UserStatus | null>(null)
 const showDeleted = ref(false)
+const searchQuery = ref('')
+const roleFilter = ref<string | null>(null)
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
 const filterStatusOptions = computed(() => [
   { label: t('users.filters.allStatuses'), value: null },
@@ -51,32 +61,69 @@ const displayedTotal = computed(() =>
 
 // Add User Dialog
 const showAddUserDialog = ref(false)
-const newUser = reactive<CreateUserRequest>({
+const confirmPassword = ref('')
+const newUserPhoneNumbers = ref<PhoneNumberRequest[]>([])
+const newUser = reactive<Omit<CreateUserRequest, 'phoneNumbers'>>({
   username: '',
   email: '',
   password: '',
   firstName: '',
   lastName: '',
+  salutation: null,
   roleCodes: ['USER'],
   status: UserStatus.ACTIVE
 })
 const newUserUsername = toRef(newUser, 'username')
 const { state: usernameState, reset: resetUsernameState } = useUsernameAvailability(newUserUsername)
+const {
+  addPhone: addNewUserPhone,
+  removePhone: removeNewUserPhone,
+  updatePhone: updateNewUserPhone
+} = usePhoneNumberList(newUserPhoneNumbers)
 
 // Edit User Dialog
 const showEditUserDialog = ref(false)
 const editingUserId = ref<number | null>(null)
-const editUser = reactive<AdminUpdateUserRequest>({
+const editUserPhoneNumbers = ref<PhoneNumberRequest[]>([])
+const editUserLoading = ref(false)
+const editUser = reactive<Omit<AdminUpdateUserRequest, 'phoneNumbers'>>({
   firstName: '',
   lastName: '',
+  salutation: null,
   roleCodes: [],
   status: UserStatus.ACTIVE,
   emailVerified: false
 })
+const {
+  addPhone: addEditUserPhone,
+  removePhone: removeEditUserPhone,
+  updatePhone: updateEditUserPhone
+} = usePhoneNumberList(editUserPhoneNumbers)
 
-const roleOptions = computed(() => [
-  { label: t('users.roles.admin'), value: 'ADMIN' },
-  { label: t('users.roles.user'), value: 'USER' }
+// Dynamic role options from roleStore
+const roleOptions = computed(() =>
+  roleStore.roles.map(role => ({
+    label: role.name,
+    value: role.code
+  }))
+)
+
+const salutationOptions = computed(() => {
+  // Only show salutations that have translations in the current locale
+  return Object.values(Salutation)
+    .filter(key => t(`user.salutations.${key}`) !== `user.salutations.${key}`)
+    .map(key => ({
+      label: t(`user.salutations.${key}`),
+      value: key
+    }))
+})
+
+const roleFilterOptions = computed(() => [
+  { label: t('user.allRoles'), value: null },
+  ...roleStore.roles.map(role => ({
+    label: role.name,
+    value: role.code
+  }))
 ])
 
 const statusOptions = computed(() => [
@@ -91,6 +138,7 @@ const temporaryPassword = ref('')
 
 onMounted(() => {
   loadUsers()
+  roleStore.fetchRoles()
 })
 
 async function loadUsers() {
@@ -99,7 +147,13 @@ async function loadUsers() {
     if (showDeleted.value) {
       await userStore.fetchDeletedUsers(page, rows.value)
     } else {
-      await userStore.fetchUsers(page, rows.value, statusFilter.value)
+      await userStore.fetchUsers(
+        page,
+        rows.value,
+        statusFilter.value,
+        searchQuery.value,
+        roleFilter.value
+      )
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : t('errors.generic')
@@ -110,6 +164,21 @@ async function loadUsers() {
       life: 5000
     })
   }
+}
+
+function onSearchInput() {
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+  }
+  searchTimeout = setTimeout(() => {
+    first.value = 0
+    loadUsers()
+  }, SEARCH_DEBOUNCE_MS)
+}
+
+function onRoleFilterChange() {
+  first.value = 0
+  loadUsers()
 }
 
 function onStatusFilterChange() {
@@ -215,17 +284,94 @@ function openAddUserDialog() {
   newUser.username = ''
   newUser.email = ''
   newUser.password = ''
+  confirmPassword.value = ''
   newUser.firstName = ''
   newUser.lastName = ''
+  newUser.salutation = null
   newUser.roleCodes = ['USER']
   newUser.status = UserStatus.ACTIVE
+  // Initialize with one empty phone entry to make it clear at least one is required
+  newUserPhoneNumbers.value = [
+    {
+      phoneNumber: '',
+      phoneType: PhoneType.MOBILE,
+      isPrimary: true
+    }
+  ]
   resetUsernameState()
   showAddUserDialog.value = true
 }
 
+const passwordsMatch = computed(() => {
+  return newUser.password === confirmPassword.value
+})
+
+const hasValidPhoneNumbers = computed(() => {
+  return newUserPhoneNumbers.value.some(p => p.phoneNumber.trim() !== '')
+})
+
+const hasValidEditPhoneNumbers = computed(() => {
+  return editUserPhoneNumbers.value.some(p => p.phoneNumber.trim() !== '')
+})
+
+// Validation error messages for Create User form
+const usernameError = computed(() => {
+  if (!newUser.username) return null
+  if (newUser.username.length < 3) return t('validation.username.min')
+  if (newUser.username.length > 50) return t('validation.username.max')
+  return null
+})
+
+const emailError = computed(() => {
+  if (!newUser.email) return null
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(newUser.email)) return t('validation.emailField.invalid')
+  return null
+})
+
+const passwordError = computed(() => {
+  if (!newUser.password) return null
+  if (newUser.password.length < 8) return t('validation.password.min')
+  return null
+})
+
+const phoneNumbersError = computed(() => {
+  if (newUserPhoneNumbers.value.length === 0) return t('validation.phone.required')
+  if (!hasValidPhoneNumbers.value) return t('validation.phone.required')
+  return null
+})
+
+// Check if form is valid for submission
+const isCreateFormValid = computed(() => {
+  return (
+    newUser.username.length >= 3 &&
+    newUser.username.length <= 50 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUser.email) &&
+    newUser.password.length >= 8 &&
+    confirmPassword.value &&
+    passwordsMatch.value &&
+    hasValidPhoneNumbers.value &&
+    usernameState.value.isAvailable !== false
+  )
+})
+
 async function createUser() {
+  if (!passwordsMatch.value) {
+    toast.add({
+      severity: 'error',
+      summary: t('common.error'),
+      detail: t('user.password.mismatch'),
+      life: 3000
+    })
+    return
+  }
+
   try {
-    await userStore.createUser(newUser)
+    const userData: CreateUserRequest = {
+      ...newUser,
+      phoneNumbers: newUserPhoneNumbers.value.filter(p => p.phoneNumber.trim() !== '')
+    }
+    await userStore.createUser(userData)
     showAddUserDialog.value = false
     toast.add({
       severity: 'success',
@@ -281,21 +427,55 @@ function copyPassword() {
   })
 }
 
-function openEditUserDialog(user: User) {
+async function openEditUserDialog(user: User) {
   editingUserId.value = user.id
-  editUser.firstName = user.firstName || ''
-  editUser.lastName = user.lastName || ''
-  editUser.roleCodes = [...user.roles]
-  editUser.status = user.status
-  editUser.emailVerified = user.emailVerified
   showEditUserDialog.value = true
+  editUserLoading.value = true
+
+  try {
+    // Fetch fresh user data to ensure phone numbers are loaded
+    const freshUser = await userStore.getUserById(user.id)
+    editUser.firstName = freshUser.firstName || ''
+    editUser.lastName = freshUser.lastName || ''
+    editUser.salutation = freshUser.salutation
+    editUser.roleCodes = [...freshUser.roles]
+    editUser.status = freshUser.status
+    editUser.emailVerified = freshUser.emailVerified
+    const existingPhones =
+      freshUser.phoneNumbers?.map(p => ({
+        id: p.id,
+        phoneNumber: p.phoneNumber,
+        phoneType: p.phoneType,
+        isPrimary: p.isPrimary
+      })) || []
+    // Ensure at least one phone entry exists for editing
+    editUserPhoneNumbers.value =
+      existingPhones.length > 0
+        ? existingPhones
+        : [{ phoneNumber: '', phoneType: PhoneType.MOBILE, isPrimary: true }]
+  } catch (error) {
+    showEditUserDialog.value = false
+    const message = error instanceof Error ? error.message : t('errors.generic')
+    toast.add({
+      severity: 'error',
+      summary: t('common.error'),
+      detail: message,
+      life: 5000
+    })
+  } finally {
+    editUserLoading.value = false
+  }
 }
 
 async function saveEditedUser() {
   if (!editingUserId.value) return
 
   try {
-    await userStore.updateUser(editingUserId.value, editUser)
+    const userData: AdminUpdateUserRequest = {
+      ...editUser,
+      phoneNumbers: editUserPhoneNumbers.value.filter(p => p.phoneNumber.trim() !== '')
+    }
+    await userStore.updateUser(editingUserId.value, userData)
     showEditUserDialog.value = false
     toast.add({
       severity: 'success',
@@ -335,6 +515,31 @@ async function saveEditedUser() {
     <Card class="filter-card">
       <template #content>
         <div class="filter-bar">
+          <div class="filter-item search-item">
+            <label for="searchQuery">{{ t('users.filters.search') }}</label>
+            <InputText
+              id="searchQuery"
+              v-model="searchQuery"
+              :placeholder="t('users.filters.searchPlaceholder')"
+              :disabled="showDeleted"
+              @input="onSearchInput"
+              class="search-input"
+            />
+          </div>
+          <div class="filter-item">
+            <label for="roleFilter">{{ t('user.filterByRole') }}</label>
+            <Select
+              id="roleFilter"
+              v-model="roleFilter"
+              :options="roleFilterOptions"
+              optionLabel="label"
+              optionValue="value"
+              :placeholder="t('user.allRoles')"
+              :disabled="showDeleted"
+              @change="onRoleFilterChange"
+              class="filter-dropdown"
+            />
+          </div>
           <div class="filter-item">
             <label for="statusFilter">{{ t('users.filters.status') }}</label>
             <Select
@@ -490,7 +695,7 @@ async function saveEditedUser() {
       v-model:visible="showAddUserDialog"
       :header="t('users.addUserDialog.title')"
       :modal="true"
-      :style="{ width: '500px' }"
+      :style="{ width: '600px' }"
     >
       <div class="form-grid">
         <div class="form-field">
@@ -502,8 +707,8 @@ async function saveEditedUser() {
               :placeholder="t('users.addUserDialog.usernamePlaceholder')"
               class="w-full"
               :class="{
-                'p-invalid': usernameState.isAvailable === false,
-                'p-valid': usernameState.isAvailable === true
+                'p-invalid': usernameState.isAvailable === false || usernameError,
+                'p-valid': usernameState.isAvailable === true && !usernameError
               }"
             />
             <span class="username-status">
@@ -513,19 +718,22 @@ async function saveEditedUser() {
                 strokeWidth="4"
               />
               <i
-                v-else-if="usernameState.isAvailable === true"
+                v-else-if="usernameState.isAvailable === true && !usernameError"
                 class="pi pi-check-circle"
                 style="color: var(--green-500)"
               />
               <i
-                v-else-if="usernameState.isAvailable === false"
+                v-else-if="usernameState.isAvailable === false || usernameError"
                 class="pi pi-times-circle"
                 style="color: var(--red-500)"
               />
             </span>
           </div>
+          <small v-if="usernameError" class="p-error">
+            {{ usernameError }}
+          </small>
           <small
-            v-if="usernameState.message"
+            v-else-if="usernameState.message"
             :class="usernameState.isAvailable ? 'p-success' : 'p-error'"
           >
             {{ usernameState.message }}
@@ -539,19 +747,56 @@ async function saveEditedUser() {
             type="email"
             :placeholder="t('users.addUserDialog.emailPlaceholder')"
             class="w-full"
+            :class="{ 'p-invalid': emailError }"
           />
-        </div>
-        <div class="form-field">
-          <label for="password">{{ t('users.addUserDialog.password') }} *</label>
-          <InputText
-            id="password"
-            v-model="newUser.password"
-            type="password"
-            :placeholder="t('users.addUserDialog.passwordPlaceholder')"
-            class="w-full"
-          />
+          <small v-if="emailError" class="p-error">
+            {{ emailError }}
+          </small>
         </div>
         <div class="form-row">
+          <div class="form-field">
+            <label for="password">{{ t('users.addUserDialog.password') }} *</label>
+            <InputText
+              id="password"
+              v-model="newUser.password"
+              type="password"
+              :placeholder="t('users.addUserDialog.passwordPlaceholder')"
+              class="w-full"
+              :class="{ 'p-invalid': passwordError }"
+            />
+            <small v-if="passwordError" class="p-error">
+              {{ passwordError }}
+            </small>
+          </div>
+          <div class="form-field">
+            <label for="confirmPassword">{{ t('user.confirmPassword') }} *</label>
+            <InputText
+              id="confirmPassword"
+              v-model="confirmPassword"
+              type="password"
+              :placeholder="t('user.confirmPassword')"
+              class="w-full"
+              :class="{ 'p-invalid': confirmPassword && !passwordsMatch }"
+            />
+            <small v-if="confirmPassword && !passwordsMatch" class="p-error">
+              {{ t('user.password.mismatch') }}
+            </small>
+          </div>
+        </div>
+        <div class="form-row-name">
+          <div class="form-field salutation-field">
+            <label for="salutation">{{ t('user.salutation') }}</label>
+            <Select
+              id="salutation"
+              v-model="newUser.salutation"
+              :options="salutationOptions"
+              optionLabel="label"
+              optionValue="value"
+              :placeholder="t('user.salutation')"
+              showClear
+              class="w-full"
+            />
+          </div>
           <div class="form-field">
             <label for="firstName">{{ t('users.addUserDialog.firstName') }}</label>
             <InputText
@@ -595,6 +840,34 @@ async function saveEditedUser() {
             class="w-full"
           />
         </div>
+
+        <!-- Phone Numbers -->
+        <div class="form-field">
+          <div class="flex justify-between items-center mb-2">
+            <label>{{ t('user.phoneNumbers') }} *</label>
+            <Button
+              icon="pi pi-plus"
+              :label="t('user.addPhoneNumber')"
+              size="small"
+              text
+              @click="addNewUserPhone"
+            />
+          </div>
+          <div class="phone-numbers-list">
+            <PhoneNumberInput
+              v-for="(phone, index) in newUserPhoneNumbers"
+              :key="`new-${index}`"
+              :model-value="phone"
+              @update:model-value="updateNewUserPhone(index, $event)"
+              :show-remove="newUserPhoneNumbers.length > 1"
+              :index="index"
+              @remove="removeNewUserPhone(index)"
+            />
+          </div>
+          <small v-if="phoneNumbersError" class="p-error">
+            {{ phoneNumbersError }}
+          </small>
+        </div>
       </div>
       <template #footer>
         <Button
@@ -608,12 +881,7 @@ async function saveEditedUser() {
           icon="pi pi-check"
           @click="createUser"
           :loading="userStore.loading"
-          :disabled="
-            !newUser.username ||
-            !newUser.email ||
-            !newUser.password ||
-            usernameState.isAvailable === false
-          "
+          :disabled="!isCreateFormValid"
         />
       </template>
     </Dialog>
@@ -652,10 +920,26 @@ async function saveEditedUser() {
       v-model:visible="showEditUserDialog"
       :header="t('users.editUserDialog.title')"
       :modal="true"
-      :style="{ width: '500px' }"
+      :style="{ width: '600px' }"
     >
-      <div class="form-grid">
-        <div class="form-row">
+      <div v-if="editUserLoading" class="flex justify-center p-4">
+        <ProgressSpinner style="width: 50px; height: 50px" />
+      </div>
+      <div v-else class="form-grid">
+        <div class="form-row-name">
+          <div class="form-field salutation-field">
+            <label for="editSalutation">{{ t('user.salutation') }}</label>
+            <Select
+              id="editSalutation"
+              v-model="editUser.salutation"
+              :options="salutationOptions"
+              optionLabel="label"
+              optionValue="value"
+              :placeholder="t('user.salutation')"
+              showClear
+              class="w-full"
+            />
+          </div>
           <div class="form-field">
             <label for="editFirstName">{{ t('users.editUserDialog.firstName') }}</label>
             <InputText
@@ -699,6 +983,31 @@ async function saveEditedUser() {
             class="w-full"
           />
         </div>
+
+        <!-- Phone Numbers -->
+        <div class="form-field">
+          <div class="flex justify-between items-center mb-2">
+            <label>{{ t('user.phoneNumbers') }} *</label>
+            <Button
+              icon="pi pi-plus"
+              :label="t('user.addPhoneNumber')"
+              size="small"
+              text
+              @click="addEditUserPhone"
+            />
+          </div>
+          <div class="phone-numbers-list">
+            <PhoneNumberInput
+              v-for="(phone, index) in editUserPhoneNumbers"
+              :key="phone.id ?? `edit-${index}`"
+              :model-value="phone"
+              @update:model-value="updateEditUserPhone(index, $event)"
+              :show-remove="editUserPhoneNumbers.length > 1"
+              :index="index"
+              @remove="removeEditUserPhone(index)"
+            />
+          </div>
+        </div>
       </div>
       <template #footer>
         <Button
@@ -706,12 +1015,14 @@ async function saveEditedUser() {
           severity="secondary"
           outlined
           @click="showEditUserDialog = false"
+          :disabled="editUserLoading"
         />
         <Button
           :label="t('common.save')"
           icon="pi pi-check"
           @click="saveEditedUser"
           :loading="userStore.loading"
+          :disabled="editUserLoading || !hasValidEditPhoneNumbers"
         />
       </template>
     </Dialog>
@@ -785,6 +1096,16 @@ async function saveEditedUser() {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+}
+
+.form-row-name {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1.5fr;
+  gap: 1rem;
+}
+
+.salutation-field {
+  min-width: 100px;
 }
 
 .w-full {
@@ -878,5 +1199,44 @@ async function saveEditedUser() {
 
 .p-error {
   color: var(--red-500);
+}
+
+.search-item {
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-input {
+  width: 100%;
+}
+
+.phone-numbers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.text-muted {
+  color: var(--text-color-secondary);
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.flex {
+  display: flex;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
 }
 </style>

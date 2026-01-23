@@ -2,13 +2,11 @@ package com.insidehealthgt.hms.service
 
 import com.insidehealthgt.hms.dto.request.LoginRequest
 import com.insidehealthgt.hms.dto.request.RefreshTokenRequest
-import com.insidehealthgt.hms.dto.request.RegisterRequest
 import com.insidehealthgt.hms.dto.response.AuthResponse
 import com.insidehealthgt.hms.dto.response.UserResponse
 import com.insidehealthgt.hms.entity.User
 import com.insidehealthgt.hms.entity.UserStatus
 import com.insidehealthgt.hms.exception.AccountDisabledException
-import com.insidehealthgt.hms.exception.ConflictException
 import com.insidehealthgt.hms.exception.InvalidCredentialsException
 import com.insidehealthgt.hms.repository.RoleRepository
 import com.insidehealthgt.hms.repository.UserRepository
@@ -27,33 +25,6 @@ class AuthService(
     private val jwtTokenProvider: JwtTokenProvider,
     private val refreshTokenService: RefreshTokenService,
 ) {
-
-    @Transactional
-    fun register(request: RegisterRequest): AuthResponse {
-        if (userRepository.existsByEmail(request.email)) {
-            throw ConflictException("Email already exists")
-        }
-        if (userRepository.existsByUsername(request.username)) {
-            throw ConflictException("Username already exists")
-        }
-
-        val user = User(
-            username = request.username,
-            email = request.email,
-            passwordHash = passwordEncoder.encode(request.password)!!,
-            firstName = request.firstName,
-            lastName = request.lastName,
-        )
-
-        // Assign default USER role
-        val userRole = roleRepository.findByCode("USER")
-        if (userRole != null) {
-            user.roles.add(userRole)
-        }
-
-        val savedUser = userRepository.save(user)
-        return generateAuthResponse(savedUser)
-    }
 
     @Transactional
     fun login(request: LoginRequest): AuthResponse {

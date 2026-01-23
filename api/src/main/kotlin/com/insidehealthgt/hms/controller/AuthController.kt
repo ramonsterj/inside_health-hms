@@ -3,7 +3,6 @@ package com.insidehealthgt.hms.controller
 import com.insidehealthgt.hms.dto.request.ForgotPasswordRequest
 import com.insidehealthgt.hms.dto.request.LoginRequest
 import com.insidehealthgt.hms.dto.request.RefreshTokenRequest
-import com.insidehealthgt.hms.dto.request.RegisterRequest
 import com.insidehealthgt.hms.dto.request.ResetPasswordRequest
 import com.insidehealthgt.hms.dto.response.ApiResponse
 import com.insidehealthgt.hms.dto.response.AuthResponse
@@ -14,7 +13,6 @@ import com.insidehealthgt.hms.service.PasswordResetService
 import com.insidehealthgt.hms.service.UserService
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Size
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -31,14 +29,6 @@ class AuthController(
     private val userService: UserService,
     private val messageService: MessageService,
 ) {
-
-    @PostMapping("/register")
-    fun register(@Valid @RequestBody request: RegisterRequest): ResponseEntity<ApiResponse<AuthResponse>> {
-        val authResponse = authService.register(request)
-        return ResponseEntity
-            .status(HttpStatus.CREATED)
-            .body(ApiResponse.success(authResponse, messageService.authRegisterSuccess()))
-    }
 
     @PostMapping("/login")
     fun login(@Valid @RequestBody request: LoginRequest): ResponseEntity<ApiResponse<AuthResponse>> {

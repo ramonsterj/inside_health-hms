@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 
 @Repository
+@Suppress("TooManyFunctions")
 interface UserRepository : JpaRepository<User, Long> {
     fun findByEmail(email: String): User?
     fun findByUsername(username: String): User?
@@ -22,6 +23,45 @@ interface UserRepository : JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE (:status IS NULL OR u.status = :status)")
     fun findByStatus(@Param("status") status: UserStatus?, pageable: Pageable): Page<User>
+
+    @Query(
+        value = """
+        SELECT DISTINCT u.* FROM users u
+        LEFT JOIN user_roles ur ON u.id = ur.user_id
+        LEFT JOIN roles r ON ur.role_id = r.id
+        WHERE u.deleted_at IS NULL
+        AND (:status IS NULL OR u.status = CAST(:status AS VARCHAR))
+        AND (:roleCode IS NULL OR r.code = :roleCode)
+        AND (:search IS NULL OR
+            LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            LOWER(u.first_name) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            LOWER(u.last_name) LIKE LOWER(CONCAT('%', :search, '%')))
+        """,
+        countQuery = """
+        SELECT COUNT(DISTINCT u.id) FROM users u
+        LEFT JOIN user_roles ur ON u.id = ur.user_id
+        LEFT JOIN roles r ON ur.role_id = r.id
+        WHERE u.deleted_at IS NULL
+        AND (:status IS NULL OR u.status = CAST(:status AS VARCHAR))
+        AND (:roleCode IS NULL OR r.code = :roleCode)
+        AND (:search IS NULL OR
+            LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            LOWER(u.first_name) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            LOWER(u.last_name) LIKE LOWER(CONCAT('%', :search, '%')))
+        """,
+        nativeQuery = true,
+    )
+    fun findWithFilters(
+        @Param("status") status: String?,
+        @Param("roleCode") roleCode: String?,
+        @Param("search") search: String?,
+        pageable: Pageable,
+    ): Page<User>
+
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.phoneNumbers WHERE u.id = :id")
+    fun findByIdWithPhoneNumbers(@Param("id") id: Long): User?
 
     @Query(
         "SELECT u FROM User u LEFT JOIN FETCH u.roles r LEFT JOIN FETCH r.permissions " +

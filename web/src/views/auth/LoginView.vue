@@ -97,12 +97,6 @@ const onSubmit = handleSubmit(async values => {
           />
         </form>
       </template>
-      <template #footer>
-        <div class="text-center">
-          <span>Don't have an account? </span>
-          <router-link :to="{ name: 'register' }">Create one</router-link>
-        </div>
-      </template>
     </Card>
   </div>
 </template>
