@@ -24,6 +24,27 @@ classDiagram
         DELETED
     }
 
+    class Salutation {
+        <<enumeration>>
+        SR
+        SRA
+        SRTA
+        DR
+        DRA
+        MR
+        MRS
+        MISS
+    }
+
+    class PhoneType {
+        <<enumeration>>
+        MOBILE
+        PRACTICE
+        HOME
+        WORK
+        OTHER
+    }
+
     class AuditAction {
         <<enumeration>>
         CREATE
@@ -67,9 +88,20 @@ classDiagram
         +UserStatus status
         +Boolean emailVerified
         +String? localePreference
+        +Salutation? salutation
+        +Boolean mustChangePassword
         +getAllPermissions() Set~Permission~
         +hasPermission(String) Boolean
         +hasRole(String) Boolean
+        +addPhoneNumber(UserPhoneNumber) void
+        +removePhoneNumber(UserPhoneNumber) void
+    }
+
+    %% UserPhoneNumber Entity
+    class UserPhoneNumber {
+        +String phoneNumber
+        +PhoneType phoneType
+        +Boolean isPrimary
     }
 
     %% Role Entity
@@ -132,6 +164,9 @@ classDiagram
         +String email
         +String? idDocumentNumber
         +String? notes
+        +hasIdDocument() Boolean
+        +addEmergencyContact(EmergencyContact) void
+        +removeEmergencyContact(EmergencyContact) void
     }
 
     %% EmergencyContact Entity
@@ -151,6 +186,7 @@ classDiagram
 
     %% Inheritance Relationships
     BaseEntity <|-- User : extends
+    BaseEntity <|-- UserPhoneNumber : extends
     BaseEntity <|-- Role : extends
     BaseEntity <|-- Permission : extends
     BaseEntity <|-- RefreshToken : extends
@@ -162,6 +198,7 @@ classDiagram
     %% Associations
     User "1" -- "*" RefreshToken : has
     User "1" -- "*" PasswordResetToken : has
+    User "1" -- "*" UserPhoneNumber : has
     User "*" -- "*" Role : user_roles
     Role "*" -- "*" Permission : role_permissions
     Patient "1" -- "*" EmergencyContact : has
@@ -169,6 +206,8 @@ classDiagram
 
     %% Enum Usage
     User ..> UserStatus : uses
+    User ..> Salutation : uses
+    UserPhoneNumber ..> PhoneType : uses
     AuditLog ..> AuditAction : uses
     Patient ..> Sex : uses
     Patient ..> MaritalStatus : uses
@@ -183,6 +222,7 @@ classDiagram
 | Role ↔ Permission | ManyToMany | `role_permissions` | Roles can have multiple permissions |
 | User → RefreshToken | OneToMany | - | Users can have multiple active refresh tokens |
 | User → PasswordResetToken | OneToMany | - | Users can have multiple password reset tokens |
+| User → UserPhoneNumber | OneToMany | - | Users can have multiple phone numbers |
 | Patient → EmergencyContact | OneToMany | - | Patients can have multiple emergency contacts |
 | Patient → PatientIdDocument | OneToOne | - | Patient can have one ID document (optional) |
 
@@ -190,6 +230,5 @@ classDiagram
 
 - **BaseEntity**: Abstract mapped superclass providing common audit fields and soft delete support
 - **AuditLog**: Standalone entity (does not extend BaseEntity) - audit logs are immutable records
-- **Soft Deletes**: All entities except AuditLog and Patient use `@SQLRestriction("deleted_at IS NULL")`
-- **Patient Records**: Patient entities extend BaseEntity but are **never deleted** to maintain medical record integrity (deleted_at field exists but is not used)
-- **Audit Trail**: Patient, EmergencyContact, and PatientIdDocument entities track who created/updated them via BaseEntity fields (createdBy, updatedBy reference User)
+- **Soft Deletes**: All entities except AuditLog use `@SQLRestriction("deleted_at IS NULL")`
+- **Audit Trail**: All entities extending BaseEntity track who created/updated them via createdBy/updatedBy fields (reference User)

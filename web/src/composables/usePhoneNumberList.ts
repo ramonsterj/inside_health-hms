@@ -20,7 +20,11 @@ export function usePhoneNumberList(phoneNumbers: Ref<PhoneNumberRequest[]>) {
   }
 
   function updatePhone(index: number, phone: PhoneNumberRequest) {
-    const currentPhone = phoneNumbers.value[index]
+    // Validate array bounds
+    if (index < 0 || index >= phoneNumbers.value.length) {
+      return
+    }
+    const currentPhone = phoneNumbers.value.at(index)
     // If this phone is being marked as primary, uncheck all others
     if (phone.isPrimary && currentPhone && !currentPhone.isPrimary) {
       phoneNumbers.value.forEach((p, i) => {
@@ -29,7 +33,7 @@ export function usePhoneNumberList(phoneNumbers: Ref<PhoneNumberRequest[]>) {
         }
       })
     }
-    phoneNumbers.value[index] = phone
+    phoneNumbers.value.splice(index, 1, phone)
   }
 
   return {

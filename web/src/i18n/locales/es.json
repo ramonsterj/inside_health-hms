@@ -87,7 +87,12 @@
     "newPassword": "Nueva Contrasena",
     "confirmNewPassword": "Confirmar Nueva Contrasena",
     "passwordChangeRequired": "Debe cambiar su contrasena antes de continuar",
-    "passwordChanged": "Contrasena cambiada exitosamente"
+    "passwordChanged": "Contrasena cambiada exitosamente",
+    "sessionExpired": {
+      "title": "Sesion Expirada",
+      "message": "Tu sesion ha expirado por inactividad. Por favor inicia sesion nuevamente para continuar.",
+      "loginButton": "Iniciar Sesion"
+    }
   },
   "dashboard": {
     "title": "Panel",

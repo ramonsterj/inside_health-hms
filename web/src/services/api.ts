@@ -1,5 +1,6 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { tokenStorage } from '@/utils/tokenStorage'
+import { useSessionExpiration } from '@/composables/useSessionExpiration'
 import type { ApiResponse, AuthResponse } from '@/types'
 
 interface RetryableRequest extends InternalAxiosRequestConfig {
@@ -43,6 +44,25 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = []
 }
 
+/**
+ * Handles session expiration by clearing tokens and triggering the session expired modal.
+ * Uses window.location to get the current path since this code runs outside Vue Router context.
+ */
+function handleSessionExpiration(): void {
+  // Clear tokens FIRST (security requirement)
+  tokenStorage.clearTokens()
+
+  // Get the composable and trigger session expiration
+  // Note: This works because useSessionExpiration uses module-level state (singleton pattern)
+  const { triggerSessionExpired } = useSessionExpiration()
+
+  // Capture full path including query params using window.location
+  // (We can't use Vue Router here as api.ts is outside Vue component context)
+  const currentPath = window.location.pathname + window.location.search
+
+  triggerSessionExpired(currentPath)
+}
+
 // Response interceptor - handle 401 and auto-refresh
 api.interceptors.response.use(
   response => response,
@@ -83,8 +103,7 @@ api.interceptors.response.use(
 
       if (!refreshToken) {
         isRefreshing = false
-        tokenStorage.clearTokens()
-        window.location.href = '/login'
+        handleSessionExpiration()
         return Promise.reject(error)
       }
 
@@ -108,8 +127,7 @@ api.interceptors.response.use(
         }
       } catch (refreshError) {
         processQueue(refreshError, null)
-        tokenStorage.clearTokens()
-        window.location.href = '/login'
+        handleSessionExpiration()
         return Promise.reject(refreshError)
       } finally {
         isRefreshing = false

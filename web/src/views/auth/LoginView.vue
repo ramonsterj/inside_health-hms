@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
@@ -8,9 +9,12 @@ import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Button from 'primevue/button'
 import { useAuthStore } from '@/stores/auth'
+import { useSessionExpiration } from '@/composables/useSessionExpiration'
 import { loginSchema, type LoginFormData } from '@/validation'
 
 const router = useRouter()
+const { t } = useI18n()
+const { scheduleExpirationCheck } = useSessionExpiration()
 const route = useRoute()
 const toast = useToast()
 const authStore = useAuthStore()
@@ -29,20 +33,23 @@ const [password] = defineField('password')
 const onSubmit = handleSubmit(async values => {
   try {
     await authStore.login(values)
+
+    // Reschedule token expiration monitoring with the new token
+    scheduleExpirationCheck()
+
     toast.add({
       severity: 'success',
-      summary: 'Welcome back!',
-      detail: 'You have successfully logged in.',
+      summary: t('auth.login.success'),
+      detail: t('auth.login.successDetail'),
       life: 3000
     })
     const redirect = route.query.redirect as string
     router.push(redirect || { name: 'dashboard' })
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Login failed. Please check your credentials.'
+    const message = error instanceof Error ? error.message : t('auth.login.failedDetail')
     toast.add({
       severity: 'error',
-      summary: 'Login Failed',
+      summary: t('auth.login.failed'),
       detail: message,
       life: 5000
     })

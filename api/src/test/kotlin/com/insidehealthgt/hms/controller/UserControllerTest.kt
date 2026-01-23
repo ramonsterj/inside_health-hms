@@ -115,7 +115,7 @@ class UserControllerTest {
     @Test
     fun `getCurrentUser should fail without authentication`() {
         mockMvc.perform(get("/api/users/me"))
-            .andExpect(status().isForbidden)
+            .andExpect(status().isUnauthorized)
     }
 
     @Test
