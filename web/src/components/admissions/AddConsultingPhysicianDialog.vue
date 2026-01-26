@@ -57,7 +57,8 @@ function resetForm() {
 }
 
 function getDoctorLabel(doctor: Doctor): string {
-  return `${doctor.salutation || ''} ${doctor.firstName || ''} ${doctor.lastName || ''}`.trim()
+  const salutationLabel = doctor.salutation ? t(`user.salutations.${doctor.salutation}`) : ''
+  return `${salutationLabel} ${doctor.firstName || ''} ${doctor.lastName || ''}`.trim()
 }
 
 function validate(): boolean {
@@ -181,11 +182,7 @@ function closeDialog() {
           :disabled="loading"
           @click="closeDialog"
         />
-        <Button
-          :label="t('common.save')"
-          :loading="loading"
-          @click="handleSubmit"
-        />
+        <Button :label="t('common.save')" :loading="loading" @click="handleSubmit" />
       </div>
     </template>
   </Dialog>

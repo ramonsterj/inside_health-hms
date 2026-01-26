@@ -523,6 +523,14 @@
         "reason": {
           "max": "Reason must be at most 500 characters"
         }
+      },
+      "inventory": {
+        "max": "Inventory must be at most 2000 characters"
+      },
+      "consent": {
+        "required": "Please select a file",
+        "size": "File must be under 25MB",
+        "type": "File must be PDF, JPEG, or PNG"
       }
     },
     "username": {
@@ -542,7 +550,8 @@
       "min": "Password must be at least 8 characters",
       "current": "Current password is required",
       "new": "New password is required",
-      "confirm": "Please confirm your password"
+      "confirm": "Please confirm your password",
+      "mustBeDifferent": "New password must be different from current password"
     },
     "name": {
       "max": "Name must be at most 100 characters"
@@ -553,6 +562,104 @@
         "required": "Phone number is required",
         "max": "Phone number must be at most 20 characters"
       }
+    },
+    "patient": {
+      "firstName": {
+        "required": "First name is required",
+        "max": "First name must be at most 100 characters"
+      },
+      "lastName": {
+        "required": "Last name is required",
+        "max": "Last name must be at most 100 characters"
+      },
+      "age": {
+        "required": "Age is required",
+        "invalid": "Age must be a number",
+        "min": "Age must be at least 0",
+        "max": "Age must be at most 150"
+      },
+      "sex": {
+        "required": "Sex is required"
+      },
+      "gender": {
+        "required": "Gender is required",
+        "max": "Gender must be at most 50 characters"
+      },
+      "maritalStatus": {
+        "required": "Marital status is required"
+      },
+      "religion": {
+        "required": "Religion is required",
+        "max": "Religion must be at most 100 characters"
+      },
+      "educationLevel": {
+        "required": "Education level is required"
+      },
+      "occupation": {
+        "required": "Occupation is required",
+        "max": "Occupation must be at most 100 characters"
+      },
+      "address": {
+        "required": "Address is required",
+        "max": "Address must be at most 500 characters"
+      },
+      "email": {
+        "required": "Email is required",
+        "invalid": "Invalid email format",
+        "max": "Email must be at most 255 characters"
+      },
+      "idDocumentNumber": {
+        "max": "ID document number must be at most 50 characters"
+      },
+      "emergencyContacts": {
+        "required": "At least one emergency contact is required",
+        "name": {
+          "required": "Contact name is required",
+          "max": "Contact name must be at most 200 characters"
+        },
+        "relationship": {
+          "required": "Relationship is required",
+          "max": "Relationship must be at most 100 characters"
+        },
+        "phone": {
+          "required": "Phone is required",
+          "max": "Phone must be at most 20 characters"
+        }
+      }
+    },
+    "room": {
+      "number": {
+        "required": "Room number is required",
+        "max": "Room number must be at most 50 characters"
+      },
+      "type": {
+        "required": "Room type is required"
+      },
+      "capacity": {
+        "required": "Capacity is required",
+        "invalid": "Capacity must be a number",
+        "min": "Capacity must be at least 1",
+        "integer": "Capacity must be an integer"
+      }
+    },
+    "triageCode": {
+      "code": {
+        "required": "Code is required",
+        "max": "Code must be at most 10 characters"
+      },
+      "color": {
+        "required": "Color is required",
+        "invalid": "Must be a valid hex color (e.g., #FF0000)"
+      },
+      "description": {
+        "max": "Description must be at most 255 characters"
+      },
+      "displayOrder": {
+        "required": "Display order is required",
+        "invalid": "Display order must be a number",
+        "integer": "Display order must be an integer",
+        "min": "Display order must be at least 0"
+      }
     }
   },
   "errors": {
@@ -561,7 +668,29 @@
     "unauthorized": "You are not authorized to perform this action.",
     "notFound": "The requested resource was not found.",
     "serverError": "Server error. Please try again later.",
-    "sessionExpired": "Your session has expired. Please log in again."
+    "sessionExpired": "Your session has expired. Please log in again.",
+    "badRequest": "Invalid request. Please check your input.",
+    "forbidden": "Access denied. You do not have permission.",
+    "conflict": "This operation conflicts with existing data.",
+    "validation": "Please correct the errors in the form.",
+    "invalidToken": "Your session is invalid. Please log in again.",
+    "authenticationFailed": "Authentication failed. Please check your credentials.",
+    "accountDisabled": "Your account is not active.",
+    "user": {
+      "notFound": "User not found.",
+      "emailExists": "This email is already registered.",
+      "usernameExists": "This username is already taken.",
+      "passwordIncorrect": "Current password is incorrect.",
+      "cannotDeleteSelf": "You cannot delete your own account."
+    },
+    "role": {
+      "notFound": "Role not found.",
+      "codeExists": "This role code already exists.",
+      "systemCannotDelete": "System roles cannot be deleted."
+    },
+    "patient": {
+      "alreadyAdmitted": "Patient already has an active admission."
+    }
   },
   "locale": {
     "en": "English",

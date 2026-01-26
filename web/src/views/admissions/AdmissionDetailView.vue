@@ -40,8 +40,8 @@ const canDelete = computed(() => authStore.hasPermission('admission:delete'))
 const canUploadConsent = computed(() => authStore.hasPermission('admission:upload-consent'))
 const canViewConsent = computed(() => authStore.hasPermission('admission:view-consent'))
 
-const existingConsultingPhysicianIds = computed(() =>
-  admission.value?.consultingPhysicians.map(cp => cp.physician.id) || []
+const existingConsultingPhysicianIds = computed(
+  () => admission.value?.consultingPhysicians.map(cp => cp.physician.id) || []
 )
 
 onMounted(async () => {
@@ -167,7 +167,8 @@ function formatDate(dateString: string | null): string {
 
 function getPhysicianName(cp: ConsultingPhysician): string {
   const { salutation, firstName, lastName } = cp.physician
-  return `${salutation || ''} ${getFullName(firstName, lastName)}`.trim()
+  const salutationLabel = salutation ? t(`user.salutations.${salutation}`) : ''
+  return `${salutationLabel} ${getFullName(firstName, lastName)}`.trim()
 }
 
 async function handleConsultingPhysicianAdded() {
@@ -206,12 +207,7 @@ async function removeConsultingPhysician(consultingPhysicianId: number) {
 
     <div class="page-header">
       <div class="header-left">
-        <Button
-          icon="pi pi-arrow-left"
-          text
-          rounded
-          @click="router.push({ name: 'admissions' })"
-        />
+        <Button icon="pi pi-arrow-left" text rounded @click="router.push({ name: 'admissions' })" />
         <h1 class="page-title">{{ t('admission.details') }}</h1>
       </div>
       <div class="header-actions" v-if="admission">
@@ -290,8 +286,17 @@ async function removeConsultingPhysician(consultingPhysicianId: number) {
           <div class="info-row">
             <span class="info-label">{{ t('admission.treatingPhysician') }}</span>
             <span class="info-value">
-              {{ admission.treatingPhysician.salutation }}
-              {{ getFullName(admission.treatingPhysician.firstName, admission.treatingPhysician.lastName) }}
+              {{
+                admission.treatingPhysician.salutation
+                  ? t(`user.salutations.${admission.treatingPhysician.salutation}`)
+                  : ''
+              }}
+              {{
+                getFullName(
+                  admission.treatingPhysician.firstName,
+                  admission.treatingPhysician.lastName
+                )
+              }}
             </span>
           </div>
           <div class="info-row">
@@ -390,7 +395,10 @@ async function removeConsultingPhysician(consultingPhysicianId: number) {
                 </div>
               </template>
             </Column>
-            <Column v-if="canUpdate && admission.status === AdmissionStatus.ACTIVE" :header="t('common.actions')">
+            <Column
+              v-if="canUpdate && admission.status === AdmissionStatus.ACTIVE"
+              :header="t('common.actions')"
+            >
               <template #body="{ data }">
                 <Button
                   icon="pi pi-trash"

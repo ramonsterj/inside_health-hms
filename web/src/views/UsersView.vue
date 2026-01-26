@@ -26,7 +26,7 @@ import { UserStatus, Salutation, PhoneType } from '@/types'
 // Constants
 const SEARCH_DEBOUNCE_MS = 300
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const toast = useToast()
 const confirm = useConfirm()
 const userStore = useUserStore()
@@ -111,7 +111,7 @@ const roleOptions = computed(() =>
 const salutationOptions = computed(() => {
   // Only show salutations that have translations in the current locale
   return Object.values(Salutation)
-    .filter(key => t(`user.salutations.${key}`) !== `user.salutations.${key}`)
+    .filter(key => te(`user.salutations.${key}`))
     .map(key => ({
       label: t(`user.salutations.${key}`),
       value: key

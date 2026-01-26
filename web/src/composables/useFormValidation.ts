@@ -1,6 +1,6 @@
 import { useForm, useField } from 'vee-validate'
 import type { GenericObject } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
+import { toTypedSchema } from '@/validation/zodI18n'
 import type { ZodSchema, ZodTypeDef } from 'zod'
 import { computed, reactive, watch } from 'vue'
 
@@ -33,7 +33,7 @@ export function useFormValidation<TInput, TOutput extends GenericObject>(
 ) {
   const typedSchema = toTypedSchema(schema)
 
-  const { handleSubmit, errors, values, resetForm, validate, meta, setFieldValue } =
+  const { handleSubmit, errors, values, resetForm, validate, meta, setFieldValue, setErrors } =
     useForm<TOutput>({
       validationSchema: typedSchema,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -88,6 +88,7 @@ export function useFormValidation<TInput, TOutput extends GenericObject>(
     handleSubmit,
     resetForm,
     validate,
+    setErrors,
     defineField: <K extends keyof TOutput>(name: K) => useField<TOutput[K]>(name as string)
   }
 }

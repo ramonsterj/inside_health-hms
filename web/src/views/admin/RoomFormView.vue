@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
+import { toTypedSchema } from '@/validation/zodI18n'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
@@ -18,7 +18,7 @@ import { RoomType } from '@/types/room'
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
-const { showError, showSuccess } = useErrorHandler()
+const { showError, showSuccess, setFieldErrorsFromResponse } = useErrorHandler()
 const roomStore = useRoomStore()
 
 const loading = ref(false)
@@ -30,7 +30,7 @@ const roomTypeOptions = computed(() => [
   { label: t('room.types.SHARED'), value: RoomType.SHARED }
 ])
 
-const { defineField, handleSubmit, errors, setValues } = useForm<RoomFormData>({
+const { defineField, handleSubmit, errors, setValues, setErrors } = useForm<RoomFormData>({
   validationSchema: toTypedSchema(roomSchema),
   initialValues: {
     number: '',
@@ -66,7 +66,7 @@ async function loadRoom() {
   }
 }
 
-const onSubmit = handleSubmit(async (values) => {
+const onSubmit = handleSubmit(async values => {
   loading.value = true
   try {
     if (isEditMode.value && roomId.value) {
@@ -78,7 +78,10 @@ const onSubmit = handleSubmit(async (values) => {
     }
     router.push({ name: 'rooms' })
   } catch (error) {
-    showError(error)
+    // Try to set field-specific validation errors, otherwise show toast
+    if (!setFieldErrorsFromResponse(setErrors, error)) {
+      showError(error)
+    }
   } finally {
     loading.value = false
   }

@@ -122,7 +122,8 @@ function getPatientLabel(patient: PatientSummary): string {
 }
 
 function getDoctorLabel(doctor: Doctor): string {
-  return `${doctor.salutation || ''} ${doctor.firstName || ''} ${doctor.lastName || ''}`.trim()
+  const salutationLabel = doctor.salutation ? t(`user.salutations.${doctor.salutation}`) : ''
+  return `${salutationLabel} ${doctor.firstName || ''} ${doctor.lastName || ''}`.trim()
 }
 
 function getTriageCodeLabel(triageCode: { code: string; description: string | null }): string {
@@ -263,7 +264,12 @@ function cancel() {
                       ({{ selectedPatient.idDocumentNumber }})
                     </span>
                   </p>
-                  <Message v-if="selectedPatient.hasActiveAdmission" severity="warn" :closable="false" class="mt-3">
+                  <Message
+                    v-if="selectedPatient.hasActiveAdmission"
+                    severity="warn"
+                    :closable="false"
+                    class="mt-3"
+                  >
                     {{ t('admission.patientAlreadyAdmittedWarning') }}
                   </Message>
                 </div>

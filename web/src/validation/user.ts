@@ -27,7 +27,7 @@ export const createUserSchema = z
     username: z.string().min(3, 'validation.username.min').max(50, 'validation.username.max'),
     email: z.string().email('validation.email.invalid').max(255, 'validation.email.max'),
     password: z.string().min(8, 'validation.password.min'),
-    confirmPassword: z.string().min(1, 'validation.password.confirm.required'),
+    confirmPassword: z.string().min(1, 'validation.password.confirm'),
     firstName: z.string().max(100, 'validation.firstName.max').optional().or(z.literal('')),
     lastName: z.string().max(100, 'validation.lastName.max').optional().or(z.literal('')),
     salutation: salutationEnum.optional().nullable(),
@@ -37,7 +37,7 @@ export const createUserSchema = z
     phoneNumbers: z.array(phoneNumberSchema).min(1, 'validation.phone.required')
   })
   .refine(data => data.password === data.confirmPassword, {
-    message: 'validation.password.mismatch',
+    message: 'validation.passwordMatch',
     path: ['confirmPassword']
   })
 
@@ -55,12 +55,12 @@ export const adminUpdateUserSchema = z.object({
 // Force change password schema (for first login)
 export const forceChangePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, 'validation.password.current.required'),
+    currentPassword: z.string().min(1, 'validation.password.current'),
     newPassword: z.string().min(8, 'validation.password.min'),
-    confirmNewPassword: z.string().min(1, 'validation.password.confirm.required')
+    confirmNewPassword: z.string().min(1, 'validation.password.confirm')
   })
   .refine(data => data.newPassword === data.confirmNewPassword, {
-    message: 'validation.password.mismatch',
+    message: 'validation.passwordMatch',
     path: ['confirmNewPassword']
   })
   .refine(data => data.currentPassword !== data.newPassword, {
