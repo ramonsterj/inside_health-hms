@@ -112,7 +112,11 @@ async function deleteTriageCode(id: number) {
 
           <Column field="description" :header="t('triageCode.description')" />
 
-          <Column field="displayOrder" :header="t('triageCode.displayOrder')" style="width: 120px" />
+          <Column
+            field="displayOrder"
+            :header="t('triageCode.displayOrder')"
+            style="width: 120px"
+          />
 
           <Column :header="t('common.actions')" style="width: 120px">
             <template #body="{ data }">

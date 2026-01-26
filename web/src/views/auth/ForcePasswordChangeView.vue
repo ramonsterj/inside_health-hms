@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
+import { toTypedSchema } from '@/validation/zodI18n'
 import { useAuthStore } from '@/stores/auth'
 import { forceChangePasswordSchema } from '@/validation/user'
 import Password from 'primevue/password'
@@ -71,7 +71,7 @@ const onSubmit = handleSubmit(async values => {
               inputClass="w-full"
             />
             <small v-if="errors.currentPassword" class="p-error">
-              {{ t(errors.currentPassword) }}
+              {{ errors.currentPassword }}
             </small>
           </div>
 
@@ -88,7 +88,7 @@ const onSubmit = handleSubmit(async values => {
               inputClass="w-full"
             />
             <small v-if="errors.newPassword" class="p-error">
-              {{ t(errors.newPassword) }}
+              {{ errors.newPassword }}
             </small>
           </div>
 
@@ -106,7 +106,7 @@ const onSubmit = handleSubmit(async values => {
               inputClass="w-full"
             />
             <small v-if="errors.confirmNewPassword" class="p-error">
-              {{ t(errors.confirmNewPassword) }}
+              {{ errors.confirmNewPassword }}
             </small>
           </div>
 

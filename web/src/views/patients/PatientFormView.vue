@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
+import { toTypedSchema } from '@/validation/zodI18n'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -28,7 +28,7 @@ import { Sex, MaritalStatus, EducationLevel } from '@/types'
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const { showError, showSuccess } = useErrorHandler()
+const { showError, showSuccess, setFieldErrorsFromResponse } = useErrorHandler()
 const patientStore = usePatientStore()
 const authStore = useAuthStore()
 
@@ -53,7 +53,7 @@ const canViewId = computed(() => authStore.hasPermission('patient:view-id'))
 const emergencyContacts = ref<EmergencyContact[]>([{ name: '', relationship: '', phone: '' }])
 
 // Form setup
-const { defineField, handleSubmit, errors, setValues } = useForm<PatientFormData>({
+const { defineField, handleSubmit, errors, setValues, setErrors } = useForm<PatientFormData>({
   validationSchema: toTypedSchema(patientSchema),
   initialValues: {
     firstName: '',
@@ -200,7 +200,8 @@ const onSubmit = handleSubmit(async values => {
     if (error instanceof DuplicatePatientError) {
       duplicates.value = error.potentialDuplicates
       showDuplicateDialog.value = true
-    } else {
+    } else if (!setFieldErrorsFromResponse(setErrors, error)) {
+      // Show toast for non-validation errors
       showError(error)
     }
   } finally {

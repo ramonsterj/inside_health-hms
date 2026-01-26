@@ -74,12 +74,7 @@ function getRoomTypeSeverity(type: RoomType): 'info' | 'success' {
     <div class="page-header">
       <h1 class="page-title">{{ t('room.title') }}</h1>
       <div class="header-actions">
-        <Button
-          v-if="canCreate"
-          icon="pi pi-plus"
-          :label="t('room.new')"
-          @click="createNewRoom"
-        />
+        <Button v-if="canCreate" icon="pi pi-plus" :label="t('room.new')" @click="createNewRoom" />
         <Button
           icon="pi pi-refresh"
           :label="t('common.refresh')"
@@ -93,12 +88,7 @@ function getRoomTypeSeverity(type: RoomType): 'info' | 'success' {
 
     <Card>
       <template #content>
-        <DataTable
-          :value="roomStore.rooms"
-          :loading="roomStore.loading"
-          dataKey="id"
-          stripedRows
-        >
+        <DataTable :value="roomStore.rooms" :loading="roomStore.loading" dataKey="id" stripedRows>
           <template #empty>
             <div class="text-center p-4">
               {{ t('room.empty') }}
@@ -109,7 +99,10 @@ function getRoomTypeSeverity(type: RoomType): 'info' | 'success' {
 
           <Column :header="t('room.type')" style="width: 120px">
             <template #body="{ data }">
-              <Tag :value="t(`room.types.${data.type}`)" :severity="getRoomTypeSeverity(data.type)" />
+              <Tag
+                :value="t(`room.types.${data.type}`)"
+                :severity="getRoomTypeSeverity(data.type)"
+              />
             </template>
           </Column>
 

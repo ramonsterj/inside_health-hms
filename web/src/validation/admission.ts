@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 /**
  * Admission validation schemas that mirror backend Jakarta Bean Validation rules.
+ * Error messages use i18n keys that are translated via zodI18n.ts
  */
 
 /** Maximum file size for consent document uploads: 25MB */
@@ -13,57 +14,64 @@ export const ACCEPTED_CONSENT_TYPES = 'image/*,application/pdf'
 // Create admission schema
 export const createAdmissionSchema = z.object({
   patientId: z
-    .number({ required_error: 'Patient is required', invalid_type_error: 'Patient must be selected' })
-    .positive('Patient is required'),
+    .number({
+      required_error: 'validation.admission.patientId.required',
+      invalid_type_error: 'validation.admission.patientId.required'
+    })
+    .positive('validation.admission.patientId.required'),
   triageCodeId: z
-    .number({ required_error: 'Triage code is required', invalid_type_error: 'Triage code must be selected' })
-    .positive('Triage code is required'),
+    .number({
+      required_error: 'validation.admission.triageCodeId.required',
+      invalid_type_error: 'validation.admission.triageCodeId.required'
+    })
+    .positive('validation.admission.triageCodeId.required'),
   roomId: z
-    .number({ required_error: 'Room is required', invalid_type_error: 'Room must be selected' })
-    .positive('Room is required'),
+    .number({
+      required_error: 'validation.admission.roomId.required',
+      invalid_type_error: 'validation.admission.roomId.required'
+    })
+    .positive('validation.admission.roomId.required'),
   treatingPhysicianId: z
     .number({
-      required_error: 'Treating physician is required',
-      invalid_type_error: 'Treating physician must be selected'
+      required_error: 'validation.admission.treatingPhysicianId.required',
+      invalid_type_error: 'validation.admission.treatingPhysicianId.required'
     })
-    .positive('Treating physician is required'),
-  admissionDate: z.string().min(1, 'Admission date is required'),
-  inventory: z
-    .string()
-    .max(2000, 'Inventory must be at most 2000 characters')
-    .optional()
-    .or(z.literal(''))
+    .positive('validation.admission.treatingPhysicianId.required'),
+  admissionDate: z.string().min(1, 'validation.admission.admissionDate.required'),
+  inventory: z.string().max(2000, 'validation.admission.inventory.max').optional().or(z.literal(''))
 })
 
 // Update admission schema (patientId and admissionDate are not editable)
 export const updateAdmissionSchema = z.object({
   triageCodeId: z
-    .number({ required_error: 'Triage code is required', invalid_type_error: 'Triage code must be selected' })
-    .positive('Triage code is required'),
+    .number({
+      required_error: 'validation.admission.triageCodeId.required',
+      invalid_type_error: 'validation.admission.triageCodeId.required'
+    })
+    .positive('validation.admission.triageCodeId.required'),
   roomId: z
-    .number({ required_error: 'Room is required', invalid_type_error: 'Room must be selected' })
-    .positive('Room is required'),
+    .number({
+      required_error: 'validation.admission.roomId.required',
+      invalid_type_error: 'validation.admission.roomId.required'
+    })
+    .positive('validation.admission.roomId.required'),
   treatingPhysicianId: z
     .number({
-      required_error: 'Treating physician is required',
-      invalid_type_error: 'Treating physician must be selected'
+      required_error: 'validation.admission.treatingPhysicianId.required',
+      invalid_type_error: 'validation.admission.treatingPhysicianId.required'
     })
-    .positive('Treating physician is required'),
-  inventory: z
-    .string()
-    .max(2000, 'Inventory must be at most 2000 characters')
-    .optional()
-    .or(z.literal(''))
+    .positive('validation.admission.treatingPhysicianId.required'),
+  inventory: z.string().max(2000, 'validation.admission.inventory.max').optional().or(z.literal(''))
 })
 
 // Consent file validation
 export const consentFileSchema = z.object({
   file: z
-    .instanceof(File, { message: 'Please select a file' })
-    .refine((file) => file.size <= MAX_CONSENT_FILE_SIZE, 'File must be under 25MB')
+    .instanceof(File, { message: 'validation.admission.consent.required' })
+    .refine(file => file.size <= MAX_CONSENT_FILE_SIZE, 'validation.admission.consent.size')
     .refine(
-      (file) => ['application/pdf', 'image/jpeg', 'image/png'].includes(file.type),
-      'File must be PDF, JPEG, or PNG'
+      file => ['application/pdf', 'image/jpeg', 'image/png'].includes(file.type),
+      'validation.admission.consent.type'
     )
 })
 
@@ -71,13 +79,13 @@ export const consentFileSchema = z.object({
 export const addConsultingPhysicianSchema = z.object({
   physicianId: z
     .number({
-      required_error: 'Physician is required',
-      invalid_type_error: 'Physician must be selected'
+      required_error: 'validation.admission.consultingPhysicians.physicianId.required',
+      invalid_type_error: 'validation.admission.consultingPhysicians.physicianId.required'
     })
-    .positive('Physician is required'),
+    .positive('validation.admission.consultingPhysicians.physicianId.required'),
   reason: z
     .string()
-    .max(500, 'Reason must be at most 500 characters')
+    .max(500, 'validation.admission.consultingPhysicians.reason.max')
     .optional()
     .or(z.literal('')),
   requestedDate: z.string().optional().or(z.literal(''))

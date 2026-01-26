@@ -151,7 +151,7 @@ describe('useAdmissionStore', () => {
 
     it('should handle loading state', async () => {
       let resolvePromise: (value: unknown) => void = () => {}
-      const promise = new Promise((resolve) => {
+      const promise = new Promise(resolve => {
         resolvePromise = resolve
       })
       mockedApi.get.mockReturnValueOnce(promise as Promise<{ data: unknown }>)
@@ -327,9 +327,13 @@ describe('useAdmissionStore', () => {
 
       const result = await store.uploadConsentDocument(1, file)
 
-      expect(mockedApi.post).toHaveBeenCalledWith('/v1/admissions/1/consent', expect.any(FormData), {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
+      expect(mockedApi.post).toHaveBeenCalledWith(
+        '/v1/admissions/1/consent',
+        expect.any(FormData),
+        {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        }
+      )
       expect(result.hasConsentDocument).toBe(true)
       expect(store.currentAdmission?.hasConsentDocument).toBe(true)
     })
@@ -353,7 +357,15 @@ describe('useAdmissionStore', () => {
   describe('searchPatients', () => {
     it('should search patients and return results', async () => {
       const mockPatients: PatientSummary[] = [
-        { id: 1, firstName: 'Juan', lastName: 'Pérez', age: 45, idDocumentNumber: '123', hasIdDocument: false, hasActiveAdmission: false }
+        {
+          id: 1,
+          firstName: 'Juan',
+          lastName: 'Pérez',
+          age: 45,
+          idDocumentNumber: '123',
+          hasIdDocument: false,
+          hasActiveAdmission: false
+        }
       ]
       mockedApi.get.mockResolvedValueOnce({
         data: { success: true, data: mockPatients }

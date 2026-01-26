@@ -1,7 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/services/api'
-import type { TriageCode, CreateTriageCodeRequest, UpdateTriageCodeRequest } from '@/types/triageCode'
+import type {
+  TriageCode,
+  CreateTriageCodeRequest,
+  UpdateTriageCodeRequest
+} from '@/types/triageCode'
 import type { ApiResponse } from '@/types'
 
 export const useTriageCodeStore = defineStore('triageCode', () => {

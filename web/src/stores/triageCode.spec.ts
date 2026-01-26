@@ -33,11 +33,61 @@ const mockTriageCode: TriageCode = {
 }
 
 const mockTriageCodes: TriageCode[] = [
-  { id: 1, code: 'A', color: '#FF0000', description: 'Critical', displayOrder: 1, createdAt: null, createdBy: null, updatedAt: null, updatedBy: null },
-  { id: 2, code: 'B', color: '#FFA500', description: 'Urgent', displayOrder: 2, createdAt: null, createdBy: null, updatedAt: null, updatedBy: null },
-  { id: 3, code: 'C', color: '#FFFF00', description: 'Semi-urgent', displayOrder: 3, createdAt: null, createdBy: null, updatedAt: null, updatedBy: null },
-  { id: 4, code: 'D', color: '#00FF00', description: 'Standard', displayOrder: 4, createdAt: null, createdBy: null, updatedAt: null, updatedBy: null },
-  { id: 5, code: 'E', color: '#0000FF', description: 'Non-urgent', displayOrder: 5, createdAt: null, createdBy: null, updatedAt: null, updatedBy: null }
+  {
+    id: 1,
+    code: 'A',
+    color: '#FF0000',
+    description: 'Critical',
+    displayOrder: 1,
+    createdAt: null,
+    createdBy: null,
+    updatedAt: null,
+    updatedBy: null
+  },
+  {
+    id: 2,
+    code: 'B',
+    color: '#FFA500',
+    description: 'Urgent',
+    displayOrder: 2,
+    createdAt: null,
+    createdBy: null,
+    updatedAt: null,
+    updatedBy: null
+  },
+  {
+    id: 3,
+    code: 'C',
+    color: '#FFFF00',
+    description: 'Semi-urgent',
+    displayOrder: 3,
+    createdAt: null,
+    createdBy: null,
+    updatedAt: null,
+    updatedBy: null
+  },
+  {
+    id: 4,
+    code: 'D',
+    color: '#00FF00',
+    description: 'Standard',
+    displayOrder: 4,
+    createdAt: null,
+    createdBy: null,
+    updatedAt: null,
+    updatedBy: null
+  },
+  {
+    id: 5,
+    code: 'E',
+    color: '#0000FF',
+    description: 'Non-urgent',
+    displayOrder: 5,
+    createdAt: null,
+    createdBy: null,
+    updatedAt: null,
+    updatedBy: null
+  }
 ]
 
 describe('useTriageCodeStore', () => {
@@ -96,7 +146,7 @@ describe('useTriageCodeStore', () => {
 
     it('should handle loading state', async () => {
       let resolvePromise: (value: unknown) => void = () => {}
-      const promise = new Promise((resolve) => {
+      const promise = new Promise(resolve => {
         resolvePromise = resolve
       })
       mockedApi.get.mockReturnValueOnce(promise as Promise<{ data: unknown }>)

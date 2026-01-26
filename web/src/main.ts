@@ -11,6 +11,10 @@ import Tooltip from 'primevue/tooltip'
 import App from './App.vue'
 import router from './router'
 import i18n from './i18n'
+import { initZodI18n } from './validation/zodI18n'
+
+// Initialize Zod with i18n error map for translated validation messages
+initZodI18n()
 
 import '@/assets/tailwind.css'
 import '@/assets/styles.scss'

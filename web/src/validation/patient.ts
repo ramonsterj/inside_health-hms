@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 /**
  * Patient validation schemas that mirror backend Jakarta Bean Validation rules.
+ * Error messages use i18n keys that are translated via zodI18n.ts
  */
 
 /** Maximum file size for ID document uploads: 5MB */
@@ -15,64 +16,73 @@ export const emergencyContactSchema = z.object({
   id: z.number().optional(),
   name: z
     .string()
-    .min(1, 'Contact name is required')
-    .max(200, 'Contact name must be at most 200 characters'),
+    .min(1, 'validation.patient.emergencyContacts.name.required')
+    .max(200, 'validation.patient.emergencyContacts.name.max'),
   relationship: z
     .string()
-    .min(1, 'Relationship is required')
-    .max(100, 'Relationship must be at most 100 characters'),
-  phone: z.string().min(1, 'Phone is required').max(20, 'Phone must be at most 20 characters')
+    .min(1, 'validation.patient.emergencyContacts.relationship.required')
+    .max(100, 'validation.patient.emergencyContacts.relationship.max'),
+  phone: z
+    .string()
+    .min(1, 'validation.patient.emergencyContacts.phone.required')
+    .max(20, 'validation.patient.emergencyContacts.phone.max')
 })
 
 // Patient schema
 export const patientSchema = z.object({
   firstName: z
     .string()
-    .min(1, 'First name is required')
-    .max(100, 'First name must be at most 100 characters'),
+    .min(1, 'validation.patient.firstName.required')
+    .max(100, 'validation.patient.firstName.max'),
   lastName: z
     .string()
-    .min(1, 'Last name is required')
-    .max(100, 'Last name must be at most 100 characters'),
+    .min(1, 'validation.patient.lastName.required')
+    .max(100, 'validation.patient.lastName.max'),
   age: z
-    .number({ required_error: 'Age is required', invalid_type_error: 'Age must be a number' })
-    .min(0, 'Age must be at least 0')
-    .max(150, 'Age must be at most 150'),
-  sex: z.enum(['MALE', 'FEMALE'], { required_error: 'Sex is required' }),
-  gender: z.string().min(1, 'Gender is required').max(50, 'Gender must be at most 50 characters'),
+    .number({
+      required_error: 'validation.patient.age.required',
+      invalid_type_error: 'validation.patient.age.invalid'
+    })
+    .min(0, 'validation.patient.age.min')
+    .max(150, 'validation.patient.age.max'),
+  sex: z.enum(['MALE', 'FEMALE'], { required_error: 'validation.patient.sex.required' }),
+  gender: z
+    .string()
+    .min(1, 'validation.patient.gender.required')
+    .max(50, 'validation.patient.gender.max'),
   maritalStatus: z.enum(['SINGLE', 'MARRIED', 'DIVORCED', 'WIDOWED', 'SEPARATED', 'OTHER'], {
-    required_error: 'Marital status is required'
+    required_error: 'validation.patient.maritalStatus.required'
   }),
   religion: z
     .string()
-    .min(1, 'Religion is required')
-    .max(100, 'Religion must be at most 100 characters'),
+    .min(1, 'validation.patient.religion.required')
+    .max(100, 'validation.patient.religion.max'),
   educationLevel: z.enum(
     ['NONE', 'PRIMARY', 'SECONDARY', 'TECHNICAL', 'UNIVERSITY', 'POSTGRADUATE'],
-    { required_error: 'Education level is required' }
+    { required_error: 'validation.patient.educationLevel.required' }
   ),
   occupation: z
     .string()
-    .min(1, 'Occupation is required')
-    .max(100, 'Occupation must be at most 100 characters'),
+    .min(1, 'validation.patient.occupation.required')
+    .max(100, 'validation.patient.occupation.max'),
   address: z
     .string()
-    .min(1, 'Address is required')
-    .max(500, 'Address must be at most 500 characters'),
+    .min(1, 'validation.patient.address.required')
+    .max(500, 'validation.patient.address.max'),
   email: z
     .string()
-    .min(1, 'Email is required')
-    .email('Invalid email format')
-    .max(255, 'Email must be at most 255 characters'),
+    .min(1, 'validation.patient.email.required')
+    .email('validation.patient.email.invalid')
+    .max(255, 'validation.patient.email.max'),
   idDocumentNumber: z
     .string()
-    .max(50, 'ID document number must be at most 50 characters')
+    .max(50, 'validation.patient.idDocumentNumber.max')
     .optional()
     .or(z.literal('')),
   notes: z.string().optional().or(z.literal('')),
   emergencyContacts: z
     .array(emergencyContactSchema)
-    .min(1, 'At least one emergency contact is required')
+    .min(1, 'validation.patient.emergencyContacts.required')
 })
 
 // Type exports inferred from schemas

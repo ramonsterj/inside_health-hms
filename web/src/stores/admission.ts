@@ -31,9 +31,12 @@ export const useAdmissionStore = defineStore('admission', () => {
       if (status) {
         params.status = status
       }
-      const response = await api.get<ApiResponse<PageResponse<AdmissionListItem>>>('/v1/admissions', {
-        params
-      })
+      const response = await api.get<ApiResponse<PageResponse<AdmissionListItem>>>(
+        '/v1/admissions',
+        {
+          params
+        }
+      )
       if (response.data.success && response.data.data) {
         admissions.value = response.data.data.content
         totalAdmissions.value = response.data.data.page.totalElements
@@ -70,7 +73,10 @@ export const useAdmissionStore = defineStore('admission', () => {
     }
   }
 
-  async function updateAdmission(id: number, data: UpdateAdmissionRequest): Promise<AdmissionDetail> {
+  async function updateAdmission(
+    id: number,
+    data: UpdateAdmissionRequest
+  ): Promise<AdmissionDetail> {
     loading.value = true
     try {
       const response = await api.put<ApiResponse<AdmissionDetail>>(`/v1/admissions/${id}`, data)
@@ -87,7 +93,9 @@ export const useAdmissionStore = defineStore('admission', () => {
   async function dischargePatient(id: number): Promise<AdmissionDetail> {
     loading.value = true
     try {
-      const response = await api.post<ApiResponse<AdmissionDetail>>(`/v1/admissions/${id}/discharge`)
+      const response = await api.post<ApiResponse<AdmissionDetail>>(
+        `/v1/admissions/${id}/discharge`
+      )
       if (response.data.success && response.data.data) {
         currentAdmission.value = response.data.data
         return response.data.data
@@ -150,9 +158,12 @@ export const useAdmissionStore = defineStore('admission', () => {
   async function searchPatients(query: string): Promise<PatientSummary[]> {
     if (!query.trim()) return []
     try {
-      const response = await api.get<ApiResponse<PatientSummary[]>>('/v1/admissions/patients/search', {
-        params: { q: query }
-      })
+      const response = await api.get<ApiResponse<PatientSummary[]>>(
+        '/v1/admissions/patients/search',
+        {
+          params: { q: query }
+        }
+      )
       if (response.data.success && response.data.data) {
         return response.data.data
       }
@@ -164,7 +175,9 @@ export const useAdmissionStore = defineStore('admission', () => {
 
   async function fetchPatientSummary(patientId: number): Promise<PatientSummary | null> {
     try {
-      const response = await api.get<ApiResponse<PatientSummary>>(`/v1/admissions/patients/${patientId}`)
+      const response = await api.get<ApiResponse<PatientSummary>>(
+        `/v1/admissions/patients/${patientId}`
+      )
       if (response.data.success && response.data.data) {
         return response.data.data
       }
@@ -210,7 +223,9 @@ export const useAdmissionStore = defineStore('admission', () => {
   ): Promise<void> {
     loading.value = true
     try {
-      await api.delete(`/v1/admissions/${admissionId}/consulting-physicians/${consultingPhysicianId}`)
+      await api.delete(
+        `/v1/admissions/${admissionId}/consulting-physicians/${consultingPhysicianId}`
+      )
       // Refresh current admission to get updated list
       await fetchAdmission(admissionId)
     } finally {

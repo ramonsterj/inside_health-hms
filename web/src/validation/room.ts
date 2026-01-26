@@ -3,19 +3,23 @@ import { RoomType } from '@/types/room'
 
 /**
  * Room validation schemas that mirror backend Jakarta Bean Validation rules.
+ * Error messages use i18n keys that are translated via zodI18n.ts
  */
 
 // Room schema
 export const roomSchema = z.object({
   number: z
     .string()
-    .min(1, 'Room number is required')
-    .max(50, 'Room number must be at most 50 characters'),
-  type: z.nativeEnum(RoomType, { required_error: 'Room type is required' }),
+    .min(1, 'validation.room.number.required')
+    .max(50, 'validation.room.number.max'),
+  type: z.nativeEnum(RoomType, { required_error: 'validation.room.type.required' }),
   capacity: z
-    .number({ required_error: 'Capacity is required', invalid_type_error: 'Capacity must be a number' })
-    .int('Capacity must be an integer')
-    .min(1, 'Capacity must be at least 1')
+    .number({
+      required_error: 'validation.room.capacity.required',
+      invalid_type_error: 'validation.room.capacity.invalid'
+    })
+    .int('validation.room.capacity.integer')
+    .min(1, 'validation.room.capacity.min')
     .default(1)
 })
 

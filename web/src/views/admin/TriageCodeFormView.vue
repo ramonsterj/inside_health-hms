@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
+import { toTypedSchema } from '@/validation/zodI18n'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
@@ -64,7 +64,7 @@ async function loadTriageCode() {
   }
 }
 
-const onSubmit = handleSubmit(async (values) => {
+const onSubmit = handleSubmit(async values => {
   loading.value = true
   try {
     const data = {
@@ -115,7 +115,11 @@ function cancel() {
             <label for="color">{{ t('triageCode.color') }} *</label>
             <div class="color-picker-wrapper">
               <ColorPicker v-model="color" inputId="color" format="hex" />
-              <InputText v-model="color" class="color-input" :class="{ 'p-invalid': errors.color }" />
+              <InputText
+                v-model="color"
+                class="color-input"
+                :class="{ 'p-invalid': errors.color }"
+              />
             </div>
             <Message v-if="errors.color" severity="error" :closable="false">
               {{ errors.color }}

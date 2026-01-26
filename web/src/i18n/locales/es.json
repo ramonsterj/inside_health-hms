@@ -266,14 +266,11 @@
   "user": {
     "salutation": "Saludo",
     "salutations": {
-      "SR": "Sr.",
-      "SRA": "Sra.",
-      "SRTA": "Srta.",
       "DR": "Dr.",
       "DRA": "Dra.",
-      "MR": "Mr.",
-      "MRS": "Mrs.",
-      "MISS": "Miss"
+      "MR": "Sr.",
+      "MRS": "Sra.",
+      "MISS": "Srta."
     },
     "phoneNumbers": "Telefonos",
     "phoneNumber": "Numero de Telefono",
@@ -526,6 +523,14 @@
         "reason": {
           "max": "El motivo debe tener como maximo 500 caracteres"
         }
+      },
+      "inventory": {
+        "max": "El inventario debe tener como maximo 2000 caracteres"
+      },
+      "consent": {
+        "required": "Por favor selecciona un archivo",
+        "size": "El archivo debe ser menor a 25MB",
+        "type": "El archivo debe ser PDF, JPEG o PNG"
       }
     },
     "username": {
@@ -545,7 +550,8 @@
       "min": "La contrasena debe tener al menos 8 caracteres",
       "current": "La contrasena actual es requerida",
       "new": "La nueva contrasena es requerida",
-      "confirm": "Por favor confirma tu contrasena"
+      "confirm": "Por favor confirma tu contrasena",
+      "mustBeDifferent": "La nueva contrasena debe ser diferente a la actual"
     },
     "name": {
       "max": "El nombre debe tener como maximo 100 caracteres"
@@ -556,6 +562,104 @@
         "required": "El numero de telefono es requerido",
         "max": "El numero de telefono debe tener como maximo 20 caracteres"
       }
+    },
+    "patient": {
+      "firstName": {
+        "required": "El nombre es requerido",
+        "max": "El nombre debe tener como maximo 100 caracteres"
+      },
+      "lastName": {
+        "required": "El apellido es requerido",
+        "max": "El apellido debe tener como maximo 100 caracteres"
+      },
+      "age": {
+        "required": "La edad es requerida",
+        "invalid": "La edad debe ser un numero",
+        "min": "La edad debe ser al menos 0",
+        "max": "La edad debe ser como maximo 150"
+      },
+      "sex": {
+        "required": "El sexo es requerido"
+      },
+      "gender": {
+        "required": "El genero es requerido",
+        "max": "El genero debe tener como maximo 50 caracteres"
+      },
+      "maritalStatus": {
+        "required": "El estado civil es requerido"
+      },
+      "religion": {
+        "required": "La religion es requerida",
+        "max": "La religion debe tener como maximo 100 caracteres"
+      },
+      "educationLevel": {
+        "required": "El nivel de educacion es requerido"
+      },
+      "occupation": {
+        "required": "La ocupacion es requerida",
+        "max": "La ocupacion debe tener como maximo 100 caracteres"
+      },
+      "address": {
+        "required": "La direccion es requerida",
+        "max": "La direccion debe tener como maximo 500 caracteres"
+      },
+      "email": {
+        "required": "El correo electronico es requerido",
+        "invalid": "Formato de correo electronico invalido",
+        "max": "El correo debe tener como maximo 255 caracteres"
+      },
+      "idDocumentNumber": {
+        "max": "El numero de documento debe tener como maximo 50 caracteres"
+      },
+      "emergencyContacts": {
+        "required": "Se requiere al menos un contacto de emergencia",
+        "name": {
+          "required": "El nombre del contacto es requerido",
+          "max": "El nombre del contacto debe tener como maximo 200 caracteres"
+        },
+        "relationship": {
+          "required": "El parentesco es requerido",
+          "max": "El parentesco debe tener como maximo 100 caracteres"
+        },
+        "phone": {
+          "required": "El telefono es requerido",
+          "max": "El telefono debe tener como maximo 20 caracteres"
+        }
+      }
+    },
+    "room": {
+      "number": {
+        "required": "El numero de habitacion es requerido",
+        "max": "El numero de habitacion debe tener como maximo 50 caracteres"
+      },
+      "type": {
+        "required": "El tipo de habitacion es requerido"
+      },
+      "capacity": {
+        "required": "La capacidad es requerida",
+        "invalid": "La capacidad debe ser un numero",
+        "min": "La capacidad debe ser al menos 1",
+        "integer": "La capacidad debe ser un numero entero"
+      }
+    },
+    "triageCode": {
+      "code": {
+        "required": "El codigo es requerido",
+        "max": "El codigo debe tener como maximo 10 caracteres"
+      },
+      "color": {
+        "required": "El color es requerido",
+        "invalid": "Debe ser un color hexadecimal valido (ej. #FF0000)"
+      },
+      "description": {
+        "max": "La descripcion debe tener como maximo 255 caracteres"
+      },
+      "displayOrder": {
+        "required": "El orden de visualizacion es requerido",
+        "invalid": "El orden de visualizacion debe ser un numero",
+        "integer": "El orden de visualizacion debe ser un numero entero",
+        "min": "El orden de visualizacion debe ser al menos 0"
+      }
     }
   },
   "errors": {
@@ -564,7 +668,29 @@
     "unauthorized": "No estas autorizado para realizar esta accion.",
     "notFound": "El recurso solicitado no fue encontrado.",
     "serverError": "Error del servidor. Por favor intenta mas tarde.",
-    "sessionExpired": "Tu sesion ha expirado. Por favor inicia sesion de nuevo."
+    "sessionExpired": "Tu sesion ha expirado. Por favor inicia sesion de nuevo.",
+    "badRequest": "Solicitud invalida. Por favor verifica tu entrada.",
+    "forbidden": "Acceso denegado. No tienes permiso.",
+    "conflict": "Esta operacion entra en conflicto con datos existentes.",
+    "validation": "Por favor corrige los errores en el formulario.",
+    "invalidToken": "Tu sesion es invalida. Por favor inicia sesion de nuevo.",
+    "authenticationFailed": "Error de autenticacion. Por favor verifica tus credenciales.",
+    "accountDisabled": "Tu cuenta no esta activa.",
+    "user": {
+      "notFound": "Usuario no encontrado.",
+      "emailExists": "Este correo ya esta registrado.",
+      "usernameExists": "Este nombre de usuario ya esta en uso.",
+      "passwordIncorrect": "La contrasena actual es incorrecta.",
+      "cannotDeleteSelf": "No puedes eliminar tu propia cuenta."
+    },
+    "role": {
+      "notFound": "Rol no encontrado.",
+      "codeExists": "Este codigo de rol ya existe.",
+      "systemCannotDelete": "Los roles del sistema no pueden ser eliminados."
+    },
+    "patient": {
+      "alreadyAdmitted": "El paciente ya tiene una admision activa."
+    }
   },
   "locale": {
     "en": "Ingles",

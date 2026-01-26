@@ -80,7 +80,7 @@ describe('useRoomStore', () => {
 
     it('should handle loading state', async () => {
       let resolvePromise: (value: unknown) => void = () => {}
-      const promise = new Promise((resolve) => {
+      const promise = new Promise(resolve => {
         resolvePromise = resolve
       })
       mockedApi.get.mockReturnValueOnce(promise as Promise<{ data: unknown }>)
@@ -124,13 +124,20 @@ describe('useRoomStore', () => {
       const roomsWithAvailability: RoomAvailability[] = [
         { ...mockRoomAvailability, id: 1, availableBeds: 1 },
         { ...mockRoomAvailability, id: 2, number: '102', availableBeds: 0 },
-        { ...mockRoomAvailability, id: 3, number: '201', type: RoomType.SHARED, capacity: 4, availableBeds: 3 }
+        {
+          ...mockRoomAvailability,
+          id: 3,
+          number: '201',
+          type: RoomType.SHARED,
+          capacity: 4,
+          availableBeds: 3
+        }
       ]
 
       mockedApi.get.mockResolvedValueOnce({
         data: {
           success: true,
-          data: roomsWithAvailability.filter((r) => r.availableBeds > 0)
+          data: roomsWithAvailability.filter(r => r.availableBeds > 0)
         }
       })
 
@@ -138,7 +145,7 @@ describe('useRoomStore', () => {
       await store.fetchAvailableRooms()
 
       expect(store.availableRooms).toHaveLength(2)
-      expect(store.availableRooms.every((r) => r.availableBeds > 0)).toBe(true)
+      expect(store.availableRooms.every(r => r.availableBeds > 0)).toBe(true)
     })
   })
 
@@ -198,7 +205,9 @@ describe('useRoomStore', () => {
         capacity: 1
       }
 
-      await expect(store.createRoom(createData)).rejects.toThrow('Room with number 101 already exists')
+      await expect(store.createRoom(createData)).rejects.toThrow(
+        'Room with number 101 already exists'
+      )
     })
   })
 
