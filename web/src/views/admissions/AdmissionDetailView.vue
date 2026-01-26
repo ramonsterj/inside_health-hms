@@ -69,11 +69,12 @@ function confirmDischarge() {
     message: t('admission.confirmDischarge'),
     header: t('common.confirm'),
     icon: 'pi pi-exclamation-triangle',
-    accept: () => dischargePatient()
+    accept: () => { dischargePatient() }
   })
 }
 
 async function dischargePatient() {
+  confirm.close()
   loading.value = true
   try {
     await admissionStore.dischargePatient(admissionId.value)

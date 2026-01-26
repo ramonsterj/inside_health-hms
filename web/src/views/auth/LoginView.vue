@@ -62,18 +62,17 @@ const onSubmit = handleSubmit(async values => {
     <Card class="login-card">
       <template #title>
         <div class="text-center">
-          <h1>Welcome Back</h1>
-          <p class="subtitle">Sign in to your account</p>
+          <img src="@/assets/logo.svg" alt="Inside Health" class="login-logo" />
         </div>
       </template>
       <template #content>
         <form @submit="onSubmit" class="login-form">
           <div class="field">
-            <label for="identifier">Email or Username</label>
+            <label for="identifier">{{ t('auth.login.identifier') }}</label>
             <InputText
               id="identifier"
               v-model="identifier"
-              placeholder="Enter your email or username"
+              :placeholder="t('auth.login.identifierPlaceholder')"
               class="w-full"
               :class="{ 'p-invalid': errors.identifier }"
             />
@@ -81,11 +80,11 @@ const onSubmit = handleSubmit(async values => {
           </div>
 
           <div class="field">
-            <label for="password">Password</label>
+            <label for="password">{{ t('auth.login.password') }}</label>
             <Password
               id="password"
               v-model="password"
-              placeholder="Enter your password"
+              :placeholder="t('auth.login.passwordPlaceholder')"
               :feedback="false"
               toggleMask
               class="w-full"
@@ -97,8 +96,7 @@ const onSubmit = handleSubmit(async values => {
 
           <Button
             type="submit"
-            label="Sign In"
-            icon="pi pi-sign-in"
+            :label="t('auth.login.submit')"
             :loading="authStore.loading"
             class="w-full mt-4"
           />
@@ -123,10 +121,11 @@ const onSubmit = handleSubmit(async values => {
   max-width: 400px;
 }
 
-.subtitle {
-  color: var(--text-color-secondary);
-  margin-top: 0.5rem;
-  font-size: 0.9rem;
+.login-logo {
+  height: 5rem;
+  width: auto;
+  display: block;
+  margin: 2rem auto;
 }
 
 .login-form {

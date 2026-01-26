@@ -45,6 +45,10 @@ const handleLogout = async () => {
         <i class="pi pi-ellipsis-v"></i>
       </button>
 
+      <span v-if="authStore.user" class="layout-topbar-username">
+        {{ authStore.user.username }}
+      </span>
+
       <div class="layout-topbar-menu hidden lg:block">
         <div class="layout-topbar-menu-content">
           <router-link to="/profile" custom v-slot="{ navigate }">

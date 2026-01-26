@@ -444,7 +444,7 @@ test.describe('Admissions - Administrative Staff', () => {
     await confirmDialogAccept(page)
 
     // Should see success message or status change
-    await expect(page.getByText(/discharged|dado de alta/i)).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText(/discharged|dado de alta/i).first()).toBeVisible({ timeout: 10000 })
   })
 
   test('cannot see delete button (admin only)', async ({ page }) => {

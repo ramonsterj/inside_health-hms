@@ -13,7 +13,7 @@ import { useAdmissionStore } from '@/stores/admission'
 import { useAuthStore } from '@/stores/auth'
 import { AdmissionStatus } from '@/types/admission'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const router = useRouter()
 const { showError } = useErrorHandler()
 const admissionStore = useAdmissionStore()
@@ -21,7 +21,7 @@ const authStore = useAuthStore()
 
 const first = ref(0)
 const rows = ref(20)
-const statusFilter = ref<AdmissionStatus | null>(null)
+const statusFilter = ref<AdmissionStatus | null>(AdmissionStatus.ACTIVE)
 
 const canCreate = computed(() => authStore.hasPermission('admission:create'))
 
@@ -69,8 +69,35 @@ function getStatusSeverity(status: AdmissionStatus): 'success' | 'secondary' {
   return status === AdmissionStatus.ACTIVE ? 'success' : 'secondary'
 }
 
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString()
+function formatDateTime(dateString: string): string {
+  const date = new Date(dateString)
+  return date.toLocaleDateString(locale.value, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+function getRelativeTime(dateString: string): string {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMinutes = Math.floor(diffMs / (1000 * 60))
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffMinutes < 1) {
+    return t('common.time.justNow')
+  } else if (diffMinutes < 60) {
+    return t('common.time.minutesAgo', { count: diffMinutes })
+  } else if (diffHours < 24) {
+    return t('common.time.hoursAgo', { count: diffHours })
+  } else if (diffDays === 1) {
+    return t('common.time.yesterday')
+  } else {
+    return t('common.time.daysAgo', { count: diffDays })
+  }
 }
 
 function getContrastColor(hexColor: string): string {
@@ -170,9 +197,12 @@ function getContrastColor(hexColor: string): string {
             </template>
           </Column>
 
-          <Column :header="t('admission.admissionDate')" style="width: 120px">
+          <Column :header="t('admission.admissionDate')" style="width: 180px">
             <template #body="{ data }">
-              {{ formatDate(data.admissionDate) }}
+              <div class="admission-date">
+                <span class="date-time">{{ formatDateTime(data.admissionDate) }}</span>
+                <span class="relative-time">{{ getRelativeTime(data.admissionDate) }}</span>
+              </div>
             </template>
           </Column>
 
@@ -252,5 +282,20 @@ function getContrastColor(hexColor: string): string {
   border-radius: 4px;
   font-weight: 600;
   font-size: 0.875rem;
+}
+
+.admission-date {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.date-time {
+  font-weight: 500;
+}
+
+.relative-time {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
 }
 </style>
