@@ -4,9 +4,11 @@ import com.insidehealthgt.hms.entity.Patient
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 
 @Repository
 interface PatientRepository : JpaRepository<Patient, Long> {
@@ -36,4 +38,12 @@ interface PatientRepository : JpaRepository<Patient, Long> {
         @Param("age") age: Int,
         @Param("idDocumentNumber") idDocumentNumber: String?,
     ): List<Patient>
+
+    /**
+     * Delete all patients including soft-deleted ones (for test cleanup).
+     */
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM patients", nativeQuery = true)
+    fun deleteAllHard()
 }

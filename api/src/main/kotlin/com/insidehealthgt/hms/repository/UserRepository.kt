@@ -81,4 +81,14 @@ interface UserRepository : JpaRepository<User, Long> {
         nativeQuery = true,
     )
     fun findDeletedById(id: Long): User?
+
+    @Query(
+        """
+        SELECT DISTINCT u FROM User u
+        JOIN u.roles r
+        WHERE r.code = :roleCode
+        ORDER BY u.lastName, u.firstName
+        """,
+    )
+    fun findByRoleCode(@Param("roleCode") roleCode: String): List<User>
 }

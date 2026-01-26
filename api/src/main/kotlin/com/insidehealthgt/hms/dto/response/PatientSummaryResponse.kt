@@ -9,15 +9,21 @@ data class PatientSummaryResponse(
     val age: Int,
     val idDocumentNumber: String?,
     val hasIdDocument: Boolean,
+    val hasActiveAdmission: Boolean = false,
 ) {
     companion object {
-        fun from(patient: Patient, hasIdDocument: Boolean): PatientSummaryResponse = PatientSummaryResponse(
+        fun from(
+            patient: Patient,
+            hasIdDocument: Boolean? = null,
+            hasActiveAdmission: Boolean = false,
+        ): PatientSummaryResponse = PatientSummaryResponse(
             id = patient.id!!,
             firstName = patient.firstName,
             lastName = patient.lastName,
             age = patient.age,
             idDocumentNumber = patient.idDocumentNumber,
-            hasIdDocument = hasIdDocument,
+            hasIdDocument = hasIdDocument ?: patient.hasIdDocument(),
+            hasActiveAdmission = hasActiveAdmission,
         )
     }
 }

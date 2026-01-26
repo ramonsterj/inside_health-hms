@@ -52,7 +52,8 @@ const mockPatientSummary: PatientSummary = {
   lastName: 'Pérez García',
   age: 45,
   idDocumentNumber: '1234567890101',
-  hasIdDocument: false
+  hasIdDocument: false,
+  hasActiveAdmission: false
 }
 
 describe('usePatientStore', () => {

@@ -25,8 +25,12 @@
     "refresh": "Actualizar",
     "view": "Ver",
     "download": "Descargar",
+    "all": "Todos",
     "createdAt": "Fecha de Creacion",
-    "updatedAt": "Fecha de Actualizacion"
+    "createdBy": "Creado Por",
+    "updatedAt": "Fecha de Actualizacion",
+    "updatedBy": "Actualizado Por",
+    "auditInfo": "Informacion de Auditoria"
   },
   "nav": {
     "home": "Inicio",
@@ -35,8 +39,11 @@
     "administration": "Administracion",
     "dashboard": "Panel",
     "patients": "Pacientes",
+    "admissions": "Admisiones",
     "users": "Usuarios",
     "roles": "Roles",
+    "triageCodes": "Codigos de Triage",
+    "rooms": "Habitaciones",
     "auditLogs": "Registros de Auditoria",
     "profile": "Perfil",
     "logout": "Cerrar Sesion"
@@ -421,6 +428,9 @@
   },
   "patient": {
     "title": "Pacientes",
+    "actions": {
+      "admit": "Admitir"
+    },
     "newPatient": "Registro de Nuevo Paciente",
     "editPatient": "Editar Paciente",
     "patientDetails": "Datos del Paciente",
@@ -493,6 +503,31 @@
     "minLength": "{field} debe tener al menos {min} caracteres",
     "maxLength": "{field} debe tener como maximo {max} caracteres",
     "passwordMatch": "Las contrasenas no coinciden",
+    "admission": {
+      "patientId": {
+        "required": "Paciente es requerido"
+      },
+      "triageCodeId": {
+        "required": "Codigo de triage es requerido"
+      },
+      "roomId": {
+        "required": "Habitacion es requerida"
+      },
+      "treatingPhysicianId": {
+        "required": "Medico tratante es requerido"
+      },
+      "admissionDate": {
+        "required": "Fecha de admision es requerida"
+      },
+      "consultingPhysicians": {
+        "physicianId": {
+          "required": "Medico es requerido"
+        },
+        "reason": {
+          "max": "El motivo debe tener como maximo 500 caracteres"
+        }
+      }
+    },
     "username": {
       "required": "El nombre de usuario es requerido",
       "min": "El nombre de usuario debe tener al menos 3 caracteres",
@@ -534,5 +569,113 @@
   "locale": {
     "en": "Ingles",
     "es": "Espanol"
+  },
+  "triageCode": {
+    "title": "Codigos de Triage",
+    "new": "Nuevo Codigo de Triage",
+    "edit": "Editar Codigo de Triage",
+    "code": "Codigo",
+    "color": "Color",
+    "description": "Descripcion",
+    "displayOrder": "Orden de Visualizacion",
+    "empty": "No se encontraron codigos de triage.",
+    "created": "Codigo de triage creado exitosamente.",
+    "updated": "Codigo de triage actualizado exitosamente.",
+    "deleted": "Codigo de triage eliminado exitosamente.",
+    "confirmDelete": "Esta seguro de que desea eliminar este codigo de triage?"
+  },
+  "room": {
+    "title": "Habitaciones",
+    "new": "Nueva Habitacion",
+    "edit": "Editar Habitacion",
+    "number": "Numero de Habitacion",
+    "type": "Tipo de Habitacion",
+    "capacity": "Capacidad",
+    "availableBeds": "Camas Disponibles",
+    "bedsAvailable": "camas disponibles",
+    "empty": "No se encontraron habitaciones.",
+    "created": "Habitacion creada exitosamente.",
+    "updated": "Habitacion actualizada exitosamente.",
+    "deleted": "Habitacion eliminada exitosamente.",
+    "confirmDelete": "Esta seguro de que desea eliminar esta habitacion?",
+    "types": {
+      "PRIVATE": "Privada",
+      "SHARED": "Compartida"
+    }
+  },
+  "admission": {
+    "title": "Admisiones",
+    "new": "Nueva Admision",
+    "edit": "Editar Admision",
+    "details": "Detalles de Admision",
+    "patient": "Paciente",
+    "patientInfo": "Informacion del Paciente",
+    "admissionInfo": "Informacion de Admision",
+    "triageCode": "Codigo de Triage",
+    "room": "Habitacion",
+    "treatingPhysician": "Medico Tratante",
+    "admissionDate": "Fecha de Admision",
+    "dischargeDate": "Fecha de Alta",
+    "status": "Estado",
+    "inventory": "Inventario del Paciente",
+    "inventoryPlaceholder": "Lista de pertenencias del paciente...",
+    "noInventory": "No se registro inventario.",
+    "consent": "Documento de Consentimiento",
+    "uploadConsent": "Subir Documento de Consentimiento",
+    "downloadConsent": "Descargar Consentimiento",
+    "replaceConsent": "Reemplazar Consentimiento",
+    "selectConsent": "Seleccionar Archivo",
+    "noConsent": "No se ha subido documento de consentimiento.",
+    "dragDropConsent": "Arrastra y suelta el archivo aqui o haz clic para buscar",
+    "consentHint": "Formatos aceptados: PDF o imagenes (max 25MB)",
+    "consentUploaded": "Documento de consentimiento subido exitosamente.",
+    "discharge": "Dar de Alta al Paciente",
+    "submit": "Crear Admision",
+    "searchPatient": "Buscar Paciente",
+    "searchPatientPlaceholder": "Buscar por nombre o documento de identidad...",
+    "patientNotFound": "No encuentra al paciente?",
+    "registerNewPatient": "Registrar Nuevo Paciente",
+    "selectedPatient": "Paciente Seleccionado",
+    "selectTriageCode": "Seleccione codigo de triage",
+    "selectRoom": "Seleccione habitacion",
+    "selectPhysician": "Seleccione medico tratante",
+    "empty": "No se encontraron admisiones.",
+    "created": "Admision creada exitosamente.",
+    "updated": "Admision actualizada exitosamente.",
+    "deleted": "Admision eliminada exitosamente.",
+    "patientAlreadyAdmitted": "El paciente ya tiene una admision activa. Por favor de de alta la admision existente primero.",
+    "patientAlreadyAdmittedWarning": "Este paciente ya tiene una admision activa. Debe dar de alta la admision existente antes de crear una nueva.",
+    "discharged": "Paciente dado de alta exitosamente.",
+    "confirmDischarge": "Esta seguro de que desea dar de alta a este paciente?",
+    "confirmDelete": "Esta seguro de que desea eliminar esta admision?",
+    "statuses": {
+      "ACTIVE": "Activo",
+      "DISCHARGED": "De Alta"
+    },
+    "steps": {
+      "patient": "Paciente",
+      "details": "Detalles",
+      "extras": "Adicional",
+      "review": "Revision"
+    },
+    "consultingPhysicians": {
+      "title": "Interconsultas",
+      "add": "Agregar Interconsulta",
+      "remove": "Eliminar",
+      "empty": "No hay interconsultas asignadas.",
+      "physician": "Medico",
+      "reason": "Motivo",
+      "reasonPlaceholder": "Motivo de la interconsulta...",
+      "requestedDate": "Fecha Solicitada",
+      "addedAt": "Agregado",
+      "addedBy": "Agregado Por",
+      "selectPhysician": "Seleccionar medico",
+      "added": "Interconsulta agregada exitosamente.",
+      "removed": "Interconsulta eliminada exitosamente.",
+      "confirmRemove": "Esta seguro que desea eliminar esta interconsulta?"
+    },
+    "errors": {
+      "invalidPatient": "Paciente no encontrado. Por favor seleccione un paciente de la lista."
+    }
   }
 }

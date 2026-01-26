@@ -33,6 +33,7 @@ const uploadLoading = ref(false)
 
 const canCreate = computed(() => authStore.hasPermission('patient:create'))
 const canUploadId = computed(() => authStore.hasPermission('patient:upload-id'))
+const canAdmit = computed(() => authStore.hasPermission('admission:create'))
 
 onMounted(() => {
   loadPatients()
@@ -67,6 +68,10 @@ function viewPatient(patientId: number) {
 
 function editPatient(patientId: number) {
   router.push({ name: 'patient-edit', params: { id: patientId } })
+}
+
+function admitPatient(patientId: number) {
+  router.push({ name: 'admission-create', query: { patientId: patientId.toString() } })
 }
 
 function createNewPatient() {
@@ -201,6 +206,15 @@ async function onFileUpload(event: { files: File | File[] }) {
                   v-tooltip.top="t('common.edit')"
                 />
                 <Button
+                  v-if="canAdmit"
+                  icon="pi pi-user-plus"
+                  severity="success"
+                  text
+                  rounded
+                  @click="admitPatient(data.id)"
+                  v-tooltip.top="t('patient.actions.admit')"
+                />
+                <Button
                   v-if="canUploadId && !data.hasIdDocument"
                   icon="pi pi-id-card"
                   severity="warning"
@@ -221,7 +235,9 @@ async function onFileUpload(event: { files: File | File[] }) {
       v-model:visible="showUploadDialog"
       :header="t('patient.uploadIdDocument')"
       :modal="true"
+      :closable="!uploadLoading"
       :style="{ width: '500px' }"
+      :breakpoints="{ '640px': '90vw' }"
       @hide="closeUploadDialog"
     >
       <div v-if="selectedPatientForUpload" class="upload-dialog-content">

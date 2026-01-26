@@ -695,7 +695,9 @@ async function saveEditedUser() {
       v-model:visible="showAddUserDialog"
       :header="t('users.addUserDialog.title')"
       :modal="true"
+      :closable="!userStore.loading"
       :style="{ width: '600px' }"
+      :breakpoints="{ '768px': '90vw' }"
     >
       <div class="form-grid">
         <div class="form-field">
@@ -892,6 +894,7 @@ async function saveEditedUser() {
       :header="t('users.resetPasswordSuccess')"
       :modal="true"
       :style="{ width: '400px' }"
+      :breakpoints="{ '640px': '90vw' }"
     >
       <div class="password-display">
         <p>{{ t('users.temporaryPasswordLabel') }}</p>
@@ -920,7 +923,9 @@ async function saveEditedUser() {
       v-model:visible="showEditUserDialog"
       :header="t('users.editUserDialog.title')"
       :modal="true"
+      :closable="!editUserLoading && !userStore.loading"
       :style="{ width: '600px' }"
+      :breakpoints="{ '768px': '90vw' }"
     >
       <div v-if="editUserLoading" class="flex justify-center p-4">
         <ProgressSpinner style="width: 50px; height: 50px" />

@@ -65,6 +65,7 @@ export interface PatientSummary {
   age: number
   idDocumentNumber: string | null
   hasIdDocument: boolean
+  hasActiveAdmission: boolean
 }
 
 export interface CreatePatientRequest {

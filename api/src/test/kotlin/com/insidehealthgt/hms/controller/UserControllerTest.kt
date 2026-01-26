@@ -6,7 +6,12 @@ import com.insidehealthgt.hms.dto.request.UpdateUserRequest
 import com.insidehealthgt.hms.dto.response.ApiResponse
 import com.insidehealthgt.hms.dto.response.AuthResponse
 import com.insidehealthgt.hms.entity.User
+import com.insidehealthgt.hms.repository.AdmissionConsentDocumentRepository
+import com.insidehealthgt.hms.repository.AdmissionRepository
+import com.insidehealthgt.hms.repository.EmergencyContactRepository
+import com.insidehealthgt.hms.repository.PatientRepository
 import com.insidehealthgt.hms.repository.RoleRepository
+import com.insidehealthgt.hms.repository.RoomRepository
 import com.insidehealthgt.hms.repository.UserRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -44,6 +49,21 @@ class UserControllerTest {
     private lateinit var roleRepository: RoleRepository
 
     @Autowired
+    private lateinit var admissionConsentDocumentRepository: AdmissionConsentDocumentRepository
+
+    @Autowired
+    private lateinit var admissionRepository: AdmissionRepository
+
+    @Autowired
+    private lateinit var emergencyContactRepository: EmergencyContactRepository
+
+    @Autowired
+    private lateinit var patientRepository: PatientRepository
+
+    @Autowired
+    private lateinit var roomRepository: RoomRepository
+
+    @Autowired
     private lateinit var passwordEncoder: PasswordEncoder
 
     private lateinit var userToken: String
@@ -51,6 +71,11 @@ class UserControllerTest {
 
     @BeforeEach
     fun setUp() {
+        admissionConsentDocumentRepository.deleteAllHard()
+        admissionRepository.deleteAllHard()
+        emergencyContactRepository.deleteAllHard()
+        patientRepository.deleteAllHard()
+        roomRepository.deleteAllHard()
         userRepository.deleteAll()
 
         // Create regular user (with permissions loaded)

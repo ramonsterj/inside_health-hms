@@ -44,17 +44,26 @@ const model = computed<MenuItem[]>(() => {
     }
   ]
 
-  // Clinical section - visible to users with patient permissions
+  // Clinical section - visible to users with patient or admission permissions
+  const clinicalItems: MenuItem[] = []
   if (authStore.hasPermission('patient:read')) {
+    clinicalItems.push({
+      label: 'nav.patients',
+      icon: 'pi pi-fw pi-id-card',
+      to: '/patients'
+    })
+  }
+  if (authStore.hasPermission('admission:read')) {
+    clinicalItems.push({
+      label: 'nav.admissions',
+      icon: 'pi pi-fw pi-building',
+      to: '/admissions'
+    })
+  }
+  if (clinicalItems.length > 0) {
     items.push({
       label: 'nav.clinical',
-      items: [
-        {
-          label: 'nav.patients',
-          icon: 'pi pi-fw pi-id-card',
-          to: '/patients'
-        }
-      ]
+      items: clinicalItems
     })
   }
 
@@ -72,6 +81,16 @@ const model = computed<MenuItem[]>(() => {
           label: 'nav.roles',
           icon: 'pi pi-fw pi-shield',
           to: '/roles'
+        },
+        {
+          label: 'nav.triageCodes',
+          icon: 'pi pi-fw pi-tags',
+          to: '/admin/triage-codes'
+        },
+        {
+          label: 'nav.rooms',
+          icon: 'pi pi-fw pi-th-large',
+          to: '/admin/rooms'
         },
         {
           label: 'nav.auditLogs',

@@ -330,7 +330,9 @@ function getPermissionGroupLabel(resource: string): string {
       v-model:visible="showAddRoleDialog"
       :header="t('roles.addDialog.title')"
       :modal="true"
+      :closable="!roleStore.loading"
       :style="{ width: '500px' }"
+      :breakpoints="{ '640px': '90vw' }"
     >
       <div class="form-grid">
         <div class="form-field">
@@ -390,7 +392,9 @@ function getPermissionGroupLabel(resource: string): string {
       v-model:visible="showEditRoleDialog"
       :header="t('roles.editDialog.title')"
       :modal="true"
+      :closable="!roleStore.loading"
       :style="{ width: '500px' }"
+      :breakpoints="{ '640px': '90vw' }"
     >
       <div class="form-grid">
         <div class="form-field">
@@ -436,7 +440,9 @@ function getPermissionGroupLabel(resource: string): string {
       v-model:visible="showPermissionsDialog"
       :header="t('roles.permissionsDialog.title', { role: permissionsRoleName })"
       :modal="true"
+      :closable="!roleStore.loading"
       :style="{ width: '600px' }"
+      :breakpoints="{ '768px': '90vw' }"
     >
       <div class="permissions-dialog-content">
         <div class="permissions-actions">

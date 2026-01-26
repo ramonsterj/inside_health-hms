@@ -6,7 +6,11 @@ import com.insidehealthgt.hms.dto.request.ForgotPasswordRequest
 import com.insidehealthgt.hms.dto.request.LoginRequest
 import com.insidehealthgt.hms.dto.request.ResetPasswordRequest
 import com.insidehealthgt.hms.entity.User
+import com.insidehealthgt.hms.repository.AdmissionConsentDocumentRepository
+import com.insidehealthgt.hms.repository.AdmissionRepository
+import com.insidehealthgt.hms.repository.EmergencyContactRepository
 import com.insidehealthgt.hms.repository.PasswordResetTokenRepository
+import com.insidehealthgt.hms.repository.PatientRepository
 import com.insidehealthgt.hms.repository.RoleRepository
 import com.insidehealthgt.hms.repository.UserRepository
 import org.junit.jupiter.api.BeforeEach
@@ -46,10 +50,26 @@ class PasswordResetControllerTest {
     private lateinit var passwordResetTokenRepository: PasswordResetTokenRepository
 
     @Autowired
+    private lateinit var admissionConsentDocumentRepository: AdmissionConsentDocumentRepository
+
+    @Autowired
+    private lateinit var admissionRepository: AdmissionRepository
+
+    @Autowired
+    private lateinit var emergencyContactRepository: EmergencyContactRepository
+
+    @Autowired
+    private lateinit var patientRepository: PatientRepository
+
+    @Autowired
     private lateinit var passwordEncoder: PasswordEncoder
 
     @BeforeEach
     fun setUp() {
+        admissionConsentDocumentRepository.deleteAllHard()
+        admissionRepository.deleteAllHard()
+        emergencyContactRepository.deleteAllHard()
+        patientRepository.deleteAllHard()
         passwordResetTokenRepository.deleteAll()
         userRepository.deleteAll()
     }
