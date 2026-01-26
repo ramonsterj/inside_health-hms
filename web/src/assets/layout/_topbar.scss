@@ -101,6 +101,18 @@
     display: flex;
     gap: 1rem;
   }
+
+  .layout-topbar-username {
+    display: none;
+    align-items: center;
+    font-size: 0.875rem;
+    color: var(--text-color);
+    font-weight: 500;
+
+    @media (min-width: 992px) {
+      display: flex;
+    }
+  }
 }
 
 @media (max-width: 991px) {

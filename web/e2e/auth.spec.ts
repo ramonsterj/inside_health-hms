@@ -18,8 +18,8 @@ test.describe('Authentication', () => {
   test('login page renders correctly', async ({ page }) => {
     await page.goto('/login')
 
-    // Check page title
-    await expect(page.getByRole('heading', { name: 'Welcome Back' })).toBeVisible()
+    // Check logo is visible (design uses logo instead of text heading)
+    await expect(page.getByAltText('Inside Health')).toBeVisible()
 
     // Check form fields exist
     await expect(page.getByLabel('Email or Username')).toBeVisible()

@@ -108,8 +108,8 @@ test.describe('Session Expiration', () => {
       // Navigate to login with a redirect parameter
       await page.goto('/login?redirect=%2Fpatients%3Fpage%3D2')
 
-      // Verify we're on the login page
-      await expect(page.getByRole('heading', { name: 'Welcome Back' })).toBeVisible()
+      // Verify we're on the login page (check for logo instead of text heading)
+      await expect(page.getByAltText('Inside Health')).toBeVisible()
 
       // The redirect param should be preserved in the URL
       await expect(page).toHaveURL(/redirect=.*patients/)

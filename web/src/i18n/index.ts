@@ -21,13 +21,13 @@ function getInitialLocale(): SupportedLocale {
     return browserLang as SupportedLocale
   }
 
-  return 'en'
+  return 'es'
 }
 
 export const i18n = createI18n<[MessageSchema], SupportedLocale>({
   legacy: false,
   locale: getInitialLocale(),
-  fallbackLocale: 'en',
+  fallbackLocale: 'es',
   messages: {
     en,
     es

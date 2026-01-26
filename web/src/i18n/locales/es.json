@@ -30,7 +30,14 @@
     "createdBy": "Creado Por",
     "updatedAt": "Fecha de Actualizacion",
     "updatedBy": "Actualizado Por",
-    "auditInfo": "Informacion de Auditoria"
+    "auditInfo": "Informacion de Auditoria",
+    "time": {
+      "justNow": "ahora",
+      "minutesAgo": "hace {count} min",
+      "hoursAgo": "hace {count}h",
+      "yesterday": "ayer",
+      "daysAgo": "hace {count}d"
+    }
   },
   "nav": {
     "home": "Inicio",
@@ -39,7 +46,7 @@
     "administration": "Administracion",
     "dashboard": "Panel",
     "patients": "Pacientes",
-    "admissions": "Admisiones",
+    "admissions": "Hospitalizaciones",
     "users": "Usuarios",
     "roles": "Roles",
     "triageCodes": "Codigos de Triage",
@@ -426,7 +433,7 @@
   "patient": {
     "title": "Pacientes",
     "actions": {
-      "admit": "Admitir"
+      "admit": "Hospitalizar"
     },
     "newPatient": "Registro de Nuevo Paciente",
     "editPatient": "Editar Paciente",
@@ -730,8 +737,8 @@
     }
   },
   "admission": {
-    "title": "Admisiones",
-    "new": "Nueva Admision",
+    "title": "Hospitalizaciones",
+    "new": "Nueva Hospitalizacion",
     "edit": "Editar Admision",
     "details": "Detalles de Admision",
     "patient": "Paciente",
