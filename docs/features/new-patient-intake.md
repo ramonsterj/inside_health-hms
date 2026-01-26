@@ -5,6 +5,7 @@
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-01-21 | @author | Initial draft |
+| 1.1 | 2026-01-24 | @author | Added "Admit" action to patient list (integration with admission flow) |
 
 ---
 
@@ -425,7 +426,7 @@ WHERE r.code IN ('DOCTOR', 'NURSE', 'CHIEF_NURSE') AND p.code = 'patient:read';
 
 | Component | Location | Description |
 |-----------|----------|-------------|
-| `PatientList.vue` | `src/views/patients/` | List view with search and pagination |
+| `PatientList.vue` | `src/views/patients/` | List view with search, pagination, and row actions (view, edit, admit) |
 | `PatientForm.vue` | `src/views/patients/` | Create/Edit patient form |
 | `PatientDetail.vue` | `src/views/patients/` | View patient details (read-only for clinical staff) |
 | `EmergencyContactForm.vue` | `src/components/patients/` | Reusable emergency contact sub-form |
@@ -605,6 +606,7 @@ export type EmergencyContactFormData = z.infer<typeof emergencyContactSchema>
 
 ## Implementation Notes
 
+- **Admission Integration**: PatientList includes an "Admit" action icon that navigates to `/admissions/new?patientId={id}`. This action should be visible only to users with `admission:create` permission and hidden if the patient already has an ACTIVE admission. See [Patient Admission](./patient-admission.md) for admission flow details.
 - **Entity Pattern**: Follow existing `User` entity pattern - extend `BaseEntity`, use `@SQLRestriction("deleted_at IS NULL")` (even though patients won't be deleted)
 - **File Storage**: ID documents stored as BYTEA in PostgreSQL for simplicity. Consider moving to object storage (S3/MinIO) if file sizes become an issue
 - **Duplicate Detection**: Check for potential duplicates on create, return 409 with suggestions. Allow user to proceed if they confirm it's a new patient (future enhancement: add `forceCreate` flag)
@@ -635,6 +637,8 @@ export type EmergencyContactFormData = z.infer<typeof emergencyContactSchema>
 
 ### Frontend
 - [ ] `PatientList.vue` component with search/pagination
+- [ ] `PatientList.vue` includes "Admit" action (requires `admission:create` permission)
+- [ ] "Admit" action hidden for patients with ACTIVE admission
 - [ ] `PatientForm.vue` component with validation
 - [ ] `PatientDetail.vue` component with audit info display
 - [ ] `EmergencyContactForm.vue` sub-component
@@ -651,6 +655,7 @@ export type EmergencyContactFormData = z.infer<typeof emergencyContactSchema>
 ### E2E Tests (Playwright)
 - [ ] **Create Patient Flow**: Admin staff can register a new patient with all required fields and emergency contacts
 - [ ] **Edit Patient Flow**: Admin staff can edit existing patient data and add/remove emergency contacts
+- [ ] **Admit Action**: Clicking "Admit" on patient row navigates to admission wizard with patient pre-selected
 - [ ] **View Patient Flow**: Clinical staff (Doctor, Nurse, Chief Nurse) can view patient details but cannot edit
 - [ ] **Search Patients**: Users can search patients by name and ID document number
 - [ ] **ID Document Upload**: Admin staff can upload and view patient ID document
@@ -698,4 +703,5 @@ export type EmergencyContactFormData = z.infer<typeof emergencyContactSchema>
 ## Related Docs/Commits/Issues
 
 - Related feature: User management (existing)
+- Related feature: [Patient Admission](./patient-admission.md) (admission starts from patient list)
 - Design discussion: This feature spec document

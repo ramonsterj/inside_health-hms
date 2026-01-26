@@ -254,6 +254,7 @@ function formatUserName(
       :header="t('patient.idDocument')"
       :modal="true"
       :style="{ width: '80vw', maxWidth: '800px' }"
+      :breakpoints="{ '640px': '95vw' }"
       @hide="closeIdDocumentDialog"
     >
       <div class="document-preview">

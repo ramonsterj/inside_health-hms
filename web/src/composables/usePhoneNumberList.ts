@@ -24,7 +24,7 @@ export function usePhoneNumberList(phoneNumbers: Ref<PhoneNumberRequest[]>) {
     if (index < 0 || index >= phoneNumbers.value.length) {
       return
     }
-    const currentPhone = phoneNumbers.value.at(index)
+    const currentPhone = phoneNumbers.value[index]
     // If this phone is being marked as primary, uncheck all others
     if (phone.isPrimary && currentPhone && !currentPhone.isPrimary) {
       phoneNumbers.value.forEach((p, i) => {

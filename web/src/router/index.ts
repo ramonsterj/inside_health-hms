@@ -82,6 +82,69 @@ const router = createRouter({
           name: 'patient-edit',
           component: () => import('@/views/patients/PatientFormView.vue'),
           meta: { requiresPermission: 'patient:update' }
+        },
+        // Admission routes
+        {
+          path: 'admissions',
+          name: 'admissions',
+          component: () => import('@/views/admissions/AdmissionsView.vue'),
+          meta: { requiresPermission: 'admission:read' }
+        },
+        {
+          path: 'admissions/new',
+          name: 'admission-create',
+          component: () => import('@/views/admissions/AdmissionWizardView.vue'),
+          meta: { requiresPermission: 'admission:create' }
+        },
+        {
+          path: 'admissions/:id',
+          name: 'admission-detail',
+          component: () => import('@/views/admissions/AdmissionDetailView.vue'),
+          meta: { requiresPermission: 'admission:read' }
+        },
+        {
+          path: 'admissions/:id/edit',
+          name: 'admission-edit',
+          component: () => import('@/views/admissions/AdmissionWizardView.vue'),
+          meta: { requiresPermission: 'admission:update' }
+        },
+        // Admin - Triage Codes
+        {
+          path: 'admin/triage-codes',
+          name: 'triage-codes',
+          component: () => import('@/views/admin/TriageCodesView.vue'),
+          meta: { requiresPermission: 'triage-code:read' }
+        },
+        {
+          path: 'admin/triage-codes/new',
+          name: 'triage-code-create',
+          component: () => import('@/views/admin/TriageCodeFormView.vue'),
+          meta: { requiresPermission: 'triage-code:create' }
+        },
+        {
+          path: 'admin/triage-codes/:id/edit',
+          name: 'triage-code-edit',
+          component: () => import('@/views/admin/TriageCodeFormView.vue'),
+          meta: { requiresPermission: 'triage-code:update' }
+        },
+        // Admin - Rooms
+        {
+          path: 'admin/rooms',
+          name: 'rooms',
+          component: () => import('@/views/admin/RoomsView.vue'),
+          meta: { requiresPermission: 'room:read' }
+        },
+        {
+          path: 'admin/rooms/new',
+          name: 'room-create',
+          component: () => import('@/views/admin/RoomFormView.vue'),
+          meta: { requiresPermission: 'room:create' }
+        },
+        {
+          path: 'admin/rooms/:id/edit',
+          name: 'room-edit',
+          component: () => import('@/views/admin/RoomFormView.vue'),
+          meta: { requiresPermission: 'room:update' }
         }
       ]
     },

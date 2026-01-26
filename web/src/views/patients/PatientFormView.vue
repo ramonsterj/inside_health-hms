@@ -484,15 +484,36 @@ function closeIdDocumentDialog() {
             <div class="contact-fields">
               <div class="form-field">
                 <label>{{ t('contact.name') }} *</label>
-                <InputText v-model="contact.name" class="w-full" />
+                <InputText
+                  v-model="contact.name"
+                  :class="{ 'p-invalid': errors[`emergencyContacts[${index}].name`] }"
+                  class="w-full"
+                />
+                <small v-if="errors[`emergencyContacts[${index}].name`]" class="p-error">
+                  {{ errors[`emergencyContacts[${index}].name`] }}
+                </small>
               </div>
               <div class="form-field">
                 <label>{{ t('contact.relationship') }} *</label>
-                <InputText v-model="contact.relationship" class="w-full" />
+                <InputText
+                  v-model="contact.relationship"
+                  :class="{ 'p-invalid': errors[`emergencyContacts[${index}].relationship`] }"
+                  class="w-full"
+                />
+                <small v-if="errors[`emergencyContacts[${index}].relationship`]" class="p-error">
+                  {{ errors[`emergencyContacts[${index}].relationship`] }}
+                </small>
               </div>
               <div class="form-field">
                 <label>{{ t('contact.phone') }} *</label>
-                <InputText v-model="contact.phone" class="w-full" />
+                <InputText
+                  v-model="contact.phone"
+                  :class="{ 'p-invalid': errors[`emergencyContacts[${index}].phone`] }"
+                  class="w-full"
+                />
+                <small v-if="errors[`emergencyContacts[${index}].phone`]" class="p-error">
+                  {{ errors[`emergencyContacts[${index}].phone`] }}
+                </small>
               </div>
             </div>
             <Button
@@ -596,6 +617,7 @@ function closeIdDocumentDialog() {
       :header="t('patient.duplicateFound')"
       :modal="true"
       :style="{ width: '500px' }"
+      :breakpoints="{ '640px': '90vw' }"
     >
       <Message severity="warn" :closable="false">
         {{ t('patient.duplicateMessage') }}
@@ -631,6 +653,7 @@ function closeIdDocumentDialog() {
       :header="t('patient.idDocument')"
       :modal="true"
       :style="{ width: '80vw', maxWidth: '800px' }"
+      :breakpoints="{ '640px': '95vw' }"
       @hide="closeIdDocumentDialog"
     >
       <div class="document-preview">

@@ -273,6 +273,7 @@ class GlobalExceptionHandler {
 - ✅ Audit logging (AuditEntityListener)
 - ✅ i18n support (I18nConfig, MessageService)
 - ✅ Testcontainers for PostgreSQL
+- ✅ Patient Admission (admissions, triage codes, rooms, discharge flow)
 
 ### Frontend (Complete)
 - ✅ Vue 3.5 + TypeScript 5.9 + Vite 7.x
@@ -284,6 +285,7 @@ class GlobalExceptionHandler {
 - ✅ Session expiration handling with modal notification, redirect preservation, and proactive token monitoring
 - ✅ Vitest for unit testing (happy-dom, @vue/test-utils, @pinia/testing)
 - ✅ Playwright for E2E testing
+- ✅ Patient Admission UI (multi-step wizard, admin CRUD for triage codes and rooms)
 
 ### Security Tooling
 - ✅ Detekt (Kotlin static analysis)
