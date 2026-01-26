@@ -78,6 +78,18 @@ classDiagram
         POSTGRADUATE
     }
 
+    class AdmissionStatus {
+        <<enumeration>>
+        ACTIVE
+        DISCHARGED
+    }
+
+    class RoomType {
+        <<enumeration>>
+        PRIVATE
+        SHARED
+    }
+
     %% User Entity
     class User {
         +String username
@@ -184,6 +196,46 @@ classDiagram
         +byte[] fileData
     }
 
+    %% TriageCode Entity
+    class TriageCode {
+        +String code
+        +String color
+        +String? description
+        +Integer displayOrder
+    }
+
+    %% Room Entity
+    class Room {
+        +String number
+        +RoomType type
+        +Integer capacity
+    }
+
+    %% Admission Entity
+    class Admission {
+        +LocalDateTime admissionDate
+        +LocalDateTime? dischargeDate
+        +AdmissionStatus status
+        +String? inventory
+        +hasConsentDocument() Boolean
+        +isActive() Boolean
+        +isDischarged() Boolean
+    }
+
+    %% AdmissionConsentDocument Entity
+    class AdmissionConsentDocument {
+        +String fileName
+        +String contentType
+        +Long fileSize
+        +byte[] fileData
+    }
+
+    %% AdmissionConsultingPhysician Entity
+    class AdmissionConsultingPhysician {
+        +String? reason
+        +LocalDate? requestedDate
+    }
+
     %% Inheritance Relationships
     BaseEntity <|-- User : extends
     BaseEntity <|-- UserPhoneNumber : extends
@@ -194,6 +246,11 @@ classDiagram
     BaseEntity <|-- Patient : extends
     BaseEntity <|-- EmergencyContact : extends
     BaseEntity <|-- PatientIdDocument : extends
+    BaseEntity <|-- TriageCode : extends
+    BaseEntity <|-- Room : extends
+    BaseEntity <|-- Admission : extends
+    BaseEntity <|-- AdmissionConsentDocument : extends
+    BaseEntity <|-- AdmissionConsultingPhysician : extends
 
     %% Associations
     User "1" -- "*" RefreshToken : has
@@ -203,6 +260,13 @@ classDiagram
     Role "*" -- "*" Permission : role_permissions
     Patient "1" -- "*" EmergencyContact : has
     Patient "1" -- "0..1" PatientIdDocument : has
+    Patient "1" -- "*" Admission : has
+    Admission "*" -- "1" TriageCode : uses
+    Admission "*" -- "1" Room : assigned to
+    Admission "*" -- "1" User : treating physician
+    Admission "1" -- "0..1" AdmissionConsentDocument : has
+    Admission "1" -- "*" AdmissionConsultingPhysician : has
+    AdmissionConsultingPhysician "*" -- "1" User : physician
 
     %% Enum Usage
     User ..> UserStatus : uses
@@ -212,6 +276,8 @@ classDiagram
     Patient ..> Sex : uses
     Patient ..> MaritalStatus : uses
     Patient ..> EducationLevel : uses
+    Admission ..> AdmissionStatus : uses
+    Room ..> RoomType : uses
 ```
 
 ## Entity Relationships
@@ -225,6 +291,13 @@ classDiagram
 | User → UserPhoneNumber | OneToMany | - | Users can have multiple phone numbers |
 | Patient → EmergencyContact | OneToMany | - | Patients can have multiple emergency contacts |
 | Patient → PatientIdDocument | OneToOne | - | Patient can have one ID document (optional) |
+| Patient → Admission | OneToMany | - | Patients can have multiple admissions |
+| Admission → TriageCode | ManyToOne | - | Each admission has a triage code |
+| Admission → Room | ManyToOne | - | Each admission is assigned to a room |
+| Admission → User (treating) | ManyToOne | - | Each admission has a treating physician |
+| Admission → AdmissionConsentDocument | OneToOne | - | Admission can have one consent document (optional) |
+| Admission → AdmissionConsultingPhysician | OneToMany | - | Admissions can have multiple consulting physicians |
+| AdmissionConsultingPhysician → User | ManyToOne | - | Each consulting record references a physician |
 
 ## Notes
 
