@@ -35,4 +35,7 @@ interface AuditLogRepository : JpaRepository<AuditLog, Long> {
         @Param("action") action: AuditAction?,
         pageable: Pageable,
     ): Page<AuditLog>
+
+    @Query("SELECT DISTINCT a.entityType FROM AuditLog a ORDER BY a.entityType")
+    fun findDistinctEntityTypes(): List<String>
 }

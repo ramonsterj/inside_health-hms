@@ -69,7 +69,9 @@ function confirmDischarge() {
     message: t('admission.confirmDischarge'),
     header: t('common.confirm'),
     icon: 'pi pi-exclamation-triangle',
-    accept: () => { dischargePatient() }
+    accept: () => {
+      dischargePatient()
+    }
   })
 }
 

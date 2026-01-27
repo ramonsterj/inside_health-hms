@@ -34,4 +34,7 @@ class AuditLogService(private val auditLogRepository: AuditLogRepository) {
     fun findByEntity(entityType: String, entityId: Long, pageable: Pageable): Page<AuditLogResponse> =
         auditLogRepository.findByEntityTypeAndEntityId(entityType, entityId, pageable)
             .map { AuditLogResponse.from(it) }
+
+    @Transactional(readOnly = true)
+    fun getDistinctEntityTypes(): List<String> = auditLogRepository.findDistinctEntityTypes()
 }

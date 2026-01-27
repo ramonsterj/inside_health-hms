@@ -33,16 +33,14 @@ const actionOptions = computed(() => [
   { label: t('auditLogs.actions.DELETE'), value: AuditAction.DELETE }
 ])
 
-// Entity type options (dynamically populated from logs)
-const entityTypeOptions = computed(() => {
-  const types = new Set(auditStore.logs.map(log => log.entityType))
-  return [
-    { label: t('auditLogs.filters.allEntities'), value: null },
-    ...Array.from(types).map(type => ({ label: type, value: type }))
-  ]
-})
+// Entity type options (fetched from API)
+const entityTypeOptions = computed(() => [
+  { label: t('auditLogs.filters.allEntities'), value: null },
+  ...auditStore.entityTypes.map(type => ({ label: type, value: type }))
+])
 
 onMounted(() => {
+  auditStore.fetchEntityTypes()
   loadLogs()
 })
 
