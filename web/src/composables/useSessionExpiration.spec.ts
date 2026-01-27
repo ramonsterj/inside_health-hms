@@ -255,10 +255,7 @@ describe('useSessionExpiration', () => {
       )
 
       // Verify new tokens were stored
-      expect(tokenStorage.setTokens).toHaveBeenCalledWith(
-        expect.any(String),
-        'new-refresh-token'
-      )
+      expect(tokenStorage.setTokens).toHaveBeenCalledWith(expect.any(String), 'new-refresh-token')
     })
 
     it('should NOT attempt refresh when user is inactive', async () => {

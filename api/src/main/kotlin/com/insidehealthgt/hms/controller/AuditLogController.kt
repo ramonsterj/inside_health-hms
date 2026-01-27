@@ -44,4 +44,10 @@ class AuditLogController(private val auditLogService: AuditLogService) {
         val logs = auditLogService.findByEntity(entityType, entityId, pageable)
         return ResponseEntity.ok(ApiResponse.success(logs))
     }
+
+    @GetMapping("/entity-types")
+    fun getEntityTypes(): ResponseEntity<ApiResponse<List<String>>> {
+        val entityTypes = auditLogService.getDistinctEntityTypes()
+        return ResponseEntity.ok(ApiResponse.success(entityTypes))
+    }
 }

@@ -9,6 +9,7 @@ export const useAuditStore = defineStore('audit', () => {
   const totalLogs = ref(0)
   const loading = ref(false)
   const filters = ref<AuditLogFilters>({})
+  const entityTypes = ref<string[]>([])
 
   async function fetchLogs(page = 0, size = 50): Promise<void> {
     loading.value = true
@@ -55,6 +56,13 @@ export const useAuditStore = defineStore('audit', () => {
     }
   }
 
+  async function fetchEntityTypes(): Promise<void> {
+    const response = await api.get<ApiResponse<string[]>>('/audit-logs/entity-types')
+    if (response.data.success && response.data.data) {
+      entityTypes.value = response.data.data
+    }
+  }
+
   function setFilters(newFilters: AuditLogFilters): void {
     filters.value = { ...newFilters }
   }
@@ -77,8 +85,10 @@ export const useAuditStore = defineStore('audit', () => {
     totalLogs,
     loading,
     filters,
+    entityTypes,
     fetchLogs,
     fetchLogsForEntity,
+    fetchEntityTypes,
     setFilters,
     clearFilters,
     parseJsonValues
