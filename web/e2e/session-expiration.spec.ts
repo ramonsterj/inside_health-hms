@@ -375,4 +375,243 @@ test.describe('Session Expiration', () => {
       expect(modalCount).toBeLessThanOrEqual(1)
     })
   })
+
+  test.describe('Activity-Based Session Extension', () => {
+    test('active user gets silent token refresh (no modal)', async ({ page }) => {
+      let refreshCallCount = 0
+
+      // Set up token that expires in 15 seconds (short for testing)
+      await page.addInitScript(() => {
+        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+        const payload = btoa(
+          JSON.stringify({
+            sub: '1',
+            // Token expires in 15 seconds (proactive refresh at ~15-90 = immediate)
+            exp: Math.floor(Date.now() / 1000) + 15
+          })
+        )
+        const mockToken = `${header}.${payload}.mock`
+        localStorage.setItem('access_token', mockToken)
+        localStorage.setItem('refresh_token', 'mock-refresh')
+      })
+
+      // Mock successful refresh - returns token that expires in 15 minutes
+      await page.route('**/api/auth/refresh', async route => {
+        refreshCallCount++
+        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+        const payload = btoa(
+          JSON.stringify({
+            sub: '1',
+            exp: Math.floor(Date.now() / 1000) + 900 // New token: 15 min
+          })
+        )
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              accessToken: `${header}.${payload}.new`,
+              refreshToken: 'new-refresh-token',
+              user: {
+                id: 1,
+                username: 'admin',
+                email: 'admin@example.com',
+                status: 'ACTIVE',
+                mustChangePassword: false,
+                roles: ['ADMIN'],
+                permissions: []
+              }
+            }
+          })
+        })
+      })
+
+      // Mock dashboard API calls
+      await page.route('**/api/users/me', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              id: 1,
+              username: 'admin',
+              email: 'admin@example.com',
+              status: 'ACTIVE',
+              mustChangePassword: false,
+              roles: ['ADMIN'],
+              permissions: []
+            }
+          })
+        })
+      })
+
+      await page.goto('/dashboard')
+
+      // Simulate user activity (mouse movements and clicks)
+      await page.mouse.move(100, 100)
+      await page.mouse.move(200, 200)
+      await page.mouse.click(150, 150)
+
+      // Wait for the proactive refresh to occur (token expires in 15s, refresh happens ~90s before or immediately)
+      // Since token expires in 15s which is less than the 90s buffer, refresh should happen immediately
+      await page.waitForTimeout(5000)
+
+      // Modal should NOT be visible (silent refresh should have occurred)
+      const modal = page.locator('[role="dialog"]')
+      const isModalVisible = await modal.isVisible().catch(() => false)
+      expect(isModalVisible).toBe(false)
+
+      // Verify refresh was called (proactive refresh happened)
+      expect(refreshCallCount).toBeGreaterThanOrEqual(1)
+
+      // Verify new token was stored
+      const newToken = await page.evaluate(() => localStorage.getItem('access_token'))
+      expect(newToken).toContain('.new') // Our mock new token ends with .new
+    })
+
+    test('session expired modal shows when refresh fails', async ({ page }) => {
+      // Set up token that expires in 5 seconds (very short for testing)
+      await page.addInitScript(() => {
+        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+        const payload = btoa(
+          JSON.stringify({
+            sub: '1',
+            exp: Math.floor(Date.now() / 1000) + 5 // Expires in 5 seconds
+          })
+        )
+        const mockToken = `${header}.${payload}.mock`
+        localStorage.setItem('access_token', mockToken)
+        localStorage.setItem('refresh_token', 'mock-refresh')
+      })
+
+      // Mock users/me to succeed initially
+      await page.route('**/api/users/me', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              id: 1,
+              username: 'admin',
+              email: 'admin@example.com',
+              status: 'ACTIVE',
+              mustChangePassword: false,
+              roles: ['ADMIN'],
+              permissions: []
+            }
+          })
+        })
+      })
+
+      // Mock refresh to FAIL - simulates expired refresh token or server error
+      await page.route('**/api/auth/refresh', async route => {
+        await route.fulfill({
+          status: 401,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: false,
+            message: 'Refresh token expired'
+          })
+        })
+      })
+
+      await page.goto('/dashboard')
+
+      // Wait for token to expire and proactive refresh to fail
+      // Token expires in 5s, proactive refresh happens immediately (since 5s < 90s buffer)
+      await page.waitForTimeout(3000)
+
+      // Modal should be visible because refresh failed
+      const modal = page.locator('[role="dialog"]')
+      await expect(modal).toBeVisible({ timeout: 10000 })
+      await expect(modal.getByText(/session expired/i)).toBeVisible()
+    })
+
+    test('proactive refresh updates stored tokens', async ({ page }) => {
+      // Set up token that expires soon
+      await page.addInitScript(() => {
+        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+        const payload = btoa(
+          JSON.stringify({
+            sub: '1',
+            exp: Math.floor(Date.now() / 1000) + 10 // Expires in 10 seconds
+          })
+        )
+        const mockToken = `${header}.${payload}.initial`
+        localStorage.setItem('access_token', mockToken)
+        localStorage.setItem('refresh_token', 'initial-refresh')
+      })
+
+      // Mock successful refresh with new tokens
+      await page.route('**/api/auth/refresh', async route => {
+        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+        const payload = btoa(
+          JSON.stringify({
+            sub: '1',
+            exp: Math.floor(Date.now() / 1000) + 900
+          })
+        )
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              accessToken: `${header}.${payload}.refreshed`,
+              refreshToken: 'refreshed-refresh-token',
+              user: {
+                id: 1,
+                username: 'admin',
+                email: 'admin@example.com',
+                status: 'ACTIVE',
+                mustChangePassword: false,
+                roles: ['ADMIN'],
+                permissions: []
+              }
+            }
+          })
+        })
+      })
+
+      await page.route('**/api/users/me', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              id: 1,
+              username: 'admin',
+              email: 'admin@example.com',
+              status: 'ACTIVE',
+              mustChangePassword: false,
+              roles: ['ADMIN'],
+              permissions: []
+            }
+          })
+        })
+      })
+
+      await page.goto('/dashboard')
+
+      // Simulate activity to trigger proactive refresh
+      await page.mouse.move(100, 100)
+      await page.waitForTimeout(500)
+      await page.mouse.move(200, 200)
+
+      // Wait for proactive refresh
+      await page.waitForTimeout(5000)
+
+      // Verify tokens were updated
+      const accessToken = await page.evaluate(() => localStorage.getItem('access_token'))
+      const refreshToken = await page.evaluate(() => localStorage.getItem('refresh_token'))
+
+      // Should have the refreshed tokens
+      expect(accessToken).toContain('.refreshed')
+      expect(refreshToken).toBe('refreshed-refresh-token')
+    })
+  })
 })
