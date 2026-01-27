@@ -65,7 +65,12 @@ function handleSessionExpiration(): void {
 
 // Response interceptor - handle 401 and auto-refresh
 api.interceptors.response.use(
-  response => response,
+  response => {
+    // Record activity on successful API calls (user is interacting with the app)
+    const { recordActivity } = useSessionExpiration()
+    recordActivity()
+    return response
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryableRequest
 
@@ -117,6 +122,11 @@ api.interceptors.response.use(
         if (response.data.success && response.data.data) {
           const { accessToken, refreshToken: newRefreshToken } = response.data.data
           tokenStorage.setTokens(accessToken, newRefreshToken)
+
+          // Reschedule monitoring with new token and record activity
+          const { scheduleExpirationCheck, recordActivity } = useSessionExpiration()
+          scheduleExpirationCheck()
+          recordActivity()
 
           processQueue(null, accessToken)
 

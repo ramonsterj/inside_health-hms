@@ -1,5 +1,24 @@
 import { ref, readonly } from 'vue'
+import axios from 'axios'
 import { tokenStorage } from '@/utils/tokenStorage'
+import type { ApiResponse, AuthResponse } from '@/types'
+
+// =============================================================================
+// Configuration Constants
+// =============================================================================
+
+/** How often to update activity timestamp (throttle window) */
+const ACTIVITY_THROTTLE_MS = 5_000 // 5 seconds
+
+/** User considered "active" if activity within this window */
+const ACTIVITY_THRESHOLD_MS = 2 * 60_000 // 2 minutes
+
+/** Start proactive refresh this long before token expiry */
+const REFRESH_BUFFER_MS = 90_000 // 90 seconds
+
+// =============================================================================
+// Module-level state (singleton pattern)
+// =============================================================================
 
 /**
  * Module-level state for singleton pattern.
@@ -9,6 +28,13 @@ const sessionExpired = ref(false)
 const intendedRoute = ref<string | null>(null)
 let monitoringInitialized = false
 let expirationTimeoutId: ReturnType<typeof setTimeout> | null = null
+
+// Activity tracking state
+let lastActivityTimestamp: number = Date.now()
+let lastActivityUpdate: number = 0
+let activityListenersAttached = false
+let proactiveRefreshTimeoutId: ReturnType<typeof setTimeout> | null = null
+let isProactiveRefreshing = false
 
 /**
  * Decodes a JWT token and returns the payload.
@@ -63,6 +89,97 @@ function isTokenExpired(): boolean {
   return Date.now() >= expirationMs
 }
 
+// =============================================================================
+// Activity Tracking
+// =============================================================================
+
+/**
+ * Updates last activity timestamp (throttled).
+ * Only updates if enough time has passed since last update to avoid performance issues.
+ */
+function updateActivity(): void {
+  const now = Date.now()
+  if (now - lastActivityUpdate >= ACTIVITY_THROTTLE_MS) {
+    lastActivityTimestamp = now
+    lastActivityUpdate = now
+  }
+}
+
+/**
+ * Returns true if user has been active within the activity threshold.
+ */
+function isUserActive(): boolean {
+  return Date.now() - lastActivityTimestamp < ACTIVITY_THRESHOLD_MS
+}
+
+/**
+ * Attaches activity event listeners to document.
+ * Only attaches once (singleton pattern).
+ */
+function attachActivityListeners(): void {
+  if (activityListenersAttached) return
+  activityListenersAttached = true
+
+  const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
+  events.forEach(event => {
+    document.addEventListener(event, updateActivity, { passive: true })
+  })
+}
+
+// =============================================================================
+// Proactive Token Refresh
+// =============================================================================
+
+/**
+ * Attempts to silently refresh the token before it expires.
+ * Only refreshes if user has been recently active.
+ */
+async function attemptProactiveRefresh(): Promise<void> {
+  // Guard against concurrent refresh attempts
+  if (isProactiveRefreshing) return
+  if (sessionExpired.value) return
+  if (!tokenStorage.hasTokens()) return
+
+  // Only refresh if user was recently active
+  if (!isUserActive()) {
+    // User is inactive - let the session expire naturally
+    return
+  }
+
+  isProactiveRefreshing = true
+
+  try {
+    const refreshToken = tokenStorage.getRefreshToken()
+    if (!refreshToken) {
+      return
+    }
+
+    // Use axios directly to avoid circular dependency with api.ts
+    const response = await axios.post<ApiResponse<AuthResponse>>(
+      '/api/auth/refresh',
+      { refreshToken },
+      { headers: { 'Content-Type': 'application/json' } }
+    )
+
+    if (response.data.success && response.data.data) {
+      const { accessToken, refreshToken: newRefreshToken } = response.data.data
+      tokenStorage.setTokens(accessToken, newRefreshToken)
+
+      // Reschedule monitoring with new token
+      scheduleExpirationCheck()
+    }
+  } catch {
+    // Proactive refresh failed - will show modal when token actually expires
+    // Don't trigger modal here; let the final expiration check handle it
+  } finally {
+    isProactiveRefreshing = false
+  }
+}
+
+// =============================================================================
+// Expiration Monitoring
+// =============================================================================
+
 /**
  * Proactively checks token expiration and triggers the modal if expired.
  * Only triggers if user has tokens (was logged in) and they're now expired.
@@ -85,14 +202,19 @@ function checkAndTriggerExpiration(): void {
 }
 
 /**
- * Schedules a check for when the token expires.
- * This ensures we proactively show the modal right when the token expires.
+ * Schedules proactive refresh and expiration checks.
+ * - Proactive refresh: Attempts silent refresh ~90 seconds before expiry (if user active)
+ * - Expiration check: Shows modal when token actually expires
  */
 function scheduleExpirationCheck(): void {
-  // Clear any existing timeout
+  // Clear any existing timeouts
   if (expirationTimeoutId) {
     clearTimeout(expirationTimeoutId)
     expirationTimeoutId = null
+  }
+  if (proactiveRefreshTimeoutId) {
+    clearTimeout(proactiveRefreshTimeoutId)
+    proactiveRefreshTimeoutId = null
   }
 
   const expirationMs = getTokenExpirationMs()
@@ -106,14 +228,26 @@ function scheduleExpirationCheck(): void {
     return
   }
 
-  // Schedule check for when token expires (with a small buffer)
   // Cap at 24 hours to avoid setTimeout overflow issues
   const maxTimeout = 24 * 60 * 60 * 1000
-  const timeout = Math.min(timeUntilExpiration + 1000, maxTimeout)
 
+  // Schedule proactive refresh (before token expires)
+  const timeUntilProactiveRefresh = timeUntilExpiration - REFRESH_BUFFER_MS
+  if (timeUntilProactiveRefresh > 0) {
+    const proactiveTimeout = Math.min(timeUntilProactiveRefresh, maxTimeout)
+    proactiveRefreshTimeoutId = setTimeout(() => {
+      attemptProactiveRefresh()
+    }, proactiveTimeout)
+  } else if (timeUntilExpiration > 0) {
+    // Token expires soon but not yet - attempt refresh now if active
+    attemptProactiveRefresh()
+  }
+
+  // Schedule final expiration check (with a small buffer after expiry)
+  const expirationTimeout = Math.min(timeUntilExpiration + 1000, maxTimeout)
   expirationTimeoutId = setTimeout(() => {
     checkAndTriggerExpiration()
-  }, timeout)
+  }, expirationTimeout)
 }
 
 /**
@@ -126,12 +260,15 @@ function handleVisibilityChange(): void {
 }
 
 /**
- * Initializes proactive token expiration monitoring.
+ * Initializes proactive token expiration monitoring and activity tracking.
  * Only initializes once (singleton pattern).
  */
 function initializeMonitoring(): void {
   if (monitoringInitialized) return
   monitoringInitialized = true
+
+  // Attach activity listeners for tracking user interaction
+  attachActivityListeners()
 
   // Check on visibility change (when user returns to tab)
   document.addEventListener('visibilitychange', handleVisibilityChange)
@@ -204,6 +341,8 @@ export function useSessionExpiration() {
     /** Reset state - called when user clicks login button */
     resetSessionExpired,
     /** Manually check token expiration (useful after login to reschedule) */
-    scheduleExpirationCheck
+    scheduleExpirationCheck,
+    /** Record user activity - call this on API requests to track activity */
+    recordActivity: updateActivity
   }
 }
