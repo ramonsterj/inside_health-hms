@@ -38,6 +38,7 @@ class AdmissionService(
     private val triageCodeRepository: TriageCodeRepository,
     private val roomRepository: RoomRepository,
     private val userRepository: UserRepository,
+    private val fileStorageService: FileStorageService,
 ) {
 
     @Transactional(readOnly = true)
@@ -171,17 +172,27 @@ class AdmissionService(
 
         validateConsentFile(file)
 
-        // Remove existing consent document if any
+        // Get patient ID for directory organization (consent files stored under patient directory)
+        val patientId = admission.patient.id!!
+
+        // Store file on disk FIRST (before DB transaction commits)
+        val storagePath = fileStorageService.storeFile(
+            patientId = patientId,
+            documentType = DocumentType.CONSENT_DOCUMENT,
+            file = file,
+        )
+
+        // Remove existing consent document if any (soft delete - file kept on disk)
         admission.consentDocument?.let {
             it.deletedAt = LocalDateTime.now()
         }
 
-        // Create new consent document
+        // Create new consent document with storage path
         val consentDocument = AdmissionConsentDocument(
             fileName = file.originalFilename ?: "consent_document",
             contentType = file.contentType ?: "application/octet-stream",
             fileSize = file.size,
-            fileData = file.bytes,
+            storagePath = storagePath,
             admission = admission,
         )
 
@@ -191,9 +202,19 @@ class AdmissionService(
     }
 
     @Transactional(readOnly = true)
-    fun getConsentDocument(admissionId: Long): AdmissionConsentDocument =
-        admissionConsentDocumentRepository.findByAdmissionId(admissionId)
+    fun getConsentDocument(admissionId: Long): DocumentFileData {
+        val document = admissionConsentDocumentRepository.findByAdmissionId(admissionId)
             ?: throw ResourceNotFoundException("Consent document not found for admission: $admissionId")
+
+        val fileData = fileStorageService.loadFile(document.storagePath)
+
+        return DocumentFileData(
+            fileName = document.fileName,
+            contentType = document.contentType,
+            fileSize = document.fileSize,
+            fileData = fileData,
+        )
+    }
 
     @Transactional(readOnly = true)
     fun searchPatients(query: String): List<PatientSummaryResponse> {

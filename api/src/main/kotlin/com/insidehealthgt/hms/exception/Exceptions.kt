@@ -31,6 +31,9 @@ class AccountDisabledException(message: String = "Account is not active") : Runt
 class DuplicatePatientException(message: String, val potentialDuplicates: List<DuplicatePatientInfo>) :
     RuntimeException(message)
 
+@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+class FileStorageException(message: String) : RuntimeException(message)
+
 data class DuplicatePatientInfo(
     val id: Long,
     val firstName: String,

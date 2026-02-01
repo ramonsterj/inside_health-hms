@@ -42,6 +42,10 @@ jwt:
   access-token-expiration: ${JWT_ACCESS_EXPIRATION:900000}  # 15 minutes
   refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 7 days
 
+app:
+  file-storage:
+    base-path: ${FILE_STORAGE_PATH:./data/files}
+
 springdoc:
   api-docs:
     path: /v3/api-docs

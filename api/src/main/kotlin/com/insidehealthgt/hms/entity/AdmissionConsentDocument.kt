@@ -22,8 +22,8 @@ class AdmissionConsentDocument(
     @Column(name = "file_size", nullable = false)
     var fileSize: Long,
 
-    @Column(name = "file_data", nullable = false, columnDefinition = "bytea")
-    var fileData: ByteArray,
+    @Column(name = "storage_path", nullable = false, length = 500)
+    var storagePath: String,
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admission_id", nullable = false, unique = true)
