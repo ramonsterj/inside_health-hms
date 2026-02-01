@@ -27,6 +27,7 @@ class PatientService(
     private val patientRepository: PatientRepository,
     private val patientIdDocumentRepository: PatientIdDocumentRepository,
     private val userRepository: UserRepository,
+    private val fileStorageService: FileStorageService,
 ) {
 
     @Transactional(readOnly = true)
@@ -176,17 +177,24 @@ class PatientService(
         // Validate file
         validateFile(file)
 
-        // Remove existing document if any
+        // Store file on disk FIRST (before DB transaction commits)
+        val storagePath = fileStorageService.storeFile(
+            patientId = patientId,
+            documentType = DocumentType.ID_DOCUMENT,
+            file = file,
+        )
+
+        // Remove existing document if any (soft delete - file kept on disk)
         patient.idDocument?.let {
             it.deletedAt = LocalDateTime.now()
         }
 
-        // Create new document
+        // Create new document with storage path
         val document = PatientIdDocument(
             fileName = file.originalFilename ?: "document",
             contentType = file.contentType ?: "application/octet-stream",
             fileSize = file.size,
-            fileData = file.bytes,
+            storagePath = storagePath,
             patient = patient,
         )
 
@@ -196,8 +204,19 @@ class PatientService(
     }
 
     @Transactional(readOnly = true)
-    fun getIdDocument(patientId: Long): PatientIdDocument = patientIdDocumentRepository.findByPatientId(patientId)
-        ?: throw ResourceNotFoundException("ID document not found for patient: $patientId")
+    fun getIdDocument(patientId: Long): DocumentFileData {
+        val document = patientIdDocumentRepository.findByPatientId(patientId)
+            ?: throw ResourceNotFoundException("ID document not found for patient: $patientId")
+
+        val fileData = fileStorageService.loadFile(document.storagePath)
+
+        return DocumentFileData(
+            fileName = document.fileName,
+            contentType = document.contentType,
+            fileSize = document.fileSize,
+            fileData = fileData,
+        )
+    }
 
     @Transactional
     fun deleteIdDocument(patientId: Long): PatientResponse {

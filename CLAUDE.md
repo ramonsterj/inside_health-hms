@@ -126,7 +126,7 @@ com.insidehealthgt.hms/
 **Location**: `src/main/resources/db/migration/`
 **Naming**: `V{version}__{description}.sql`
 
-**Current migrations**: V001-V010 (users, audit_logs, roles/permissions, password_reset_tokens, locale)
+**Current migrations**: V001-V028 (users, audit_logs, roles/permissions, password_reset_tokens, locale, patients, admissions, file storage)
 
 ```sql
 -- Example: Always include BaseEntity fields in new tables
@@ -210,6 +210,30 @@ class UserService(private val passwordEncoder: PasswordEncoder) {
 - `EmailService` interface with `ConsoleEmailService` (dev) and `SmtpEmailService` (prod)
 - Endpoints: `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`
 
+### File Storage Configuration
+
+Files are stored on the local file system instead of database BYTEA columns.
+
+```yaml
+# application.yml
+app:
+  file-storage:
+    base-path: ${FILE_STORAGE_PATH:/var/data/hms/files}
+```
+
+**Directory Structure**:
+```
+{base-path}/
+└── patients/
+    └── {patientId}/
+        ├── id-documents/
+        │   └── {uuid}_{filename}
+        └── consent-documents/
+            └── {uuid}_{filename}
+```
+
+**Environment variable**: `FILE_STORAGE_PATH` (defaults to `/var/data/hms/files` in production, `./data/files` in dev)
+
 ---
 
 ## 🚫 COMMON MISTAKES TO AVOID
@@ -274,6 +298,7 @@ class GlobalExceptionHandler {
 - ✅ i18n support (I18nConfig, MessageService)
 - ✅ Testcontainers for PostgreSQL
 - ✅ Patient Admission (admissions, triage codes, rooms, discharge flow)
+- ✅ File System Storage for patient documents (ID docs, consent forms)
 
 ### Frontend (Complete)
 - ✅ Vue 3.5 + TypeScript 5.9 + Vite 7.x
@@ -350,4 +375,4 @@ See **ARCHITECTURE.md** for full documentation, **VERSION_UPDATES.md** for versi
 
 ---
 
-**Last Updated**: January 23, 2026
+**Last Updated**: January 31, 2026

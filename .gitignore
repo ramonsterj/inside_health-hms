@@ -60,3 +60,6 @@ test-output/
 # Spring Boot
 *.jar
 !gradle-wrapper.jar
+
+# File storage (local dev and tests)
+data/

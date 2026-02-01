@@ -141,6 +141,21 @@ class GlobalExceptionHandler(private val messageService: MessageService) {
             )
     }
 
+    @ExceptionHandler(FileStorageException::class)
+    fun handleFileStorageException(ex: FileStorageException): ResponseEntity<ErrorResponse> {
+        logger.error("File storage error: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(
+                ErrorResponse(
+                    error = ErrorDetails(
+                        code = "FILE_STORAGE_ERROR",
+                        message = ex.message ?: messageService.errorInternal(),
+                    ),
+                ),
+            )
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidationErrors(ex: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
         val details = ex.bindingResult.fieldErrors
