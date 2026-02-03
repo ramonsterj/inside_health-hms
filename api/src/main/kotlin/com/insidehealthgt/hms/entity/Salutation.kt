@@ -6,6 +6,8 @@ enum class Salutation {
     SRTA,
     DR,
     DRA,
+    LIC,
+    LICDA,
     MR,
     MRS,
     MISS,

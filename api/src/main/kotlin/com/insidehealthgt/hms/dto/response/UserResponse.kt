@@ -47,6 +47,8 @@ data class UserResponse(
             Salutation.SRTA -> "Srta."
             Salutation.DR -> "Dr."
             Salutation.DRA -> "Dra."
+            Salutation.LIC -> "Lic."
+            Salutation.LICDA -> "Licda."
             Salutation.MR -> "Mr."
             Salutation.MRS -> "Mrs."
             Salutation.MISS -> "Miss"

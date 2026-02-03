@@ -273,8 +273,13 @@
   "user": {
     "salutation": "Salutation",
     "salutations": {
+      "SR": "Sr.",
+      "SRA": "Sra.",
+      "SRTA": "Srta.",
       "DR": "Dr.",
       "DRA": "Dr. (F)",
+      "LIC": "Lic.",
+      "LICDA": "Lic. (F)",
       "MR": "Mr.",
       "MRS": "Mrs.",
       "MISS": "Miss"
