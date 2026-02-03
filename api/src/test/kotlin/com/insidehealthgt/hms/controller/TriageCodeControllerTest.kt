@@ -9,6 +9,7 @@ import com.insidehealthgt.hms.dto.request.EmergencyContactRequest
 import com.insidehealthgt.hms.dto.request.UpdateTriageCodeRequest
 import com.insidehealthgt.hms.dto.response.ApiResponse
 import com.insidehealthgt.hms.dto.response.AuthResponse
+import com.insidehealthgt.hms.entity.AdmissionType
 import com.insidehealthgt.hms.entity.EducationLevel
 import com.insidehealthgt.hms.entity.MaritalStatus
 import com.insidehealthgt.hms.entity.Room
@@ -446,6 +447,7 @@ class TriageCodeControllerTest {
             roomId = room.id!!,
             treatingPhysicianId = doctorId,
             admissionDate = LocalDateTime.now(),
+            type = AdmissionType.HOSPITALIZATION,
             inventory = null,
         )
 

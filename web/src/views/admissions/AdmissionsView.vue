@@ -11,7 +11,8 @@ import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 import { useAdmissionStore } from '@/stores/admission'
 import { useAuthStore } from '@/stores/auth'
-import { AdmissionStatus } from '@/types/admission'
+import { AdmissionStatus, AdmissionType } from '@/types/admission'
+import AdmissionTypeBadge from '@/components/admissions/AdmissionTypeBadge.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -22,6 +23,7 @@ const authStore = useAuthStore()
 const first = ref(0)
 const rows = ref(20)
 const statusFilter = ref<AdmissionStatus | null>(AdmissionStatus.ACTIVE)
+const typeFilter = ref<AdmissionType | null>(null)
 
 const canCreate = computed(() => authStore.hasPermission('admission:create'))
 
@@ -31,6 +33,15 @@ const statusOptions = computed(() => [
   { label: t('admission.statuses.DISCHARGED'), value: AdmissionStatus.DISCHARGED }
 ])
 
+const typeOptions = computed(() => [
+  { label: t('common.all'), value: null },
+  { label: t('admission.types.HOSPITALIZATION'), value: AdmissionType.HOSPITALIZATION },
+  { label: t('admission.types.AMBULATORY'), value: AdmissionType.AMBULATORY },
+  { label: t('admission.types.ELECTROSHOCK_THERAPY'), value: AdmissionType.ELECTROSHOCK_THERAPY },
+  { label: t('admission.types.KETAMINE_INFUSION'), value: AdmissionType.KETAMINE_INFUSION },
+  { label: t('admission.types.EMERGENCY'), value: AdmissionType.EMERGENCY }
+])
+
 onMounted(() => {
   loadAdmissions()
 })
@@ -38,13 +49,13 @@ onMounted(() => {
 async function loadAdmissions() {
   try {
     const page = Math.floor(first.value / rows.value)
-    await admissionStore.fetchAdmissions(page, rows.value, statusFilter.value)
+    await admissionStore.fetchAdmissions(page, rows.value, statusFilter.value, typeFilter.value)
   } catch (error) {
     showError(error)
   }
 }
 
-function onStatusChange() {
+function onFilterChange() {
   first.value = 0
   loadAdmissions()
 }
@@ -141,7 +152,18 @@ function getContrastColor(hexColor: string): string {
               :options="statusOptions"
               optionLabel="label"
               optionValue="value"
-              @change="onStatusChange"
+              @change="onFilterChange"
+              style="width: 200px"
+            />
+          </div>
+          <div class="filter-field">
+            <label>{{ t('admission.type') }}</label>
+            <Select
+              v-model="typeFilter"
+              :options="typeOptions"
+              optionLabel="label"
+              optionValue="value"
+              @change="onFilterChange"
               style="width: 200px"
             />
           </div>
@@ -180,6 +202,7 @@ function getContrastColor(hexColor: string): string {
           <Column :header="t('admission.triageCode')" style="width: 100px">
             <template #body="{ data }">
               <span
+                v-if="data.triageCode"
                 class="triage-badge"
                 :style="{
                   backgroundColor: data.triageCode.color,
@@ -188,12 +211,19 @@ function getContrastColor(hexColor: string): string {
               >
                 {{ data.triageCode.code }}
               </span>
+              <span v-else>-</span>
             </template>
           </Column>
 
           <Column :header="t('admission.room')" style="width: 100px">
             <template #body="{ data }">
-              {{ data.room.number }}
+              {{ data.room?.number || '-' }}
+            </template>
+          </Column>
+
+          <Column :header="t('admission.type')" style="width: 150px">
+            <template #body="{ data }">
+              <AdmissionTypeBadge :type="data.type" />
             </template>
           </Column>
 

@@ -9,6 +9,7 @@ import com.insidehealthgt.hms.dto.request.EmergencyContactRequest
 import com.insidehealthgt.hms.dto.request.UpdateAdmissionRequest
 import com.insidehealthgt.hms.dto.response.ApiResponse
 import com.insidehealthgt.hms.dto.response.AuthResponse
+import com.insidehealthgt.hms.entity.AdmissionType
 import com.insidehealthgt.hms.entity.EducationLevel
 import com.insidehealthgt.hms.entity.MaritalStatus
 import com.insidehealthgt.hms.entity.Room
@@ -220,6 +221,7 @@ class AdmissionControllerTest {
         roomId = roomId,
         treatingPhysicianId = doctorUser.id!!,
         admissionDate = LocalDateTime.now(),
+        type = AdmissionType.HOSPITALIZATION,
         inventory = "Wallet, phone, glasses",
     )
 
@@ -1038,6 +1040,590 @@ class AdmissionControllerTest {
             .andExpect(jsonPath("$.data.consultingPhysicians").isArray)
             .andExpect(jsonPath("$.data.consultingPhysicians[0].physician.firstName").value("Dr. Carlos"))
             .andExpect(jsonPath("$.data.consultingPhysicians[0].reason").value("Cardiology consultation"))
+    }
+
+    // ============ ADMISSION TYPE TESTS ============
+
+    @Test
+    fun `create HOSPITALIZATION admission requires room and triage code`() {
+        val request = CreateAdmissionRequest(
+            patientId = patientId,
+            triageCodeId = triageCodeId,
+            roomId = roomId,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.HOSPITALIZATION,
+            inventory = "Personal belongings",
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.data.type").value("HOSPITALIZATION"))
+            .andExpect(jsonPath("$.data.room").exists())
+            .andExpect(jsonPath("$.data.triageCode").exists())
+    }
+
+    @Test
+    fun `create HOSPITALIZATION admission should fail without room`() {
+        val request = CreateAdmissionRequest(
+            patientId = patientId,
+            triageCodeId = triageCodeId,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.HOSPITALIZATION,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.message").value("Room is required for HOSPITALIZATION admissions"))
+    }
+
+    @Test
+    fun `create HOSPITALIZATION admission should fail without triage code`() {
+        val request = CreateAdmissionRequest(
+            patientId = patientId,
+            triageCodeId = null,
+            roomId = roomId,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.HOSPITALIZATION,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.message").value("Triage code is required for HOSPITALIZATION admissions"))
+    }
+
+    @Test
+    fun `create AMBULATORY admission does not require room or triage code`() {
+        val request = CreateAdmissionRequest(
+            patientId = patientId,
+            triageCodeId = null,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.AMBULATORY,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.data.type").value("AMBULATORY"))
+            .andExpect(jsonPath("$.data.room").doesNotExist())
+            .andExpect(jsonPath("$.data.triageCode").doesNotExist())
+    }
+
+    @Test
+    fun `create ELECTROSHOCK_THERAPY admission does not require room or triage code`() {
+        val request = CreateAdmissionRequest(
+            patientId = patientId,
+            triageCodeId = null,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.ELECTROSHOCK_THERAPY,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.data.type").value("ELECTROSHOCK_THERAPY"))
+            .andExpect(jsonPath("$.data.room").doesNotExist())
+            .andExpect(jsonPath("$.data.triageCode").doesNotExist())
+    }
+
+    @Test
+    fun `create KETAMINE_INFUSION admission does not require room or triage code`() {
+        val request = CreateAdmissionRequest(
+            patientId = patientId,
+            triageCodeId = null,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.KETAMINE_INFUSION,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.data.type").value("KETAMINE_INFUSION"))
+            .andExpect(jsonPath("$.data.room").doesNotExist())
+            .andExpect(jsonPath("$.data.triageCode").doesNotExist())
+    }
+
+    @Test
+    fun `create EMERGENCY admission requires triage code but not room`() {
+        val request = CreateAdmissionRequest(
+            patientId = patientId,
+            triageCodeId = triageCodeId,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.EMERGENCY,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.data.type").value("EMERGENCY"))
+            .andExpect(jsonPath("$.data.room").doesNotExist())
+            .andExpect(jsonPath("$.data.triageCode").exists())
+    }
+
+    @Test
+    fun `create EMERGENCY admission should fail without triage code`() {
+        val request = CreateAdmissionRequest(
+            patientId = patientId,
+            triageCodeId = null,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.EMERGENCY,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.message").value("Triage code is required for EMERGENCY admissions"))
+    }
+
+    @Test
+    fun `AMBULATORY admission can optionally include room and triage code`() {
+        val request = CreateAdmissionRequest(
+            patientId = patientId,
+            triageCodeId = triageCodeId,
+            roomId = roomId,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.AMBULATORY,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.data.type").value("AMBULATORY"))
+            .andExpect(jsonPath("$.data.room").exists())
+            .andExpect(jsonPath("$.data.triageCode").exists())
+    }
+
+    @Test
+    fun `list admissions should filter by type`() {
+        // Create AMBULATORY admission
+        val ambulatoryRequest = CreateAdmissionRequest(
+            patientId = patientId,
+            triageCodeId = null,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.AMBULATORY,
+        )
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(ambulatoryRequest)),
+        ).andExpect(status().isCreated)
+
+        // Create HOSPITALIZATION admission with a different patient
+        val patient2Id = createSecondPatient()
+        val hospitalizationRequest = CreateAdmissionRequest(
+            patientId = patient2Id,
+            triageCodeId = triageCodeId,
+            roomId = roomId,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.HOSPITALIZATION,
+        )
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(hospitalizationRequest)),
+        ).andExpect(status().isCreated)
+
+        // Filter by AMBULATORY
+        mockMvc.perform(
+            get("/api/v1/admissions")
+                .param("type", "AMBULATORY")
+                .header("Authorization", "Bearer $administrativeStaffToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content").isArray)
+            .andExpect(jsonPath("$.data.content.length()").value(1))
+            .andExpect(jsonPath("$.data.content[0].type").value("AMBULATORY"))
+
+        // Filter by HOSPITALIZATION
+        mockMvc.perform(
+            get("/api/v1/admissions")
+                .param("type", "HOSPITALIZATION")
+                .header("Authorization", "Bearer $administrativeStaffToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content").isArray)
+            .andExpect(jsonPath("$.data.content.length()").value(1))
+            .andExpect(jsonPath("$.data.content[0].type").value("HOSPITALIZATION"))
+    }
+
+    @Test
+    fun `list admissions should filter by status and type`() {
+        // Create AMBULATORY admission
+        val ambulatoryRequest = CreateAdmissionRequest(
+            patientId = patientId,
+            triageCodeId = null,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.AMBULATORY,
+        )
+        val ambulatoryResult = mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(ambulatoryRequest)),
+        ).andReturn()
+
+        val ambulatoryId = objectMapper.readTree(ambulatoryResult.response.contentAsString)
+            .get("data").get("id").asLong()
+
+        // Discharge AMBULATORY admission
+        mockMvc.perform(
+            post("/api/v1/admissions/$ambulatoryId/discharge")
+                .header("Authorization", "Bearer $administrativeStaffToken"),
+        )
+
+        // Create another AMBULATORY admission (active)
+        val patient2Id = createSecondPatient()
+        val ambulatoryRequest2 = CreateAdmissionRequest(
+            patientId = patient2Id,
+            triageCodeId = null,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.AMBULATORY,
+        )
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(ambulatoryRequest2)),
+        )
+
+        // Filter by ACTIVE and AMBULATORY
+        mockMvc.perform(
+            get("/api/v1/admissions")
+                .param("status", "ACTIVE")
+                .param("type", "AMBULATORY")
+                .header("Authorization", "Bearer $administrativeStaffToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content").isArray)
+            .andExpect(jsonPath("$.data.content.length()").value(1))
+            .andExpect(jsonPath("$.data.content[0].type").value("AMBULATORY"))
+            .andExpect(jsonPath("$.data.content[0].status").value("ACTIVE"))
+
+        // Filter by DISCHARGED and AMBULATORY
+        mockMvc.perform(
+            get("/api/v1/admissions")
+                .param("status", "DISCHARGED")
+                .param("type", "AMBULATORY")
+                .header("Authorization", "Bearer $administrativeStaffToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content").isArray)
+            .andExpect(jsonPath("$.data.content.length()").value(1))
+            .andExpect(jsonPath("$.data.content[0].type").value("AMBULATORY"))
+            .andExpect(jsonPath("$.data.content[0].status").value("DISCHARGED"))
+    }
+
+    @Test
+    fun `update admission type from HOSPITALIZATION to AMBULATORY should allow removing room and triage code`() {
+        // Create HOSPITALIZATION admission
+        val createRequest = createValidAdmissionRequest()
+        val createResult = mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest)),
+        ).andReturn()
+
+        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
+            .get("data").get("id").asLong()
+
+        // Update to AMBULATORY without room and triage code
+        val updateRequest = UpdateAdmissionRequest(
+            triageCodeId = null,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            type = AdmissionType.AMBULATORY,
+            inventory = "Updated inventory",
+        )
+
+        mockMvc.perform(
+            put("/api/v1/admissions/$admissionId")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.type").value("AMBULATORY"))
+            .andExpect(jsonPath("$.data.room").doesNotExist())
+            .andExpect(jsonPath("$.data.triageCode").doesNotExist())
+    }
+
+    @Test
+    fun `update admission type to HOSPITALIZATION should require room and triage code`() {
+        // Create AMBULATORY admission
+        val createRequest = CreateAdmissionRequest(
+            patientId = patientId,
+            triageCodeId = null,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.AMBULATORY,
+        )
+        val createResult = mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest)),
+        ).andReturn()
+
+        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
+            .get("data").get("id").asLong()
+
+        // Try to update to HOSPITALIZATION without room - should fail
+        val updateRequest = UpdateAdmissionRequest(
+            triageCodeId = triageCodeId,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            type = AdmissionType.HOSPITALIZATION,
+        )
+
+        mockMvc.perform(
+            put("/api/v1/admissions/$admissionId")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.message").value("Room is required for HOSPITALIZATION admissions"))
+    }
+
+    @Test
+    fun `update admission type to EMERGENCY should require triage code`() {
+        // Create AMBULATORY admission
+        val createRequest = CreateAdmissionRequest(
+            patientId = patientId,
+            triageCodeId = null,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.AMBULATORY,
+        )
+        val createResult = mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest)),
+        ).andReturn()
+
+        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
+            .get("data").get("id").asLong()
+
+        // Try to update to EMERGENCY without triage code - should fail
+        val updateRequest = UpdateAdmissionRequest(
+            triageCodeId = null,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            type = AdmissionType.EMERGENCY,
+        )
+
+        mockMvc.perform(
+            put("/api/v1/admissions/$admissionId")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.message").value("Triage code is required for EMERGENCY admissions"))
+    }
+
+    @Test
+    fun `AMBULATORY admissions should not count against room capacity`() {
+        // Fill the room with HOSPITALIZATION admissions (capacity is 2)
+        val request1 = createValidAdmissionRequest()
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request1)),
+        ).andExpect(status().isCreated)
+
+        val patient2Id = createSecondPatient()
+        val request2 = createValidAdmissionRequest().copy(patientId = patient2Id)
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request2)),
+        ).andExpect(status().isCreated)
+
+        // Room is now full, but AMBULATORY admission with room should still work
+        // because AMBULATORY admissions are assigned to rooms optionally and don't require beds
+        val patient3Id = createThirdPatient()
+        val ambulatoryRequest = CreateAdmissionRequest(
+            patientId = patient3Id,
+            triageCodeId = triageCodeId,
+            roomId = roomId,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.AMBULATORY,
+        )
+
+        // This should fail because room capacity check is still applied
+        // when a room is explicitly provided, regardless of admission type
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(ambulatoryRequest)),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.message").value("Room 'TEST-101' is full. No available beds."))
+    }
+
+    @Test
+    fun `update admission should preserve type if not specified`() {
+        // Create KETAMINE_INFUSION admission
+        val createRequest = CreateAdmissionRequest(
+            patientId = patientId,
+            triageCodeId = null,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.KETAMINE_INFUSION,
+        )
+        val createResult = mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest)),
+        ).andReturn()
+
+        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
+            .get("data").get("id").asLong()
+
+        // Update without specifying type
+        val updateRequest = UpdateAdmissionRequest(
+            triageCodeId = null,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            type = null,
+            inventory = "Updated notes",
+        )
+
+        mockMvc.perform(
+            put("/api/v1/admissions/$admissionId")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.type").value("KETAMINE_INFUSION"))
+            .andExpect(jsonPath("$.data.inventory").value("Updated notes"))
+    }
+
+    @Test
+    fun `admission detail response should include type field`() {
+        val request = CreateAdmissionRequest(
+            patientId = patientId,
+            triageCodeId = null,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.ELECTROSHOCK_THERAPY,
+        )
+        val createResult = mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        ).andReturn()
+
+        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
+            .get("data").get("id").asLong()
+
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId")
+                .header("Authorization", "Bearer $administrativeStaffToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.type").value("ELECTROSHOCK_THERAPY"))
+    }
+
+    @Test
+    fun `admission list response should include type field`() {
+        val request = CreateAdmissionRequest(
+            patientId = patientId,
+            triageCodeId = null,
+            roomId = null,
+            treatingPhysicianId = doctorUser.id!!,
+            admissionDate = LocalDateTime.now(),
+            type = AdmissionType.KETAMINE_INFUSION,
+        )
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+
+        mockMvc.perform(
+            get("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content[0].type").value("KETAMINE_INFUSION"))
     }
 
     private fun createAdmissionAndGetId(): Long {

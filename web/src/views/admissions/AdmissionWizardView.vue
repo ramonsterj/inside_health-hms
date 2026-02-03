@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { useErrorHandler } from '@/composables/useErrorHandler'
@@ -20,6 +20,11 @@ import { useTriageCodeStore } from '@/stores/triageCode'
 import { useRoomStore } from '@/stores/room'
 import type { PatientSummary } from '@/types'
 import type { Doctor } from '@/types/admission'
+import {
+  AdmissionType,
+  admissionTypeRequiresRoom,
+  admissionTypeRequiresTriageCode
+} from '@/types/admission'
 import { MAX_CONSENT_FILE_SIZE, ACCEPTED_CONSENT_TYPES } from '@/validation/admission'
 
 const { t } = useI18n()
@@ -48,7 +53,31 @@ const selectedPatient = ref<PatientSummary | null>(null)
 const selectedTriageCode = ref<number | null>(null)
 const selectedRoom = ref<number | null>(null)
 const selectedPhysician = ref<number | null>(null)
+const selectedType = ref<AdmissionType>(AdmissionType.HOSPITALIZATION)
 const admissionDate = ref<Date>(new Date())
+
+const typeOptions = computed(() => [
+  { label: t('admission.types.HOSPITALIZATION'), value: AdmissionType.HOSPITALIZATION },
+  { label: t('admission.types.AMBULATORY'), value: AdmissionType.AMBULATORY },
+  { label: t('admission.types.ELECTROSHOCK_THERAPY'), value: AdmissionType.ELECTROSHOCK_THERAPY },
+  { label: t('admission.types.KETAMINE_INFUSION'), value: AdmissionType.KETAMINE_INFUSION },
+  { label: t('admission.types.EMERGENCY'), value: AdmissionType.EMERGENCY }
+])
+
+const roomRequired = computed(() => admissionTypeRequiresRoom(selectedType.value))
+const triageCodeRequired = computed(() => admissionTypeRequiresTriageCode(selectedType.value))
+const showRoomField = computed(() => admissionTypeRequiresRoom(selectedType.value))
+const showTriageCodeField = computed(() => admissionTypeRequiresTriageCode(selectedType.value))
+
+// Watch for type changes and clear irrelevant values
+watch(selectedType, newType => {
+  if (!admissionTypeRequiresRoom(newType)) {
+    selectedRoom.value = null
+  }
+  if (!admissionTypeRequiresTriageCode(newType)) {
+    selectedTriageCode.value = null
+  }
+})
 
 // Step 3: Extras
 const inventory = ref('')
@@ -76,9 +105,10 @@ async function loadAdmission() {
   try {
     const admission = await admissionStore.fetchAdmission(admissionId.value!)
     selectedPatient.value = admission.patient
-    selectedTriageCode.value = admission.triageCode.id
-    selectedRoom.value = admission.room.id
+    selectedTriageCode.value = admission.triageCode?.id ?? null
+    selectedRoom.value = admission.room?.id ?? null
     selectedPhysician.value = admission.treatingPhysician.id
+    selectedType.value = admission.type
     admissionDate.value = new Date(admission.admissionDate)
     inventory.value = admission.inventory || ''
   } catch (error) {
@@ -149,11 +179,16 @@ function validateStep1(): boolean {
 
 function validateStep2(): boolean {
   errors.value = {}
-  if (!selectedTriageCode.value) {
-    errors.value.triageCode = t('validation.admission.triageCodeId.required')
+  if (!selectedType.value) {
+    errors.value.type = t('validation.admission.type.required')
   }
-  if (!selectedRoom.value) {
-    errors.value.room = t('validation.admission.roomId.required')
+  // Triage code is required only for HOSPITALIZATION and EMERGENCY types
+  if (triageCodeRequired.value && !selectedTriageCode.value) {
+    errors.value.triageCode = t('validation.admission.triageCodeId.requiredForType')
+  }
+  // Room is required only for HOSPITALIZATION type
+  if (roomRequired.value && !selectedRoom.value) {
+    errors.value.room = t('validation.admission.roomId.requiredForType')
   }
   if (!selectedPhysician.value) {
     errors.value.physician = t('validation.admission.treatingPhysicianId.required')
@@ -175,19 +210,21 @@ async function submitAdmission() {
   try {
     if (isEditMode.value && admissionId.value) {
       await admissionStore.updateAdmission(admissionId.value, {
-        triageCodeId: selectedTriageCode.value!,
-        roomId: selectedRoom.value!,
+        triageCodeId: selectedTriageCode.value,
+        roomId: selectedRoom.value,
         treatingPhysicianId: selectedPhysician.value!,
+        type: selectedType.value,
         inventory: inventory.value || undefined
       })
       showSuccess('admission.updated')
     } else {
       const admission = await admissionStore.createAdmission({
         patientId: selectedPatient.value!.id,
-        triageCodeId: selectedTriageCode.value!,
-        roomId: selectedRoom.value!,
+        triageCodeId: selectedTriageCode.value,
+        roomId: selectedRoom.value,
         treatingPhysicianId: selectedPhysician.value!,
         admissionDate: admissionDate.value.toISOString(),
+        type: selectedType.value,
         inventory: inventory.value || undefined
       })
 
@@ -294,6 +331,21 @@ function cancel() {
               <div class="step-content">
                 <div class="form-grid">
                   <div class="form-field">
+                    <label>{{ t('admission.type') }} *</label>
+                    <Select
+                      v-model="selectedType"
+                      :options="typeOptions"
+                      optionValue="value"
+                      optionLabel="label"
+                      :placeholder="t('admission.selectType')"
+                      :class="{ 'p-invalid': errors.type }"
+                    />
+                    <Message v-if="errors.type" severity="error" :closable="false">
+                      {{ errors.type }}
+                    </Message>
+                  </div>
+
+                  <div v-if="showTriageCodeField" class="form-field">
                     <label>{{ t('admission.triageCode') }} *</label>
                     <Select
                       v-model="selectedTriageCode"
@@ -308,7 +360,7 @@ function cancel() {
                     </Message>
                   </div>
 
-                  <div class="form-field">
+                  <div v-if="showRoomField" class="form-field">
                     <label>{{ t('admission.room') }} *</label>
                     <Select
                       v-model="selectedRoom"

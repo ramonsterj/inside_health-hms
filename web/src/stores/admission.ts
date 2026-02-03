@@ -7,6 +7,7 @@ import type {
   CreateAdmissionRequest,
   UpdateAdmissionRequest,
   AdmissionStatus,
+  AdmissionType,
   Doctor,
   ConsultingPhysician,
   AddConsultingPhysicianRequest
@@ -23,13 +24,17 @@ export const useAdmissionStore = defineStore('admission', () => {
   async function fetchAdmissions(
     page = 0,
     size = 20,
-    status: AdmissionStatus | null = null
+    status: AdmissionStatus | null = null,
+    type: AdmissionType | null = null
   ): Promise<void> {
     loading.value = true
     try {
       const params: Record<string, unknown> = { page, size }
       if (status) {
         params.status = status
+      }
+      if (type) {
+        params.type = type
       }
       const response = await api.get<ApiResponse<PageResponse<AdmissionListItem>>>(
         '/v1/admissions',

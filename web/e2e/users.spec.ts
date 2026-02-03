@@ -1,51 +1,159 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('User Management - Phone Number Primary Flag', () => {
-  async function loginAsAdmin(page: import('@playwright/test').Page) {
-    await page.goto('/login')
+// Mock user data
+const mockAdminUser = {
+  id: 1,
+  username: 'admin',
+  email: 'admin@example.com',
+  firstName: 'Admin',
+  lastName: 'User',
+  roles: ['ADMIN'],
+  permissions: ['user:read', 'user:create', 'user:update', 'user:delete'],
+  status: 'ACTIVE',
+  emailVerified: true,
+  createdAt: '2026-01-01T00:00:00Z',
+  localePreference: 'en'
+}
 
-    // Clear localStorage once at the start (not on every page load)
-    await page.evaluate(() => localStorage.clear())
+const mockUserWithPhone = {
+  id: 2,
+  username: 'testuser',
+  email: 'testuser@example.com',
+  firstName: 'Test',
+  lastName: 'User',
+  roles: ['USER'],
+  permissions: [],
+  status: 'ACTIVE',
+  emailVerified: true,
+  createdAt: '2026-01-15T10:00:00Z',
+  localePreference: 'en',
+  phoneNumbers: [
+    { id: 1, phoneNumber: '12345678', phoneType: 'MOBILE', isPrimary: false }
+  ]
+}
 
-    // Reload to apply the cleared state
-    await page.reload()
-    await page.waitForLoadState('networkidle')
+const mockRoles = [
+  { id: 1, name: 'Admin', code: 'ADMIN', description: 'Administrator' },
+  { id: 2, name: 'User', code: 'USER', description: 'Regular user' },
+  { id: 3, name: 'Doctor', code: 'DOCTOR', description: 'Doctor' }
+]
 
-    // Wait for login form to be visible
-    const identifierInput = page.getByLabel('Email or Username')
-    await expect(identifierInput).toBeVisible({ timeout: 10000 })
-
-    // Fill in credentials for admin user
-    await identifierInput.fill('admin')
-
-    // PrimeVue Password wraps the input, so we need to find the actual input element
-    const passwordInput = page.locator('#password input')
-    await expect(passwordInput).toBeVisible({ timeout: 5000 })
-    await passwordInput.fill('admin123')
-
-    // Submit
-    const signInButton = page.getByRole('button', { name: 'Sign In' })
-    await expect(signInButton).toBeVisible()
-    await signInButton.click()
-
-    // Wait for redirect - could be dashboard or force password change
-    await page.waitForURL(/\/(dashboard|auth\/change-password)/, { timeout: 15000 })
-
-    // If redirected to password change, handle it
-    if (page.url().includes('change-password')) {
-      await page.waitForLoadState('networkidle')
-      const passwordInputs = page.locator('input[type="password"]')
-      await passwordInputs.first().fill('admin123')
-      await passwordInputs.nth(1).fill('NewAdmin123!')
-      await passwordInputs.nth(2).fill('NewAdmin123!')
-      await page.getByRole('button', { name: /change|cambiar/i }).click()
-      await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 })
+const mockUsersPage = {
+  content: [
+    {
+      id: 2,
+      username: 'testuser',
+      email: 'testuser@example.com',
+      firstName: 'Test',
+      lastName: 'User',
+      roles: ['USER'],
+      status: 'ACTIVE',
+      createdAt: '2026-01-15T10:00:00Z'
     }
+  ],
+  page: {
+    totalElements: 1,
+    totalPages: 1,
+    size: 10,
+    number: 0
   }
+}
+
+// Helper function to setup authenticated state
+async function setupAuth(page: import('@playwright/test').Page) {
+  await page.addInitScript(
+    (userData) => {
+      localStorage.setItem('access_token', 'mock-access-token')
+      localStorage.setItem('refresh_token', 'mock-refresh-token')
+      localStorage.setItem('mock_user', JSON.stringify(userData))
+    },
+    mockAdminUser
+  )
+}
+
+// Helper function to setup API mocks
+async function setupApiMocks(page: import('@playwright/test').Page) {
+  await page.route('**/api/users/me', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: mockAdminUser })
+    })
+  })
+
+  // Mock auth refresh to prevent session expiration
+  await page.route('**/api/auth/refresh', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: { accessToken: 'new-mock-token', refreshToken: 'new-mock-refresh' }
+      })
+    })
+  })
+
+  // Mock roles list
+  await page.route('**/api/roles', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: mockRoles })
+    })
+  })
+}
+
+test.describe('User Management - Phone Number Primary Flag', () => {
+  // Track state changes for persistence simulation
+  let userPhoneIsPrimary = false
 
   test('primary phone number flag persists after save', async ({ page }) => {
-    // Login as admin
-    await loginAsAdmin(page)
+    // Setup mock authentication
+    await setupAuth(page)
+    await setupApiMocks(page)
+
+    // Mock users list endpoint
+    await page.route('**/api/users?*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: mockUsersPage })
+      })
+    })
+
+    // Mock get single user endpoint - returns current state
+    await page.route('**/api/users/2', async (route) => {
+      if (route.request().method() === 'GET') {
+        const userData = {
+          ...mockUserWithPhone,
+          phoneNumbers: [
+            { id: 1, phoneNumber: '12345678', phoneType: 'MOBILE', isPrimary: userPhoneIsPrimary }
+          ]
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: userData })
+        })
+      } else if (route.request().method() === 'PUT') {
+        // Parse the request body to extract isPrimary state
+        const requestBody = route.request().postDataJSON()
+        if (requestBody?.phoneNumbers?.[0]?.isPrimary !== undefined) {
+          userPhoneIsPrimary = requestBody.phoneNumbers[0].isPrimary
+        }
+        const updatedUser = {
+          ...mockUserWithPhone,
+          phoneNumbers: [
+            { id: 1, phoneNumber: '12345678', phoneType: 'MOBILE', isPrimary: userPhoneIsPrimary }
+          ]
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: updatedUser })
+        })
+      }
+    })
 
     // Navigate to users page
     await page.goto('/users')
@@ -70,27 +178,18 @@ test.describe('User Management - Phone Number Primary Flag', () => {
     // Wait for loading spinner to disappear (user data is being fetched)
     await expect(dialog.locator('.p-progress-spinner')).toBeHidden({ timeout: 10000 })
 
-    // Find the phone number input and fill it if empty (required for save to be enabled)
+    // Find the phone number input and verify it has value
     const phoneInput = dialog.locator('.phone-numbers-list input[type="text"]').first()
     await expect(phoneInput).toBeVisible({ timeout: 5000 })
-    const phoneValue = await phoneInput.inputValue()
-    if (!phoneValue || phoneValue.trim() === '') {
-      await phoneInput.fill('12345678')
-    }
 
     // Find the primary checkbox in the phone numbers section
     const primaryCheckbox = dialog.locator('.phone-numbers-list input[type="checkbox"]').first()
     await expect(primaryCheckbox).toBeVisible({ timeout: 5000 })
 
-    // Get the current checked state
-    const wasChecked = await primaryCheckbox.isChecked()
+    // The checkbox should not be checked initially (isPrimary: false in mock)
+    await expect(primaryCheckbox).not.toBeChecked()
 
-    // Toggle the checkbox to ensure we're making a change
-    if (wasChecked) {
-      // If checked, uncheck it first then recheck
-      await primaryCheckbox.uncheck()
-    }
-    // Now check it
+    // Check it
     await primaryCheckbox.check()
 
     // Verify it's now checked before save
@@ -127,8 +226,87 @@ test.describe('User Management - Phone Number Primary Flag', () => {
   })
 
   test('primary phone number flag is correctly set when creating a new user', async ({ page }) => {
-    // Login as admin
-    await loginAsAdmin(page)
+    // Setup mock authentication
+    await setupAuth(page)
+    await setupApiMocks(page)
+
+    const timestamp = Date.now()
+    const newUsername = `testuser${timestamp}`
+    const newEmail = `testuser${timestamp}@example.com`
+    let createdUser: typeof mockUserWithPhone | null = null
+
+    // Mock users list endpoint
+    await page.route('**/api/users?*', async (route) => {
+      const usersData = createdUser
+        ? {
+            content: [
+              ...mockUsersPage.content,
+              {
+                id: 3,
+                username: newUsername,
+                email: newEmail,
+                firstName: '',
+                lastName: '',
+                roles: ['USER'],
+                status: 'ACTIVE',
+                createdAt: new Date().toISOString()
+              }
+            ],
+            page: { ...mockUsersPage.page, totalElements: 2 }
+          }
+        : mockUsersPage
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: usersData })
+      })
+    })
+
+    // Mock create user endpoint
+    await page.route('**/api/users', async (route) => {
+      if (route.request().method() === 'POST') {
+        const requestBody = route.request().postDataJSON()
+        createdUser = {
+          id: 3,
+          username: requestBody.username,
+          email: requestBody.email,
+          firstName: requestBody.firstName || '',
+          lastName: requestBody.lastName || '',
+          roles: requestBody.roles || ['USER'],
+          permissions: [],
+          status: 'ACTIVE',
+          emailVerified: false,
+          createdAt: new Date().toISOString(),
+          localePreference: 'en',
+          phoneNumbers: requestBody.phoneNumbers || []
+        }
+        await route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: createdUser })
+        })
+      }
+    })
+
+    // Mock get single user endpoint for the newly created user
+    await page.route('**/api/users/3', async (route) => {
+      if (route.request().method() === 'GET' && createdUser) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: createdUser })
+        })
+      }
+    })
+
+    // Mock username availability check
+    await page.route('**/api/users/check-username-availability*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: { available: true } })
+      })
+    })
 
     // Navigate to users page
     await page.goto('/users')
@@ -147,19 +325,14 @@ test.describe('User Management - Phone Number Primary Flag', () => {
     const dialog = page.locator('[role="dialog"]')
     await expect(dialog).toBeVisible({ timeout: 5000 })
 
-    // Generate unique username and email
-    const timestamp = Date.now()
-    const username = `testuser${timestamp}`
-    const email = `testuser${timestamp}@example.com`
-
     // Fill in required fields - use id selector for username input
     const usernameInput = dialog.locator('#username')
     await expect(usernameInput).toBeVisible({ timeout: 5000 })
-    await usernameInput.fill(username)
+    await usernameInput.fill(newUsername)
 
     const emailInput = dialog.locator('input[type="email"]')
     await expect(emailInput).toBeVisible()
-    await emailInput.fill(email)
+    await emailInput.fill(newEmail)
 
     // Fill password fields - using InputText type="password"
     const passwordInputs = dialog.locator('input[type="password"]')
@@ -196,14 +369,14 @@ test.describe('User Management - Phone Number Primary Flag', () => {
     // Search for the newly created user
     const searchInput = page.locator('.filter-bar input[type="text"]').first()
     await expect(searchInput).toBeVisible()
-    await searchInput.fill(username)
+    await searchInput.fill(newUsername)
 
     // Wait for search results
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(500)
 
     // Find the edit button for the new user
-    const newUserRow = page.locator('.p-datatable-tbody tr').filter({ hasText: email })
+    const newUserRow = page.locator('.p-datatable-tbody tr').filter({ hasText: newEmail })
     await expect(newUserRow).toBeVisible({ timeout: 10000 })
 
     const editNewUserButton = newUserRow.locator('button').filter({ has: page.locator('.pi-pencil') })

@@ -104,6 +104,7 @@ const mockAdmission = {
   admissionDate: '2026-01-23T10:30:00',
   dischargeDate: null,
   status: 'ACTIVE',
+  type: 'HOSPITALIZATION',
   inventory: 'Wallet, phone, glasses',
   hasConsentDocument: false,
   consultingPhysicians: [],
@@ -122,7 +123,8 @@ const mockAdmissionsPage = {
       room: mockRooms[0],
       treatingPhysician: mockDoctors[0],
       admissionDate: '2026-01-23T10:30:00',
-      status: 'ACTIVE'
+      status: 'ACTIVE',
+      type: 'HOSPITALIZATION'
     }
   ],
   page: {

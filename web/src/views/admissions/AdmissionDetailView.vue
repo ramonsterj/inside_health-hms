@@ -18,6 +18,7 @@ import { AdmissionStatus } from '@/types/admission'
 import type { ConsultingPhysician } from '@/types/admission'
 import { MAX_CONSENT_FILE_SIZE, ACCEPTED_CONSENT_TYPES } from '@/validation/admission'
 import AddConsultingPhysicianDialog from '@/components/admissions/AddConsultingPhysicianDialog.vue'
+import AdmissionTypeBadge from '@/components/admissions/AdmissionTypeBadge.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -271,6 +272,10 @@ async function removeConsultingPhysician(consultingPhysicianId: number) {
             />
           </div>
           <div class="info-row">
+            <span class="info-label">{{ t('admission.type') }}</span>
+            <AdmissionTypeBadge :type="admission.type" />
+          </div>
+          <div v-if="admission.triageCode" class="info-row">
             <span class="info-label">{{ t('admission.triageCode') }}</span>
             <span
               class="triage-badge"
@@ -284,7 +289,7 @@ async function removeConsultingPhysician(consultingPhysicianId: number) {
           </div>
           <div class="info-row">
             <span class="info-label">{{ t('admission.room') }}</span>
-            <span class="info-value">{{ admission.room.number }}</span>
+            <span class="info-value">{{ admission.room?.number || '-' }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">{{ t('admission.treatingPhysician') }}</span>

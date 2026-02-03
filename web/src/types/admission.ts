@@ -7,6 +7,22 @@ export enum AdmissionStatus {
   DISCHARGED = 'DISCHARGED'
 }
 
+export enum AdmissionType {
+  HOSPITALIZATION = 'HOSPITALIZATION',
+  AMBULATORY = 'AMBULATORY',
+  ELECTROSHOCK_THERAPY = 'ELECTROSHOCK_THERAPY',
+  KETAMINE_INFUSION = 'KETAMINE_INFUSION',
+  EMERGENCY = 'EMERGENCY'
+}
+
+export function admissionTypeRequiresRoom(type: AdmissionType): boolean {
+  return type === AdmissionType.HOSPITALIZATION
+}
+
+export function admissionTypeRequiresTriageCode(type: AdmissionType): boolean {
+  return type === AdmissionType.HOSPITALIZATION || type === AdmissionType.EMERGENCY
+}
+
 export interface Doctor {
   id: number
   salutation: string | null
@@ -18,12 +34,13 @@ export interface Doctor {
 export interface AdmissionListItem {
   id: number
   patient: PatientSummary
-  triageCode: TriageCodeSummary
-  room: RoomSummary
+  triageCode: TriageCodeSummary | null
+  room: RoomSummary | null
   treatingPhysician: Doctor
   admissionDate: string
   dischargeDate: string | null
   status: AdmissionStatus
+  type: AdmissionType
   hasConsentDocument: boolean
   createdAt: string | null
 }
@@ -31,12 +48,13 @@ export interface AdmissionListItem {
 export interface AdmissionDetail {
   id: number
   patient: PatientSummary
-  triageCode: TriageCodeSummary
-  room: RoomSummary
+  triageCode: TriageCodeSummary | null
+  room: RoomSummary | null
   treatingPhysician: Doctor
   admissionDate: string
   dischargeDate: string | null
   status: AdmissionStatus
+  type: AdmissionType
   inventory: string | null
   hasConsentDocument: boolean
   consultingPhysicians: ConsultingPhysician[]
@@ -48,17 +66,19 @@ export interface AdmissionDetail {
 
 export interface CreateAdmissionRequest {
   patientId: number
-  triageCodeId: number
-  roomId: number
+  triageCodeId: number | null
+  roomId: number | null
   treatingPhysicianId: number
   admissionDate: string
+  type: AdmissionType
   inventory?: string | null
 }
 
 export interface UpdateAdmissionRequest {
-  triageCodeId: number
-  roomId: number
+  triageCodeId: number | null
+  roomId: number | null
   treatingPhysicianId: number
+  type?: AdmissionType
   inventory?: string | null
 }
 
