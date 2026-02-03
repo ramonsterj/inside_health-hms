@@ -12,6 +12,7 @@ import com.insidehealthgt.hms.entity.Admission
 import com.insidehealthgt.hms.entity.AdmissionConsentDocument
 import com.insidehealthgt.hms.entity.AdmissionConsultingPhysician
 import com.insidehealthgt.hms.entity.AdmissionStatus
+import com.insidehealthgt.hms.entity.AdmissionType
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
 import com.insidehealthgt.hms.repository.AdmissionConsentDocumentRepository
@@ -46,11 +47,23 @@ class AdmissionService(
         ?: throw ResourceNotFoundException("Admission not found with id: $id")
 
     @Transactional(readOnly = true)
-    fun findAll(pageable: Pageable, status: AdmissionStatus? = null): Page<AdmissionListResponse> {
-        val admissions = if (status != null) {
-            admissionRepository.findAllByStatusWithRelations(status, pageable)
-        } else {
-            admissionRepository.findAllWithRelations(pageable)
+    fun findAll(
+        pageable: Pageable,
+        status: AdmissionStatus? = null,
+        type: AdmissionType? = null,
+    ): Page<AdmissionListResponse> {
+        val admissions = when {
+            status != null && type != null ->
+                admissionRepository.findAllByStatusAndTypeWithRelations(status, type, pageable)
+
+            status != null ->
+                admissionRepository.findAllByStatusWithRelations(status, pageable)
+
+            type != null ->
+                admissionRepository.findAllByTypeWithRelations(type, pageable)
+
+            else ->
+                admissionRepository.findAllWithRelations(pageable)
         }
         return admissions.map { AdmissionListResponse.from(it) }
     }
@@ -71,11 +84,27 @@ class AdmissionService(
             throw BadRequestException("Patient already has an active admission")
         }
 
-        val triageCode = triageCodeRepository.findById(request.triageCodeId)
-            .orElseThrow { ResourceNotFoundException("Triage code not found with id: ${request.triageCodeId}") }
+        // Validate triage code requirement based on admission type
+        if (request.type.requiresTriageCode() && request.triageCodeId == null) {
+            throw BadRequestException("Triage code is required for ${request.type} admissions")
+        }
 
-        val room = roomRepository.findById(request.roomId)
-            .orElseThrow { ResourceNotFoundException("Room not found with id: ${request.roomId}") }
+        // Load triage code if provided
+        val triageCode = request.triageCodeId?.let { triageCodeId ->
+            triageCodeRepository.findById(triageCodeId)
+                .orElseThrow { ResourceNotFoundException("Triage code not found with id: $triageCodeId") }
+        }
+
+        // Validate room requirement based on admission type
+        if (request.type.requiresRoom() && request.roomId == null) {
+            throw BadRequestException("Room is required for ${request.type} admissions")
+        }
+
+        // Load room if provided
+        val room = request.roomId?.let { roomId ->
+            roomRepository.findById(roomId)
+                .orElseThrow { ResourceNotFoundException("Room not found with id: $roomId") }
+        }
 
         val treatingPhysician = userRepository.findById(request.treatingPhysicianId)
             .orElseThrow { ResourceNotFoundException("User not found with id: ${request.treatingPhysicianId}") }
@@ -85,10 +114,12 @@ class AdmissionService(
             throw BadRequestException("Treating physician must have the DOCTOR role")
         }
 
-        // Validate room availability
-        val activeAdmissions = roomRepository.countActiveAdmissionsByRoomId(room.id!!)
-        if (activeAdmissions >= room.capacity) {
-            throw BadRequestException("Room '${room.number}' is full. No available beds.")
+        // Validate room availability if room is provided
+        room?.let {
+            val activeAdmissions = roomRepository.countActiveAdmissionsByRoomId(it.id!!)
+            if (activeAdmissions >= it.capacity) {
+                throw BadRequestException("Room '${it.number}' is full. No available beds.")
+            }
         }
 
         val admission = Admission(
@@ -99,6 +130,7 @@ class AdmissionService(
             admissionDate = request.admissionDate,
             inventory = request.inventory,
             status = AdmissionStatus.ACTIVE,
+            type = request.type,
         )
 
         val savedAdmission = admissionRepository.save(admission)
@@ -113,11 +145,30 @@ class AdmissionService(
             throw BadRequestException("Cannot update a discharged admission")
         }
 
-        val triageCode = triageCodeRepository.findById(request.triageCodeId)
-            .orElseThrow { ResourceNotFoundException("Triage code not found with id: ${request.triageCodeId}") }
+        // Determine the effective type (update if provided, otherwise keep current)
+        val effectiveType = request.type ?: admission.type
 
-        val room = roomRepository.findById(request.roomId)
-            .orElseThrow { ResourceNotFoundException("Room not found with id: ${request.roomId}") }
+        // Validate triage code requirement based on admission type
+        if (effectiveType.requiresTriageCode() && request.triageCodeId == null) {
+            throw BadRequestException("Triage code is required for $effectiveType admissions")
+        }
+
+        // Load triage code if provided
+        val triageCode = request.triageCodeId?.let { triageCodeId ->
+            triageCodeRepository.findById(triageCodeId)
+                .orElseThrow { ResourceNotFoundException("Triage code not found with id: $triageCodeId") }
+        }
+
+        // Validate room requirement based on admission type
+        if (effectiveType.requiresRoom() && request.roomId == null) {
+            throw BadRequestException("Room is required for $effectiveType admissions")
+        }
+
+        // Load room if provided
+        val room = request.roomId?.let { roomId ->
+            roomRepository.findById(roomId)
+                .orElseThrow { ResourceNotFoundException("Room not found with id: $roomId") }
+        }
 
         val treatingPhysician = userRepository.findById(request.treatingPhysicianId)
             .orElseThrow { ResourceNotFoundException("User not found with id: ${request.treatingPhysicianId}") }
@@ -128,7 +179,7 @@ class AdmissionService(
         }
 
         // Validate room availability if changing rooms
-        if (room.id != admission.room.id) {
+        if (room != null && room.id != admission.room?.id) {
             val activeAdmissions = roomRepository.countActiveAdmissionsByRoomId(room.id!!)
             if (activeAdmissions >= room.capacity) {
                 throw BadRequestException("Room '${room.number}' is full. No available beds.")
@@ -139,6 +190,7 @@ class AdmissionService(
         admission.room = room
         admission.treatingPhysician = treatingPhysician
         admission.inventory = request.inventory
+        request.type?.let { admission.type = it }
 
         val savedAdmission = admissionRepository.save(admission)
         return buildAdmissionDetailResponse(savedAdmission)

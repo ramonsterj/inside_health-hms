@@ -2,6 +2,7 @@ package com.insidehealthgt.hms.repository
 
 import com.insidehealthgt.hms.entity.Admission
 import com.insidehealthgt.hms.entity.AdmissionStatus
+import com.insidehealthgt.hms.entity.AdmissionType
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
@@ -52,6 +53,36 @@ interface AdmissionRepository : JpaRepository<Admission, Long> {
         countQuery = "SELECT COUNT(a) FROM Admission a WHERE a.status = :status",
     )
     fun findAllByStatusWithRelations(@Param("status") status: AdmissionStatus, pageable: Pageable): Page<Admission>
+
+    @Query(
+        """
+        SELECT a FROM Admission a
+        LEFT JOIN FETCH a.patient
+        LEFT JOIN FETCH a.triageCode
+        LEFT JOIN FETCH a.room
+        LEFT JOIN FETCH a.treatingPhysician
+        WHERE a.type = :type
+        """,
+        countQuery = "SELECT COUNT(a) FROM Admission a WHERE a.type = :type",
+    )
+    fun findAllByTypeWithRelations(@Param("type") type: AdmissionType, pageable: Pageable): Page<Admission>
+
+    @Query(
+        """
+        SELECT a FROM Admission a
+        LEFT JOIN FETCH a.patient
+        LEFT JOIN FETCH a.triageCode
+        LEFT JOIN FETCH a.room
+        LEFT JOIN FETCH a.treatingPhysician
+        WHERE a.status = :status AND a.type = :type
+        """,
+        countQuery = "SELECT COUNT(a) FROM Admission a WHERE a.status = :status AND a.type = :type",
+    )
+    fun findAllByStatusAndTypeWithRelations(
+        @Param("status") status: AdmissionStatus,
+        @Param("type") type: AdmissionType,
+        pageable: Pageable,
+    ): Page<Admission>
 
     fun countByRoomIdAndStatus(roomId: Long, status: AdmissionStatus): Long
 

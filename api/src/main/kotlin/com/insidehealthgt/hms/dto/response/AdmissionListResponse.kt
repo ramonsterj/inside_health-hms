@@ -2,17 +2,19 @@ package com.insidehealthgt.hms.dto.response
 
 import com.insidehealthgt.hms.entity.Admission
 import com.insidehealthgt.hms.entity.AdmissionStatus
+import com.insidehealthgt.hms.entity.AdmissionType
 import java.time.LocalDateTime
 
 data class AdmissionListResponse(
     val id: Long,
     val patient: PatientSummaryResponse,
-    val triageCode: TriageCodeSummaryResponse,
-    val room: RoomSummaryResponse,
+    val triageCode: TriageCodeSummaryResponse?,
+    val room: RoomSummaryResponse?,
     val treatingPhysician: DoctorResponse,
     val admissionDate: LocalDateTime,
     val dischargeDate: LocalDateTime?,
     val status: AdmissionStatus,
+    val type: AdmissionType,
     val hasConsentDocument: Boolean,
     val createdAt: LocalDateTime?,
 ) {
@@ -20,12 +22,13 @@ data class AdmissionListResponse(
         fun from(admission: Admission): AdmissionListResponse = AdmissionListResponse(
             id = admission.id!!,
             patient = PatientSummaryResponse.from(admission.patient),
-            triageCode = TriageCodeSummaryResponse.from(admission.triageCode),
-            room = RoomSummaryResponse.from(admission.room),
+            triageCode = admission.triageCode?.let { TriageCodeSummaryResponse.from(it) },
+            room = admission.room?.let { RoomSummaryResponse.from(it) },
             treatingPhysician = DoctorResponse.from(admission.treatingPhysician),
             admissionDate = admission.admissionDate,
             dischargeDate = admission.dischargeDate,
             status = admission.status,
+            type = admission.type,
             hasConsentDocument = admission.hasConsentDocument(),
             createdAt = admission.createdAt,
         )

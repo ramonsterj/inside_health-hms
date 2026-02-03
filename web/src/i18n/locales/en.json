@@ -512,10 +512,15 @@
         "required": "Patient is required"
       },
       "triageCodeId": {
-        "required": "Triage code is required"
+        "required": "Triage code is required",
+        "requiredForType": "Triage code is required for this admission type"
       },
       "roomId": {
-        "required": "Room is required"
+        "required": "Room is required",
+        "requiredForType": "Room is required for this admission type"
+      },
+      "type": {
+        "required": "Admission type is required"
       },
       "treatingPhysicianId": {
         "required": "Treating physician is required"
@@ -784,6 +789,16 @@
     "statuses": {
       "ACTIVE": "Active",
       "DISCHARGED": "Discharged"
+    },
+    "type": "Admission Type",
+    "selectType": "Select admission type",
+    "roomOptionalHint": "Room is optional for this admission type",
+    "types": {
+      "HOSPITALIZATION": "Hospitalization",
+      "AMBULATORY": "Ambulatory",
+      "ELECTROSHOCK_THERAPY": "Electroshock Therapy",
+      "KETAMINE_INFUSION": "Ketamine Infusion",
+      "EMERGENCY": "Emergency"
     },
     "steps": {
       "patient": "Patient",

@@ -10,6 +10,7 @@ import com.insidehealthgt.hms.dto.response.ConsultingPhysicianResponse
 import com.insidehealthgt.hms.dto.response.DoctorResponse
 import com.insidehealthgt.hms.dto.response.PatientSummaryResponse
 import com.insidehealthgt.hms.entity.AdmissionStatus
+import com.insidehealthgt.hms.entity.AdmissionType
 import com.insidehealthgt.hms.service.AdmissionService
 import jakarta.validation.Valid
 import org.springframework.data.domain.Page
@@ -41,8 +42,9 @@ class AdmissionController(private val admissionService: AdmissionService) {
     fun listAdmissions(
         @PageableDefault(size = 20) pageable: Pageable,
         @RequestParam(required = false) status: AdmissionStatus?,
+        @RequestParam(required = false) type: AdmissionType?,
     ): ResponseEntity<ApiResponse<Page<AdmissionListResponse>>> {
-        val admissions = admissionService.findAll(pageable, status)
+        val admissions = admissionService.findAll(pageable, status, type)
         return ResponseEntity.ok(ApiResponse.success(admissions))
     }
 

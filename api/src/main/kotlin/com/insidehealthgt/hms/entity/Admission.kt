@@ -24,12 +24,12 @@ class Admission(
     var patient: Patient,
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "triage_code_id", nullable = false)
-    var triageCode: TriageCode,
+    @JoinColumn(name = "triage_code_id")
+    var triageCode: TriageCode? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id", nullable = false)
-    var room: Room,
+    @JoinColumn(name = "room_id")
+    var room: Room? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "treating_physician_id", nullable = false)
@@ -44,6 +44,10 @@ class Admission(
     @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     var status: AdmissionStatus = AdmissionStatus.ACTIVE,
+
+    @Column(nullable = false, length = 30)
+    @Enumerated(EnumType.STRING)
+    var type: AdmissionType = AdmissionType.HOSPITALIZATION,
 
     @Column(columnDefinition = "TEXT")
     var inventory: String? = null,

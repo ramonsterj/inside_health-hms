@@ -512,10 +512,15 @@
         "required": "Paciente es requerido"
       },
       "triageCodeId": {
-        "required": "Codigo de triage es requerido"
+        "required": "Codigo de triage es requerido",
+        "requiredForType": "Codigo de triage es requerido para este tipo de admision"
       },
       "roomId": {
-        "required": "Habitacion es requerida"
+        "required": "Habitacion es requerida",
+        "requiredForType": "Habitacion es requerida para este tipo de admision"
+      },
+      "type": {
+        "required": "Tipo de admision es requerido"
       },
       "treatingPhysicianId": {
         "required": "Medico tratante es requerido"
@@ -784,6 +789,16 @@
     "statuses": {
       "ACTIVE": "Activo",
       "DISCHARGED": "De Alta"
+    },
+    "type": "Tipo de Admision",
+    "selectType": "Seleccionar tipo de admision",
+    "roomOptionalHint": "La habitacion es opcional para este tipo de admision",
+    "types": {
+      "HOSPITALIZATION": "Hospitalizacion",
+      "AMBULATORY": "Ambulatorio",
+      "ELECTROSHOCK_THERAPY": "Terapia Electroconvulsiva",
+      "KETAMINE_INFUSION": "Infusion de Ketamina",
+      "EMERGENCY": "Emergencia"
     },
     "steps": {
       "patient": "Paciente",
