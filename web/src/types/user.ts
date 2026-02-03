@@ -10,6 +10,8 @@ export enum Salutation {
   SRTA = 'SRTA',
   DR = 'DR',
   DRA = 'DRA',
+  LIC = 'LIC',
+  LICDA = 'LICDA',
   MR = 'MR',
   MRS = 'MRS',
   MISS = 'MISS'
