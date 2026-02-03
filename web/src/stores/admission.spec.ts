@@ -4,7 +4,7 @@ import { useAdmissionStore } from './admission'
 import api from '@/services/api'
 import type { AdmissionDetail, AdmissionListItem, Doctor } from '@/types/admission'
 import type { PatientSummary } from '@/types'
-import { AdmissionStatus } from '@/types/admission'
+import { AdmissionStatus, AdmissionType } from '@/types/admission'
 import { RoomType } from '@/types/room'
 
 vi.mock('@/services/api', () => ({
@@ -60,6 +60,7 @@ const mockAdmissionDetail: AdmissionDetail = {
   triageCode: mockTriageCode,
   room: mockRoom,
   treatingPhysician: mockDoctor,
+  type: AdmissionType.HOSPITALIZATION,
   admissionDate: '2026-01-23T10:30:00',
   dischargeDate: null,
   status: AdmissionStatus.ACTIVE,
@@ -78,6 +79,7 @@ const mockAdmissionListItem: AdmissionListItem = {
   triageCode: mockTriageCode,
   room: mockRoom,
   treatingPhysician: mockDoctor,
+  type: AdmissionType.HOSPITALIZATION,
   admissionDate: '2026-01-23T10:30:00',
   dischargeDate: null,
   status: AdmissionStatus.ACTIVE,
@@ -210,6 +212,7 @@ describe('useAdmissionStore', () => {
         triageCodeId: 1,
         roomId: 1,
         treatingPhysicianId: 3,
+        type: AdmissionType.HOSPITALIZATION,
         admissionDate: '2026-01-23T10:30:00',
         inventory: 'Wallet, phone, glasses'
       }
@@ -231,6 +234,7 @@ describe('useAdmissionStore', () => {
         triageCodeId: 1,
         roomId: 1,
         treatingPhysicianId: 3,
+        type: AdmissionType.HOSPITALIZATION,
         admissionDate: '2026-01-23T10:30:00'
       }
 

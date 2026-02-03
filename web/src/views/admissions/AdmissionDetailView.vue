@@ -169,16 +169,18 @@ function formatDate(dateString: string | null): string {
   return new Date(dateString).toLocaleDateString()
 }
 
-function getPhysicianName(cp: ConsultingPhysician): string {
-  const { salutation, firstName, lastName } = cp.physician
-  const salutationLabel = salutation ? t(`user.salutations.${salutation}`) : ''
-  return `${salutationLabel} ${getFullName(firstName, lastName)}`.trim()
+function formatDoctorName(doctor: {
+  salutation: string | null
+  firstName: string | null
+  lastName: string | null
+}): string {
+  const salutationLabel = doctor.salutation ? t(`user.salutations.${doctor.salutation}`) : ''
+  return `${salutationLabel} ${getFullName(doctor.firstName, doctor.lastName)}`.trim()
 }
 
 async function handleConsultingPhysicianAdded() {
   showAddConsultingPhysicianDialog.value = false
   showSuccess('admission.consultingPhysicians.added')
-  // Refresh admission data after dialog closes
   await admissionStore.fetchAdmission(admissionId.value)
 }
 
@@ -293,19 +295,7 @@ async function removeConsultingPhysician(consultingPhysicianId: number) {
           </div>
           <div class="info-row">
             <span class="info-label">{{ t('admission.treatingPhysician') }}</span>
-            <span class="info-value">
-              {{
-                admission.treatingPhysician.salutation
-                  ? t(`user.salutations.${admission.treatingPhysician.salutation}`)
-                  : ''
-              }}
-              {{
-                getFullName(
-                  admission.treatingPhysician.firstName,
-                  admission.treatingPhysician.lastName
-                )
-              }}
-            </span>
+            <span class="info-value">{{ formatDoctorName(admission.treatingPhysician) }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">{{ t('admission.admissionDate') }}</span>
@@ -314,45 +304,6 @@ async function removeConsultingPhysician(consultingPhysicianId: number) {
           <div v-if="admission.dischargeDate" class="info-row">
             <span class="info-label">{{ t('admission.dischargeDate') }}</span>
             <span class="info-value">{{ formatDateTime(admission.dischargeDate) }}</span>
-          </div>
-        </template>
-      </Card>
-
-      <Card class="full-width">
-        <template #title>{{ t('admission.inventory') }}</template>
-        <template #content>
-          <p class="inventory-text">{{ admission.inventory || t('admission.noInventory') }}</p>
-        </template>
-      </Card>
-
-      <Card class="full-width">
-        <template #title>{{ t('admission.consent') }}</template>
-        <template #content>
-          <div class="consent-section">
-            <div v-if="admission.hasConsentDocument" class="consent-actions">
-              <Button
-                v-if="canViewConsent"
-                icon="pi pi-download"
-                :label="t('admission.downloadConsent')"
-                @click="downloadConsent"
-              />
-              <Button
-                v-if="canUploadConsent"
-                icon="pi pi-upload"
-                :label="t('admission.replaceConsent')"
-                severity="secondary"
-                @click="showUploadDialog = true"
-              />
-            </div>
-            <div v-else class="no-consent">
-              <p>{{ t('admission.noConsent') }}</p>
-              <Button
-                v-if="canUploadConsent"
-                icon="pi pi-upload"
-                :label="t('admission.uploadConsent')"
-                @click="showUploadDialog = true"
-              />
-            </div>
           </div>
         </template>
       </Card>
@@ -382,7 +333,7 @@ async function removeConsultingPhysician(consultingPhysicianId: number) {
           >
             <Column :header="t('admission.consultingPhysicians.physician')">
               <template #body="{ data }">
-                {{ getPhysicianName(data) }}
+                {{ formatDoctorName(data.physician) }}
               </template>
             </Column>
             <Column :header="t('admission.consultingPhysicians.reason')">
@@ -419,6 +370,45 @@ async function removeConsultingPhysician(consultingPhysicianId: number) {
               </template>
             </Column>
           </DataTable>
+        </template>
+      </Card>
+
+      <Card class="full-width">
+        <template #title>{{ t('admission.consent') }}</template>
+        <template #content>
+          <div class="consent-section">
+            <div v-if="admission.hasConsentDocument" class="consent-actions">
+              <Button
+                v-if="canViewConsent"
+                icon="pi pi-download"
+                :label="t('admission.downloadConsent')"
+                @click="downloadConsent"
+              />
+              <Button
+                v-if="canUploadConsent"
+                icon="pi pi-upload"
+                :label="t('admission.replaceConsent')"
+                severity="secondary"
+                @click="showUploadDialog = true"
+              />
+            </div>
+            <div v-else class="no-consent">
+              <p>{{ t('admission.noConsent') }}</p>
+              <Button
+                v-if="canUploadConsent"
+                icon="pi pi-upload"
+                :label="t('admission.uploadConsent')"
+                @click="showUploadDialog = true"
+              />
+            </div>
+          </div>
+        </template>
+      </Card>
+
+      <Card class="full-width">
+        <template #title>{{ t('admission.inventory') }}</template>
+        <template #content>
+          <p class="inventory-text">{{ admission.inventory || t('admission.noInventory') }}</p>
         </template>
       </Card>
 
