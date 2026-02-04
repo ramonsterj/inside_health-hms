@@ -7,8 +7,6 @@ import { useConfirm } from 'primevue/useconfirm'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
-import Dialog from 'primevue/dialog'
-import FileUpload from 'primevue/fileupload'
 import ConfirmDialog from 'primevue/confirmdialog'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -16,9 +14,11 @@ import { useAdmissionStore } from '@/stores/admission'
 import { useAuthStore } from '@/stores/auth'
 import { AdmissionStatus } from '@/types/admission'
 import type { ConsultingPhysician } from '@/types/admission'
-import { MAX_CONSENT_FILE_SIZE, ACCEPTED_CONSENT_TYPES } from '@/validation/admission'
 import AddConsultingPhysicianDialog from '@/components/admissions/AddConsultingPhysicianDialog.vue'
 import AdmissionTypeBadge from '@/components/admissions/AdmissionTypeBadge.vue'
+import DocumentList from '@/components/documents/DocumentList.vue'
+import DocumentUploadDialog from '@/components/documents/DocumentUploadDialog.vue'
+import DocumentViewer from '@/components/documents/DocumentViewer.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -29,17 +29,14 @@ const admissionStore = useAdmissionStore()
 const authStore = useAuthStore()
 
 const loading = ref(false)
-const showUploadDialog = ref(false)
-const uploadLoading = ref(false)
 const showAddConsultingPhysicianDialog = ref(false)
+const showDocumentUploadDialog = ref(false)
 
 const admissionId = computed(() => Number(route.params.id))
 const admission = computed(() => admissionStore.currentAdmission)
 
 const canUpdate = computed(() => authStore.hasPermission('admission:update'))
 const canDelete = computed(() => authStore.hasPermission('admission:delete'))
-const canUploadConsent = computed(() => authStore.hasPermission('admission:upload-consent'))
-const canViewConsent = computed(() => authStore.hasPermission('admission:view-consent'))
 
 const existingConsultingPhysicianIds = computed(
   () => admission.value?.consultingPhysicians.map(cp => cp.physician.id) || []
@@ -112,37 +109,6 @@ async function deleteAdmission() {
   }
 }
 
-async function downloadConsent() {
-  try {
-    const blob = await admissionStore.downloadConsentDocument(admissionId.value)
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'consent_document'
-    link.click()
-    window.URL.revokeObjectURL(url)
-  } catch (error) {
-    showError(error)
-  }
-}
-
-async function onFileUpload(event: { files: File | File[] }) {
-  const files = Array.isArray(event.files) ? event.files : [event.files]
-  const file = files[0]
-  if (!file) return
-
-  uploadLoading.value = true
-  try {
-    await admissionStore.uploadConsentDocument(admissionId.value, file)
-    showSuccess('admission.consentUploaded')
-    showUploadDialog.value = false
-  } catch (error) {
-    showError(error)
-  } finally {
-    uploadLoading.value = false
-  }
-}
-
 function getFullName(firstName: string | null, lastName: string | null): string {
   return `${firstName || ''} ${lastName || ''}`.trim()
 }
@@ -204,6 +170,10 @@ async function removeConsultingPhysician(consultingPhysicianId: number) {
   } finally {
     loading.value = false
   }
+}
+
+function handleDocumentUploaded() {
+  showDocumentUploadDialog.value = false
 }
 </script>
 
@@ -373,42 +343,10 @@ async function removeConsultingPhysician(consultingPhysicianId: number) {
         </template>
       </Card>
 
-      <Card class="full-width">
-        <template #title>{{ t('admission.consent') }}</template>
+      <!-- Documents Section -->
+      <Card class="full-width documents-card">
         <template #content>
-          <div class="consent-section">
-            <div v-if="admission.hasConsentDocument" class="consent-actions">
-              <Button
-                v-if="canViewConsent"
-                icon="pi pi-download"
-                :label="t('admission.downloadConsent')"
-                @click="downloadConsent"
-              />
-              <Button
-                v-if="canUploadConsent"
-                icon="pi pi-upload"
-                :label="t('admission.replaceConsent')"
-                severity="secondary"
-                @click="showUploadDialog = true"
-              />
-            </div>
-            <div v-else class="no-consent">
-              <p>{{ t('admission.noConsent') }}</p>
-              <Button
-                v-if="canUploadConsent"
-                icon="pi pi-upload"
-                :label="t('admission.uploadConsent')"
-                @click="showUploadDialog = true"
-              />
-            </div>
-          </div>
-        </template>
-      </Card>
-
-      <Card class="full-width">
-        <template #title>{{ t('admission.inventory') }}</template>
-        <template #content>
-          <p class="inventory-text">{{ admission.inventory || t('admission.noInventory') }}</p>
+          <DocumentList :admissionId="admissionId" @upload="showDocumentUploadDialog = true" />
         </template>
       </Card>
 
@@ -437,34 +375,6 @@ async function removeConsultingPhysician(consultingPhysicianId: number) {
       </Card>
     </div>
 
-    <!-- Upload Consent Dialog -->
-    <Dialog
-      v-model:visible="showUploadDialog"
-      :header="t('admission.uploadConsent')"
-      :modal="true"
-      :closable="!uploadLoading"
-      :style="{ width: '500px' }"
-      :breakpoints="{ '640px': '90vw' }"
-    >
-      <FileUpload
-        name="consent"
-        :accept="ACCEPTED_CONSENT_TYPES"
-        :maxFileSize="MAX_CONSENT_FILE_SIZE"
-        :auto="true"
-        customUpload
-        @uploader="onFileUpload"
-        :disabled="uploadLoading"
-      >
-        <template #empty>
-          <div class="dropzone-empty">
-            <i class="pi pi-cloud-upload dropzone-icon" />
-            <p class="dropzone-text">{{ t('admission.dragDropConsent') }}</p>
-            <p class="dropzone-hint">{{ t('admission.consentHint') }}</p>
-          </div>
-        </template>
-      </FileUpload>
-    </Dialog>
-
     <!-- Add Consulting Physician Dialog -->
     <AddConsultingPhysicianDialog
       v-if="admission"
@@ -474,6 +384,16 @@ async function removeConsultingPhysician(consultingPhysicianId: number) {
       :existingPhysicianIds="existingConsultingPhysicianIds"
       @added="handleConsultingPhysicianAdded"
     />
+
+    <!-- Document Upload Dialog -->
+    <DocumentUploadDialog
+      v-model:visible="showDocumentUploadDialog"
+      :admissionId="admissionId"
+      @uploaded="handleDocumentUploaded"
+    />
+
+    <!-- Document Viewer Modal -->
+    <DocumentViewer />
   </div>
 </template>
 
@@ -548,56 +468,10 @@ async function removeConsultingPhysician(consultingPhysicianId: number) {
   font-weight: 600;
 }
 
-.inventory-text {
-  white-space: pre-wrap;
-  margin: 0;
-}
-
-.consent-section {
-  text-align: center;
-}
-
-.consent-actions {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.no-consent {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
 .audit-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
-}
-
-.dropzone-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 2rem;
-  text-align: center;
-}
-
-.dropzone-icon {
-  font-size: 3rem;
-  color: var(--p-primary-color);
-  margin-bottom: 1rem;
-}
-
-.dropzone-text {
-  font-weight: 500;
-  margin: 0;
-}
-
-.dropzone-hint {
-  color: var(--p-text-muted-color);
-  margin: 0.5rem 0 0 0;
 }
 
 .card-title-with-action {
@@ -630,5 +504,9 @@ async function removeConsultingPhysician(consultingPhysicianId: number) {
 .added-info small {
   color: var(--p-text-muted-color);
   font-size: 0.75rem;
+}
+
+.documents-card :deep(.p-card-content) {
+  padding: 0;
 }
 </style>

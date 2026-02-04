@@ -93,7 +93,7 @@ const router = createRouter({
         {
           path: 'admissions/new',
           name: 'admission-create',
-          component: () => import('@/views/admissions/AdmissionWizardView.vue'),
+          component: () => import('@/views/admissions/AdmissionFormView.vue'),
           meta: { requiresPermission: 'admission:create' }
         },
         {
@@ -105,7 +105,7 @@ const router = createRouter({
         {
           path: 'admissions/:id/edit',
           name: 'admission-edit',
-          component: () => import('@/views/admissions/AdmissionWizardView.vue'),
+          component: () => import('@/views/admissions/AdmissionFormView.vue'),
           meta: { requiresPermission: 'admission:update' }
         },
         // Admin - Triage Codes
@@ -145,6 +145,25 @@ const router = createRouter({
           name: 'room-edit',
           component: () => import('@/views/admin/RoomFormView.vue'),
           meta: { requiresPermission: 'room:update' }
+        },
+        // Admin - Document Types
+        {
+          path: 'admin/document-types',
+          name: 'document-types',
+          component: () => import('@/views/admin/DocumentTypesView.vue'),
+          meta: { requiresPermission: 'document-type:read' }
+        },
+        {
+          path: 'admin/document-types/new',
+          name: 'document-type-create',
+          component: () => import('@/views/admin/DocumentTypeFormView.vue'),
+          meta: { requiresPermission: 'document-type:create' }
+        },
+        {
+          path: 'admin/document-types/:id/edit',
+          name: 'document-type-edit',
+          component: () => import('@/views/admin/DocumentTypeFormView.vue'),
+          meta: { requiresPermission: 'document-type:update' }
         }
       ]
     },

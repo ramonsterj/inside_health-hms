@@ -1,3 +1,5 @@
 export { useAuthStore } from './auth'
 export { useUserStore } from './user'
 export { useNotificationStore } from './notification'
+export { useDocumentStore } from './document'
+export { useDocumentTypeStore } from './documentType'

@@ -230,7 +230,7 @@ class AdmissionService(
         // Store file on disk FIRST (before DB transaction commits)
         val storagePath = fileStorageService.storeFile(
             patientId = patientId,
-            documentType = DocumentType.CONSENT_DOCUMENT,
+            documentType = StorageDocumentType.CONSENT_DOCUMENT,
             file = file,
         )
 

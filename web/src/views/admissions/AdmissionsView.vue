@@ -10,7 +10,6 @@ import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 import { useAdmissionStore } from '@/stores/admission'
-import { useAuthStore } from '@/stores/auth'
 import { AdmissionStatus, AdmissionType } from '@/types/admission'
 import AdmissionTypeBadge from '@/components/admissions/AdmissionTypeBadge.vue'
 
@@ -18,14 +17,11 @@ const { t, locale } = useI18n()
 const router = useRouter()
 const { showError } = useErrorHandler()
 const admissionStore = useAdmissionStore()
-const authStore = useAuthStore()
 
 const first = ref(0)
 const rows = ref(20)
 const statusFilter = ref<AdmissionStatus | null>(AdmissionStatus.ACTIVE)
 const typeFilter = ref<AdmissionType | null>(null)
-
-const canCreate = computed(() => authStore.hasPermission('admission:create'))
 
 const statusOptions = computed(() => [
   { label: t('common.all'), value: null },
@@ -66,10 +62,6 @@ function onPageChange() {
 
 function viewAdmission(id: number) {
   router.push({ name: 'admission-detail', params: { id } })
-}
-
-function createNewAdmission() {
-  router.push({ name: 'admission-create' })
 }
 
 function getFullName(firstName: string, lastName: string): string {
@@ -124,22 +116,14 @@ function getContrastColor(hexColor: string): string {
   <div class="admissions-page">
     <div class="page-header">
       <h1 class="page-title">{{ t('admission.title') }}</h1>
-      <div class="header-actions">
-        <Button
-          v-if="canCreate"
-          icon="pi pi-plus"
-          :label="t('admission.new')"
-          @click="createNewAdmission"
-        />
-        <Button
-          icon="pi pi-refresh"
-          :label="t('common.refresh')"
-          severity="secondary"
-          outlined
-          @click="loadAdmissions"
-          :loading="admissionStore.loading"
-        />
-      </div>
+      <Button
+        icon="pi pi-refresh"
+        :label="t('common.refresh')"
+        severity="secondary"
+        outlined
+        @click="loadAdmissions"
+        :loading="admissionStore.loading"
+      />
     </div>
 
     <Card class="filter-card">

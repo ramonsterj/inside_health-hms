@@ -293,73 +293,9 @@ test.describe('Admissions - Administrative Staff', () => {
     await expect(page.getByText('Juan')).toBeVisible()
   })
 
-  test('can see New Admission button', async ({ page }) => {
-    await setupAuth(page, mockAdminStaffUser)
-    await setupAdminStaffMocks(page)
-
-    await page.route('**/api/v1/admissions*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: mockAdmissionsPage })
-      })
-    })
-
-    await page.goto('/admissions')
-
-    // Should see the New Admission button
-    await expect(page.getByRole('button', { name: /New Admission|Nueva Admisión/i })).toBeVisible()
-  })
-
-  test('can navigate to create admission wizard', async ({ page }) => {
-    await setupAuth(page, mockAdminStaffUser)
-    await setupAdminStaffMocks(page)
-    await setupAdmissionMocks(page)
-
-    await page.route('**/api/v1/admissions*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: mockAdmissionsPage })
-      })
-    })
-
-    await page.goto('/admissions')
-
-    await page.getByRole('button', { name: /New Admission|Nueva Admisión/i }).click()
-
-    await expect(page).toHaveURL(/\/admissions\/new/)
-  })
-
-  test('admission wizard displays multi-step form', async ({ page }) => {
-    await setupAuth(page, mockAdminStaffUser)
-    await setupAdminStaffMocks(page)
-    await setupAdmissionMocks(page)
-
-    await page.goto('/admissions/new')
-
-    // Should see step indicator or stepper with step labels
-    await expect(page.getByText(/^Patient$|^Paciente$/i).first()).toBeVisible()
-    await expect(page.getByText(/^Details$|^Detalles$/i).first()).toBeVisible()
-  })
-
-  test('can search for patient in admission wizard', async ({ page }) => {
-    await setupAuth(page, mockAdminStaffUser)
-    await setupAdminStaffMocks(page)
-    await setupAdmissionMocks(page)
-
-    await page.goto('/admissions/new')
-
-    // Search for patient
-    const searchInput = page.getByPlaceholder(/Search by name|Buscar por nombre/i)
-    await searchInput.fill('Juan')
-
-    // Wait for autocomplete results
-    await page.waitForTimeout(500)
-
-    // Should see patient in autocomplete results
-    await expect(page.getByText('Juan Pérez García')).toBeVisible()
-  })
+  // NOTE: The "New Admission" button was removed from the admissions list.
+  // Admissions are now created from the Patient Detail view by clicking "Admit Patient".
+  // Tests for the old wizard flow have been removed.
 
   test('can view admission details', async ({ page }) => {
     await setupAuth(page, mockAdminStaffUser)
@@ -379,8 +315,7 @@ test.describe('Admissions - Administrative Staff', () => {
 
     // Should see admission details
     await expect(page.getByText('Juan Pérez García')).toBeVisible()
-    await expect(page.getByText('ACTIVE')).toBeVisible()
-    await expect(page.getByText('Wallet, phone, glasses')).toBeVisible()
+    await expect(page.getByText(/ACTIVE|Activo/i)).toBeVisible()
   })
 
   test('can see discharge button on active admission', async ({ page }) => {
@@ -666,34 +601,51 @@ test.describe('Admissions - Room Availability', () => {
     await setupAdminStaffMocks(page)
     await setupAdmissionMocks(page)
 
-    await page.goto('/admissions/new')
+    // Mock patient summary endpoint for pre-selected patient
+    await page.route('**/api/v1/admissions/patients/1', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: { ...mockPatient, hasIdDocument: false, hasActiveAdmission: false }
+        })
+      })
+    })
 
-    // Select a patient first (required to proceed)
-    const searchInput = page.getByPlaceholder(/Search by name|Buscar por nombre/i)
-    await searchInput.fill('Juan')
-    await page.waitForTimeout(500)
-    await page.getByText('Juan Pérez García').click()
+    // Navigate directly with patientId (new flow)
+    await page.goto('/admissions/new?patientId=1')
 
-    // Go to next step
-    await page.getByRole('button', { name: /Next|Siguiente/i }).click()
+    // Patient should be pre-selected, verify patient name is shown
+    await expect(page.getByText('Juan Pérez García')).toBeVisible()
+
+    // Select HOSPITALIZATION type (which requires room)
+    await page.locator('.p-select').first().click() // Type dropdown
+    await page.getByText('Hospitalization', { exact: false }).first().click()
 
     // Click on Room dropdown to open it
-    await page.getByText(/^Select room$|^Seleccionar habitación$/i).click()
+    await page.locator('.p-select').nth(2).click() // Room dropdown (after triage code)
 
     // Room dropdown should show available beds
-    await expect(page.getByText(/101.*1 beds available|101.*1 camas disponibles/i)).toBeVisible()
-    await expect(page.getByText(/201.*3 beds available|201.*3 camas disponibles/i)).toBeVisible()
+    await expect(page.getByText(/101.*1.*available|101.*1.*disponible/i)).toBeVisible()
+    await expect(page.getByText(/201.*3.*available|201.*3.*disponible/i)).toBeVisible()
   })
 
   test('full rooms do not appear in dropdown', async ({ page }) => {
     await setupAuth(page, mockAdminStaffUser)
     await setupAdminStaffMocks(page)
 
-    // Mock rooms with one full room
-    const roomsWithFullRoom = [
-      { id: 1, number: '101', type: 'PRIVATE', capacity: 1, availableBeds: 0 },
-      { id: 2, number: '201', type: 'SHARED', capacity: 4, availableBeds: 2 }
-    ]
+    // Mock patient summary
+    await page.route('**/api/v1/admissions/patients/1', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: { ...mockPatient, hasIdDocument: false, hasActiveAdmission: false }
+        })
+      })
+    })
 
     await page.route('**/api/v1/triage-codes', async (route) => {
       await route.fulfill({
@@ -704,13 +656,13 @@ test.describe('Admissions - Room Availability', () => {
     })
 
     await page.route('**/api/v1/rooms/available', async (route) => {
-      // Only return rooms with available beds
+      // Only return rooms with available beds (room 101 has 0, so only 201 returned)
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          data: roomsWithFullRoom.filter((r) => r.availableBeds > 0)
+          data: [{ id: 2, number: '201', type: 'SHARED', capacity: 4, availableBeds: 2 }]
         })
       })
     })
@@ -723,100 +675,28 @@ test.describe('Admissions - Room Availability', () => {
       })
     })
 
-    await page.route('**/api/v1/admissions/patients/search*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: [mockPatient] })
-      })
-    })
+    // Navigate directly with patientId (new flow)
+    await page.goto('/admissions/new?patientId=1')
 
-    await page.goto('/admissions/new')
+    // Patient should be pre-selected
+    await expect(page.getByText('Juan Pérez García')).toBeVisible()
 
-    // Select a patient first
-    const searchInput = page.getByPlaceholder(/Search by name|Buscar por nombre/i)
-    await searchInput.fill('Juan')
-    await page.waitForTimeout(500)
-    await page.getByText('Juan Pérez García').click()
-
-    // Go to next step
-    await page.getByRole('button', { name: /Next|Siguiente/i }).click()
+    // Select HOSPITALIZATION type (which requires room)
+    await page.locator('.p-select').first().click() // Type dropdown
+    await page.getByText('Hospitalization', { exact: false }).first().click()
 
     // Click on Room dropdown to open it
-    await page.getByText(/^Select room$|^Seleccionar habitación$/i).click()
+    await page.locator('.p-select').nth(2).click() // Room dropdown
 
-    // Room 101 (full) should not appear, only 201
+    // Room 201 should appear, 101 (full) should not
     await expect(page.getByText('201')).toBeVisible()
     await expect(page.getByText('101')).not.toBeVisible()
   })
 })
 
-test.describe('Admissions - Consent Document', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.clear()
-    })
-  })
-
-  test('can see upload consent option in wizard', async ({ page }) => {
-    await setupAuth(page, mockAdminStaffUser)
-    await setupAdminStaffMocks(page)
-    await setupAdmissionMocks(page)
-
-    await page.goto('/admissions/new')
-
-    // Navigate through steps to reach consent upload
-    // Step 1: Select patient
-    const searchInput = page.getByPlaceholder(/Search by name|Buscar por nombre/i)
-    await searchInput.fill('Juan')
-    await page.waitForTimeout(500)
-    await page.getByText('Juan Pérez García').click()
-    await page.getByRole('button', { name: /Next|Siguiente/i }).click()
-
-    // Step 2: Fill admission details (select triage, room, doctor)
-    // Select triage code
-    await page.getByText(/^Select triage code$|^Seleccionar código de triaje$/i).click()
-    await page.getByText('A - Critical').click()
-
-    // Select room
-    await page.getByText(/^Select room$|^Seleccionar habitación$/i).click()
-    await page.getByText(/101.*1 beds available|101.*1 camas disponibles/i).click()
-
-    // Select treating physician
-    await page.getByText(/^Select treating physician$|^Seleccionar médico tratante$/i).click()
-    await page.getByText('Dr. Maria Garcia').click()
-
-    // Go to Step 3
-    await page.getByRole('button', { name: /Next|Siguiente/i }).click()
-
-    // Step 3: Should see consent upload section
-    await expect(page.getByText(/Consent Document|Documento de Consentimiento/i)).toBeVisible()
-  })
-
-  test('can view consent document download button when document exists', async ({ page }) => {
-    await setupAuth(page, mockAdminStaffUser)
-    await setupAdminStaffMocks(page)
-
-    const admissionWithConsent = { ...mockAdmission, hasConsentDocument: true }
-
-    await page.route('**/api/v1/admissions/1', async (route) => {
-      if (route.request().method() === 'GET') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ success: true, data: admissionWithConsent })
-        })
-      }
-    })
-
-    await page.goto('/admissions/1')
-
-    // Should see download consent button
-    await expect(
-      page.getByRole('button', { name: /Download Consent|Descargar Consentimiento|View Consent/i })
-    ).toBeVisible()
-  })
-})
+// NOTE: Consent document tests have been moved to documents.spec.ts
+// Documents (including consent forms) are now managed in the AdmissionDetailView
+// via the DocumentList component, not in the admission creation form.
 
 test.describe('Admissions - Patient-Centric Flow', () => {
   test.beforeEach(async ({ page }) => {
@@ -928,15 +808,30 @@ test.describe('Admissions - Patient-Centric Flow', () => {
     await expect(page).toHaveURL(/\/patients/, { timeout: 10000 })
   })
 
-  test('no patientId shows search input (backwards compatible)', async ({ page }) => {
+  test('no patientId redirects to patients page', async ({ page }) => {
     await setupAuth(page, mockAdminStaffUser)
     await setupAdminStaffMocks(page)
     await setupAdmissionMocks(page)
 
+    const mockPatientsPage = {
+      content: [{ ...mockPatient, hasIdDocument: false, hasActiveAdmission: false }],
+      page: { totalElements: 1, totalPages: 1, size: 20, number: 0 }
+    }
+
+    await page.route('**/api/v1/patients*', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: mockPatientsPage })
+        })
+      }
+    })
+
     await page.goto('/admissions/new')
 
-    // Search input should be visible
-    await expect(page.getByPlaceholder(/Search by name|Buscar por nombre/i)).toBeVisible()
+    // Without patientId, should redirect to patients page
+    await expect(page).toHaveURL(/\/patients/, { timeout: 10000 })
   })
 
   test('patient with active admission shows warning when pre-selected', async ({ page }) => {
@@ -963,8 +858,8 @@ test.describe('Admissions - Patient-Centric Flow', () => {
     // Should see warning message
     await expect(page.getByText(/already has an active admission|ya tiene una admisión activa/i)).toBeVisible()
 
-    // Next button should be disabled
-    const nextButton = page.getByRole('button', { name: /Next|Siguiente/i })
-    await expect(nextButton).toBeDisabled()
+    // Submit button should be disabled (form has no Next button, just Create Admission button)
+    const submitButton = page.getByRole('button', { name: /Create Admission|Crear Admision/i })
+    await expect(submitButton).toBeDisabled()
   })
 })

@@ -25,6 +25,7 @@ const idDocumentUrl = ref<string | null>(null)
 
 const canEdit = computed(() => authStore.hasPermission('patient:update'))
 const canViewId = computed(() => authStore.hasPermission('patient:view-id'))
+const canAdmit = computed(() => authStore.hasPermission('admission:create'))
 
 onMounted(async () => {
   await loadPatient()
@@ -44,6 +45,10 @@ async function loadPatient() {
 
 function editPatient() {
   router.push({ name: 'patient-edit', params: { id: patientId.value } })
+}
+
+function admitPatient() {
+  router.push({ name: 'admission-create', query: { patientId: patientId.value } })
 }
 
 function goBack() {
@@ -114,9 +119,16 @@ function formatUserName(
         </div>
         <div class="header-actions">
           <Button
+            v-if="canAdmit"
+            icon="pi pi-user-plus"
+            :label="t('patient.admitPatient')"
+            @click="admitPatient"
+          />
+          <Button
             v-if="canEdit"
             icon="pi pi-pencil"
             :label="t('common.edit')"
+            severity="secondary"
             @click="editPatient"
           />
         </div>
