@@ -34,7 +34,7 @@ class FileStorageServiceTest {
         val content = "test file content".toByteArray()
         val file = createMockMultipartFile("test.pdf", "application/pdf", content)
 
-        val storagePath = fileStorageService.storeFile(123L, DocumentType.ID_DOCUMENT, file)
+        val storagePath = fileStorageService.storeFile(123L, StorageDocumentType.ID_DOCUMENT, file)
 
         assertTrue(storagePath.startsWith("patients/123/id-documents/"))
         assertTrue(storagePath.endsWith("_test.pdf"))
@@ -49,7 +49,7 @@ class FileStorageServiceTest {
         val content = "consent content".toByteArray()
         val file = createMockMultipartFile("consent.pdf", "application/pdf", content)
 
-        val storagePath = fileStorageService.storeFile(456L, DocumentType.CONSENT_DOCUMENT, file)
+        val storagePath = fileStorageService.storeFile(456L, StorageDocumentType.CONSENT_DOCUMENT, file)
 
         assertTrue(storagePath.startsWith("patients/456/consent-documents/"))
         assertTrue(storagePath.endsWith("_consent.pdf"))
@@ -60,7 +60,7 @@ class FileStorageServiceTest {
         val content = "content".toByteArray()
         val file = createMockMultipartFile("../../../etc/passwd", "application/pdf", content)
 
-        val storagePath = fileStorageService.storeFile(1L, DocumentType.ID_DOCUMENT, file)
+        val storagePath = fileStorageService.storeFile(1L, StorageDocumentType.ID_DOCUMENT, file)
 
         // File should be stored safely within patient directory (slashes removed from filename)
         assertTrue(storagePath.startsWith("patients/1/id-documents/"))
@@ -74,7 +74,7 @@ class FileStorageServiceTest {
         val content = "content".toByteArray()
         val file = createMockMultipartFile("..\\..\\etc\\passwd", "application/pdf", content)
 
-        val storagePath = fileStorageService.storeFile(1L, DocumentType.ID_DOCUMENT, file)
+        val storagePath = fileStorageService.storeFile(1L, StorageDocumentType.ID_DOCUMENT, file)
 
         // Verify backslashes are removed from filename
         assertTrue(!storagePath.contains("\\"))
@@ -85,7 +85,7 @@ class FileStorageServiceTest {
         val content = "content".toByteArray()
         val file = createMockMultipartFile("", "application/pdf", content)
 
-        val storagePath = fileStorageService.storeFile(1L, DocumentType.ID_DOCUMENT, file)
+        val storagePath = fileStorageService.storeFile(1L, StorageDocumentType.ID_DOCUMENT, file)
 
         assertTrue(storagePath.contains("_document"))
     }
@@ -95,7 +95,7 @@ class FileStorageServiceTest {
         val content = "content".toByteArray()
         val file = createMockMultipartFile(null, "application/pdf", content)
 
-        val storagePath = fileStorageService.storeFile(1L, DocumentType.ID_DOCUMENT, file)
+        val storagePath = fileStorageService.storeFile(1L, StorageDocumentType.ID_DOCUMENT, file)
 
         assertTrue(storagePath.contains("_document"))
     }
@@ -106,8 +106,8 @@ class FileStorageServiceTest {
         val file1 = createMockMultipartFile("same.pdf", "application/pdf", content)
         val file2 = createMockMultipartFile("same.pdf", "application/pdf", content)
 
-        val path1 = fileStorageService.storeFile(1L, DocumentType.ID_DOCUMENT, file1)
-        val path2 = fileStorageService.storeFile(1L, DocumentType.ID_DOCUMENT, file2)
+        val path1 = fileStorageService.storeFile(1L, StorageDocumentType.ID_DOCUMENT, file1)
+        val path2 = fileStorageService.storeFile(1L, StorageDocumentType.ID_DOCUMENT, file2)
 
         // Both should exist and be different (UUID prefix)
         assertTrue(path1 != path2)
@@ -119,7 +119,7 @@ class FileStorageServiceTest {
     fun `loadFile should return file contents`() {
         val originalContent = "file content here".toByteArray()
         val file = createMockMultipartFile("doc.pdf", "application/pdf", originalContent)
-        val storagePath = fileStorageService.storeFile(1L, DocumentType.ID_DOCUMENT, file)
+        val storagePath = fileStorageService.storeFile(1L, StorageDocumentType.ID_DOCUMENT, file)
 
         val loadedContent = fileStorageService.loadFile(storagePath)
 
@@ -153,7 +153,7 @@ class FileStorageServiceTest {
     fun `deleteFile should remove file from disk`() {
         val content = "to be deleted".toByteArray()
         val file = createMockMultipartFile("delete-me.pdf", "application/pdf", content)
-        val storagePath = fileStorageService.storeFile(1L, DocumentType.ID_DOCUMENT, file)
+        val storagePath = fileStorageService.storeFile(1L, StorageDocumentType.ID_DOCUMENT, file)
 
         assertTrue(Files.exists(tempDir.resolve(storagePath)))
 

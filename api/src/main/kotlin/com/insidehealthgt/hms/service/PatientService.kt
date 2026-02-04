@@ -180,7 +180,7 @@ class PatientService(
         // Store file on disk FIRST (before DB transaction commits)
         val storagePath = fileStorageService.storeFile(
             patientId = patientId,
-            documentType = DocumentType.ID_DOCUMENT,
+            documentType = StorageDocumentType.ID_DOCUMENT,
             file = file,
         )
 

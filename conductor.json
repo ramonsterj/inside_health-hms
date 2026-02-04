@@ -1,0 +1,7 @@
+{
+    "scripts": {
+        "setup": "cd web && npm install",
+        "run": "./scripts/run-all.sh"
+    },
+    "runScriptMode": "concurrent"
+}

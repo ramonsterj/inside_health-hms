@@ -440,6 +440,7 @@
     "actions": {
       "admit": "Admit"
     },
+    "admitPatient": "Admit Patient",
     "newPatient": "New Patient",
     "editPatient": "Edit Patient",
     "patientDetails": "Patient Details",
@@ -808,9 +809,11 @@
     "steps": {
       "patient": "Patient",
       "details": "Details",
-      "extras": "Additional",
+      "confirmation": "Confirmation",
       "review": "Review"
     },
+    "documentsInfoMessage": "After creating the admission, you can upload documents such as consent forms and patient inventory from the admission details page.",
+    "confirmationSummary": "Admission Summary",
     "consultingPhysicians": {
       "title": "Consulting Physicians",
       "add": "Add Consulting Physician",
@@ -829,6 +832,91 @@
     },
     "errors": {
       "invalidPatient": "Patient not found. Please select a patient from the list."
+    }
+  },
+  "document": {
+    "title": "Documents",
+    "upload": "Upload",
+    "uploadTitle": "Upload Document",
+    "uploadFirst": "Upload First Document",
+    "view": "View",
+    "download": "Download",
+    "delete": "Delete",
+    "viewer": "Document Viewer",
+    "file": "File",
+    "selectFile": "Select File",
+    "type": "Document Type",
+    "selectType": "Select document type",
+    "displayName": "Display Name",
+    "displayNamePlaceholder": "Enter a custom name for the document",
+    "displayNameHelp": "If left empty, the original filename will be used",
+    "empty": "No documents uploaded yet.",
+    "uploaded": "Document uploaded successfully.",
+    "deleted": "Document deleted successfully.",
+    "confirmDelete": "Are you sure you want to delete '{name}'?",
+    "unsupportedType": "This file type cannot be previewed. Please download to view.",
+    "pdfNotSupported": "PDF preview is not available. Please download to view.",
+    "dragDropFile": "Drag and drop file here or click to browse",
+    "fileHint": "Accepted formats: PDF or images (max 25MB)",
+    "types": {
+      "CONSENT_ADMISSION": "Admission Consent",
+      "CONSENT_ISOLATION": "Isolation Consent",
+      "CONSENT_RESTRAINT": "Restraint Consent",
+      "CONSENT_SEDATION": "Sedation Consent",
+      "INVENTORY_LIST": "Inventory List",
+      "INVENTORY_PHOTO": "Inventory Photos",
+      "OTHER": "Other Document"
+    }
+  },
+  "documentType": {
+    "title": "Document Types",
+    "new": "New Document Type",
+    "edit": "Edit Document Type",
+    "code": "Code",
+    "codeHelp": "Uppercase letters and underscores only (e.g., CONSENT_ADMISSION)",
+    "name": "Name",
+    "description": "Description",
+    "displayOrder": "Display Order",
+    "empty": "No document types found.",
+    "created": "Document type created successfully.",
+    "updated": "Document type updated successfully.",
+    "deleted": "Document type deleted successfully.",
+    "confirmDelete": "Are you sure you want to delete this document type?"
+  },
+  "validation": {
+    "document": {
+      "file": {
+        "required": "Please select a file to upload.",
+        "size": "The file is too large. Maximum allowed size is 25MB.",
+        "type": "This file type is not supported. Please upload a PDF, JPEG, or PNG file."
+      },
+      "type": {
+        "required": "Please select a document type.",
+        "invalid": "Invalid document type."
+      },
+      "displayName": {
+        "max": "Display name must be 255 characters or less."
+      }
+    },
+    "documentType": {
+      "code": {
+        "required": "Code is required.",
+        "max": "Code must be 50 characters or less.",
+        "pattern": "Code must contain only uppercase letters and underscores."
+      },
+      "name": {
+        "required": "Name is required.",
+        "max": "Name must be 100 characters or less."
+      },
+      "description": {
+        "max": "Description must be 255 characters or less."
+      },
+      "displayOrder": {
+        "required": "Display order is required.",
+        "invalid": "Display order must be a number.",
+        "integer": "Display order must be a whole number.",
+        "min": "Display order must be 0 or greater."
+      }
     }
   }
 }

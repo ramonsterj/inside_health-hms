@@ -51,6 +51,9 @@ dependencies {
     // OpenAPI / Swagger UI
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
 
+    // PDF rendering for thumbnail generation
+    implementation("org.apache.pdfbox:pdfbox:3.0.1")
+
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")

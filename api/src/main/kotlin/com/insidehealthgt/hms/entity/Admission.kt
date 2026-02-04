@@ -58,6 +58,9 @@ class Admission(
     @OneToMany(mappedBy = "admission", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
     var consultingPhysicians: MutableList<AdmissionConsultingPhysician> = mutableListOf(),
 
+    @OneToMany(mappedBy = "admission", fetch = FetchType.LAZY)
+    var documents: MutableList<AdmissionDocument> = mutableListOf(),
+
 ) : BaseEntity() {
 
     fun hasConsentDocument(): Boolean = consentDocument != null

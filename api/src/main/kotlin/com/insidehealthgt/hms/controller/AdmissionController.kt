@@ -4,6 +4,7 @@ import com.insidehealthgt.hms.dto.request.AddConsultingPhysicianRequest
 import com.insidehealthgt.hms.dto.request.CreateAdmissionRequest
 import com.insidehealthgt.hms.dto.request.UpdateAdmissionRequest
 import com.insidehealthgt.hms.dto.response.AdmissionDetailResponse
+import com.insidehealthgt.hms.dto.response.AdmissionDocumentResponse
 import com.insidehealthgt.hms.dto.response.AdmissionListResponse
 import com.insidehealthgt.hms.dto.response.ApiResponse
 import com.insidehealthgt.hms.dto.response.ConsultingPhysicianResponse
@@ -11,6 +12,7 @@ import com.insidehealthgt.hms.dto.response.DoctorResponse
 import com.insidehealthgt.hms.dto.response.PatientSummaryResponse
 import com.insidehealthgt.hms.entity.AdmissionStatus
 import com.insidehealthgt.hms.entity.AdmissionType
+import com.insidehealthgt.hms.service.AdmissionDocumentService
 import com.insidehealthgt.hms.service.AdmissionService
 import jakarta.validation.Valid
 import org.springframework.data.domain.Page
@@ -34,8 +36,11 @@ import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/api/v1/admissions")
-@Suppress("TooManyFunctions")
-class AdmissionController(private val admissionService: AdmissionService) {
+@Suppress("TooManyFunctions", "MaxLineLength", "FunctionSignature", "ParameterListWrapping", "MaximumLineLength")
+class AdmissionController(
+    private val admissionService: AdmissionService,
+    private val admissionDocumentService: AdmissionDocumentService,
+) {
 
     @GetMapping
     @PreAuthorize("hasAuthority('admission:read')")
@@ -157,5 +162,62 @@ class AdmissionController(private val admissionService: AdmissionService) {
     ): ResponseEntity<Void> {
         admissionService.removeConsultingPhysician(id, consultingPhysicianId)
         return ResponseEntity.noContent().build()
+    }
+
+    // Document endpoints
+
+    @GetMapping("/{id}/documents")
+    @PreAuthorize("hasAuthority('admission:view-documents')")
+    fun listDocuments(@PathVariable id: Long): ResponseEntity<ApiResponse<List<AdmissionDocumentResponse>>> {
+        val documents = admissionDocumentService.listDocuments(id)
+        return ResponseEntity.ok(ApiResponse.success(documents))
+    }
+
+    @PostMapping("/{id}/documents")
+    @PreAuthorize("hasAuthority('admission:upload-documents')")
+    fun uploadDocument(
+        @PathVariable id: Long,
+        @RequestParam("file") file: MultipartFile,
+        @RequestParam("documentTypeId") documentTypeId: Long,
+        @RequestParam(value = "displayName", required = false) displayName: String?,
+    ): ResponseEntity<ApiResponse<AdmissionDocumentResponse>> {
+        val document = admissionDocumentService.uploadDocument(id, documentTypeId, displayName, file)
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(document))
+    }
+
+    @GetMapping("/{id}/documents/{docId}")
+    @PreAuthorize("hasAuthority('admission:view-documents')")
+    fun getDocument(@PathVariable id: Long, @PathVariable docId: Long): ResponseEntity<ApiResponse<AdmissionDocumentResponse>> {
+        val document = admissionDocumentService.getDocument(id, docId)
+        return ResponseEntity.ok(ApiResponse.success(document))
+    }
+
+    @GetMapping("/{id}/documents/{docId}/file")
+    @PreAuthorize("hasAuthority('admission:download-documents')")
+    fun downloadDocument(@PathVariable id: Long, @PathVariable docId: Long): ResponseEntity<ByteArray> {
+        val document = admissionDocumentService.downloadDocument(id, docId)
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${document.fileName}\"")
+            .contentType(MediaType.parseMediaType(document.contentType))
+            .contentLength(document.fileSize)
+            .body(document.fileData)
+    }
+
+    @GetMapping("/{id}/documents/{docId}/thumbnail")
+    @PreAuthorize("hasAuthority('admission:view-documents')")
+    fun getThumbnail(@PathVariable id: Long, @PathVariable docId: Long): ResponseEntity<ByteArray> {
+        val thumbnail = admissionDocumentService.getThumbnail(id, docId)
+            ?: return ResponseEntity.notFound().build()
+
+        return ResponseEntity.ok()
+            .contentType(MediaType.IMAGE_PNG)
+            .body(thumbnail.fileData)
+    }
+
+    @DeleteMapping("/{id}/documents/{docId}")
+    @PreAuthorize("hasAuthority('admission:delete-documents')")
+    fun deleteDocument(@PathVariable id: Long, @PathVariable docId: Long): ResponseEntity<ApiResponse<Unit>> {
+        admissionDocumentService.deleteDocument(id, docId)
+        return ResponseEntity.ok(ApiResponse.success("Document deleted successfully"))
     }
 }

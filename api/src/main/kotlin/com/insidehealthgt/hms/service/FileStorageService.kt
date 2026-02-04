@@ -24,7 +24,7 @@ data class DocumentFileData(val fileName: String, val contentType: String, val f
 /**
  * Type of document being stored, determines subdirectory name.
  */
-enum class DocumentType(val directoryName: String) {
+enum class StorageDocumentType(val directoryName: String) {
     ID_DOCUMENT("id-documents"),
     CONSENT_DOCUMENT("consent-documents"),
 }
@@ -69,40 +69,13 @@ class FileStorageService(
      * @param file The uploaded file
      * @return The relative storage path from base directory
      */
-    fun storeFile(patientId: Long, documentType: DocumentType, file: MultipartFile): String {
-        val sanitizedFilename = sanitizeFilename(file.originalFilename ?: "document")
-        val uniqueFilename = "${UUID.randomUUID()}_$sanitizedFilename"
-
-        // Build relative path: patients/{patientId}/{documentType}/
+    fun storeFile(patientId: Long, documentType: StorageDocumentType, file: MultipartFile): String {
         val relativePath = Paths.get(
             "patients",
             patientId.toString(),
             documentType.directoryName,
-            uniqueFilename,
         )
-
-        val targetPath = baseDirectory.resolve(relativePath).normalize()
-
-        // Security check: ensure target is still within base directory
-        if (!targetPath.startsWith(baseDirectory)) {
-            throw BadRequestException("Invalid filename. Please rename the file and try again.")
-        }
-
-        try {
-            // Create parent directories if needed
-            Files.createDirectories(targetPath.parent)
-
-            // Write file
-            file.inputStream.use { inputStream ->
-                Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING)
-            }
-
-            logger.debug("File stored at: {}", relativePath)
-            return relativePath.toString()
-        } catch (ex: IOException) {
-            logger.error("Failed to store file at {}: {}", targetPath, ex.message, ex)
-            throw FileStorageException("Unable to save the file. Please contact support.")
-        }
+        return storeMultipartFile(relativePath, file)
     }
 
     /**
@@ -141,6 +114,91 @@ class FileStorageService(
 
         return filePath
     }
+
+    /**
+     * Store a file for an admission document.
+     *
+     * @param admissionId The admission ID for directory organization
+     * @param file The uploaded file
+     * @return The relative storage path from base directory
+     */
+    fun storeFileForAdmission(admissionId: Long, file: MultipartFile): String {
+        val relativePath = Paths.get(
+            "admissions",
+            admissionId.toString(),
+            "documents",
+        )
+        return storeMultipartFile(relativePath, file)
+    }
+
+    /**
+     * Common file storage logic for MultipartFile uploads.
+     *
+     * @param directoryPath The relative directory path to store the file in
+     * @param file The uploaded file
+     * @return The relative storage path from base directory (including filename)
+     */
+    private fun storeMultipartFile(directoryPath: Path, file: MultipartFile): String {
+        val sanitizedFilename = sanitizeFilename(file.originalFilename ?: "document")
+        val uniqueFilename = "${UUID.randomUUID()}_$sanitizedFilename"
+
+        val relativePath = directoryPath.resolve(uniqueFilename)
+        val targetPath = baseDirectory.resolve(relativePath).normalize()
+
+        // Security check: ensure target is still within base directory
+        if (!targetPath.startsWith(baseDirectory)) {
+            throw BadRequestException("Invalid filename. Please rename the file and try again.")
+        }
+
+        try {
+            Files.createDirectories(targetPath.parent)
+
+            file.inputStream.use { inputStream ->
+                Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING)
+            }
+
+            logger.debug("File stored at: {}", relativePath)
+            return relativePath.toString()
+        } catch (ex: IOException) {
+            logger.error("Failed to store file at {}: {}", targetPath, ex.message, ex)
+            throw FileStorageException("Unable to save the file. Please contact support.")
+        }
+    }
+
+    /**
+     * Store a file directly with a given path (used for thumbnails).
+     *
+     * @param relativePath The relative path for the file
+     * @param content The file content as bytes
+     * @return The relative storage path from base directory
+     */
+    fun storeBytes(relativePath: Path, content: ByteArray): String {
+        val targetPath = baseDirectory.resolve(relativePath).normalize()
+
+        // Security check: ensure target is still within base directory
+        if (!targetPath.startsWith(baseDirectory)) {
+            throw BadRequestException("Invalid path")
+        }
+
+        try {
+            // Create parent directories if needed
+            Files.createDirectories(targetPath.parent)
+
+            Files.write(targetPath, content)
+
+            logger.debug("File stored at: {}", relativePath)
+            return relativePath.toString()
+        } catch (ex: IOException) {
+            logger.error("Failed to store file at {}: {}", targetPath, ex.message, ex)
+            throw FileStorageException("Unable to save the file. Please contact support.")
+        }
+    }
+
+    /**
+     * Get the absolute path for a relative storage path.
+     * Used by ThumbnailService to read original files.
+     */
+    fun getAbsolutePath(storagePath: String): Path = resolveAndValidatePath(storagePath)
 
     /**
      * Delete a file from storage.

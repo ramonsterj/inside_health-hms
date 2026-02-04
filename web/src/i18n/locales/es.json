@@ -440,6 +440,7 @@
     "actions": {
       "admit": "Hospitalizar"
     },
+    "admitPatient": "Hospitalizar Paciente",
     "newPatient": "Registro de Nuevo Paciente",
     "editPatient": "Editar Paciente",
     "patientDetails": "Datos del Paciente",
@@ -808,9 +809,11 @@
     "steps": {
       "patient": "Paciente",
       "details": "Detalles",
-      "extras": "Adicional",
+      "confirmation": "Confirmacion",
       "review": "Revision"
     },
+    "documentsInfoMessage": "Despues de crear la admision, puede subir documentos como formularios de consentimiento e inventario del paciente desde la pagina de detalles de la admision.",
+    "confirmationSummary": "Resumen de Admision",
     "consultingPhysicians": {
       "title": "Interconsultas",
       "add": "Agregar Interconsulta",
@@ -829,6 +832,91 @@
     },
     "errors": {
       "invalidPatient": "Paciente no encontrado. Por favor seleccione un paciente de la lista."
+    }
+  },
+  "document": {
+    "title": "Documentos",
+    "upload": "Subir",
+    "uploadTitle": "Subir Documento",
+    "uploadFirst": "Subir Primer Documento",
+    "view": "Ver",
+    "download": "Descargar",
+    "delete": "Eliminar",
+    "viewer": "Visor de Documentos",
+    "file": "Archivo",
+    "selectFile": "Seleccionar Archivo",
+    "type": "Tipo de Documento",
+    "selectType": "Seleccione tipo de documento",
+    "displayName": "Nombre a Mostrar",
+    "displayNamePlaceholder": "Ingrese un nombre personalizado para el documento",
+    "displayNameHelp": "Si se deja vacio, se usara el nombre original del archivo",
+    "empty": "No hay documentos subidos aun.",
+    "uploaded": "Documento subido exitosamente.",
+    "deleted": "Documento eliminado exitosamente.",
+    "confirmDelete": "Esta seguro que desea eliminar '{name}'?",
+    "unsupportedType": "Este tipo de archivo no se puede previsualizar. Por favor descargue para ver.",
+    "pdfNotSupported": "La vista previa del PDF no esta disponible. Por favor descargue para ver.",
+    "dragDropFile": "Arrastra y suelta el archivo aqui o haz clic para buscar",
+    "fileHint": "Formatos aceptados: PDF o imagenes (max 25MB)",
+    "types": {
+      "CONSENT_ADMISSION": "Consentimiento de Admision",
+      "CONSENT_ISOLATION": "Consentimiento de Aislamiento",
+      "CONSENT_RESTRAINT": "Consentimiento de Inmovilizacion",
+      "CONSENT_SEDATION": "Consentimiento de Sedacion",
+      "INVENTORY_LIST": "Lista de Inventario",
+      "INVENTORY_PHOTO": "Fotos de Inventario",
+      "OTHER": "Otro Documento"
+    }
+  },
+  "documentType": {
+    "title": "Tipos de Documento",
+    "new": "Nuevo Tipo de Documento",
+    "edit": "Editar Tipo de Documento",
+    "code": "Codigo",
+    "codeHelp": "Solo letras mayusculas y guiones bajos (ej. CONSENTIMIENTO_ADMISION)",
+    "name": "Nombre",
+    "description": "Descripcion",
+    "displayOrder": "Orden de Visualizacion",
+    "empty": "No se encontraron tipos de documento.",
+    "created": "Tipo de documento creado exitosamente.",
+    "updated": "Tipo de documento actualizado exitosamente.",
+    "deleted": "Tipo de documento eliminado exitosamente.",
+    "confirmDelete": "Esta seguro que desea eliminar este tipo de documento?"
+  },
+  "validation": {
+    "document": {
+      "file": {
+        "required": "Por favor seleccione un archivo para subir.",
+        "size": "El archivo es demasiado grande. Tamano maximo permitido es 25MB.",
+        "type": "Este tipo de archivo no es compatible. Por favor suba un archivo PDF, JPEG o PNG."
+      },
+      "type": {
+        "required": "Por favor seleccione un tipo de documento.",
+        "invalid": "Tipo de documento invalido."
+      },
+      "displayName": {
+        "max": "El nombre a mostrar debe tener 255 caracteres o menos."
+      }
+    },
+    "documentType": {
+      "code": {
+        "required": "El codigo es obligatorio.",
+        "max": "El codigo debe tener 50 caracteres o menos.",
+        "pattern": "El codigo solo debe contener letras mayusculas y guiones bajos."
+      },
+      "name": {
+        "required": "El nombre es obligatorio.",
+        "max": "El nombre debe tener 100 caracteres o menos."
+      },
+      "description": {
+        "max": "La descripcion debe tener 255 caracteres o menos."
+      },
+      "displayOrder": {
+        "required": "El orden de visualizacion es obligatorio.",
+        "invalid": "El orden de visualizacion debe ser un numero.",
+        "integer": "El orden de visualizacion debe ser un numero entero.",
+        "min": "El orden de visualizacion debe ser 0 o mayor."
+      }
     }
   }
 }
