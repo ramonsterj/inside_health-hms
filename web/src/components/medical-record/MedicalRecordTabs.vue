@@ -8,12 +8,15 @@ import Tab from 'primevue/tab'
 import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
 import { useAuthStore } from '@/stores/auth'
+import { AdmissionType } from '@/types/admission'
 import ClinicalHistoryView from './ClinicalHistoryView.vue'
 import ProgressNoteList from './ProgressNoteList.vue'
 import MedicalOrderList from './MedicalOrderList.vue'
+import PsychotherapyActivityList from '@/components/psychotherapy/PsychotherapyActivityList.vue'
 
-defineProps<{
+const props = defineProps<{
   admissionId: number
+  admissionType?: AdmissionType
 }>()
 
 const { t } = useI18n()
@@ -29,17 +32,26 @@ const canViewClinicalHistory = computed(
 )
 const canViewProgressNotes = computed(
   () =>
-    authStore.hasPermission('progress-note:read') ||
-    authStore.hasPermission('progress-note:create')
+    authStore.hasPermission('progress-note:read') || authStore.hasPermission('progress-note:create')
 )
 const canViewMedicalOrders = computed(
   () =>
-    authStore.hasPermission('medical-order:read') ||
-    authStore.hasPermission('medical-order:create')
+    authStore.hasPermission('medical-order:read') || authStore.hasPermission('medical-order:create')
+)
+// Psychotherapy activities: only for HOSPITALIZATION admissions
+const canViewPsychotherapyActivities = computed(
+  () =>
+    props.admissionType === AdmissionType.HOSPITALIZATION &&
+    (authStore.hasPermission('psychotherapy-activity:read') ||
+      authStore.hasPermission('psychotherapy-activity:create'))
 )
 
 const hasAnyPermission = computed(
-  () => canViewClinicalHistory.value || canViewProgressNotes.value || canViewMedicalOrders.value
+  () =>
+    canViewClinicalHistory.value ||
+    canViewProgressNotes.value ||
+    canViewMedicalOrders.value ||
+    canViewPsychotherapyActivities.value
 )
 </script>
 
@@ -66,6 +78,10 @@ const hasAnyPermission = computed(
             <i class="pi pi-clipboard tab-icon"></i>
             {{ t('medicalRecord.tabs.medicalOrders') }}
           </Tab>
+          <Tab v-if="canViewPsychotherapyActivities" value="psychotherapyActivities">
+            <i class="pi pi-heart tab-icon"></i>
+            {{ t('medicalRecord.tabs.psychotherapyActivities') }}
+          </Tab>
         </TabList>
         <TabPanels>
           <TabPanel v-if="canViewClinicalHistory" value="clinicalHistory">
@@ -76,6 +92,9 @@ const hasAnyPermission = computed(
           </TabPanel>
           <TabPanel v-if="canViewMedicalOrders" value="medicalOrders">
             <MedicalOrderList :admissionId="admissionId" />
+          </TabPanel>
+          <TabPanel v-if="canViewPsychotherapyActivities" value="psychotherapyActivities">
+            <PsychotherapyActivityList :admissionId="admissionId" />
           </TabPanel>
         </TabPanels>
       </Tabs>

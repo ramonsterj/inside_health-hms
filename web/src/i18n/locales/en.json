@@ -53,6 +53,7 @@
     "roles": "Roles",
     "triageCodes": "Triage Codes",
     "rooms": "Rooms",
+    "activityCategories": "Activity Categories",
     "auditLogs": "Audit Logs",
     "profile": "Profile",
     "logout": "Logout"
@@ -965,7 +966,8 @@
     "tabs": {
       "clinicalHistory": "Clinical History",
       "progressNotes": "Progress Notes",
-      "medicalOrders": "Medical Orders"
+      "medicalOrders": "Medical Orders",
+      "psychotherapyActivities": "Psychotherapeutic Activities"
     },
     "clinicalHistory": {
       "title": "Clinical History",
@@ -1092,6 +1094,68 @@
         "frequency": "e.g., every 8 hours, 3 times a day",
         "schedule": "e.g., 8am, 4pm, 12am",
         "observations": "Special instructions, precautions..."
+      }
+    }
+  },
+  "psychotherapy": {
+    "category": {
+      "title": "Activity Categories",
+      "new": "New Category",
+      "edit": "Edit Category",
+      "name": "Name",
+      "description": "Description",
+      "displayOrder": "Display Order",
+      "active": "Active",
+      "empty": "No activity categories found.",
+      "created": "Activity category created successfully.",
+      "updated": "Activity category updated successfully.",
+      "deleted": "Activity category deleted successfully.",
+      "confirmDelete": "Are you sure you want to delete this category?"
+    },
+    "activity": {
+      "title": "Psychotherapeutic Activities",
+      "activity": "activity",
+      "activities": "activities",
+      "add": "Add Activity",
+      "addFirst": "Add First Activity",
+      "empty": "No activities registered yet.",
+      "created": "Activity registered successfully.",
+      "deleted": "Activity deleted successfully.",
+      "confirmDelete": "Are you sure you want to delete this activity?",
+      "category": "Category",
+      "selectCategory": "Select category",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe the activity performed with the patient...",
+      "registeredBy": "Registered by",
+      "registeredAt": "Registered at",
+      "newestFirst": "Newest first",
+      "oldestFirst": "Oldest first"
+    }
+  },
+  "validation": {
+    "psychotherapy": {
+      "category": {
+        "name": {
+          "required": "Category name is required.",
+          "max": "Name must be at most 100 characters."
+        },
+        "description": {
+          "max": "Description must be at most 255 characters."
+        },
+        "displayOrder": {
+          "invalid": "Display order must be a number.",
+          "integer": "Display order must be a whole number.",
+          "min": "Display order must be 0 or greater."
+        }
+      },
+      "activity": {
+        "category": {
+          "required": "Category is required."
+        },
+        "description": {
+          "required": "Description is required.",
+          "max": "Description must be at most 2000 characters."
+        }
       }
     }
   }

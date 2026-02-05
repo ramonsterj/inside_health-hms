@@ -7,7 +7,6 @@ import { useConfirm } from 'primevue/useconfirm'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
-import ConfirmDialog from 'primevue/confirmdialog'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import { useAdmissionStore } from '@/stores/admission'
@@ -45,7 +44,9 @@ const canViewMedicalRecord = computed(
     authStore.hasPermission('progress-note:read') ||
     authStore.hasPermission('progress-note:create') ||
     authStore.hasPermission('medical-order:read') ||
-    authStore.hasPermission('medical-order:create')
+    authStore.hasPermission('medical-order:create') ||
+    authStore.hasPermission('psychotherapy-activity:read') ||
+    authStore.hasPermission('psychotherapy-activity:create')
 )
 
 const existingConsultingPhysicianIds = computed(
@@ -189,8 +190,6 @@ function handleDocumentUploaded() {
 
 <template>
   <div class="admission-detail-page">
-    <ConfirmDialog />
-
     <div class="page-header">
       <div class="header-left">
         <Button icon="pi pi-arrow-left" text rounded @click="router.push({ name: 'admissions' })" />
@@ -364,6 +363,7 @@ function handleDocumentUploaded() {
       <MedicalRecordTabs
         v-if="canViewMedicalRecord"
         :admissionId="admissionId"
+        :admissionType="admission.type"
         class="full-width"
       />
 

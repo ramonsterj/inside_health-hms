@@ -126,7 +126,7 @@ com.insidehealthgt.hms/
 **Location**: `src/main/resources/db/migration/`
 **Naming**: `V{version}__{description}.sql`
 
-**Current migrations**: V001-V028 (users, audit_logs, roles/permissions, password_reset_tokens, locale, patients, admissions, file storage)
+**Current migrations**: V001-V042 (users, audit_logs, roles/permissions, password_reset_tokens, locale, patients, admissions, file storage, admission types, document types, clinical histories, progress notes, medical orders, psychotherapy categories, psychotherapy activities)
 
 ```sql
 -- Example: Always include BaseEntity fields in new tables
@@ -299,6 +299,8 @@ class GlobalExceptionHandler {
 - ✅ Testcontainers for PostgreSQL
 - ✅ Patient Admission (admissions, triage codes, rooms, discharge flow)
 - ✅ File System Storage for patient documents (ID docs, consent forms)
+- ✅ Medical Record System (clinical histories, progress notes, medical orders)
+- ✅ Psychotherapeutic Activities (activity registration for hospitalized patients, category management)
 
 ### Frontend (Complete)
 - ✅ Vue 3.5 + TypeScript 5.9 + Vite 7.x
@@ -311,6 +313,7 @@ class GlobalExceptionHandler {
 - ✅ Vitest for unit testing (happy-dom, @vue/test-utils, @pinia/testing)
 - ✅ Playwright for E2E testing
 - ✅ Patient Admission UI (multi-step wizard, admin CRUD for triage codes and rooms)
+- ✅ Psychotherapeutic Activities UI (activity list with sorting, admin category management)
 
 ### Security Tooling
 - ✅ Detekt (Kotlin static analysis)
@@ -375,4 +378,4 @@ See **ARCHITECTURE.md** for full documentation, **VERSION_UPDATES.md** for versi
 
 ---
 
-**Last Updated**: January 31, 2026
+**Last Updated**: February 5, 2026

@@ -164,6 +164,25 @@ const router = createRouter({
           name: 'document-type-edit',
           component: () => import('@/views/admin/DocumentTypeFormView.vue'),
           meta: { requiresPermission: 'document-type:update' }
+        },
+        // Admin - Psychotherapy Categories
+        {
+          path: 'admin/psychotherapy-categories',
+          name: 'psychotherapy-categories',
+          component: () => import('@/views/admin/PsychotherapyCategoriesView.vue'),
+          meta: { requiresPermission: 'psychotherapy-category:read' }
+        },
+        {
+          path: 'admin/psychotherapy-categories/new',
+          name: 'psychotherapy-category-create',
+          component: () => import('@/views/admin/PsychotherapyCategoryFormView.vue'),
+          meta: { requiresPermission: 'psychotherapy-category:create' }
+        },
+        {
+          path: 'admin/psychotherapy-categories/:id/edit',
+          name: 'psychotherapy-category-edit',
+          component: () => import('@/views/admin/PsychotherapyCategoryFormView.vue'),
+          meta: { requiresPermission: 'psychotherapy-category:update' }
         }
       ]
     },

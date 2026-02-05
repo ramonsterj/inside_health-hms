@@ -93,6 +93,11 @@ const model = computed<MenuItem[]>(() => {
           to: '/admin/rooms'
         },
         {
+          label: 'nav.activityCategories',
+          icon: 'pi pi-fw pi-heart',
+          to: '/admin/psychotherapy-categories'
+        },
+        {
           label: 'nav.auditLogs',
           icon: 'pi pi-fw pi-history',
           to: '/audit-logs'

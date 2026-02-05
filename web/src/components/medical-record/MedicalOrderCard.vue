@@ -5,7 +5,6 @@ import { useConfirm } from 'primevue/useconfirm'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
-import ConfirmDialog from 'primevue/confirmdialog'
 import { MedicalOrderStatus, MedicalOrderCategory } from '@/types/medicalRecord'
 import type { MedicalOrderResponse } from '@/types/medicalRecord'
 
@@ -150,7 +149,6 @@ function confirmDiscontinue() {
       </div>
     </template>
   </Card>
-  <ConfirmDialog />
 </template>
 
 <style scoped>

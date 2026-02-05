@@ -134,9 +134,7 @@ function handleOrderSaved() {
   showFormDialog.value = false
   editingOrder.value = null
   showSuccess(
-    wasEditing
-      ? 'medicalRecord.medicalOrder.updated'
-      : 'medicalRecord.medicalOrder.created'
+    wasEditing ? 'medicalRecord.medicalOrder.updated' : 'medicalRecord.medicalOrder.created'
   )
 }
 </script>
