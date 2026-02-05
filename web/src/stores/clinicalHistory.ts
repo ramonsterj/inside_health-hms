@@ -13,7 +13,9 @@ export const useClinicalHistoryStore = defineStore('clinicalHistory', () => {
   const clinicalHistories = ref<Map<number, ClinicalHistoryResponse>>(new Map())
   const loading = ref(false)
 
-  async function fetchClinicalHistory(admissionId: number): Promise<ClinicalHistoryResponse | null> {
+  async function fetchClinicalHistory(
+    admissionId: number
+  ): Promise<ClinicalHistoryResponse | null> {
     loading.value = true
     try {
       const response = await api.get<ApiResponse<ClinicalHistoryResponse>>(

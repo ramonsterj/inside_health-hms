@@ -12,10 +12,7 @@ import { toTypedSchema } from '@/validation/zodI18n'
 import { clinicalHistorySchema, type ClinicalHistoryFormData } from '@/validation/medicalRecord'
 import { useClinicalHistoryStore } from '@/stores/clinicalHistory'
 import { useErrorHandler } from '@/composables/useErrorHandler'
-import type {
-  ClinicalHistoryResponse,
-  ClinicalHistoryFieldName
-} from '@/types/medicalRecord'
+import type { ClinicalHistoryResponse, ClinicalHistoryFieldName } from '@/types/medicalRecord'
 import RichTextEditor from '@/components/common/RichTextEditor.vue'
 
 const props = defineProps<{
@@ -227,11 +224,7 @@ function cancel() {
 
     <form @submit="onSubmit">
       <Accordion multiple :value="[]">
-        <AccordionPanel
-          v-for="section in fieldSections"
-          :key="section.key"
-          :value="section.key"
-        >
+        <AccordionPanel v-for="section in fieldSections" :key="section.key" :value="section.key">
           <AccordionHeader>
             {{ t(`medicalRecord.clinicalHistory.sections.${section.key}`) }}
           </AccordionHeader>

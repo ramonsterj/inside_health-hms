@@ -82,9 +82,7 @@ function handleNoteSaved() {
   showFormDialog.value = false
   editingNote.value = null
   showSuccess(
-    wasEditing
-      ? 'medicalRecord.progressNote.updated'
-      : 'medicalRecord.progressNote.created'
+    wasEditing ? 'medicalRecord.progressNote.updated' : 'medicalRecord.progressNote.created'
   )
 }
 </script>

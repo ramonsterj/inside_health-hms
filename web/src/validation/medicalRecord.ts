@@ -79,16 +79,32 @@ export const medicalOrderSchema = z.object({
   }),
   startDate: z.string().min(1, 'validation.medicalRecord.medicalOrder.startDate.required'),
   endDate: z.string().optional().or(z.literal('')),
-  medication: z.string().max(255, 'validation.medicalRecord.medicalOrder.medication.max').optional().or(z.literal('')),
-  dosage: z.string().max(100, 'validation.medicalRecord.medicalOrder.dosage.max').optional().or(z.literal('')),
+  medication: z
+    .string()
+    .max(255, 'validation.medicalRecord.medicalOrder.medication.max')
+    .optional()
+    .or(z.literal('')),
+  dosage: z
+    .string()
+    .max(100, 'validation.medicalRecord.medicalOrder.dosage.max')
+    .optional()
+    .or(z.literal('')),
   route: z
     .enum(administrationRouteValues, {
       invalid_type_error: 'validation.medicalRecord.medicalOrder.route.invalid'
     })
     .nullable()
     .optional(),
-  frequency: z.string().max(100, 'validation.medicalRecord.medicalOrder.frequency.max').optional().or(z.literal('')),
-  schedule: z.string().max(100, 'validation.medicalRecord.medicalOrder.schedule.max').optional().or(z.literal('')),
+  frequency: z
+    .string()
+    .max(100, 'validation.medicalRecord.medicalOrder.frequency.max')
+    .optional()
+    .or(z.literal('')),
+  schedule: z
+    .string()
+    .max(100, 'validation.medicalRecord.medicalOrder.schedule.max')
+    .optional()
+    .or(z.literal('')),
   observations: z.string().optional().or(z.literal(''))
 })
 

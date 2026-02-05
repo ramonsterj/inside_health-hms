@@ -53,6 +53,7 @@
     "roles": "Roles",
     "triageCodes": "Codigos de Triage",
     "rooms": "Habitaciones",
+    "activityCategories": "Categorías de Actividades",
     "auditLogs": "Registros de Auditoria",
     "profile": "Perfil",
     "logout": "Cerrar Sesion"
@@ -965,7 +966,8 @@
     "tabs": {
       "clinicalHistory": "Historia Clinica",
       "progressNotes": "Notas de Evolucion",
-      "medicalOrders": "Ordenes Medicas"
+      "medicalOrders": "Ordenes Medicas",
+      "psychotherapyActivities": "Actividades Psicoterapeuticas"
     },
     "clinicalHistory": {
       "title": "Historia Clinica",
@@ -1092,6 +1094,68 @@
         "frequency": "ej. cada 8 horas, 3 veces al dia",
         "schedule": "ej. 8am, 4pm, 12am",
         "observations": "Indicaciones especiales, precauciones..."
+      }
+    }
+  },
+  "psychotherapy": {
+    "category": {
+      "title": "Categorías de Actividades",
+      "new": "Nueva Categoría",
+      "edit": "Editar Categoría",
+      "name": "Nombre",
+      "description": "Descripción",
+      "displayOrder": "Orden de Visualización",
+      "active": "Activo",
+      "empty": "No se encontraron categorías de actividades.",
+      "created": "Categoría creada exitosamente.",
+      "updated": "Categoría actualizada exitosamente.",
+      "deleted": "Categoría eliminada exitosamente.",
+      "confirmDelete": "¿Está seguro que desea eliminar esta categoría?"
+    },
+    "activity": {
+      "title": "Actividades Psicoterapéuticas",
+      "activity": "actividad",
+      "activities": "actividades",
+      "add": "Agregar Actividad",
+      "addFirst": "Agregar Primera Actividad",
+      "empty": "No hay actividades registradas aún.",
+      "created": "Actividad registrada exitosamente.",
+      "deleted": "Actividad eliminada exitosamente.",
+      "confirmDelete": "¿Está seguro que desea eliminar esta actividad?",
+      "category": "Categoría",
+      "selectCategory": "Seleccionar categoría",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Describa la actividad realizada con el paciente...",
+      "registeredBy": "Registrado por",
+      "registeredAt": "Registrado el",
+      "newestFirst": "Más recientes",
+      "oldestFirst": "Más antiguas"
+    }
+  },
+  "validation": {
+    "psychotherapy": {
+      "category": {
+        "name": {
+          "required": "El nombre de la categoría es requerido.",
+          "max": "El nombre debe tener como máximo 100 caracteres."
+        },
+        "description": {
+          "max": "La descripción debe tener como máximo 255 caracteres."
+        },
+        "displayOrder": {
+          "invalid": "El orden de visualización debe ser un número.",
+          "integer": "El orden de visualización debe ser un número entero.",
+          "min": "El orden de visualización debe ser 0 o mayor."
+        }
+      },
+      "activity": {
+        "category": {
+          "required": "La categoría es requerida."
+        },
+        "description": {
+          "required": "La descripción es requerida.",
+          "max": "La descripción debe tener como máximo 2000 caracteres."
+        }
       }
     }
   }

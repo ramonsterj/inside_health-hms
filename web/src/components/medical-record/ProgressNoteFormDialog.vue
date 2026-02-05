@@ -97,9 +97,7 @@ function closeDialog() {
     :visible="visible"
     @update:visible="$emit('update:visible', $event)"
     :header="
-      isEditMode
-        ? t('medicalRecord.progressNote.edit')
-        : t('medicalRecord.progressNote.add')
+      isEditMode ? t('medicalRecord.progressNote.edit') : t('medicalRecord.progressNote.add')
     "
     :modal="true"
     :closable="!loading"
