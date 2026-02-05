@@ -31,6 +31,8 @@
     "updatedAt": "Fecha de Actualizacion",
     "updatedBy": "Actualizado Por",
     "auditInfo": "Informacion de Auditoria",
+    "expand": "Expandir",
+    "collapse": "Contraer",
     "time": {
       "justNow": "ahora",
       "minutesAgo": "hace {count} min",
@@ -916,6 +918,180 @@
         "invalid": "El orden de visualizacion debe ser un numero.",
         "integer": "El orden de visualizacion debe ser un numero entero.",
         "min": "El orden de visualizacion debe ser 0 o mayor."
+      }
+    },
+    "medicalRecord": {
+      "progressNote": {
+        "subjectiveData": {
+          "required": "Los datos subjetivos son requeridos"
+        },
+        "objectiveData": {
+          "required": "Los datos objetivos son requeridos"
+        },
+        "analysis": {
+          "required": "El analisis es requerido"
+        },
+        "actionPlans": {
+          "required": "El plan de accion es requerido"
+        }
+      },
+      "medicalOrder": {
+        "category": {
+          "required": "La categoria es requerida"
+        },
+        "startDate": {
+          "required": "La fecha de inicio es requerida"
+        },
+        "medication": {
+          "max": "El medicamento debe tener como maximo 255 caracteres"
+        },
+        "dosage": {
+          "max": "La dosis debe tener como maximo 100 caracteres"
+        },
+        "route": {
+          "invalid": "Via de administracion invalida"
+        },
+        "frequency": {
+          "max": "La frecuencia debe tener como maximo 100 caracteres"
+        },
+        "schedule": {
+          "max": "El horario debe tener como maximo 255 caracteres"
+        }
+      }
+    }
+  },
+  "medicalRecord": {
+    "title": "Expediente Medico",
+    "tabs": {
+      "clinicalHistory": "Historia Clinica",
+      "progressNotes": "Notas de Evolucion",
+      "medicalOrders": "Ordenes Medicas"
+    },
+    "clinicalHistory": {
+      "title": "Historia Clinica",
+      "create": "Crear Historia Clinica",
+      "edit": "Editar Historia Clinica",
+      "empty": "No se ha creado la historia clinica para esta admision.",
+      "created": "Historia clinica creada exitosamente.",
+      "updated": "Historia clinica actualizada exitosamente.",
+      "noData": "Sin datos",
+      "sections": {
+        "presentation": "Presentacion",
+        "history": "Antecedentes",
+        "social": "Historia Social",
+        "exam": "Examen",
+        "assessment": "Evaluacion",
+        "notes": "Notas Adicionales"
+      },
+      "fields": {
+        "reasonForAdmission": "Motivo de Admision",
+        "historyOfPresentIllness": "Historia de la Enfermedad Actual",
+        "psychiatricHistory": "Antecedentes Psiquiatricos",
+        "medicalHistory": "Antecedentes Medicos",
+        "familyHistory": "Antecedentes Familiares",
+        "personalHistory": "Historia Personal",
+        "substanceUseHistory": "Historia de Uso de Sustancias",
+        "legalHistory": "Antecedentes Legales",
+        "socialHistory": "Historia Social",
+        "developmentalHistory": "Historia del Desarrollo",
+        "educationalOccupationalHistory": "Historia Educativa y Laboral",
+        "sexualHistory": "Historia Sexual",
+        "religiousSpiritualHistory": "Historia Religiosa/Espiritual",
+        "mentalStatusExam": "Examen del Estado Mental",
+        "physicalExam": "Examen Fisico",
+        "diagnosticImpression": "Impresion Diagnostica",
+        "treatmentPlan": "Plan de Tratamiento",
+        "riskAssessment": "Evaluacion de Riesgo",
+        "prognosis": "Pronostico",
+        "informedConsentNotes": "Notas de Consentimiento Informado",
+        "additionalNotes": "Notas Adicionales"
+      }
+    },
+    "progressNote": {
+      "title": "Notas de Evolucion",
+      "add": "Agregar Nota",
+      "addFirst": "Agregar Primera Nota",
+      "edit": "Editar Nota de Evolucion",
+      "empty": "No hay notas de evolucion registradas.",
+      "created": "Nota de evolucion creada exitosamente.",
+      "updated": "Nota de evolucion actualizada exitosamente.",
+      "notes": "notas",
+      "newestFirst": "Mas recientes",
+      "oldestFirst": "Mas antiguas",
+      "edited": "editada",
+      "soapDescription": "Registre la evolucion del paciente usando el formato SOAP (Subjetivo, Objetivo, Analisis, Plan).",
+      "fields": {
+        "subjectiveData": "Datos Subjetivos (S)",
+        "objectiveData": "Datos Objetivos (O)",
+        "analysis": "Analisis (A)",
+        "actionPlans": "Plan de Accion (P)"
+      },
+      "placeholders": {
+        "subjectiveData": "Sintomas, quejas y percepcion del paciente...",
+        "objectiveData": "Signos vitales, hallazgos del examen, resultados de laboratorio...",
+        "analysis": "Diagnostico diferencial, interpretacion de hallazgos...",
+        "actionPlans": "Tratamiento, intervenciones, seguimiento..."
+      }
+    },
+    "medicalOrder": {
+      "title": "Ordenes Medicas",
+      "add": "Agregar Orden",
+      "addFirst": "Agregar Primera Orden",
+      "edit": "Editar Orden Medica",
+      "empty": "No hay ordenes medicas registradas.",
+      "created": "Orden medica creada exitosamente.",
+      "updated": "Orden medica actualizada exitosamente.",
+      "discontinued": "Orden medica descontinuada exitosamente.",
+      "discontinue": "Descontinuar",
+      "confirmDiscontinue": "Esta seguro que desea descontinuar esta orden medica?",
+      "orders": "ordenes",
+      "orderedBy": "Ordenado por",
+      "discontinuedBy": "Descontinuado por",
+      "categories": {
+        "ORDENES_MEDICAS": "Ordenes Medicas Generales",
+        "MEDICAMENTOS": "Medicamentos",
+        "LABORATORIOS": "Laboratorios",
+        "REFERENCIAS_MEDICAS": "Referencias Medicas",
+        "PRUEBAS_PSICOMETRICAS": "Pruebas Psicometricas",
+        "ACTIVIDAD_FISICA": "Actividad Fisica",
+        "CUIDADOS_ESPECIALES": "Cuidados Especiales",
+        "DIETA": "Dieta",
+        "RESTRICCIONES_MOVILIDAD": "Restricciones de Movilidad",
+        "PERMISOS_VISITA": "Permisos de Visita",
+        "OTRAS": "Otras Ordenes"
+      },
+      "statuses": {
+        "ACTIVE": "Activa",
+        "DISCONTINUED": "Descontinuada"
+      },
+      "routes": {
+        "ORAL": "Oral",
+        "IV": "Intravenosa (IV)",
+        "IM": "Intramuscular (IM)",
+        "SC": "Subcutanea (SC)",
+        "TOPICAL": "Topica",
+        "INHALATION": "Inhalacion",
+        "RECTAL": "Rectal",
+        "SUBLINGUAL": "Sublingual",
+        "OTHER": "Otra"
+      },
+      "fields": {
+        "category": "Categoria",
+        "startDate": "Fecha de Inicio",
+        "endDate": "Fecha de Fin",
+        "medication": "Medicamento",
+        "dosage": "Dosis",
+        "route": "Via de Administracion",
+        "frequency": "Frecuencia",
+        "schedule": "Horario",
+        "observations": "Observaciones"
+      },
+      "placeholders": {
+        "medication": "Nombre del medicamento",
+        "dosage": "ej. 500mg, 10ml",
+        "frequency": "ej. cada 8 horas, 3 veces al dia",
+        "schedule": "ej. 8am, 4pm, 12am",
+        "observations": "Indicaciones especiales, precauciones..."
       }
     }
   }

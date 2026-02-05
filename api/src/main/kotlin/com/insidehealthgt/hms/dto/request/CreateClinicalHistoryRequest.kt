@@ -1,0 +1,25 @@
+package com.insidehealthgt.hms.dto.request
+
+data class CreateClinicalHistoryRequest(
+    val reasonForAdmission: String? = null,
+    val historyOfPresentIllness: String? = null,
+    val psychiatricHistory: String? = null,
+    val medicalHistory: String? = null,
+    val familyHistory: String? = null,
+    val personalHistory: String? = null,
+    val substanceUseHistory: String? = null,
+    val legalHistory: String? = null,
+    val socialHistory: String? = null,
+    val developmentalHistory: String? = null,
+    val educationalOccupationalHistory: String? = null,
+    val sexualHistory: String? = null,
+    val religiousSpiritualHistory: String? = null,
+    val mentalStatusExam: String? = null,
+    val physicalExam: String? = null,
+    val diagnosticImpression: String? = null,
+    val treatmentPlan: String? = null,
+    val riskAssessment: String? = null,
+    val prognosis: String? = null,
+    val informedConsentNotes: String? = null,
+    val additionalNotes: String? = null,
+)

@@ -31,6 +31,8 @@
     "updatedAt": "Updated At",
     "updatedBy": "Updated By",
     "auditInfo": "Audit Information",
+    "expand": "Expand",
+    "collapse": "Collapse",
     "time": {
       "justNow": "just now",
       "minutesAgo": "{count} min ago",
@@ -916,6 +918,180 @@
         "invalid": "Display order must be a number.",
         "integer": "Display order must be a whole number.",
         "min": "Display order must be 0 or greater."
+      }
+    },
+    "medicalRecord": {
+      "progressNote": {
+        "subjectiveData": {
+          "required": "Subjective data is required"
+        },
+        "objectiveData": {
+          "required": "Objective data is required"
+        },
+        "analysis": {
+          "required": "Analysis is required"
+        },
+        "actionPlans": {
+          "required": "Action plan is required"
+        }
+      },
+      "medicalOrder": {
+        "category": {
+          "required": "Category is required"
+        },
+        "startDate": {
+          "required": "Start date is required"
+        },
+        "medication": {
+          "max": "Medication must be at most 255 characters"
+        },
+        "dosage": {
+          "max": "Dosage must be at most 100 characters"
+        },
+        "route": {
+          "invalid": "Invalid administration route"
+        },
+        "frequency": {
+          "max": "Frequency must be at most 100 characters"
+        },
+        "schedule": {
+          "max": "Schedule must be at most 255 characters"
+        }
+      }
+    }
+  },
+  "medicalRecord": {
+    "title": "Medical Record",
+    "tabs": {
+      "clinicalHistory": "Clinical History",
+      "progressNotes": "Progress Notes",
+      "medicalOrders": "Medical Orders"
+    },
+    "clinicalHistory": {
+      "title": "Clinical History",
+      "create": "Create Clinical History",
+      "edit": "Edit Clinical History",
+      "empty": "No clinical history has been created for this admission.",
+      "created": "Clinical history created successfully.",
+      "updated": "Clinical history updated successfully.",
+      "noData": "No data",
+      "sections": {
+        "presentation": "Presentation",
+        "history": "History",
+        "social": "Social History",
+        "exam": "Examination",
+        "assessment": "Assessment",
+        "notes": "Additional Notes"
+      },
+      "fields": {
+        "reasonForAdmission": "Reason for Admission",
+        "historyOfPresentIllness": "History of Present Illness",
+        "psychiatricHistory": "Psychiatric History",
+        "medicalHistory": "Medical History",
+        "familyHistory": "Family History",
+        "personalHistory": "Personal History",
+        "substanceUseHistory": "Substance Use History",
+        "legalHistory": "Legal History",
+        "socialHistory": "Social History",
+        "developmentalHistory": "Developmental History",
+        "educationalOccupationalHistory": "Educational and Occupational History",
+        "sexualHistory": "Sexual History",
+        "religiousSpiritualHistory": "Religious/Spiritual History",
+        "mentalStatusExam": "Mental Status Exam",
+        "physicalExam": "Physical Exam",
+        "diagnosticImpression": "Diagnostic Impression",
+        "treatmentPlan": "Treatment Plan",
+        "riskAssessment": "Risk Assessment",
+        "prognosis": "Prognosis",
+        "informedConsentNotes": "Informed Consent Notes",
+        "additionalNotes": "Additional Notes"
+      }
+    },
+    "progressNote": {
+      "title": "Progress Notes",
+      "add": "Add Note",
+      "addFirst": "Add First Note",
+      "edit": "Edit Progress Note",
+      "empty": "No progress notes recorded.",
+      "created": "Progress note created successfully.",
+      "updated": "Progress note updated successfully.",
+      "notes": "notes",
+      "newestFirst": "Newest first",
+      "oldestFirst": "Oldest first",
+      "edited": "edited",
+      "soapDescription": "Record the patient's progress using the SOAP format (Subjective, Objective, Assessment, Plan).",
+      "fields": {
+        "subjectiveData": "Subjective Data (S)",
+        "objectiveData": "Objective Data (O)",
+        "analysis": "Assessment (A)",
+        "actionPlans": "Plan (P)"
+      },
+      "placeholders": {
+        "subjectiveData": "Symptoms, complaints, and patient's perception...",
+        "objectiveData": "Vital signs, exam findings, lab results...",
+        "analysis": "Differential diagnosis, interpretation of findings...",
+        "actionPlans": "Treatment, interventions, follow-up..."
+      }
+    },
+    "medicalOrder": {
+      "title": "Medical Orders",
+      "add": "Add Order",
+      "addFirst": "Add First Order",
+      "edit": "Edit Medical Order",
+      "empty": "No medical orders recorded.",
+      "created": "Medical order created successfully.",
+      "updated": "Medical order updated successfully.",
+      "discontinued": "Medical order discontinued successfully.",
+      "discontinue": "Discontinue",
+      "confirmDiscontinue": "Are you sure you want to discontinue this medical order?",
+      "orders": "orders",
+      "orderedBy": "Ordered by",
+      "discontinuedBy": "Discontinued by",
+      "categories": {
+        "ORDENES_MEDICAS": "General Medical Orders",
+        "MEDICAMENTOS": "Medications",
+        "LABORATORIOS": "Laboratory Tests",
+        "REFERENCIAS_MEDICAS": "Medical Referrals",
+        "PRUEBAS_PSICOMETRICAS": "Psychometric Tests",
+        "ACTIVIDAD_FISICA": "Physical Activity",
+        "CUIDADOS_ESPECIALES": "Special Care",
+        "DIETA": "Diet",
+        "RESTRICCIONES_MOVILIDAD": "Mobility Restrictions",
+        "PERMISOS_VISITA": "Visit Permissions",
+        "OTRAS": "Other Orders"
+      },
+      "statuses": {
+        "ACTIVE": "Active",
+        "DISCONTINUED": "Discontinued"
+      },
+      "routes": {
+        "ORAL": "Oral",
+        "IV": "Intravenous (IV)",
+        "IM": "Intramuscular (IM)",
+        "SC": "Subcutaneous (SC)",
+        "TOPICAL": "Topical",
+        "INHALATION": "Inhalation",
+        "RECTAL": "Rectal",
+        "SUBLINGUAL": "Sublingual",
+        "OTHER": "Other"
+      },
+      "fields": {
+        "category": "Category",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "medication": "Medication",
+        "dosage": "Dosage",
+        "route": "Administration Route",
+        "frequency": "Frequency",
+        "schedule": "Schedule",
+        "observations": "Observations"
+      },
+      "placeholders": {
+        "medication": "Medication name",
+        "dosage": "e.g., 500mg, 10ml",
+        "frequency": "e.g., every 8 hours, 3 times a day",
+        "schedule": "e.g., 8am, 4pm, 12am",
+        "observations": "Special instructions, precautions..."
       }
     }
   }

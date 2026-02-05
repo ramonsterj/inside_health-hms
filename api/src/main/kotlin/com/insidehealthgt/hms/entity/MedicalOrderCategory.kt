@@ -1,0 +1,15 @@
+package com.insidehealthgt.hms.entity
+
+enum class MedicalOrderCategory {
+    ORDENES_MEDICAS,
+    MEDICAMENTOS,
+    LABORATORIOS,
+    REFERENCIAS_MEDICAS,
+    PRUEBAS_PSICOMETRICAS,
+    ACTIVIDAD_FISICA,
+    CUIDADOS_ESPECIALES,
+    DIETA,
+    RESTRICCIONES_MOVILIDAD,
+    PERMISOS_VISITA,
+    OTRAS,
+}
