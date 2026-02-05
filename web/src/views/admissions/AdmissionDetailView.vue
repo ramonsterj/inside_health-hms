@@ -19,6 +19,7 @@ import AdmissionTypeBadge from '@/components/admissions/AdmissionTypeBadge.vue'
 import DocumentList from '@/components/documents/DocumentList.vue'
 import DocumentUploadDialog from '@/components/documents/DocumentUploadDialog.vue'
 import DocumentViewer from '@/components/documents/DocumentViewer.vue'
+import MedicalRecordTabs from '@/components/medical-record/MedicalRecordTabs.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -37,6 +38,15 @@ const admission = computed(() => admissionStore.currentAdmission)
 
 const canUpdate = computed(() => authStore.hasPermission('admission:update'))
 const canDelete = computed(() => authStore.hasPermission('admission:delete'))
+const canViewMedicalRecord = computed(
+  () =>
+    authStore.hasPermission('clinical-history:read') ||
+    authStore.hasPermission('clinical-history:create') ||
+    authStore.hasPermission('progress-note:read') ||
+    authStore.hasPermission('progress-note:create') ||
+    authStore.hasPermission('medical-order:read') ||
+    authStore.hasPermission('medical-order:create')
+)
 
 const existingConsultingPhysicianIds = computed(
   () => admission.value?.consultingPhysicians.map(cp => cp.physician.id) || []
@@ -349,6 +359,13 @@ function handleDocumentUploaded() {
           <DocumentList :admissionId="admissionId" @upload="showDocumentUploadDialog = true" />
         </template>
       </Card>
+
+      <!-- Medical Record Section -->
+      <MedicalRecordTabs
+        v-if="canViewMedicalRecord"
+        :admissionId="admissionId"
+        class="full-width"
+      />
 
       <Card class="full-width">
         <template #title>{{ t('common.auditInfo') }}</template>
