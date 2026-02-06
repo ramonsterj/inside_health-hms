@@ -36,10 +36,18 @@ class PasswordResetTokenRepositoryTest {
     @Autowired
     private lateinit var patientRepository: PatientRepository
 
+    @Autowired
+    private lateinit var nursingNoteRepository: NursingNoteRepository
+
+    @Autowired
+    private lateinit var vitalSignRepository: VitalSignRepository
+
     private lateinit var testUser: User
 
     @BeforeEach
     fun setUp() {
+        nursingNoteRepository.deleteAllHard()
+        vitalSignRepository.deleteAllHard()
         admissionConsentDocumentRepository.deleteAllHard()
         admissionRepository.deleteAllHard()
         emergencyContactRepository.deleteAllHard()

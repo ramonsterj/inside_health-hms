@@ -92,9 +92,8 @@ function handleNoteSaved() {
     <!-- Header -->
     <div class="list-header">
       <div class="header-left">
-        <h3>{{ t('medicalRecord.progressNote.title') }}</h3>
         <span class="note-count" v-if="totalNotes > 0">
-          ({{ totalNotes }} {{ t('medicalRecord.progressNote.notes') }})
+          {{ totalNotes }} {{ t('medicalRecord.progressNote.notes') }}
         </span>
       </div>
       <div class="header-actions">
@@ -180,10 +179,6 @@ function handleNoteSaved() {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
-}
-
-.header-left h3 {
-  margin: 0;
 }
 
 .note-count {

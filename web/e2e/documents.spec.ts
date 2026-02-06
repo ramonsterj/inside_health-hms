@@ -207,6 +207,32 @@ async function setupDocumentMocks(page: import('@playwright/test').Page) {
       body: transparentPng
     })
   })
+
+  // Mock doctors endpoint (called by AdmissionDetailView on mount)
+  await page.route('**/api/v1/admissions/doctors', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: [] })
+    })
+  })
+
+  // Mock clinical history endpoint (default tab for admin users)
+  await page.route('**/api/v1/admissions/1/clinical-history', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: null })
+    })
+  })
+}
+
+// Helper function to click on the Documents tab in MedicalRecordTabs (needed for admin users
+// who have all permissions, making Clinical History the default tab instead of Documents)
+async function clickDocumentsTab(page: import('@playwright/test').Page) {
+  const documentsTab = page.getByRole('tab', { name: /Documents|Documentos/i })
+  await expect(documentsTab).toBeVisible({ timeout: 10000 })
+  await documentsTab.click()
 }
 
 test.describe('Documents - Admin User', () => {
@@ -222,8 +248,9 @@ test.describe('Documents - Admin User', () => {
     await setupDocumentMocks(page)
 
     await page.goto('/admissions/1')
+    await clickDocumentsTab(page)
 
-    // Should see Documents section
+    // Should see Documents section active in Medical Record heading
     await expect(page.getByRole('heading', { name: /Documents/i })).toBeVisible()
 
     // Should see document thumbnails/list
@@ -237,6 +264,7 @@ test.describe('Documents - Admin User', () => {
     await setupDocumentMocks(page)
 
     await page.goto('/admissions/1')
+    await clickDocumentsTab(page)
 
     // Should see Upload button
     await expect(page.getByRole('button', { name: /Upload|Subir/i })).toBeVisible()
@@ -248,11 +276,7 @@ test.describe('Documents - Admin User', () => {
     await setupDocumentMocks(page)
 
     await page.goto('/admissions/1')
-
-    // Wait for Documents section to load
-    await expect(page.getByRole('heading', { name: /Documents|Documentos/i })).toBeVisible({
-      timeout: 10000
-    })
+    await clickDocumentsTab(page)
     await waitForOverlaysToClear(page)
 
     // Click Upload button (in header)
@@ -275,11 +299,7 @@ test.describe('Documents - Admin User', () => {
     await setupDocumentMocks(page)
 
     await page.goto('/admissions/1')
-
-    // Wait for Documents section to load
-    await expect(page.getByRole('heading', { name: /Documents|Documentos/i })).toBeVisible({
-      timeout: 10000
-    })
+    await clickDocumentsTab(page)
     await waitForOverlaysToClear(page)
 
     // Click Upload button (in header)
@@ -335,11 +355,7 @@ test.describe('Documents - Admin User', () => {
     })
 
     await page.goto('/admissions/1')
-
-    // Wait for Documents section to load
-    await expect(page.getByRole('heading', { name: /Documents|Documentos/i })).toBeVisible({
-      timeout: 10000
-    })
+    await clickDocumentsTab(page)
     await waitForOverlaysToClear(page)
 
     // Click Upload button (in header)
@@ -377,6 +393,7 @@ test.describe('Documents - Admin User', () => {
     await setupDocumentMocks(page)
 
     await page.goto('/admissions/1')
+    await clickDocumentsTab(page)
 
     // Wait for documents to load
     await expect(page.getByText('General Consent Form')).toBeVisible()
@@ -402,11 +419,8 @@ test.describe('Documents - Admin User', () => {
     })
 
     await page.goto('/admissions/1')
+    await clickDocumentsTab(page)
 
-    // Wait for Documents section and documents to load
-    await expect(page.getByRole('heading', { name: /Documents|Documentos/i })).toBeVisible({
-      timeout: 10000
-    })
     await expect(page.getByText('General Consent Form')).toBeVisible({ timeout: 10000 })
     await waitForOverlaysToClear(page)
 
@@ -447,11 +461,8 @@ test.describe('Documents - Admin User', () => {
     })
 
     await page.goto('/admissions/1')
+    await clickDocumentsTab(page)
 
-    // Wait for Documents section and documents to load
-    await expect(page.getByRole('heading', { name: /Documents|Documentos/i })).toBeVisible({
-      timeout: 10000
-    })
     await expect(page.getByText('General Consent Form')).toBeVisible({ timeout: 10000 })
     await waitForOverlaysToClear(page)
 
@@ -488,6 +499,7 @@ test.describe('Documents - Admin User', () => {
     })
 
     await page.goto('/admissions/1')
+    await clickDocumentsTab(page)
 
     // Wait for documents to load
     await expect(page.getByText('Patient Belongings Photo')).toBeVisible()
@@ -624,12 +636,25 @@ test.describe('Documents - Empty State', () => {
       })
     })
 
-    await page.goto('/admissions/1')
-
-    // Wait for Documents section to load
-    await expect(page.getByRole('heading', { name: /Documents|Documentos/i })).toBeVisible({
-      timeout: 10000
+    // Mock endpoints for other tabs to prevent error toasts
+    await page.route('**/api/v1/admissions/doctors', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [] })
+      })
     })
+
+    await page.route('**/api/v1/admissions/1/clinical-history', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: null })
+      })
+    })
+
+    await page.goto('/admissions/1')
+    await clickDocumentsTab(page)
 
     // Should see empty state message
     await expect(page.getByText(/No documents uploaded yet|No hay documentos subidos/i)).toBeVisible({
@@ -659,11 +684,7 @@ test.describe('Documents - Validation', () => {
     await setupDocumentMocks(page)
 
     await page.goto('/admissions/1')
-
-    // Wait for Documents section to load
-    await expect(page.getByRole('heading', { name: /Documents|Documentos/i })).toBeVisible({
-      timeout: 10000
-    })
+    await clickDocumentsTab(page)
     await waitForOverlaysToClear(page)
 
     // Click Upload button (in header)

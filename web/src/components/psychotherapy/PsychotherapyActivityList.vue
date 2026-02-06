@@ -87,14 +87,13 @@ async function deleteActivity(activityId: number) {
     <!-- Header -->
     <div class="list-header">
       <div class="header-left">
-        <h3>{{ t('psychotherapy.activity.title') }}</h3>
         <span class="activity-count" v-if="activities.length > 0">
-          ({{ activities.length }}
+          {{ activities.length }}
           {{
             activities.length === 1
               ? t('psychotherapy.activity.activity')
               : t('psychotherapy.activity.activities')
-          }})
+          }}
         </span>
       </div>
       <div class="header-actions">
@@ -169,10 +168,6 @@ async function deleteActivity(activityId: number) {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
-}
-
-.header-left h3 {
-  margin: 0;
 }
 
 .activity-count {

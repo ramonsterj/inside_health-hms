@@ -26,6 +26,7 @@
     "view": "View",
     "download": "Download",
     "all": "All",
+    "more": "More",
     "createdAt": "Created At",
     "createdBy": "Created By",
     "updatedAt": "Updated At",
@@ -33,6 +34,7 @@
     "auditInfo": "Audit Information",
     "expand": "Expand",
     "collapse": "Collapse",
+    "unknown": "Unknown",
     "time": {
       "justNow": "just now",
       "minutesAgo": "{count} min ago",
@@ -1157,6 +1159,139 @@
           "max": "Description must be at most 2000 characters."
         }
       }
+    },
+    "nursing": {
+      "note": {
+        "description": {
+          "required": "Description is required.",
+          "max": "Description must be at most 5000 characters."
+        }
+      },
+      "vitalSign": {
+        "systolicBp": {
+          "required": "Systolic blood pressure is required.",
+          "integer": "Systolic blood pressure must be a whole number.",
+          "min": "Systolic blood pressure must be at least 60 mmHg.",
+          "max": "Systolic blood pressure must be at most 250 mmHg."
+        },
+        "diastolicBp": {
+          "required": "Diastolic blood pressure is required.",
+          "integer": "Diastolic blood pressure must be a whole number.",
+          "min": "Diastolic blood pressure must be at least 30 mmHg.",
+          "max": "Diastolic blood pressure must be at most 150 mmHg."
+        },
+        "bpComparison": "Systolic blood pressure must be greater than diastolic.",
+        "heartRate": {
+          "required": "Heart rate is required.",
+          "integer": "Heart rate must be a whole number.",
+          "min": "Heart rate must be at least 20 bpm.",
+          "max": "Heart rate must be at most 250 bpm."
+        },
+        "respiratoryRate": {
+          "required": "Respiratory rate is required.",
+          "integer": "Respiratory rate must be a whole number.",
+          "min": "Respiratory rate must be at least 5 breaths/min.",
+          "max": "Respiratory rate must be at most 60 breaths/min."
+        },
+        "temperature": {
+          "required": "Temperature is required.",
+          "min": "Temperature must be at least 30.0°C.",
+          "max": "Temperature must be at most 45.0°C."
+        },
+        "oxygenSaturation": {
+          "required": "Oxygen saturation is required.",
+          "integer": "Oxygen saturation must be a whole number.",
+          "min": "Oxygen saturation must be at least 50%.",
+          "max": "Oxygen saturation must be at most 100%."
+        },
+        "other": {
+          "max": "Other observations must be at most 1000 characters."
+        },
+        "recordedAt": {
+          "future": "Recorded time cannot be in the future."
+        }
+      }
+    }
+  },
+  "nursing": {
+    "title": "Nursing",
+    "tabs": {
+      "notes": "Nursing Notes",
+      "vitalSigns": "Vital Signs"
+    },
+    "notes": {
+      "title": "Nursing Notes",
+      "add": "Add Note",
+      "addFirst": "Add First Note",
+      "edit": "Edit Note",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter observations, care provided, and other relevant notes...",
+      "empty": "No nursing notes recorded.",
+      "created": "Nursing note created successfully.",
+      "updated": "Nursing note updated successfully.",
+      "edited": "edited",
+      "newestFirst": "Newest first",
+      "oldestFirst": "Oldest first",
+      "editWindowClosed": "Edit window closed (24-hour limit exceeded)",
+      "cannotEditOthers": "You can only edit records you created"
+    },
+    "vitalSigns": {
+      "title": "Vital Signs",
+      "add": "Record Vital Signs",
+      "addFirst": "Record First Vital Signs",
+      "edit": "Edit Vital Signs",
+      "table": "Table",
+      "charts": "Charts",
+      "empty": "No vital signs recorded.",
+      "noChartData": "No data available for charts.",
+      "created": "Vital signs recorded successfully.",
+      "updated": "Vital signs updated successfully.",
+      "fields": {
+        "recordedAt": "Recorded At",
+        "bloodPressure": "Blood Pressure (s/d)",
+        "systolicBp": "Systolic BP",
+        "diastolicBp": "Diastolic BP",
+        "heartRate": "Heart Rate",
+        "respiratoryRate": "Respiratory Rate",
+        "temperature": "Temperature",
+        "oxygenSaturation": "Oxygen Saturation",
+        "other": "Other Observations"
+      },
+      "placeholders": {
+        "recordedAt": "Select date and time",
+        "other": "Additional observations..."
+      },
+      "hints": {
+        "recordedAt": "Leave empty to use current time"
+      },
+      "units": {
+        "mmHg": "mmHg",
+        "bpm": "bpm",
+        "breathsPerMin": "breaths/min",
+        "celsius": "°C",
+        "percent": "%"
+      },
+      "filter": {
+        "dateRange": "Date Range",
+        "from": "From",
+        "to": "To",
+        "last7Days": "Last 7 Days",
+        "last30Days": "Last 30 Days",
+        "allTime": "All Time",
+        "apply": "Apply",
+        "clear": "Clear"
+      },
+      "chartLabels": {
+        "bloodPressure": "Blood Pressure",
+        "heartRate": "Heart Rate",
+        "respiratoryRate": "Respiratory Rate",
+        "temperature": "Temperature",
+        "oxygenSaturation": "Oxygen Saturation",
+        "systolic": "Systolic",
+        "diastolic": "Diastolic"
+      },
+      "editWindowClosed": "Edit window closed (24-hour limit exceeded)",
+      "cannotEditOthers": "You can only edit records you created"
     }
   }
 }

@@ -126,7 +126,7 @@ com.insidehealthgt.hms/
 **Location**: `src/main/resources/db/migration/`
 **Naming**: `V{version}__{description}.sql`
 
-**Current migrations**: V001-V042 (users, audit_logs, roles/permissions, password_reset_tokens, locale, patients, admissions, file storage, admission types, document types, clinical histories, progress notes, medical orders, psychotherapy categories, psychotherapy activities)
+**Current migrations**: V001-V045 (users, audit_logs, roles/permissions, password_reset_tokens, locale, patients, admissions, file storage, admission types, document types, clinical histories, progress notes, medical orders, psychotherapy categories, psychotherapy activities, nursing notes, vital signs)
 
 ```sql
 -- Example: Always include BaseEntity fields in new tables
@@ -301,6 +301,7 @@ class GlobalExceptionHandler {
 - ✅ File System Storage for patient documents (ID docs, consent forms)
 - ✅ Medical Record System (clinical histories, progress notes, medical orders)
 - ✅ Psychotherapeutic Activities (activity registration for hospitalized patients, category management)
+- ✅ Nursing Module (nursing notes, vital signs with 24h edit window, discharge protection)
 
 ### Frontend (Complete)
 - ✅ Vue 3.5 + TypeScript 5.9 + Vite 7.x
