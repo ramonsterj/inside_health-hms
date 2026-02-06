@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile
 import java.io.ByteArrayInputStream
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -62,9 +63,7 @@ class FileStorageServiceTest {
 
         val storagePath = fileStorageService.storeFile(1L, StorageDocumentType.ID_DOCUMENT, file)
 
-        // File should be stored safely within patient directory (slashes removed from filename)
         assertTrue(storagePath.startsWith("patients/1/id-documents/"))
-        // Verify file doesn't contain path separators in the filename portion
         val filename = storagePath.substringAfterLast("/")
         assertTrue(!filename.contains("/"))
     }
@@ -76,7 +75,6 @@ class FileStorageServiceTest {
 
         val storagePath = fileStorageService.storeFile(1L, StorageDocumentType.ID_DOCUMENT, file)
 
-        // Verify backslashes are removed from filename
         assertTrue(!storagePath.contains("\\"))
     }
 
@@ -109,10 +107,99 @@ class FileStorageServiceTest {
         val path1 = fileStorageService.storeFile(1L, StorageDocumentType.ID_DOCUMENT, file1)
         val path2 = fileStorageService.storeFile(1L, StorageDocumentType.ID_DOCUMENT, file2)
 
-        // Both should exist and be different (UUID prefix)
         assertTrue(path1 != path2)
         assertTrue(Files.exists(tempDir.resolve(path1)))
         assertTrue(Files.exists(tempDir.resolve(path2)))
+    }
+
+    @Test
+    fun `storeFile should sanitize null bytes in filename`() {
+        val content = "content".toByteArray()
+        val file = createMockMultipartFile("malicious\u0000.pdf", "application/pdf", content)
+
+        val storagePath = fileStorageService.storeFile(1L, StorageDocumentType.ID_DOCUMENT, file)
+
+        assertTrue(!storagePath.contains("\u0000"))
+        assertTrue(Files.exists(tempDir.resolve(storagePath)))
+    }
+
+    @Test
+    fun `storeFile should truncate filename longer than 200 characters`() {
+        val longName = "a".repeat(250) + ".pdf"
+        val content = "content".toByteArray()
+        val file = createMockMultipartFile(longName, "application/pdf", content)
+
+        val storagePath = fileStorageService.storeFile(1L, StorageDocumentType.ID_DOCUMENT, file)
+
+        val filename = storagePath.substringAfterLast("/")
+        // filename = UUID(36 chars) + "_" + sanitized(<=200 chars)
+        val sanitizedPart = filename.substringAfter("_")
+        assertTrue(sanitizedPart.length <= 200)
+        assertTrue(sanitizedPart.endsWith(".pdf"))
+        assertTrue(Files.exists(tempDir.resolve(storagePath)))
+    }
+
+    @Test
+    fun `storeFileForAdmission should store in admission directory`() {
+        val content = "admission doc".toByteArray()
+        val file = createMockMultipartFile("report.pdf", "application/pdf", content)
+
+        val storagePath = fileStorageService.storeFileForAdmission(99L, file)
+
+        assertTrue(storagePath.startsWith("admissions/99/documents/"))
+        assertTrue(storagePath.endsWith("_report.pdf"))
+        assertTrue(Files.exists(tempDir.resolve(storagePath)))
+        assertEquals("admission doc", Files.readString(tempDir.resolve(storagePath)))
+    }
+
+    @Test
+    fun `storeBytes should store raw bytes at given path`() {
+        val content = "raw bytes content".toByteArray()
+        val relativePath = Paths.get("admissions", "1", "thumbnails", "thumb.png")
+
+        val storagePath = fileStorageService.storeBytes(relativePath, content)
+
+        assertEquals(relativePath.toString(), storagePath)
+        val fullPath = tempDir.resolve(storagePath)
+        assertTrue(Files.exists(fullPath))
+        assertEquals("raw bytes content", Files.readString(fullPath))
+    }
+
+    @Test
+    fun `storeBytes should reject path traversal`() {
+        val content = "content".toByteArray()
+        val maliciousPath = Paths.get("..", "..", "etc", "passwd")
+
+        assertThrows<BadRequestException> {
+            fileStorageService.storeBytes(maliciousPath, content)
+        }
+    }
+
+    @Test
+    fun `getAbsolutePath should return resolved path for existing file`() {
+        val content = "content".toByteArray()
+        val file = createMockMultipartFile("test.pdf", "application/pdf", content)
+        val storagePath = fileStorageService.storeFile(1L, StorageDocumentType.ID_DOCUMENT, file)
+
+        val absolutePath = fileStorageService.getAbsolutePath(storagePath)
+
+        assertTrue(absolutePath.isAbsolute)
+        assertTrue(Files.exists(absolutePath))
+        assertTrue(absolutePath.startsWith(tempDir.toAbsolutePath().normalize()))
+    }
+
+    @Test
+    fun `getAbsolutePath should throw for nonexistent file`() {
+        assertThrows<ResourceNotFoundException> {
+            fileStorageService.getAbsolutePath("patients/999/id-documents/nonexistent.pdf")
+        }
+    }
+
+    @Test
+    fun `getAbsolutePath should reject path traversal`() {
+        assertThrows<BadRequestException> {
+            fileStorageService.getAbsolutePath("../../etc/passwd")
+        }
     }
 
     @Test
@@ -164,15 +251,12 @@ class FileStorageServiceTest {
 
     @Test
     fun `deleteFile should not throw for nonexistent file`() {
-        // Should not throw
         fileStorageService.deleteFile("patients/999/id-documents/nonexistent.pdf")
     }
 
     @Test
     fun `deleteFile should reject path traversal attempts`() {
-        // Should not throw but also should not delete anything outside base directory
         fileStorageService.deleteFile("../../../etc/passwd")
-        // No exception means the guard clause worked
     }
 
     private fun createMockMultipartFile(filename: String?, contentType: String, content: ByteArray): MultipartFile {

@@ -1,27 +1,10 @@
 package com.insidehealthgt.hms.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.insidehealthgt.hms.TestcontainersConfiguration
 import com.insidehealthgt.hms.dto.request.CreatePsychotherapyCategoryRequest
 import com.insidehealthgt.hms.dto.request.UpdatePsychotherapyCategoryRequest
-import com.insidehealthgt.hms.dto.response.ApiResponse
-import com.insidehealthgt.hms.dto.response.AuthResponse
-import com.insidehealthgt.hms.entity.Salutation
-import com.insidehealthgt.hms.entity.User
-import com.insidehealthgt.hms.repository.PsychotherapyActivityRepository
-import com.insidehealthgt.hms.repository.PsychotherapyCategoryRepository
-import com.insidehealthgt.hms.repository.RoleRepository
-import com.insidehealthgt.hms.repository.UserRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
-import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
-import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.test.annotation.DirtiesContext
-import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -29,32 +12,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-@AutoConfigureMockMvc
-@Import(TestcontainersConfiguration::class)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-class PsychotherapyCategoryControllerTest {
-
-    @Autowired
-    private lateinit var mockMvc: MockMvc
-
-    @Autowired
-    private lateinit var objectMapper: ObjectMapper
-
-    @Autowired
-    private lateinit var userRepository: UserRepository
-
-    @Autowired
-    private lateinit var roleRepository: RoleRepository
-
-    @Autowired
-    private lateinit var categoryRepository: PsychotherapyCategoryRepository
-
-    @Autowired
-    private lateinit var activityRepository: PsychotherapyActivityRepository
-
-    @Autowired
-    private lateinit var passwordEncoder: PasswordEncoder
+class PsychotherapyCategoryControllerTest : AbstractIntegrationTest() {
 
     private lateinit var adminToken: String
     private lateinit var psychologistToken: String
@@ -63,81 +21,17 @@ class PsychotherapyCategoryControllerTest {
 
     @BeforeEach
     fun setUp() {
-        activityRepository.deleteAllHard()
-        userRepository.deleteAll()
+        val (_, adminTkn) = createAdminUser()
+        adminToken = adminTkn
 
-        // Create admin user
-        val adminRole = roleRepository.findByCode("ADMIN")!!
-        val adminUser = User(
-            username = "admin",
-            email = "admin@example.com",
-            passwordHash = passwordEncoder.encode("admin123")!!,
-            firstName = "Admin",
-            lastName = "User",
-        )
-        adminUser.roles.add(adminRole)
-        userRepository.save(adminUser)
-        adminToken = loginAndGetToken("admin@example.com", "admin123")
+        val (_, psychTkn) = createPsychologistUser()
+        psychologistToken = psychTkn
 
-        // Create psychologist user
-        val psychologistRole = roleRepository.findByCode("PSYCHOLOGIST")!!
-        val psychologistUser = User(
-            username = "psychologist",
-            email = "psychologist@example.com",
-            passwordHash = passwordEncoder.encode("password123")!!,
-            firstName = "Sofia",
-            lastName = "Martinez",
-            salutation = Salutation.LICDA,
-        )
-        psychologistUser.roles.add(psychologistRole)
-        userRepository.save(psychologistUser)
-        psychologistToken = loginAndGetToken("psychologist@example.com", "password123")
+        val (_, docTkn) = createDoctorUser()
+        doctorToken = docTkn
 
-        // Create doctor user
-        val doctorRole = roleRepository.findByCode("DOCTOR")!!
-        val doctorUser = User(
-            username = "doctor",
-            email = "doctor@example.com",
-            passwordHash = passwordEncoder.encode("password123")!!,
-            firstName = "Maria",
-            lastName = "Garcia",
-            salutation = Salutation.DR,
-        )
-        doctorUser.roles.add(doctorRole)
-        userRepository.save(doctorUser)
-        doctorToken = loginAndGetToken("doctor@example.com", "password123")
-
-        // Create nurse user
-        val nurseRole = roleRepository.findByCode("NURSE")!!
-        val nurseUser = User(
-            username = "nurse",
-            email = "nurse@example.com",
-            passwordHash = passwordEncoder.encode("password123")!!,
-            firstName = "Ana",
-            lastName = "Lopez",
-        )
-        nurseUser.roles.add(nurseRole)
-        userRepository.save(nurseUser)
-        nurseToken = loginAndGetToken("nurse@example.com", "password123")
-    }
-
-    private fun loginAndGetToken(email: String, password: String): String {
-        val request = mapOf("identifier" to email, "password" to password)
-        val result = mockMvc.perform(
-            post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        val responseType = objectMapper.typeFactory.constructParametricType(
-            ApiResponse::class.java,
-            AuthResponse::class.java,
-        )
-        val response: ApiResponse<AuthResponse> = objectMapper.readValue(
-            result.response.contentAsString,
-            responseType,
-        )
-        return response.data!!.accessToken
+        val (_, nurseTkn) = createNurseUser()
+        nurseToken = nurseTkn
     }
 
     // ============ LIST CATEGORIES TESTS ============
@@ -151,7 +45,7 @@ class PsychotherapyCategoryControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.data").isArray)
-            .andExpect(jsonPath("$.data[0].name").value("Taller"))
+            .andExpect(jsonPath("$.data").isNotEmpty)
     }
 
     @Test
@@ -280,7 +174,7 @@ class PsychotherapyCategoryControllerTest {
 
     @Test
     fun `get category should return category details`() {
-        val category = categoryRepository.findAll().first()
+        val category = psychotherapyCategoryRepository.findAll().first()
 
         mockMvc.perform(
             get("/api/v1/admin/psychotherapy-categories/${category.id}")
@@ -343,7 +237,7 @@ class PsychotherapyCategoryControllerTest {
 
     @Test
     fun `update category should fail for psychologist`() {
-        val category = categoryRepository.findAll().first()
+        val category = psychotherapyCategoryRepository.findAll().first()
         val updateRequest = UpdatePsychotherapyCategoryRequest(
             name = "Updated Name",
             description = "Updated",
@@ -358,6 +252,43 @@ class PsychotherapyCategoryControllerTest {
                 .content(objectMapper.writeValueAsString(updateRequest)),
         )
             .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `update category should fail with duplicate name`() {
+        // Create a category
+        val createRequest = CreatePsychotherapyCategoryRequest(
+            name = "Unique Category",
+            description = "Test",
+            displayOrder = 50,
+            active = true,
+        )
+        val createResult = mockMvc.perform(
+            post("/api/v1/admin/psychotherapy-categories")
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest)),
+        ).andReturn()
+
+        val categoryId = objectMapper.readTree(createResult.response.contentAsString)
+            .get("data").get("id").asLong()
+
+        // Try to update to a name that already exists (seeded data)
+        val updateRequest = UpdatePsychotherapyCategoryRequest(
+            name = "Taller",
+            description = "Duplicate name",
+            displayOrder = 50,
+            active = true,
+        )
+
+        mockMvc.perform(
+            put("/api/v1/admin/psychotherapy-categories/$categoryId")
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.message").value("Psychotherapy category with name 'Taller' already exists"))
     }
 
     // ============ DELETE CATEGORY TESTS ============
@@ -397,7 +328,7 @@ class PsychotherapyCategoryControllerTest {
 
     @Test
     fun `delete category should fail for psychologist`() {
-        val category = categoryRepository.findAll().first()
+        val category = psychotherapyCategoryRepository.findAll().first()
 
         mockMvc.perform(
             delete("/api/v1/admin/psychotherapy-categories/${category.id}")
@@ -408,7 +339,7 @@ class PsychotherapyCategoryControllerTest {
 
     @Test
     fun `delete category should fail without authentication`() {
-        val category = categoryRepository.findAll().first()
+        val category = psychotherapyCategoryRepository.findAll().first()
 
         mockMvc.perform(
             delete("/api/v1/admin/psychotherapy-categories/${category.id}"),

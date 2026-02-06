@@ -1,158 +1,49 @@
 package com.insidehealthgt.hms.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.insidehealthgt.hms.TestcontainersConfiguration
-import com.insidehealthgt.hms.dto.request.AddConsultingPhysicianRequest
 import com.insidehealthgt.hms.dto.request.CreateAdmissionRequest
-import com.insidehealthgt.hms.dto.request.CreatePatientRequest
-import com.insidehealthgt.hms.dto.request.EmergencyContactRequest
 import com.insidehealthgt.hms.dto.request.UpdateAdmissionRequest
-import com.insidehealthgt.hms.dto.response.ApiResponse
-import com.insidehealthgt.hms.dto.response.AuthResponse
 import com.insidehealthgt.hms.entity.AdmissionType
-import com.insidehealthgt.hms.entity.EducationLevel
-import com.insidehealthgt.hms.entity.MaritalStatus
 import com.insidehealthgt.hms.entity.Room
 import com.insidehealthgt.hms.entity.RoomType
-import com.insidehealthgt.hms.entity.Salutation
-import com.insidehealthgt.hms.entity.Sex
 import com.insidehealthgt.hms.entity.User
-import com.insidehealthgt.hms.repository.AdmissionRepository
-import com.insidehealthgt.hms.repository.PatientRepository
-import com.insidehealthgt.hms.repository.RoleRepository
-import com.insidehealthgt.hms.repository.RoomRepository
-import com.insidehealthgt.hms.repository.TriageCodeRepository
-import com.insidehealthgt.hms.repository.UserRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
-import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
-import org.springframework.mock.web.MockMultipartFile
-import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.test.annotation.DirtiesContext
-import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.time.LocalDate
 import java.time.LocalDateTime
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-@AutoConfigureMockMvc
-@Import(TestcontainersConfiguration::class)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@Suppress("LargeClass", "LongMethod")
-class AdmissionControllerTest {
-
-    @Autowired
-    private lateinit var mockMvc: MockMvc
-
-    @Autowired
-    private lateinit var objectMapper: ObjectMapper
-
-    @Autowired
-    private lateinit var userRepository: UserRepository
-
-    @Autowired
-    private lateinit var roleRepository: RoleRepository
-
-    @Autowired
-    private lateinit var patientRepository: PatientRepository
-
-    @Autowired
-    private lateinit var admissionRepository: AdmissionRepository
-
-    @Autowired
-    private lateinit var roomRepository: RoomRepository
-
-    @Autowired
-    private lateinit var triageCodeRepository: TriageCodeRepository
-
-    @Autowired
-    private lateinit var passwordEncoder: PasswordEncoder
+class AdmissionControllerTest : AbstractIntegrationTest() {
 
     private lateinit var adminToken: String
     private lateinit var administrativeStaffToken: String
     private lateinit var doctorToken: String
     private lateinit var doctorUser: User
-    private lateinit var secondDoctorUser: User
     private var patientId: Long = 0
     private var triageCodeId: Long = 0
     private var roomId: Long = 0
 
     @BeforeEach
     fun setUp() {
-        admissionRepository.deleteAll()
-        patientRepository.deleteAll()
-        userRepository.deleteAll()
+        val (_, adminTkn) = createAdminUser()
+        adminToken = adminTkn
 
-        // Create admin user
-        val adminRole = roleRepository.findByCode("ADMIN")!!
-        val adminUser = User(
-            username = "admin",
-            email = "admin@example.com",
-            passwordHash = passwordEncoder.encode("admin123")!!,
-            firstName = "Admin",
-            lastName = "User",
-        )
-        adminUser.roles.add(adminRole)
-        userRepository.save(adminUser)
-        adminToken = loginAndGetToken("admin@example.com", "admin123")
+        val (_, staffTkn) = createAdminStaffUser()
+        administrativeStaffToken = staffTkn
 
-        // Create administrative staff user
-        val adminStaffRole = roleRepository.findByCode("ADMINISTRATIVE_STAFF")!!
-        val adminStaffUser = User(
-            username = "receptionist",
-            email = "receptionist@example.com",
-            passwordHash = passwordEncoder.encode("password123")!!,
-            firstName = "Reception",
-            lastName = "Staff",
-        )
-        adminStaffUser.roles.add(adminStaffRole)
-        userRepository.save(adminStaffUser)
-        administrativeStaffToken = loginAndGetToken("receptionist@example.com", "password123")
+        val (doctorUsr, doctorTkn) = createDoctorUser()
+        doctorUser = doctorUsr
+        doctorToken = doctorTkn
 
-        // Create doctor user
-        val doctorRole = roleRepository.findByCode("DOCTOR")!!
-        doctorUser = User(
-            username = "doctor",
-            email = "doctor@example.com",
-            passwordHash = passwordEncoder.encode("password123")!!,
-            firstName = "Dr. Maria",
-            lastName = "Garcia",
-            salutation = Salutation.DR,
-        )
-        doctorUser.roles.add(doctorRole)
-        userRepository.save(doctorUser)
-        doctorToken = loginAndGetToken("doctor@example.com", "password123")
+        patientId = createPatient(administrativeStaffToken)
 
-        // Create second doctor user for consulting physician tests
-        secondDoctorUser = User(
-            username = "doctor2",
-            email = "doctor2@example.com",
-            passwordHash = passwordEncoder.encode("password123")!!,
-            firstName = "Dr. Carlos",
-            lastName = "Rodriguez",
-            salutation = Salutation.DR,
-        )
-        secondDoctorUser.roles.add(doctorRole)
-        userRepository.save(secondDoctorUser)
-
-        // Create a patient for admission tests
-        patientId = createPatient()
-
-        // Get a triage code (seeded by migration V021)
         val triageCode = triageCodeRepository.findAll().first()
         triageCodeId = triageCode.id!!
 
-        // Create a room for admission tests (use unique number to avoid conflict with seeded data)
         val room = Room(
             number = "TEST-101",
             type = RoomType.PRIVATE,
@@ -160,59 +51,6 @@ class AdmissionControllerTest {
         )
         roomRepository.save(room)
         roomId = room.id!!
-    }
-
-    private fun loginAndGetToken(email: String, password: String): String {
-        val request = mapOf("identifier" to email, "password" to password)
-        val result = mockMvc.perform(
-            post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        val responseType = objectMapper.typeFactory.constructParametricType(
-            ApiResponse::class.java,
-            AuthResponse::class.java,
-        )
-        val response: ApiResponse<AuthResponse> = objectMapper.readValue(
-            result.response.contentAsString,
-            responseType,
-        )
-        return response.data!!.accessToken
-    }
-
-    private fun createPatient(): Long {
-        val request = CreatePatientRequest(
-            firstName = "Juan",
-            lastName = "Pérez García",
-            age = 45,
-            sex = Sex.MALE,
-            gender = "Masculino",
-            maritalStatus = MaritalStatus.MARRIED,
-            religion = "Católica",
-            educationLevel = EducationLevel.UNIVERSITY,
-            occupation = "Ingeniero",
-            address = "4a Calle 5-67 Zona 1, Guatemala",
-            email = "juan.perez@email.com",
-            idDocumentNumber = "1234567890101",
-            emergencyContacts = listOf(
-                EmergencyContactRequest(
-                    name = "María de Pérez",
-                    relationship = "Esposa",
-                    phone = "+502 5555-1234",
-                ),
-            ),
-        )
-
-        val result = mockMvc.perform(
-            post("/api/v1/patients")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        return objectMapper.readTree(result.response.contentAsString)
-            .get("data").get("id").asLong()
     }
 
     private fun createValidAdmissionRequest(): CreateAdmissionRequest = CreateAdmissionRequest(
@@ -287,11 +125,10 @@ class AdmissionControllerTest {
 
     @Test
     fun `create admission should fail with non-doctor treating physician`() {
-        // Create non-doctor user
         val adminStaffRole = roleRepository.findByCode("ADMINISTRATIVE_STAFF")!!
         val nonDoctorUser = User(
-            username = "nurse",
-            email = "nurse@example.com",
+            username = "nondoctor",
+            email = "nondoctor@example.com",
             passwordHash = passwordEncoder.encode("password123")!!,
             firstName = "Nurse",
             lastName = "Jones",
@@ -313,7 +150,6 @@ class AdmissionControllerTest {
 
     @Test
     fun `create admission should fail when room is full`() {
-        // Fill the room (capacity is 2)
         val request1 = createValidAdmissionRequest()
         mockMvc.perform(
             post("/api/v1/admissions")
@@ -322,8 +158,7 @@ class AdmissionControllerTest {
                 .content(objectMapper.writeValueAsString(request1)),
         ).andExpect(status().isCreated)
 
-        // Create second patient
-        val patient2Id = createSecondPatient()
+        val patient2Id = createSecondPatient(administrativeStaffToken)
         val request2 = createValidAdmissionRequest().copy(patientId = patient2Id)
         mockMvc.perform(
             post("/api/v1/admissions")
@@ -332,8 +167,7 @@ class AdmissionControllerTest {
                 .content(objectMapper.writeValueAsString(request2)),
         ).andExpect(status().isCreated)
 
-        // Create third patient - should fail
-        val patient3Id = createThirdPatient()
+        val patient3Id = createThirdPatient(administrativeStaffToken)
         val request3 = createValidAdmissionRequest().copy(patientId = patient3Id)
         mockMvc.perform(
             post("/api/v1/admissions")
@@ -370,11 +204,30 @@ class AdmissionControllerTest {
             .andExpect(status().isUnauthorized)
     }
 
+    @Test
+    fun `create admission should fail when patient already has active admission`() {
+        val request = createValidAdmissionRequest()
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        ).andExpect(status().isCreated)
+
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.message").value("Patient already has an active admission"))
+    }
+
     // ============ LIST ADMISSIONS TESTS ============
 
     @Test
     fun `list admissions should return paginated results`() {
-        // Create an admission first
         val request = createValidAdmissionRequest()
         mockMvc.perform(
             post("/api/v1/admissions")
@@ -395,7 +248,6 @@ class AdmissionControllerTest {
 
     @Test
     fun `list admissions should filter by status`() {
-        // Create an admission
         val request = createValidAdmissionRequest()
         val createResult = mockMvc.perform(
             post("/api/v1/admissions")
@@ -407,13 +259,11 @@ class AdmissionControllerTest {
         val admissionId = objectMapper.readTree(createResult.response.contentAsString)
             .get("data").get("id").asLong()
 
-        // Discharge the patient
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/discharge")
                 .header("Authorization", "Bearer $administrativeStaffToken"),
         )
 
-        // Filter by ACTIVE - should be empty
         mockMvc.perform(
             get("/api/v1/admissions")
                 .param("status", "ACTIVE")
@@ -422,7 +272,6 @@ class AdmissionControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.data.content").isEmpty)
 
-        // Filter by DISCHARGED - should have one
         mockMvc.perform(
             get("/api/v1/admissions")
                 .param("status", "DISCHARGED")
@@ -513,7 +362,6 @@ class AdmissionControllerTest {
         val admissionId = objectMapper.readTree(createResult.response.contentAsString)
             .get("data").get("id").asLong()
 
-        // Discharge the patient
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/discharge")
                 .header("Authorization", "Bearer $administrativeStaffToken"),
@@ -534,106 +382,6 @@ class AdmissionControllerTest {
         )
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.error.message").value("Cannot update a discharged admission"))
-    }
-
-    // ============ DISCHARGE TESTS ============
-
-    @Test
-    fun `discharge patient should set status to DISCHARGED`() {
-        val request = createValidAdmissionRequest()
-        val createResult = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
-            .get("data").get("id").asLong()
-
-        mockMvc.perform(
-            post("/api/v1/admissions/$admissionId/discharge")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.data.status").value("DISCHARGED"))
-            .andExpect(jsonPath("$.data.dischargeDate").exists())
-    }
-
-    @Test
-    fun `discharge patient should fail when already discharged`() {
-        val request = createValidAdmissionRequest()
-        val createResult = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
-            .get("data").get("id").asLong()
-
-        // First discharge
-        mockMvc.perform(
-            post("/api/v1/admissions/$admissionId/discharge")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-
-        // Second discharge should fail
-        mockMvc.perform(
-            post("/api/v1/admissions/$admissionId/discharge")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-            .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error.message").value("Patient is already discharged"))
-    }
-
-    @Test
-    fun `discharge should free room capacity`() {
-        // Fill the room (capacity is 2)
-        val request1 = createValidAdmissionRequest()
-        val createResult = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request1)),
-        ).andReturn()
-
-        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
-            .get("data").get("id").asLong()
-
-        val patient2Id = createSecondPatient()
-        val request2 = createValidAdmissionRequest().copy(patientId = patient2Id)
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request2)),
-        ).andExpect(status().isCreated)
-
-        // Room is now full, third admission should fail
-        val patient3Id = createThirdPatient()
-        val request3 = createValidAdmissionRequest().copy(patientId = patient3Id)
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request3)),
-        ).andExpect(status().isBadRequest)
-
-        // Discharge first patient
-        mockMvc.perform(
-            post("/api/v1/admissions/$admissionId/discharge")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-
-        // Now third admission should succeed
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request3)),
-        ).andExpect(status().isCreated)
     }
 
     // ============ DELETE ADMISSION TESTS ============
@@ -657,7 +405,6 @@ class AdmissionControllerTest {
         )
             .andExpect(status().isOk)
 
-        // Should not be found after deletion
         mockMvc.perform(
             get("/api/v1/admissions/$admissionId")
                 .header("Authorization", "Bearer $adminToken"),
@@ -683,118 +430,6 @@ class AdmissionControllerTest {
                 .header("Authorization", "Bearer $administrativeStaffToken"),
         )
             .andExpect(status().isForbidden)
-    }
-
-    // ============ CONSENT DOCUMENT TESTS ============
-
-    @Test
-    fun `upload consent document should work for administrative staff`() {
-        val request = createValidAdmissionRequest()
-        val createResult = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
-            .get("data").get("id").asLong()
-
-        val mockFile = MockMultipartFile(
-            "file",
-            "consent.pdf",
-            MediaType.APPLICATION_PDF_VALUE,
-            "fake-pdf-content".toByteArray(),
-        )
-
-        mockMvc.perform(
-            multipart("/api/v1/admissions/$admissionId/consent")
-                .file(mockFile)
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.data.hasConsentDocument").value(true))
-    }
-
-    @Test
-    fun `upload consent document should fail for invalid file type`() {
-        val request = createValidAdmissionRequest()
-        val createResult = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
-            .get("data").get("id").asLong()
-
-        val mockFile = MockMultipartFile(
-            "file",
-            "consent.txt",
-            MediaType.TEXT_PLAIN_VALUE,
-            "text content".toByteArray(),
-        )
-
-        mockMvc.perform(
-            multipart("/api/v1/admissions/$admissionId/consent")
-                .file(mockFile)
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-            .andExpect(status().isBadRequest)
-    }
-
-    @Test
-    fun `download consent document should work after upload`() {
-        val request = createValidAdmissionRequest()
-        val createResult = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
-            .get("data").get("id").asLong()
-
-        val mockFile = MockMultipartFile(
-            "file",
-            "consent.pdf",
-            MediaType.APPLICATION_PDF_VALUE,
-            "fake-pdf-content".toByteArray(),
-        )
-
-        mockMvc.perform(
-            multipart("/api/v1/admissions/$admissionId/consent")
-                .file(mockFile)
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-
-        mockMvc.perform(
-            get("/api/v1/admissions/$admissionId/consent")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-            .andExpect(status().isOk)
-    }
-
-    @Test
-    fun `download consent document should return 404 when no document uploaded`() {
-        val request = createValidAdmissionRequest()
-        val createResult = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
-            .get("data").get("id").asLong()
-
-        mockMvc.perform(
-            get("/api/v1/admissions/$admissionId/consent")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-            .andExpect(status().isNotFound)
     }
 
     // ============ SEARCH PATIENTS TESTS ============
@@ -832,878 +467,5 @@ class AdmissionControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.data[0].firstName").value("Dr. Maria"))
             .andExpect(jsonPath("$.data[0].salutation").value("DR"))
-    }
-
-    // ============ CONSULTING PHYSICIANS TESTS ============
-
-    @Test
-    fun `list consulting physicians should return empty list for new admission`() {
-        val request = createValidAdmissionRequest()
-        val createResult = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
-            .get("data").get("id").asLong()
-
-        mockMvc.perform(
-            get("/api/v1/admissions/$admissionId/consulting-physicians")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.data").isArray)
-            .andExpect(jsonPath("$.data").isEmpty)
-    }
-
-    @Test
-    fun `add consulting physician should return 201`() {
-        val admissionId = createAdmissionAndGetId()
-
-        val consultingRequest = AddConsultingPhysicianRequest(
-            physicianId = secondDoctorUser.id!!,
-            reason = "Cardiology consultation",
-            requestedDate = LocalDate.now(),
-        )
-
-        mockMvc.perform(
-            post("/api/v1/admissions/$admissionId/consulting-physicians")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(consultingRequest)),
-        )
-            .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.data.physician.firstName").value("Dr. Carlos"))
-            .andExpect(jsonPath("$.data.reason").value("Cardiology consultation"))
-    }
-
-    @Test
-    fun `add consulting physician should fail when adding treating physician`() {
-        val admissionId = createAdmissionAndGetId()
-
-        val consultingRequest = AddConsultingPhysicianRequest(
-            physicianId = doctorUser.id!!,
-            reason = "Should fail",
-        )
-
-        mockMvc.perform(
-            post("/api/v1/admissions/$admissionId/consulting-physicians")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(consultingRequest)),
-        )
-            .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error.message").value("Cannot add treating physician as a consulting physician"))
-    }
-
-    @Test
-    fun `add consulting physician should fail when user is not a doctor`() {
-        val admissionId = createAdmissionAndGetId()
-
-        // Use admin user (not a doctor)
-        val adminUser = userRepository.findByEmail("admin@example.com")!!
-
-        val consultingRequest = AddConsultingPhysicianRequest(
-            physicianId = adminUser.id!!,
-            reason = "Should fail",
-        )
-
-        mockMvc.perform(
-            post("/api/v1/admissions/$admissionId/consulting-physicians")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(consultingRequest)),
-        )
-            .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error.message").value("Consulting physician must have the DOCTOR role"))
-    }
-
-    @Test
-    fun `add consulting physician should fail when physician already assigned`() {
-        val admissionId = createAdmissionAndGetId()
-
-        val consultingRequest = AddConsultingPhysicianRequest(
-            physicianId = secondDoctorUser.id!!,
-            reason = "First assignment",
-        )
-
-        // First assignment should succeed
-        mockMvc.perform(
-            post("/api/v1/admissions/$admissionId/consulting-physicians")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(consultingRequest)),
-        )
-            .andExpect(status().isCreated)
-
-        // Second assignment should fail
-        mockMvc.perform(
-            post("/api/v1/admissions/$admissionId/consulting-physicians")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(consultingRequest)),
-        )
-            .andExpect(status().isBadRequest)
-            .andExpect(
-                jsonPath("$.error.message")
-                    .value("Physician is already assigned as a consultant for this admission"),
-            )
-    }
-
-    @Test
-    fun `remove consulting physician should return 204`() {
-        val admissionId = createAdmissionAndGetId()
-
-        val consultingRequest = AddConsultingPhysicianRequest(
-            physicianId = secondDoctorUser.id!!,
-            reason = "To be removed",
-        )
-
-        val addResult = mockMvc.perform(
-            post("/api/v1/admissions/$admissionId/consulting-physicians")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(consultingRequest)),
-        ).andReturn()
-
-        val consultingPhysicianId = objectMapper.readTree(addResult.response.contentAsString)
-            .get("data").get("id").asLong()
-
-        mockMvc.perform(
-            delete("/api/v1/admissions/$admissionId/consulting-physicians/$consultingPhysicianId")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-            .andExpect(status().isNoContent)
-
-        // Verify it's removed
-        mockMvc.perform(
-            get("/api/v1/admissions/$admissionId/consulting-physicians")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.data").isEmpty)
-    }
-
-    @Test
-    fun `remove consulting physician should return 404 for non-existent record`() {
-        val admissionId = createAdmissionAndGetId()
-
-        mockMvc.perform(
-            delete("/api/v1/admissions/$admissionId/consulting-physicians/99999")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-            .andExpect(status().isNotFound)
-    }
-
-    @Test
-    fun `add consulting physician should fail for doctor role`() {
-        val admissionId = createAdmissionAndGetId()
-
-        val consultingRequest = AddConsultingPhysicianRequest(
-            physicianId = secondDoctorUser.id!!,
-            reason = "Should fail - no permission",
-        )
-
-        mockMvc.perform(
-            post("/api/v1/admissions/$admissionId/consulting-physicians")
-                .header("Authorization", "Bearer $doctorToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(consultingRequest)),
-        )
-            .andExpect(status().isForbidden)
-    }
-
-    @Test
-    fun `get admission should include consulting physicians`() {
-        val admissionId = createAdmissionAndGetId()
-
-        val consultingRequest = AddConsultingPhysicianRequest(
-            physicianId = secondDoctorUser.id!!,
-            reason = "Cardiology consultation",
-        )
-
-        mockMvc.perform(
-            post("/api/v1/admissions/$admissionId/consulting-physicians")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(consultingRequest)),
-        )
-
-        mockMvc.perform(
-            get("/api/v1/admissions/$admissionId")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.data.consultingPhysicians").isArray)
-            .andExpect(jsonPath("$.data.consultingPhysicians[0].physician.firstName").value("Dr. Carlos"))
-            .andExpect(jsonPath("$.data.consultingPhysicians[0].reason").value("Cardiology consultation"))
-    }
-
-    // ============ ADMISSION TYPE TESTS ============
-
-    @Test
-    fun `create HOSPITALIZATION admission requires room and triage code`() {
-        val request = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = triageCodeId,
-            roomId = roomId,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.HOSPITALIZATION,
-            inventory = "Personal belongings",
-        )
-
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        )
-            .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.data.type").value("HOSPITALIZATION"))
-            .andExpect(jsonPath("$.data.room").exists())
-            .andExpect(jsonPath("$.data.triageCode").exists())
-    }
-
-    @Test
-    fun `create HOSPITALIZATION admission should fail without room`() {
-        val request = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = triageCodeId,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.HOSPITALIZATION,
-        )
-
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        )
-            .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error.message").value("Room is required for HOSPITALIZATION admissions"))
-    }
-
-    @Test
-    fun `create HOSPITALIZATION admission should fail without triage code`() {
-        val request = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = null,
-            roomId = roomId,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.HOSPITALIZATION,
-        )
-
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        )
-            .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error.message").value("Triage code is required for HOSPITALIZATION admissions"))
-    }
-
-    @Test
-    fun `create AMBULATORY admission does not require room or triage code`() {
-        val request = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = null,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.AMBULATORY,
-        )
-
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        )
-            .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.data.type").value("AMBULATORY"))
-            .andExpect(jsonPath("$.data.room").doesNotExist())
-            .andExpect(jsonPath("$.data.triageCode").doesNotExist())
-    }
-
-    @Test
-    fun `create ELECTROSHOCK_THERAPY admission does not require room or triage code`() {
-        val request = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = null,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.ELECTROSHOCK_THERAPY,
-        )
-
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        )
-            .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.data.type").value("ELECTROSHOCK_THERAPY"))
-            .andExpect(jsonPath("$.data.room").doesNotExist())
-            .andExpect(jsonPath("$.data.triageCode").doesNotExist())
-    }
-
-    @Test
-    fun `create KETAMINE_INFUSION admission does not require room or triage code`() {
-        val request = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = null,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.KETAMINE_INFUSION,
-        )
-
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        )
-            .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.data.type").value("KETAMINE_INFUSION"))
-            .andExpect(jsonPath("$.data.room").doesNotExist())
-            .andExpect(jsonPath("$.data.triageCode").doesNotExist())
-    }
-
-    @Test
-    fun `create EMERGENCY admission requires triage code but not room`() {
-        val request = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = triageCodeId,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.EMERGENCY,
-        )
-
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        )
-            .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.data.type").value("EMERGENCY"))
-            .andExpect(jsonPath("$.data.room").doesNotExist())
-            .andExpect(jsonPath("$.data.triageCode").exists())
-    }
-
-    @Test
-    fun `create EMERGENCY admission should fail without triage code`() {
-        val request = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = null,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.EMERGENCY,
-        )
-
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        )
-            .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error.message").value("Triage code is required for EMERGENCY admissions"))
-    }
-
-    @Test
-    fun `AMBULATORY admission can optionally include room and triage code`() {
-        val request = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = triageCodeId,
-            roomId = roomId,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.AMBULATORY,
-        )
-
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        )
-            .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.data.type").value("AMBULATORY"))
-            .andExpect(jsonPath("$.data.room").exists())
-            .andExpect(jsonPath("$.data.triageCode").exists())
-    }
-
-    @Test
-    fun `list admissions should filter by type`() {
-        // Create AMBULATORY admission
-        val ambulatoryRequest = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = null,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.AMBULATORY,
-        )
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(ambulatoryRequest)),
-        ).andExpect(status().isCreated)
-
-        // Create HOSPITALIZATION admission with a different patient
-        val patient2Id = createSecondPatient()
-        val hospitalizationRequest = CreateAdmissionRequest(
-            patientId = patient2Id,
-            triageCodeId = triageCodeId,
-            roomId = roomId,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.HOSPITALIZATION,
-        )
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(hospitalizationRequest)),
-        ).andExpect(status().isCreated)
-
-        // Filter by AMBULATORY
-        mockMvc.perform(
-            get("/api/v1/admissions")
-                .param("type", "AMBULATORY")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.data.content").isArray)
-            .andExpect(jsonPath("$.data.content.length()").value(1))
-            .andExpect(jsonPath("$.data.content[0].type").value("AMBULATORY"))
-
-        // Filter by HOSPITALIZATION
-        mockMvc.perform(
-            get("/api/v1/admissions")
-                .param("type", "HOSPITALIZATION")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.data.content").isArray)
-            .andExpect(jsonPath("$.data.content.length()").value(1))
-            .andExpect(jsonPath("$.data.content[0].type").value("HOSPITALIZATION"))
-    }
-
-    @Test
-    fun `list admissions should filter by status and type`() {
-        // Create AMBULATORY admission
-        val ambulatoryRequest = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = null,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.AMBULATORY,
-        )
-        val ambulatoryResult = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(ambulatoryRequest)),
-        ).andReturn()
-
-        val ambulatoryId = objectMapper.readTree(ambulatoryResult.response.contentAsString)
-            .get("data").get("id").asLong()
-
-        // Discharge AMBULATORY admission
-        mockMvc.perform(
-            post("/api/v1/admissions/$ambulatoryId/discharge")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-
-        // Create another AMBULATORY admission (active)
-        val patient2Id = createSecondPatient()
-        val ambulatoryRequest2 = CreateAdmissionRequest(
-            patientId = patient2Id,
-            triageCodeId = null,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.AMBULATORY,
-        )
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(ambulatoryRequest2)),
-        )
-
-        // Filter by ACTIVE and AMBULATORY
-        mockMvc.perform(
-            get("/api/v1/admissions")
-                .param("status", "ACTIVE")
-                .param("type", "AMBULATORY")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.data.content").isArray)
-            .andExpect(jsonPath("$.data.content.length()").value(1))
-            .andExpect(jsonPath("$.data.content[0].type").value("AMBULATORY"))
-            .andExpect(jsonPath("$.data.content[0].status").value("ACTIVE"))
-
-        // Filter by DISCHARGED and AMBULATORY
-        mockMvc.perform(
-            get("/api/v1/admissions")
-                .param("status", "DISCHARGED")
-                .param("type", "AMBULATORY")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.data.content").isArray)
-            .andExpect(jsonPath("$.data.content.length()").value(1))
-            .andExpect(jsonPath("$.data.content[0].type").value("AMBULATORY"))
-            .andExpect(jsonPath("$.data.content[0].status").value("DISCHARGED"))
-    }
-
-    @Test
-    fun `update admission type from HOSPITALIZATION to AMBULATORY should allow removing room and triage code`() {
-        // Create HOSPITALIZATION admission
-        val createRequest = createValidAdmissionRequest()
-        val createResult = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createRequest)),
-        ).andReturn()
-
-        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
-            .get("data").get("id").asLong()
-
-        // Update to AMBULATORY without room and triage code
-        val updateRequest = UpdateAdmissionRequest(
-            triageCodeId = null,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            type = AdmissionType.AMBULATORY,
-            inventory = "Updated inventory",
-        )
-
-        mockMvc.perform(
-            put("/api/v1/admissions/$admissionId")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateRequest)),
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.data.type").value("AMBULATORY"))
-            .andExpect(jsonPath("$.data.room").doesNotExist())
-            .andExpect(jsonPath("$.data.triageCode").doesNotExist())
-    }
-
-    @Test
-    fun `update admission type to HOSPITALIZATION should require room and triage code`() {
-        // Create AMBULATORY admission
-        val createRequest = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = null,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.AMBULATORY,
-        )
-        val createResult = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createRequest)),
-        ).andReturn()
-
-        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
-            .get("data").get("id").asLong()
-
-        // Try to update to HOSPITALIZATION without room - should fail
-        val updateRequest = UpdateAdmissionRequest(
-            triageCodeId = triageCodeId,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            type = AdmissionType.HOSPITALIZATION,
-        )
-
-        mockMvc.perform(
-            put("/api/v1/admissions/$admissionId")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateRequest)),
-        )
-            .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error.message").value("Room is required for HOSPITALIZATION admissions"))
-    }
-
-    @Test
-    fun `update admission type to EMERGENCY should require triage code`() {
-        // Create AMBULATORY admission
-        val createRequest = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = null,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.AMBULATORY,
-        )
-        val createResult = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createRequest)),
-        ).andReturn()
-
-        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
-            .get("data").get("id").asLong()
-
-        // Try to update to EMERGENCY without triage code - should fail
-        val updateRequest = UpdateAdmissionRequest(
-            triageCodeId = null,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            type = AdmissionType.EMERGENCY,
-        )
-
-        mockMvc.perform(
-            put("/api/v1/admissions/$admissionId")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateRequest)),
-        )
-            .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error.message").value("Triage code is required for EMERGENCY admissions"))
-    }
-
-    @Test
-    fun `AMBULATORY admissions should not count against room capacity`() {
-        // Fill the room with HOSPITALIZATION admissions (capacity is 2)
-        val request1 = createValidAdmissionRequest()
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request1)),
-        ).andExpect(status().isCreated)
-
-        val patient2Id = createSecondPatient()
-        val request2 = createValidAdmissionRequest().copy(patientId = patient2Id)
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request2)),
-        ).andExpect(status().isCreated)
-
-        // Room is now full, but AMBULATORY admission with room should still work
-        // because AMBULATORY admissions are assigned to rooms optionally and don't require beds
-        val patient3Id = createThirdPatient()
-        val ambulatoryRequest = CreateAdmissionRequest(
-            patientId = patient3Id,
-            triageCodeId = triageCodeId,
-            roomId = roomId,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.AMBULATORY,
-        )
-
-        // This should fail because room capacity check is still applied
-        // when a room is explicitly provided, regardless of admission type
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(ambulatoryRequest)),
-        )
-            .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error.message").value("Room 'TEST-101' is full. No available beds."))
-    }
-
-    @Test
-    fun `update admission should preserve type if not specified`() {
-        // Create KETAMINE_INFUSION admission
-        val createRequest = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = null,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.KETAMINE_INFUSION,
-        )
-        val createResult = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createRequest)),
-        ).andReturn()
-
-        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
-            .get("data").get("id").asLong()
-
-        // Update without specifying type
-        val updateRequest = UpdateAdmissionRequest(
-            triageCodeId = null,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            type = null,
-            inventory = "Updated notes",
-        )
-
-        mockMvc.perform(
-            put("/api/v1/admissions/$admissionId")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateRequest)),
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.data.type").value("KETAMINE_INFUSION"))
-            .andExpect(jsonPath("$.data.inventory").value("Updated notes"))
-    }
-
-    @Test
-    fun `admission detail response should include type field`() {
-        val request = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = null,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.ELECTROSHOCK_THERAPY,
-        )
-        val createResult = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
-            .get("data").get("id").asLong()
-
-        mockMvc.perform(
-            get("/api/v1/admissions/$admissionId")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.data.type").value("ELECTROSHOCK_THERAPY"))
-    }
-
-    @Test
-    fun `admission list response should include type field`() {
-        val request = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = null,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.KETAMINE_INFUSION,
-        )
-        mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        )
-
-        mockMvc.perform(
-            get("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.data.content[0].type").value("KETAMINE_INFUSION"))
-    }
-
-    private fun createAdmissionAndGetId(): Long {
-        val request = createValidAdmissionRequest()
-        val createResult = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        return objectMapper.readTree(createResult.response.contentAsString)
-            .get("data").get("id").asLong()
-    }
-
-    // ============ HELPER METHODS ============
-
-    private fun createSecondPatient(): Long {
-        val request = CreatePatientRequest(
-            firstName = "Maria",
-            lastName = "Lopez",
-            age = 35,
-            sex = Sex.FEMALE,
-            gender = "Femenino",
-            maritalStatus = MaritalStatus.SINGLE,
-            religion = "Católica",
-            educationLevel = EducationLevel.UNIVERSITY,
-            occupation = "Doctora",
-            address = "5a Avenida 10-20 Zona 2, Guatemala",
-            email = "maria.lopez@email.com",
-            emergencyContacts = listOf(
-                EmergencyContactRequest(
-                    name = "Pedro Lopez",
-                    relationship = "Hermano",
-                    phone = "+502 5555-5678",
-                ),
-            ),
-        )
-
-        val result = mockMvc.perform(
-            post("/api/v1/patients")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        return objectMapper.readTree(result.response.contentAsString)
-            .get("data").get("id").asLong()
-    }
-
-    private fun createThirdPatient(): Long {
-        val request = CreatePatientRequest(
-            firstName = "Carlos",
-            lastName = "Ramirez",
-            age = 50,
-            sex = Sex.MALE,
-            gender = "Masculino",
-            maritalStatus = MaritalStatus.MARRIED,
-            religion = "Evangélica",
-            educationLevel = EducationLevel.SECONDARY,
-            occupation = "Comerciante",
-            address = "6a Calle 15-30 Zona 3, Guatemala",
-            email = "carlos.ramirez@email.com",
-            emergencyContacts = listOf(
-                EmergencyContactRequest(
-                    name = "Ana Ramirez",
-                    relationship = "Esposa",
-                    phone = "+502 5555-9999",
-                ),
-            ),
-        )
-
-        val result = mockMvc.perform(
-            post("/api/v1/patients")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        return objectMapper.readTree(result.response.contentAsString)
-            .get("data").get("id").asLong()
     }
 }

@@ -90,6 +90,22 @@ class JwtTokenProviderTest {
     }
 
     @Test
+    fun `getEmailFromToken should return null for refresh token`() {
+        val token = jwtTokenProvider.generateRefreshToken(1L)
+
+        val email = jwtTokenProvider.getEmailFromToken(token)
+
+        assertEquals(null, email)
+    }
+
+    @Test
+    fun `validateToken should return false for empty string`() {
+        val result = jwtTokenProvider.validateToken("")
+
+        assertFalse(result)
+    }
+
+    @Test
     fun `getAccessTokenExpiration should return configured value`() {
         assertEquals(900000L, jwtTokenProvider.getAccessTokenExpiration())
     }

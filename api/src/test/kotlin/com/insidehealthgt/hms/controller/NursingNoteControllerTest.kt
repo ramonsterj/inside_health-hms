@@ -1,35 +1,10 @@
 package com.insidehealthgt.hms.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.insidehealthgt.hms.TestcontainersConfiguration
-import com.insidehealthgt.hms.dto.request.CreateAdmissionRequest
 import com.insidehealthgt.hms.dto.request.CreateNursingNoteRequest
-import com.insidehealthgt.hms.dto.request.CreatePatientRequest
-import com.insidehealthgt.hms.dto.request.EmergencyContactRequest
-import com.insidehealthgt.hms.dto.response.ApiResponse
-import com.insidehealthgt.hms.dto.response.AuthResponse
-import com.insidehealthgt.hms.entity.AdmissionType
-import com.insidehealthgt.hms.entity.EducationLevel
-import com.insidehealthgt.hms.entity.MaritalStatus
-import com.insidehealthgt.hms.entity.Salutation
-import com.insidehealthgt.hms.entity.Sex
 import com.insidehealthgt.hms.entity.User
-import com.insidehealthgt.hms.repository.AdmissionRepository
-import com.insidehealthgt.hms.repository.NursingNoteRepository
-import com.insidehealthgt.hms.repository.PatientRepository
-import com.insidehealthgt.hms.repository.RoleRepository
-import com.insidehealthgt.hms.repository.UserRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
-import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
-import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.test.annotation.DirtiesContext
-import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
@@ -37,39 +12,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDateTime
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-@AutoConfigureMockMvc
-@Import(TestcontainersConfiguration::class)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@Suppress("LargeClass", "LongMethod")
-class NursingNoteControllerTest {
-
-    @Autowired
-    private lateinit var mockMvc: MockMvc
-
-    @Autowired
-    private lateinit var objectMapper: ObjectMapper
-
-    @Autowired
-    private lateinit var userRepository: UserRepository
-
-    @Autowired
-    private lateinit var roleRepository: RoleRepository
-
-    @Autowired
-    private lateinit var patientRepository: PatientRepository
-
-    @Autowired
-    private lateinit var admissionRepository: AdmissionRepository
-
-    @Autowired
-    private lateinit var nursingNoteRepository: NursingNoteRepository
-
-    @Autowired
-    private lateinit var passwordEncoder: PasswordEncoder
-
-    @Autowired
-    private lateinit var jdbcTemplate: JdbcTemplate
+class NursingNoteControllerTest : AbstractIntegrationTest() {
 
     private lateinit var adminToken: String
     private lateinit var doctorToken: String
@@ -80,127 +23,19 @@ class NursingNoteControllerTest {
 
     @BeforeEach
     fun setUp() {
-        nursingNoteRepository.deleteAll()
-        admissionRepository.deleteAll()
-        patientRepository.deleteAll()
-        userRepository.deleteAll()
+        val (_, adminTkn) = createAdminUser()
+        adminToken = adminTkn
 
-        // Create admin user
-        val adminRole = roleRepository.findByCode("ADMIN")!!
-        val adminUser = User(
-            username = "admin",
-            email = "admin@example.com",
-            passwordHash = passwordEncoder.encode("admin123")!!,
-            firstName = "Admin",
-            lastName = "User",
-        )
-        adminUser.roles.add(adminRole)
-        userRepository.save(adminUser)
-        adminToken = loginAndGetToken("admin@example.com", "admin123")
+        val (doctorUsr, doctorTkn) = createDoctorUser()
+        doctorUser = doctorUsr
+        doctorToken = doctorTkn
 
-        // Create doctor user
-        val doctorRole = roleRepository.findByCode("DOCTOR")!!
-        doctorUser = User(
-            username = "doctor",
-            email = "doctor@example.com",
-            passwordHash = passwordEncoder.encode("password123")!!,
-            firstName = "Dr. Maria",
-            lastName = "Garcia",
-            salutation = Salutation.DR,
-        )
-        doctorUser.roles.add(doctorRole)
-        userRepository.save(doctorUser)
-        doctorToken = loginAndGetToken("doctor@example.com", "password123")
+        val (nurseUsr, nurseTkn) = createNurseUser()
+        nurseUser = nurseUsr
+        nurseToken = nurseTkn
 
-        // Create nurse user
-        val nurseRole = roleRepository.findByCode("NURSE")!!
-        nurseUser = User(
-            username = "nurse",
-            email = "nurse@example.com",
-            passwordHash = passwordEncoder.encode("password123")!!,
-            firstName = "Nurse",
-            lastName = "Johnson",
-        )
-        nurseUser.roles.add(nurseRole)
-        userRepository.save(nurseUser)
-        nurseToken = loginAndGetToken("nurse@example.com", "password123")
-
-        // Create admission for tests
-        admissionId = createAdmission()
-    }
-
-    private fun loginAndGetToken(email: String, password: String): String {
-        val request = mapOf("identifier" to email, "password" to password)
-        val result = mockMvc.perform(
-            post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        val responseType = objectMapper.typeFactory.constructParametricType(
-            ApiResponse::class.java,
-            AuthResponse::class.java,
-        )
-        val response: ApiResponse<AuthResponse> = objectMapper.readValue(
-            result.response.contentAsString,
-            responseType,
-        )
-        return response.data!!.accessToken
-    }
-
-    private fun createAdmission(): Long {
-        val patientRequest = CreatePatientRequest(
-            firstName = "Juan",
-            lastName = "Perez",
-            age = 45,
-            sex = Sex.MALE,
-            gender = "Masculino",
-            maritalStatus = MaritalStatus.MARRIED,
-            religion = "Catolica",
-            educationLevel = EducationLevel.UNIVERSITY,
-            occupation = "Ingeniero",
-            address = "Guatemala City",
-            email = "juan.perez@example.com",
-            emergencyContacts = listOf(
-                EmergencyContactRequest(name = "Maria", relationship = "Esposa", phone = "555-1234"),
-            ),
-        )
-
-        val patientResult = mockMvc.perform(
-            post("/api/v1/patients")
-                .header("Authorization", "Bearer $adminToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(patientRequest)),
-        ).andReturn()
-
-        val patientId = objectMapper.readTree(patientResult.response.contentAsString)
-            .get("data").get("id").asLong()
-
-        val admissionRequest = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = null,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
-            admissionDate = LocalDateTime.now(),
-            type = AdmissionType.AMBULATORY,
-        )
-
-        val admissionResult = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $adminToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(admissionRequest)),
-        ).andReturn()
-
-        return objectMapper.readTree(admissionResult.response.contentAsString)
-            .get("data").get("id").asLong()
-    }
-
-    private fun dischargeAdmission(id: Long) {
-        mockMvc.perform(
-            post("/api/v1/admissions/$id/discharge")
-                .header("Authorization", "Bearer $adminToken"),
-        ).andExpect(status().isOk)
+        val patientId = createPatient(adminToken)
+        admissionId = createAdmission(adminToken, patientId, doctorUser.id!!)
     }
 
     // ============ LIST NURSING NOTES TESTS ============
@@ -392,11 +227,33 @@ class NursingNoteControllerTest {
     }
 
     @Test
+    fun `list nursing notes for non-existent admission returns 404`() {
+        mockMvc.perform(
+            get("/api/v1/admissions/99999/nursing-notes")
+                .header("Authorization", "Bearer $nurseToken"),
+        )
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `create nursing note for non-existent admission returns 404`() {
+        val request = CreateNursingNoteRequest(
+            description = "Test",
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions/99999/nursing-notes")
+                .header("Authorization", "Bearer $nurseToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
     fun `non-creator cannot update nursing note`() {
-        // Nurse creates a note
         val noteId = createNursingNoteAndGetId("Nurse's note", nurseToken)
 
-        // Doctor tries to update it
         val updateRequest = CreateNursingNoteRequest(
             description = "Should fail",
         )
@@ -414,7 +271,6 @@ class NursingNoteControllerTest {
     fun `edit after 24 hours denied for non-admin`() {
         val noteId = createNursingNoteAndGetId("Old note", nurseToken)
 
-        // Use native SQL to bypass @Column(updatable = false) on createdAt
         jdbcTemplate.update(
             "UPDATE nursing_notes SET created_at = ? WHERE id = ?",
             java.sql.Timestamp.valueOf(LocalDateTime.now().minusHours(25)),
@@ -436,7 +292,7 @@ class NursingNoteControllerTest {
 
     @Test
     fun `create nursing note fails for discharged admission`() {
-        dischargeAdmission(admissionId)
+        dischargeAdmission(admissionId, adminToken)
 
         val request = CreateNursingNoteRequest(
             description = "Should fail - discharged",
@@ -454,7 +310,7 @@ class NursingNoteControllerTest {
     @Test
     fun `update nursing note fails for discharged admission`() {
         val noteId = createNursingNoteAndGetId("Note before discharge", nurseToken)
-        dischargeAdmission(admissionId)
+        dischargeAdmission(admissionId, adminToken)
 
         val updateRequest = CreateNursingNoteRequest(
             description = "Should fail - discharged",
@@ -489,7 +345,6 @@ class NursingNoteControllerTest {
     fun `canEdit is true for creator within 24h and false otherwise`() {
         val noteId = createNursingNoteAndGetId("Edit window test", nurseToken)
 
-        // Creator within 24h - canEdit should be true
         mockMvc.perform(
             get("/api/v1/admissions/$admissionId/nursing-notes/$noteId")
                 .header("Authorization", "Bearer $nurseToken"),
@@ -497,7 +352,6 @@ class NursingNoteControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.data.canEdit").value(true))
 
-        // Non-creator - canEdit should be false
         mockMvc.perform(
             get("/api/v1/admissions/$admissionId/nursing-notes/$noteId")
                 .header("Authorization", "Bearer $doctorToken"),
@@ -516,7 +370,7 @@ class NursingNoteControllerTest {
                 .header("Authorization", "Bearer $token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)),
-        )
+        ).andExpect(status().isCreated)
     }
 
     private fun createNursingNoteAndGetId(description: String, token: String = nurseToken): Long {

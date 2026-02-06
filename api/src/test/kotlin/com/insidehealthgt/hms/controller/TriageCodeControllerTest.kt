@@ -1,38 +1,15 @@
 package com.insidehealthgt.hms.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.insidehealthgt.hms.TestcontainersConfiguration
 import com.insidehealthgt.hms.dto.request.CreateAdmissionRequest
-import com.insidehealthgt.hms.dto.request.CreatePatientRequest
 import com.insidehealthgt.hms.dto.request.CreateTriageCodeRequest
-import com.insidehealthgt.hms.dto.request.EmergencyContactRequest
 import com.insidehealthgt.hms.dto.request.UpdateTriageCodeRequest
-import com.insidehealthgt.hms.dto.response.ApiResponse
-import com.insidehealthgt.hms.dto.response.AuthResponse
 import com.insidehealthgt.hms.entity.AdmissionType
-import com.insidehealthgt.hms.entity.EducationLevel
-import com.insidehealthgt.hms.entity.MaritalStatus
 import com.insidehealthgt.hms.entity.Room
 import com.insidehealthgt.hms.entity.RoomType
-import com.insidehealthgt.hms.entity.Salutation
-import com.insidehealthgt.hms.entity.Sex
 import com.insidehealthgt.hms.entity.User
-import com.insidehealthgt.hms.repository.AdmissionRepository
-import com.insidehealthgt.hms.repository.PatientRepository
-import com.insidehealthgt.hms.repository.RoleRepository
-import com.insidehealthgt.hms.repository.RoomRepository
-import com.insidehealthgt.hms.repository.TriageCodeRepository
-import com.insidehealthgt.hms.repository.UserRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
-import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
-import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.test.annotation.DirtiesContext
-import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -41,108 +18,24 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDateTime
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-@AutoConfigureMockMvc
-@Import(TestcontainersConfiguration::class)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-class TriageCodeControllerTest {
-
-    @Autowired
-    private lateinit var mockMvc: MockMvc
-
-    @Autowired
-    private lateinit var objectMapper: ObjectMapper
-
-    @Autowired
-    private lateinit var userRepository: UserRepository
-
-    @Autowired
-    private lateinit var roleRepository: RoleRepository
-
-    @Autowired
-    private lateinit var triageCodeRepository: TriageCodeRepository
-
-    @Autowired
-    private lateinit var admissionRepository: AdmissionRepository
-
-    @Autowired
-    private lateinit var patientRepository: PatientRepository
-
-    @Autowired
-    private lateinit var roomRepository: RoomRepository
-
-    @Autowired
-    private lateinit var passwordEncoder: PasswordEncoder
+class TriageCodeControllerTest : AbstractIntegrationTest() {
 
     private lateinit var adminToken: String
     private lateinit var administrativeStaffToken: String
     private lateinit var doctorToken: String
+    private lateinit var doctorUser: User
 
     @BeforeEach
     fun setUp() {
-        admissionRepository.deleteAll()
-        roomRepository.deleteAll()
-        patientRepository.deleteAll()
-        userRepository.deleteAll()
+        val (_, adminTkn) = createAdminUser()
+        adminToken = adminTkn
 
-        // Create admin user
-        val adminRole = roleRepository.findByCode("ADMIN")!!
-        val adminUser = User(
-            username = "admin",
-            email = "admin@example.com",
-            passwordHash = passwordEncoder.encode("admin123")!!,
-            firstName = "Admin",
-            lastName = "User",
-        )
-        adminUser.roles.add(adminRole)
-        userRepository.save(adminUser)
-        adminToken = loginAndGetToken("admin@example.com", "admin123")
+        val (_, staffTkn) = createAdminStaffUser()
+        administrativeStaffToken = staffTkn
 
-        // Create administrative staff user
-        val adminStaffRole = roleRepository.findByCode("ADMINISTRATIVE_STAFF")!!
-        val adminStaffUser = User(
-            username = "receptionist",
-            email = "receptionist@example.com",
-            passwordHash = passwordEncoder.encode("password123")!!,
-            firstName = "Reception",
-            lastName = "Staff",
-        )
-        adminStaffUser.roles.add(adminStaffRole)
-        userRepository.save(adminStaffUser)
-        administrativeStaffToken = loginAndGetToken("receptionist@example.com", "password123")
-
-        // Create doctor user
-        val doctorRole = roleRepository.findByCode("DOCTOR")!!
-        val doctorUser = User(
-            username = "doctor",
-            email = "doctor@example.com",
-            passwordHash = passwordEncoder.encode("password123")!!,
-            firstName = "Dr. Maria",
-            lastName = "Garcia",
-            salutation = Salutation.DR,
-        )
-        doctorUser.roles.add(doctorRole)
-        userRepository.save(doctorUser)
-        doctorToken = loginAndGetToken("doctor@example.com", "password123")
-    }
-
-    private fun loginAndGetToken(email: String, password: String): String {
-        val request = mapOf("identifier" to email, "password" to password)
-        val result = mockMvc.perform(
-            post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        val responseType = objectMapper.typeFactory.constructParametricType(
-            ApiResponse::class.java,
-            AuthResponse::class.java,
-        )
-        val response: ApiResponse<AuthResponse> = objectMapper.readValue(
-            result.response.contentAsString,
-            responseType,
-        )
-        return response.data!!.accessToken
+        val (docUsr, docTkn) = createDoctorUser()
+        doctorUser = docUsr
+        doctorToken = docTkn
     }
 
     private fun createValidTriageCodeRequest(): CreateTriageCodeRequest = CreateTriageCodeRequest(
@@ -395,6 +288,52 @@ class TriageCodeControllerTest {
             .andExpect(status().isNotFound)
     }
 
+    @Test
+    fun `update triage code should fail with duplicate code`() {
+        // Create first triage code
+        val request1 = createValidTriageCodeRequest()
+        mockMvc.perform(
+            post("/api/v1/triage-codes")
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request1)),
+        ).andExpect(status().isCreated)
+
+        // Create second triage code
+        val request2 = CreateTriageCodeRequest(
+            code = "Y",
+            color = "#00FF00",
+            description = "Second code",
+            displayOrder = 100,
+        )
+        val result2 = mockMvc.perform(
+            post("/api/v1/triage-codes")
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request2)),
+        ).andReturn()
+
+        val code2Id = objectMapper.readTree(result2.response.contentAsString)
+            .get("data").get("id").asLong()
+
+        // Try to update second code to have same code as first
+        val updateRequest = UpdateTriageCodeRequest(
+            code = "X",
+            color = "#00FF00",
+            description = "Duplicate",
+            displayOrder = 100,
+        )
+
+        mockMvc.perform(
+            put("/api/v1/triage-codes/$code2Id")
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.message").value("Triage code with code 'X' already exists"))
+    }
+
     // ============ DELETE TRIAGE CODE TESTS ============
 
     @Test
@@ -429,7 +368,7 @@ class TriageCodeControllerTest {
         // Get existing triage code from seeded data
         val triageCode = triageCodeRepository.findAll().first()
 
-        // Create room, patient, and doctor for admission
+        // Create room for admission
         val room = Room(
             number = "101",
             type = RoomType.PRIVATE,
@@ -437,15 +376,14 @@ class TriageCodeControllerTest {
         )
         roomRepository.save(room)
 
-        val patientId = createPatient()
-        val doctorId = createDoctor()
+        val patientId = createPatient(administrativeStaffToken)
 
         // Create admission using the triage code
         val admissionRequest = CreateAdmissionRequest(
             patientId = patientId,
             triageCodeId = triageCode.id!!,
             roomId = room.id!!,
-            treatingPhysicianId = doctorId,
+            treatingPhysicianId = doctorUser.id!!,
             admissionDate = LocalDateTime.now(),
             type = AdmissionType.HOSPITALIZATION,
             inventory = null,
@@ -484,55 +422,5 @@ class TriageCodeControllerTest {
                 .header("Authorization", "Bearer $administrativeStaffToken"),
         )
             .andExpect(status().isForbidden)
-    }
-
-    // ============ HELPER METHODS ============
-
-    private fun createPatient(): Long {
-        val request = CreatePatientRequest(
-            firstName = "Juan",
-            lastName = "Pérez García",
-            age = 45,
-            sex = Sex.MALE,
-            gender = "Masculino",
-            maritalStatus = MaritalStatus.MARRIED,
-            religion = "Católica",
-            educationLevel = EducationLevel.UNIVERSITY,
-            occupation = "Ingeniero",
-            address = "4a Calle 5-67 Zona 1, Guatemala",
-            email = "juan.perez@email.com",
-            emergencyContacts = listOf(
-                EmergencyContactRequest(
-                    name = "María de Pérez",
-                    relationship = "Esposa",
-                    phone = "+502 5555-1234",
-                ),
-            ),
-        )
-
-        val result = mockMvc.perform(
-            post("/api/v1/patients")
-                .header("Authorization", "Bearer $administrativeStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        return objectMapper.readTree(result.response.contentAsString)
-            .get("data").get("id").asLong()
-    }
-
-    private fun createDoctor(): Long {
-        val doctorRole = roleRepository.findByCode("DOCTOR")!!
-        val doctor = User(
-            username = "doctor2",
-            email = "doctor2@example.com",
-            passwordHash = passwordEncoder.encode("password123")!!,
-            firstName = "Dr. Carlos",
-            lastName = "Lopez",
-            salutation = Salutation.DR,
-        )
-        doctor.roles.add(doctorRole)
-        userRepository.save(doctor)
-        return doctor.id!!
     }
 }
