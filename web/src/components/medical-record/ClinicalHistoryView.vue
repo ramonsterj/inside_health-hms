@@ -152,7 +152,6 @@ function handleFormCancelled() {
     <!-- View Mode - Has History -->
     <div v-else-if="clinicalHistory">
       <div class="view-header">
-        <h3>{{ t('medicalRecord.clinicalHistory.title') }}</h3>
         <Button
           v-if="canUpdate"
           icon="pi pi-pencil"
@@ -240,13 +239,9 @@ function handleFormCancelled() {
 
 .view-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-bottom: 1.5rem;
-}
-
-.view-header h3 {
-  margin: 0;
 }
 
 .clinical-history-accordion {

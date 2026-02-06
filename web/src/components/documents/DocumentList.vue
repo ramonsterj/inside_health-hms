@@ -81,18 +81,15 @@ async function deleteDocument(document: AdmissionDocument) {
 <template>
   <div class="document-list">
     <div class="document-list-header">
-      <h3>{{ t('document.title') }}</h3>
       <div class="header-actions">
         <Button
           v-if="canUpload"
           icon="pi pi-upload"
           :label="t('document.upload')"
-          size="small"
           @click="emit('upload')"
         />
         <Button
           icon="pi pi-refresh"
-          size="small"
           severity="secondary"
           outlined
           @click="loadDocuments"
@@ -139,13 +136,9 @@ async function deleteDocument(document: AdmissionDocument) {
 
 .document-list-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-bottom: 1rem;
-}
-
-.document-list-header h3 {
-  margin: 0;
 }
 
 .header-actions {

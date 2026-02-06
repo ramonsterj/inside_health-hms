@@ -26,6 +26,7 @@
     "view": "Ver",
     "download": "Descargar",
     "all": "Todos",
+    "more": "Mas",
     "createdAt": "Fecha de Creacion",
     "createdBy": "Creado Por",
     "updatedAt": "Fecha de Actualizacion",
@@ -33,6 +34,7 @@
     "auditInfo": "Informacion de Auditoria",
     "expand": "Expandir",
     "collapse": "Contraer",
+    "unknown": "Desconocido",
     "time": {
       "justNow": "ahora",
       "minutesAgo": "hace {count} min",
@@ -1157,6 +1159,139 @@
           "max": "La descripción debe tener como máximo 2000 caracteres."
         }
       }
+    },
+    "nursing": {
+      "note": {
+        "description": {
+          "required": "La descripción es requerida.",
+          "max": "La descripción debe tener como máximo 5000 caracteres."
+        }
+      },
+      "vitalSign": {
+        "systolicBp": {
+          "required": "La presión arterial sistólica es requerida.",
+          "integer": "La presión arterial sistólica debe ser un número entero.",
+          "min": "La presión arterial sistólica debe ser al menos 60 mmHg.",
+          "max": "La presión arterial sistólica debe ser como máximo 250 mmHg."
+        },
+        "diastolicBp": {
+          "required": "La presión arterial diastólica es requerida.",
+          "integer": "La presión arterial diastólica debe ser un número entero.",
+          "min": "La presión arterial diastólica debe ser al menos 30 mmHg.",
+          "max": "La presión arterial diastólica debe ser como máximo 150 mmHg."
+        },
+        "bpComparison": "La presión arterial sistólica debe ser mayor que la diastólica.",
+        "heartRate": {
+          "required": "La frecuencia cardiaca es requerida.",
+          "integer": "La frecuencia cardiaca debe ser un número entero.",
+          "min": "La frecuencia cardiaca debe ser al menos 20 lpm.",
+          "max": "La frecuencia cardiaca debe ser como máximo 250 lpm."
+        },
+        "respiratoryRate": {
+          "required": "La frecuencia respiratoria es requerida.",
+          "integer": "La frecuencia respiratoria debe ser un número entero.",
+          "min": "La frecuencia respiratoria debe ser al menos 5 resp/min.",
+          "max": "La frecuencia respiratoria debe ser como máximo 60 resp/min."
+        },
+        "temperature": {
+          "required": "La temperatura es requerida.",
+          "min": "La temperatura debe ser al menos 30.0°C.",
+          "max": "La temperatura debe ser como máximo 45.0°C."
+        },
+        "oxygenSaturation": {
+          "required": "La oximetría es requerida.",
+          "integer": "La oximetría debe ser un número entero.",
+          "min": "La oximetría debe ser al menos 50%.",
+          "max": "La oximetría debe ser como máximo 100%."
+        },
+        "other": {
+          "max": "Las otras observaciones deben tener como máximo 1000 caracteres."
+        },
+        "recordedAt": {
+          "future": "La hora de registro no puede ser en el futuro."
+        }
+      }
+    }
+  },
+  "nursing": {
+    "title": "Enfermería",
+    "tabs": {
+      "notes": "Notas de Enfermería",
+      "vitalSigns": "Signos Vitales"
+    },
+    "notes": {
+      "title": "Notas de Enfermería",
+      "add": "Agregar Nota",
+      "addFirst": "Agregar Primera Nota",
+      "edit": "Editar Nota",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Ingrese observaciones, cuidados brindados y otras notas relevantes...",
+      "empty": "No hay notas de enfermería registradas.",
+      "created": "Nota de enfermería creada exitosamente.",
+      "updated": "Nota de enfermería actualizada exitosamente.",
+      "edited": "editada",
+      "newestFirst": "Más recientes",
+      "oldestFirst": "Más antiguas",
+      "editWindowClosed": "Ventana de edición cerrada (límite de 24 horas excedido)",
+      "cannotEditOthers": "Solo puede editar registros que usted creó"
+    },
+    "vitalSigns": {
+      "title": "Signos Vitales",
+      "add": "Registrar Signos Vitales",
+      "addFirst": "Registrar Primeros Signos Vitales",
+      "edit": "Editar Signos Vitales",
+      "table": "Tabla",
+      "charts": "Gráficos",
+      "empty": "No hay signos vitales registrados.",
+      "noChartData": "No hay datos disponibles para gráficos.",
+      "created": "Signos vitales registrados exitosamente.",
+      "updated": "Signos vitales actualizados exitosamente.",
+      "fields": {
+        "recordedAt": "Fecha/Hora de Registro",
+        "bloodPressure": "Presión Arterial (s/d)",
+        "systolicBp": "PA Sistólica",
+        "diastolicBp": "PA Diastólica",
+        "heartRate": "Frecuencia Cardiaca",
+        "respiratoryRate": "Frecuencia Respiratoria",
+        "temperature": "Temperatura",
+        "oxygenSaturation": "Oximetría",
+        "other": "Otras Observaciones"
+      },
+      "placeholders": {
+        "recordedAt": "Seleccione fecha y hora",
+        "other": "Observaciones adicionales..."
+      },
+      "hints": {
+        "recordedAt": "Deje vacío para usar la hora actual"
+      },
+      "units": {
+        "mmHg": "mmHg",
+        "bpm": "lpm",
+        "breathsPerMin": "resp/min",
+        "celsius": "°C",
+        "percent": "%"
+      },
+      "filter": {
+        "dateRange": "Rango de Fechas",
+        "from": "Desde",
+        "to": "Hasta",
+        "last7Days": "Últimos 7 Días",
+        "last30Days": "Últimos 30 Días",
+        "allTime": "Todo el Historial",
+        "apply": "Aplicar",
+        "clear": "Limpiar"
+      },
+      "chartLabels": {
+        "bloodPressure": "Presión Arterial",
+        "heartRate": "Frecuencia Cardiaca",
+        "respiratoryRate": "Frecuencia Respiratoria",
+        "temperature": "Temperatura",
+        "oxygenSaturation": "Oximetría",
+        "systolic": "Sistólica",
+        "diastolic": "Diastólica"
+      },
+      "editWindowClosed": "Ventana de edición cerrada (límite de 24 horas excedido)",
+      "cannotEditOthers": "Solo puede editar registros que usted creó"
     }
   }
 }

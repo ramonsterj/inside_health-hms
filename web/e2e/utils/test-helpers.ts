@@ -91,13 +91,15 @@ export async function fillRichTextEditor(
  */
 export async function selectMedicalRecordTab(
   page: Page,
-  tabKey: 'clinicalHistory' | 'progressNotes' | 'medicalOrders' | 'psychotherapyActivities'
+  tabKey: 'clinicalHistory' | 'progressNotes' | 'medicalOrders' | 'psychotherapyActivities' | 'nursingNotes' | 'vitalSigns'
 ) {
   const tabLabels: Record<string, RegExp> = {
     clinicalHistory: /Clinical History|Historia Clínica/i,
     progressNotes: /Progress Notes|Notas de Evolución/i,
     medicalOrders: /Medical Orders|Órdenes Médicas/i,
-    psychotherapyActivities: /Psychotherapeutic Activities|Actividades Psicoterapéuticas/i
+    psychotherapyActivities: /Psychotherapeutic Activities|Actividades Psicoterapéuticas/i,
+    nursingNotes: /Nursing Notes|Notas de Enfermería/i,
+    vitalSigns: /Vital Signs|Signos Vitales/i
   }
   const tab = page.locator('.p-tablist').getByText(tabLabels[tabKey])
   await tab.click()

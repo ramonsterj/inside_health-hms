@@ -7,15 +7,11 @@ import { useConfirm } from 'primevue/useconfirm'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
 import { useAdmissionStore } from '@/stores/admission'
 import { useAuthStore } from '@/stores/auth'
 import { AdmissionStatus } from '@/types/admission'
-import type { ConsultingPhysician } from '@/types/admission'
 import AddConsultingPhysicianDialog from '@/components/admissions/AddConsultingPhysicianDialog.vue'
 import AdmissionTypeBadge from '@/components/admissions/AdmissionTypeBadge.vue'
-import DocumentList from '@/components/documents/DocumentList.vue'
 import DocumentUploadDialog from '@/components/documents/DocumentUploadDialog.vue'
 import DocumentViewer from '@/components/documents/DocumentViewer.vue'
 import MedicalRecordTabs from '@/components/medical-record/MedicalRecordTabs.vue'
@@ -46,7 +42,13 @@ const canViewMedicalRecord = computed(
     authStore.hasPermission('medical-order:read') ||
     authStore.hasPermission('medical-order:create') ||
     authStore.hasPermission('psychotherapy-activity:read') ||
-    authStore.hasPermission('psychotherapy-activity:create')
+    authStore.hasPermission('psychotherapy-activity:create') ||
+    authStore.hasPermission('nursing-note:read') ||
+    authStore.hasPermission('nursing-note:create') ||
+    authStore.hasPermission('vital-sign:read') ||
+    authStore.hasPermission('vital-sign:create') ||
+    authStore.hasPermission('admission:read') ||
+    authStore.hasPermission('admission:upload-documents')
 )
 
 const existingConsultingPhysicianIds = computed(
@@ -141,11 +143,6 @@ function getContrastColor(hexColor: string): string {
   return luminance > 0.5 ? '#000000' : '#FFFFFF'
 }
 
-function formatDate(dateString: string | null): string {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleDateString()
-}
-
 function formatDoctorName(doctor: {
   salutation: string | null
   firstName: string | null
@@ -161,13 +158,13 @@ async function handleConsultingPhysicianAdded() {
   await admissionStore.fetchAdmission(admissionId.value)
 }
 
-function confirmRemoveConsultingPhysician(cp: ConsultingPhysician) {
+function confirmRemoveConsultingPhysicianById(id: number) {
   confirm.require({
     message: t('admission.consultingPhysicians.confirmRemove'),
     header: t('common.confirm'),
     icon: 'pi pi-exclamation-triangle',
     acceptClass: 'p-button-danger',
-    accept: () => removeConsultingPhysician(cp.id)
+    accept: () => removeConsultingPhysician(id)
   })
 }
 
@@ -287,84 +284,18 @@ function handleDocumentUploaded() {
         </template>
       </Card>
 
-      <!-- Consulting Physicians Section -->
-      <Card class="full-width">
-        <template #title>
-          <div class="card-title-with-action">
-            <span>{{ t('admission.consultingPhysicians.title') }}</span>
-            <Button
-              v-if="canUpdate && admission.status === AdmissionStatus.ACTIVE"
-              icon="pi pi-plus"
-              :label="t('admission.consultingPhysicians.add')"
-              size="small"
-              @click="showAddConsultingPhysicianDialog = true"
-            />
-          </div>
-        </template>
-        <template #content>
-          <div v-if="admission.consultingPhysicians.length === 0" class="empty-section">
-            <p>{{ t('admission.consultingPhysicians.empty') }}</p>
-          </div>
-          <DataTable
-            v-else
-            :value="admission.consultingPhysicians"
-            class="consulting-physicians-table"
-          >
-            <Column :header="t('admission.consultingPhysicians.physician')">
-              <template #body="{ data }">
-                {{ formatDoctorName(data.physician) }}
-              </template>
-            </Column>
-            <Column :header="t('admission.consultingPhysicians.reason')">
-              <template #body="{ data }">
-                {{ data.reason || '-' }}
-              </template>
-            </Column>
-            <Column :header="t('admission.consultingPhysicians.requestedDate')">
-              <template #body="{ data }">
-                {{ formatDate(data.requestedDate) }}
-              </template>
-            </Column>
-            <Column :header="t('admission.consultingPhysicians.addedBy')">
-              <template #body="{ data }">
-                <div class="added-info">
-                  <span>{{ data.createdBy?.username || '-' }}</span>
-                  <small>{{ formatDateTime(data.createdAt) }}</small>
-                </div>
-              </template>
-            </Column>
-            <Column
-              v-if="canUpdate && admission.status === AdmissionStatus.ACTIVE"
-              :header="t('common.actions')"
-            >
-              <template #body="{ data }">
-                <Button
-                  icon="pi pi-trash"
-                  severity="danger"
-                  text
-                  rounded
-                  size="small"
-                  @click="confirmRemoveConsultingPhysician(data)"
-                />
-              </template>
-            </Column>
-          </DataTable>
-        </template>
-      </Card>
-
-      <!-- Documents Section -->
-      <Card class="full-width documents-card">
-        <template #content>
-          <DocumentList :admissionId="admissionId" @upload="showDocumentUploadDialog = true" />
-        </template>
-      </Card>
-
-      <!-- Medical Record Section -->
+      <!-- Medical Record Section (includes Documents, Consulting Physicians, Nursing, etc.) -->
       <MedicalRecordTabs
         v-if="canViewMedicalRecord"
         :admissionId="admissionId"
         :admissionType="admission.type"
+        :admissionStatus="admission.status"
+        :consultingPhysicians="admission.consultingPhysicians"
+        :treatingPhysicianId="admission.treatingPhysician.id"
         class="full-width"
+        @upload-document="showDocumentUploadDialog = true"
+        @add-consulting-physician="showAddConsultingPhysicianDialog = true"
+        @remove-consulting-physician="confirmRemoveConsultingPhysicianById"
       />
 
       <Card class="full-width">
@@ -416,7 +347,7 @@ function handleDocumentUploaded() {
 
 <style scoped>
 .admission-detail-page {
-  max-width: 900px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -489,41 +420,5 @@ function handleDocumentUploaded() {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
-}
-
-.card-title-with-action {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-.empty-section {
-  text-align: center;
-  padding: 1rem;
-  color: var(--p-text-muted-color);
-}
-
-.empty-section p {
-  margin: 0;
-}
-
-.consulting-physicians-table {
-  margin-top: 0.5rem;
-}
-
-.added-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.added-info small {
-  color: var(--p-text-muted-color);
-  font-size: 0.75rem;
-}
-
-.documents-card :deep(.p-card-content) {
-  padding: 0;
 }
 </style>

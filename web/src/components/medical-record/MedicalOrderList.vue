@@ -144,9 +144,8 @@ function handleOrderSaved() {
     <!-- Header -->
     <div class="list-header">
       <div class="header-left">
-        <h3>{{ t('medicalRecord.medicalOrder.title') }}</h3>
         <span class="order-count" v-if="totalOrders > 0">
-          ({{ totalOrders }} {{ t('medicalRecord.medicalOrder.orders') }})
+          {{ totalOrders }} {{ t('medicalRecord.medicalOrder.orders') }}
         </span>
       </div>
       <div class="header-actions">
@@ -244,10 +243,6 @@ function handleOrderSaved() {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
-}
-
-.header-left h3 {
-  margin: 0;
 }
 
 .order-count {

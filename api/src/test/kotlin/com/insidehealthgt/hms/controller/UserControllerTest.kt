@@ -9,10 +9,12 @@ import com.insidehealthgt.hms.entity.User
 import com.insidehealthgt.hms.repository.AdmissionConsentDocumentRepository
 import com.insidehealthgt.hms.repository.AdmissionRepository
 import com.insidehealthgt.hms.repository.EmergencyContactRepository
+import com.insidehealthgt.hms.repository.NursingNoteRepository
 import com.insidehealthgt.hms.repository.PatientRepository
 import com.insidehealthgt.hms.repository.RoleRepository
 import com.insidehealthgt.hms.repository.RoomRepository
 import com.insidehealthgt.hms.repository.UserRepository
+import com.insidehealthgt.hms.repository.VitalSignRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -64,6 +66,12 @@ class UserControllerTest {
     private lateinit var roomRepository: RoomRepository
 
     @Autowired
+    private lateinit var nursingNoteRepository: NursingNoteRepository
+
+    @Autowired
+    private lateinit var vitalSignRepository: VitalSignRepository
+
+    @Autowired
     private lateinit var passwordEncoder: PasswordEncoder
 
     private lateinit var userToken: String
@@ -71,6 +79,8 @@ class UserControllerTest {
 
     @BeforeEach
     fun setUp() {
+        nursingNoteRepository.deleteAllHard()
+        vitalSignRepository.deleteAllHard()
         admissionConsentDocumentRepository.deleteAllHard()
         admissionRepository.deleteAllHard()
         emergencyContactRepository.deleteAllHard()
