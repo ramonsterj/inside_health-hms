@@ -15,6 +15,7 @@ import org.springframework.security.core.AuthenticationException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.method.annotation.HandlerMethodValidationException
 
 @RestControllerAdvice
 @Suppress("TooManyFunctions")
@@ -163,6 +164,29 @@ class GlobalExceptionHandler(private val messageService: MessageService) {
             .mapValues { (_, errors) -> errors.mapNotNull { it.defaultMessage } }
 
         logger.debug("Validation failed: {}", details)
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(
+                ErrorResponse(
+                    error = ErrorDetails(
+                        code = "VALIDATION_ERROR",
+                        message = messageService.errorValidation(),
+                        details = details,
+                    ),
+                ),
+            )
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException::class)
+    fun handleMethodValidation(ex: HandlerMethodValidationException): ResponseEntity<ErrorResponse> {
+        val details = ex.parameterValidationResults.flatMap { result ->
+            val paramName = result.methodParameter.parameterName ?: "unknown"
+            result.resolvableErrors.mapNotNull { error ->
+                error.defaultMessage?.let { paramName to it }
+            }
+        }.groupBy({ it.first }, { it.second })
+
+        logger.debug("Method validation failed: {}", details)
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
             .body(

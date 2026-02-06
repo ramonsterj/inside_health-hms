@@ -1,35 +1,10 @@
 package com.insidehealthgt.hms.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.insidehealthgt.hms.TestcontainersConfiguration
-import com.insidehealthgt.hms.dto.request.CreateAdmissionRequest
-import com.insidehealthgt.hms.dto.request.CreatePatientRequest
 import com.insidehealthgt.hms.dto.request.CreateVitalSignRequest
-import com.insidehealthgt.hms.dto.request.EmergencyContactRequest
-import com.insidehealthgt.hms.dto.response.ApiResponse
-import com.insidehealthgt.hms.dto.response.AuthResponse
-import com.insidehealthgt.hms.entity.AdmissionType
-import com.insidehealthgt.hms.entity.EducationLevel
-import com.insidehealthgt.hms.entity.MaritalStatus
-import com.insidehealthgt.hms.entity.Salutation
-import com.insidehealthgt.hms.entity.Sex
 import com.insidehealthgt.hms.entity.User
-import com.insidehealthgt.hms.repository.AdmissionRepository
-import com.insidehealthgt.hms.repository.PatientRepository
-import com.insidehealthgt.hms.repository.RoleRepository
-import com.insidehealthgt.hms.repository.UserRepository
-import com.insidehealthgt.hms.repository.VitalSignRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
-import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
-import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.test.annotation.DirtiesContext
-import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
@@ -38,39 +13,8 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-@AutoConfigureMockMvc
-@Import(TestcontainersConfiguration::class)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@Suppress("LargeClass", "LongMethod")
-class VitalSignControllerTest {
-
-    @Autowired
-    private lateinit var mockMvc: MockMvc
-
-    @Autowired
-    private lateinit var objectMapper: ObjectMapper
-
-    @Autowired
-    private lateinit var userRepository: UserRepository
-
-    @Autowired
-    private lateinit var roleRepository: RoleRepository
-
-    @Autowired
-    private lateinit var patientRepository: PatientRepository
-
-    @Autowired
-    private lateinit var admissionRepository: AdmissionRepository
-
-    @Autowired
-    private lateinit var vitalSignRepository: VitalSignRepository
-
-    @Autowired
-    private lateinit var passwordEncoder: PasswordEncoder
-
-    @Autowired
-    private lateinit var jdbcTemplate: JdbcTemplate
+@Suppress("LargeClass")
+class VitalSignControllerTest : AbstractIntegrationTest() {
 
     private lateinit var adminToken: String
     private lateinit var doctorToken: String
@@ -81,127 +25,25 @@ class VitalSignControllerTest {
 
     @BeforeEach
     fun setUp() {
-        vitalSignRepository.deleteAll()
-        admissionRepository.deleteAll()
-        patientRepository.deleteAll()
-        userRepository.deleteAll()
+        val (_, adminTkn) = createAdminUser()
+        adminToken = adminTkn
 
-        // Create admin user
-        val adminRole = roleRepository.findByCode("ADMIN")!!
-        val adminUser = User(
-            username = "admin",
-            email = "admin@example.com",
-            passwordHash = passwordEncoder.encode("admin123")!!,
-            firstName = "Admin",
-            lastName = "User",
-        )
-        adminUser.roles.add(adminRole)
-        userRepository.save(adminUser)
-        adminToken = loginAndGetToken("admin@example.com", "admin123")
+        val (docUsr, docTkn) = createDoctorUser()
+        doctorUser = docUsr
+        doctorToken = docTkn
 
-        // Create doctor user
-        val doctorRole = roleRepository.findByCode("DOCTOR")!!
-        doctorUser = User(
-            username = "doctor",
-            email = "doctor@example.com",
-            passwordHash = passwordEncoder.encode("password123")!!,
-            firstName = "Dr. Maria",
-            lastName = "Garcia",
-            salutation = Salutation.DR,
-        )
-        doctorUser.roles.add(doctorRole)
-        userRepository.save(doctorUser)
-        doctorToken = loginAndGetToken("doctor@example.com", "password123")
+        val (nrsUsr, nrsTkn) = createNurseUser()
+        nurseUser = nrsUsr
+        nurseToken = nrsTkn
 
-        // Create nurse user
-        val nurseRole = roleRepository.findByCode("NURSE")!!
-        nurseUser = User(
-            username = "nurse",
-            email = "nurse@example.com",
-            passwordHash = passwordEncoder.encode("password123")!!,
-            firstName = "Nurse",
-            lastName = "Johnson",
-        )
-        nurseUser.roles.add(nurseRole)
-        userRepository.save(nurseUser)
-        nurseToken = loginAndGetToken("nurse@example.com", "password123")
-
-        // Create admission for tests
-        admissionId = createAdmission()
-    }
-
-    private fun loginAndGetToken(email: String, password: String): String {
-        val request = mapOf("identifier" to email, "password" to password)
-        val result = mockMvc.perform(
-            post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        val responseType = objectMapper.typeFactory.constructParametricType(
-            ApiResponse::class.java,
-            AuthResponse::class.java,
-        )
-        val response: ApiResponse<AuthResponse> = objectMapper.readValue(
-            result.response.contentAsString,
-            responseType,
-        )
-        return response.data!!.accessToken
-    }
-
-    private fun createAdmission(): Long {
-        val patientRequest = CreatePatientRequest(
-            firstName = "Juan",
-            lastName = "Perez",
-            age = 45,
-            sex = Sex.MALE,
-            gender = "Masculino",
-            maritalStatus = MaritalStatus.MARRIED,
-            religion = "Catolica",
-            educationLevel = EducationLevel.UNIVERSITY,
-            occupation = "Ingeniero",
-            address = "Guatemala City",
-            email = "juan.perez@example.com",
-            emergencyContacts = listOf(
-                EmergencyContactRequest(name = "Maria", relationship = "Esposa", phone = "555-1234"),
-            ),
-        )
-
-        val patientResult = mockMvc.perform(
-            post("/api/v1/patients")
-                .header("Authorization", "Bearer $adminToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(patientRequest)),
-        ).andReturn()
-
-        val patientId = objectMapper.readTree(patientResult.response.contentAsString)
-            .get("data").get("id").asLong()
-
-        val admissionRequest = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = null,
-            roomId = null,
-            treatingPhysicianId = doctorUser.id!!,
+        // Create admission for tests (use past date so recordedAt backdating works)
+        val patientId = createPatient(adminToken)
+        admissionId = createAdmission(
+            adminToken,
+            patientId,
+            doctorUser.id!!,
             admissionDate = LocalDateTime.now().minusDays(1),
-            type = AdmissionType.AMBULATORY,
         )
-
-        val admissionResult = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $adminToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(admissionRequest)),
-        ).andReturn()
-
-        return objectMapper.readTree(admissionResult.response.contentAsString)
-            .get("data").get("id").asLong()
-    }
-
-    private fun dischargeAdmission(id: Long) {
-        mockMvc.perform(
-            post("/api/v1/admissions/$id/discharge")
-                .header("Authorization", "Bearer $adminToken"),
-        ).andExpect(status().isOk)
     }
 
     private fun createDefaultVitalSignRequest(): CreateVitalSignRequest = CreateVitalSignRequest(
@@ -645,6 +487,130 @@ class VitalSignControllerTest {
             .andExpect(status().isBadRequest)
     }
 
+    @Test
+    fun `create fails with systolic BP above 250`() {
+        val request = CreateVitalSignRequest(
+            systolicBp = 251,
+            diastolicBp = 80,
+            heartRate = 72,
+            respiratoryRate = 16,
+            temperature = BigDecimal("36.5"),
+            oxygenSaturation = 98,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/vital-signs")
+                .header("Authorization", "Bearer $nurseToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `create fails with diastolic BP above 150`() {
+        val request = CreateVitalSignRequest(
+            systolicBp = 200,
+            diastolicBp = 151,
+            heartRate = 72,
+            respiratoryRate = 16,
+            temperature = BigDecimal("36.5"),
+            oxygenSaturation = 98,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/vital-signs")
+                .header("Authorization", "Bearer $nurseToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `create fails with respiratory rate below 5`() {
+        val request = CreateVitalSignRequest(
+            systolicBp = 120,
+            diastolicBp = 80,
+            heartRate = 72,
+            respiratoryRate = 4,
+            temperature = BigDecimal("36.5"),
+            oxygenSaturation = 98,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/vital-signs")
+                .header("Authorization", "Bearer $nurseToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `create fails with respiratory rate above 60`() {
+        val request = CreateVitalSignRequest(
+            systolicBp = 120,
+            diastolicBp = 80,
+            heartRate = 72,
+            respiratoryRate = 61,
+            temperature = BigDecimal("36.5"),
+            oxygenSaturation = 98,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/vital-signs")
+                .header("Authorization", "Bearer $nurseToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    // ============ UNAUTHENTICATED / NON-EXISTENT ADMISSION TESTS ============
+
+    @Test
+    fun `list vital signs fails without authentication`() {
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/vital-signs"),
+        )
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `create vital sign fails without authentication`() {
+        val request = createDefaultVitalSignRequest()
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/vital-signs")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `list vital signs for non-existent admission returns 404`() {
+        mockMvc.perform(
+            get("/api/v1/admissions/99999/vital-signs")
+                .header("Authorization", "Bearer $nurseToken"),
+        )
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `create vital sign for non-existent admission returns 404`() {
+        val request = createDefaultVitalSignRequest()
+
+        mockMvc.perform(
+            post("/api/v1/admissions/99999/vital-signs")
+                .header("Authorization", "Bearer $nurseToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isNotFound)
+    }
+
     // ============ AUTHORIZATION / BUSINESS RULES TESTS ============
 
     @Test
@@ -686,7 +652,7 @@ class VitalSignControllerTest {
 
     @Test
     fun `create vital sign fails for discharged admission`() {
-        dischargeAdmission(admissionId)
+        dischargeAdmission(admissionId, adminToken)
 
         val request = createDefaultVitalSignRequest()
 
@@ -702,7 +668,7 @@ class VitalSignControllerTest {
     @Test
     fun `update vital sign fails for discharged admission`() {
         val vitalSignId = createVitalSignAndGetId(nurseToken)
-        dischargeAdmission(admissionId)
+        dischargeAdmission(admissionId, adminToken)
 
         val updateRequest = createDefaultVitalSignRequest()
 
@@ -742,7 +708,7 @@ class VitalSignControllerTest {
                 .header("Authorization", "Bearer $token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)),
-        )
+        ).andExpect(status().isCreated)
     }
 
     private fun createVitalSignAndGetId(token: String = nurseToken): Long {

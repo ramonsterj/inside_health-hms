@@ -164,6 +164,26 @@ class PasswordResetServiceTest {
     }
 
     @Test
+    fun `resetPassword should throw exception for already used token`() {
+        val usedToken = PasswordResetToken(
+            token = "used-token",
+            expiresAt = LocalDateTime.now().plusHours(1),
+            user = testUser,
+        ).apply {
+            id = 1L
+            deletedAt = LocalDateTime.now().minusMinutes(5)
+        }
+        whenever(passwordResetTokenRepository.findByToken("used-token")).thenReturn(usedToken)
+
+        val exception = assertThrows<InvalidTokenException> {
+            passwordResetService.resetPassword("used-token", "newpassword")
+        }
+
+        assertTrue(exception.message!!.contains("used"))
+        verify(userRepository, never()).save(any())
+    }
+
+    @Test
     fun `cleanupExpiredTokens should delete expired tokens`() {
         passwordResetService.cleanupExpiredTokens()
 

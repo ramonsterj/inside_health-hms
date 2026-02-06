@@ -1,78 +1,16 @@
 package com.insidehealthgt.hms.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.insidehealthgt.hms.TestcontainersConfiguration
 import com.insidehealthgt.hms.dto.request.LoginRequest
+import com.insidehealthgt.hms.dto.request.RefreshTokenRequest
 import com.insidehealthgt.hms.entity.User
-import com.insidehealthgt.hms.repository.AdmissionConsentDocumentRepository
-import com.insidehealthgt.hms.repository.AdmissionRepository
-import com.insidehealthgt.hms.repository.EmergencyContactRepository
-import com.insidehealthgt.hms.repository.NursingNoteRepository
-import com.insidehealthgt.hms.repository.PatientRepository
-import com.insidehealthgt.hms.repository.RoleRepository
-import com.insidehealthgt.hms.repository.UserRepository
-import com.insidehealthgt.hms.repository.VitalSignRepository
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
-import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
-import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-@AutoConfigureMockMvc
-@Import(TestcontainersConfiguration::class)
-class AuthControllerTest {
-
-    @Autowired
-    private lateinit var mockMvc: MockMvc
-
-    @Autowired
-    private lateinit var objectMapper: ObjectMapper
-
-    @Autowired
-    private lateinit var userRepository: UserRepository
-
-    @Autowired
-    private lateinit var roleRepository: RoleRepository
-
-    @Autowired
-    private lateinit var admissionConsentDocumentRepository: AdmissionConsentDocumentRepository
-
-    @Autowired
-    private lateinit var admissionRepository: AdmissionRepository
-
-    @Autowired
-    private lateinit var emergencyContactRepository: EmergencyContactRepository
-
-    @Autowired
-    private lateinit var patientRepository: PatientRepository
-
-    @Autowired
-    private lateinit var nursingNoteRepository: NursingNoteRepository
-
-    @Autowired
-    private lateinit var vitalSignRepository: VitalSignRepository
-
-    @Autowired
-    private lateinit var passwordEncoder: PasswordEncoder
-
-    @BeforeEach
-    fun setUp() {
-        nursingNoteRepository.deleteAllHard()
-        vitalSignRepository.deleteAllHard()
-        admissionConsentDocumentRepository.deleteAllHard()
-        admissionRepository.deleteAllHard()
-        emergencyContactRepository.deleteAllHard()
-        patientRepository.deleteAllHard()
-        userRepository.deleteAll()
-    }
+class AuthControllerTest : AbstractIntegrationTest() {
 
     private fun createUser(
         username: String,
@@ -93,6 +31,8 @@ class AuthControllerTest {
         user.roles.add(userRole)
         return userRepository.save(user)
     }
+
+    // ============ LOGIN TESTS ============
 
     @Test
     fun `login should return tokens for valid credentials`() {
@@ -177,5 +117,146 @@ class AuthControllerTest {
         )
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.success").value(false))
+    }
+
+    // ============ REFRESH TOKEN TESTS ============
+
+    @Test
+    fun `refresh should return new tokens for valid refresh token`() {
+        createUser(
+            username = "refreshuser",
+            email = "refresh@example.com",
+            password = "password123",
+        )
+
+        val authResponse = loginAndGetAuthResponse("refresh@example.com", "password123")
+
+        val refreshRequest = RefreshTokenRequest(
+            refreshToken = authResponse.refreshToken,
+        )
+
+        mockMvc.perform(
+            post("/api/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest)),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data.accessToken").exists())
+            .andExpect(jsonPath("$.data.refreshToken").exists())
+    }
+
+    @Test
+    fun `refresh should fail with invalid refresh token`() {
+        val refreshRequest = RefreshTokenRequest(
+            refreshToken = "invalid-token-value",
+        )
+
+        mockMvc.perform(
+            post("/api/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest)),
+        )
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `refresh should fail with already-used refresh token`() {
+        createUser(
+            username = "revokeduser",
+            email = "revoked@example.com",
+            password = "password123",
+        )
+
+        val authResponse = loginAndGetAuthResponse("revoked@example.com", "password123")
+
+        val refreshRequest = RefreshTokenRequest(
+            refreshToken = authResponse.refreshToken,
+        )
+
+        // First refresh should succeed
+        mockMvc.perform(
+            post("/api/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest)),
+        )
+            .andExpect(status().isOk)
+
+        // Second refresh with the same token should fail (token was revoked after first use)
+        mockMvc.perform(
+            post("/api/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest)),
+        )
+            .andExpect(status().isUnauthorized)
+    }
+
+    // ============ LOGOUT TESTS ============
+
+    @Test
+    fun `logout should succeed for authenticated user`() {
+        createUser(
+            username = "logoutuser",
+            email = "logout@example.com",
+            password = "password123",
+        )
+
+        val token = loginAndGetToken("logout@example.com", "password123")
+
+        mockMvc.perform(
+            post("/api/auth/logout")
+                .header("Authorization", "Bearer $token"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.success").value(true))
+    }
+
+    @Test
+    fun `logout without authentication is a no-op`() {
+        mockMvc.perform(
+            post("/api/auth/logout"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.success").value(true))
+    }
+
+    // ============ CHECK USERNAME TESTS ============
+
+    @Test
+    fun `check username should return available for non-existing username`() {
+        mockMvc.perform(
+            get("/api/auth/check-username")
+                .param("username", "availableuser"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data.available").value(true))
+    }
+
+    @Test
+    fun `check username should return unavailable for existing username`() {
+        createUser(
+            username = "takenuser",
+            email = "taken@example.com",
+            password = "password123",
+        )
+
+        mockMvc.perform(
+            get("/api/auth/check-username")
+                .param("username", "takenuser"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data.available").value(false))
+    }
+
+    @Test
+    fun `check username should reject too short username`() {
+        mockMvc.perform(
+            get("/api/auth/check-username")
+                .param("username", "ab"),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
     }
 }

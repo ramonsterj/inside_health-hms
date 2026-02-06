@@ -1,90 +1,27 @@
 package com.insidehealthgt.hms.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.insidehealthgt.hms.TestcontainersConfiguration
-import com.insidehealthgt.hms.dto.request.CreateAdmissionRequest
-import com.insidehealthgt.hms.dto.request.CreatePatientRequest
 import com.insidehealthgt.hms.dto.request.CreatePsychotherapyActivityRequest
-import com.insidehealthgt.hms.dto.request.EmergencyContactRequest
-import com.insidehealthgt.hms.dto.response.ApiResponse
-import com.insidehealthgt.hms.dto.response.AuthResponse
 import com.insidehealthgt.hms.entity.AdmissionType
-import com.insidehealthgt.hms.entity.EducationLevel
-import com.insidehealthgt.hms.entity.MaritalStatus
 import com.insidehealthgt.hms.entity.Room
 import com.insidehealthgt.hms.entity.RoomType
-import com.insidehealthgt.hms.entity.Salutation
-import com.insidehealthgt.hms.entity.Sex
 import com.insidehealthgt.hms.entity.User
-import com.insidehealthgt.hms.repository.AdmissionRepository
-import com.insidehealthgt.hms.repository.PatientRepository
-import com.insidehealthgt.hms.repository.PsychotherapyActivityRepository
-import com.insidehealthgt.hms.repository.PsychotherapyCategoryRepository
-import com.insidehealthgt.hms.repository.RoleRepository
-import com.insidehealthgt.hms.repository.RoomRepository
-import com.insidehealthgt.hms.repository.TriageCodeRepository
-import com.insidehealthgt.hms.repository.UserRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
-import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
-import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.test.annotation.DirtiesContext
-import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.time.LocalDateTime
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-@AutoConfigureMockMvc
-@Import(TestcontainersConfiguration::class)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-class PsychotherapyActivityControllerTest {
-
-    @Autowired
-    private lateinit var mockMvc: MockMvc
-
-    @Autowired
-    private lateinit var objectMapper: ObjectMapper
-
-    @Autowired
-    private lateinit var userRepository: UserRepository
-
-    @Autowired
-    private lateinit var roleRepository: RoleRepository
-
-    @Autowired
-    private lateinit var categoryRepository: PsychotherapyCategoryRepository
-
-    @Autowired
-    private lateinit var activityRepository: PsychotherapyActivityRepository
-
-    @Autowired
-    private lateinit var admissionRepository: AdmissionRepository
-
-    @Autowired
-    private lateinit var patientRepository: PatientRepository
-
-    @Autowired
-    private lateinit var roomRepository: RoomRepository
-
-    @Autowired
-    private lateinit var triageCodeRepository: TriageCodeRepository
-
-    @Autowired
-    private lateinit var passwordEncoder: PasswordEncoder
+class PsychotherapyActivityControllerTest : AbstractIntegrationTest() {
 
     private lateinit var adminToken: String
     private lateinit var psychologistToken: String
     private lateinit var doctorToken: String
     private lateinit var nurseToken: String
     private lateinit var adminStaffToken: String
+    private lateinit var doctorUser: User
 
     private var hospitalizationAdmissionId: Long = 0
     private var ambulatoryAdmissionId: Long = 0
@@ -92,141 +29,50 @@ class PsychotherapyActivityControllerTest {
 
     @BeforeEach
     fun setUp() {
-        activityRepository.deleteAllHard()
-        admissionRepository.deleteAll()
-        roomRepository.deleteAll()
-        patientRepository.deleteAll()
-        userRepository.deleteAll()
+        val (_, adminTkn) = createAdminUser()
+        adminToken = adminTkn
 
-        adminToken = createUserAndGetToken("ADMIN", "admin", "admin@example.com", "admin123")
-        psychologistToken = createUserAndGetToken("PSYCHOLOGIST", "psychologist", "psychologist@example.com")
-        doctorToken = createUserAndGetToken("DOCTOR", "doctor", "doctor@example.com")
-        nurseToken = createUserAndGetToken("NURSE", "nurse", "nurse@example.com")
-        adminStaffToken = createUserAndGetToken("ADMINISTRATIVE_STAFF", "receptionist", "receptionist@example.com")
+        val (_, psychTkn) = createPsychologistUser()
+        psychologistToken = psychTkn
 
-        categoryId = categoryRepository.findAll().first().id!!
-        hospitalizationAdmissionId = createAdmission(AdmissionType.HOSPITALIZATION)
-        ambulatoryAdmissionId = createAdmission(AdmissionType.AMBULATORY)
-    }
+        val (docUsr, docTkn) = createDoctorUser()
+        doctorUser = docUsr
+        doctorToken = docTkn
 
-    private fun createUserAndGetToken(
-        roleCode: String,
-        username: String,
-        email: String,
-        password: String = "password123",
-    ): String {
-        val role = roleRepository.findByCode(roleCode)!!
-        val user = User(
-            username = username,
-            email = email,
-            passwordHash = passwordEncoder.encode(password)!!,
-            firstName = username.replaceFirstChar { it.uppercase() },
-            lastName = "User",
-        )
-        user.roles.add(role)
-        userRepository.save(user)
-        return loginAndGetToken(email, password)
-    }
+        val (_, nurseTkn) = createNurseUser()
+        nurseToken = nurseTkn
 
-    private fun loginAndGetToken(email: String, password: String): String {
-        val request = mapOf("identifier" to email, "password" to password)
-        val result = mockMvc.perform(
-            post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
+        val (_, staffTkn) = createAdminStaffUser()
+        adminStaffToken = staffTkn
 
-        val responseType = objectMapper.typeFactory.constructParametricType(
-            ApiResponse::class.java,
-            AuthResponse::class.java,
-        )
-        val response: ApiResponse<AuthResponse> = objectMapper.readValue(
-            result.response.contentAsString,
-            responseType,
-        )
-        return response.data!!.accessToken
-    }
+        categoryId = psychotherapyCategoryRepository.findAll().first().id!!
 
-    private fun createAdmission(type: AdmissionType): Long {
-        val patientId = createPatient()
-        val doctorId = createDoctor()
-
+        // Create hospitalization admission (requires room + triage code)
         val room = Room(
             number = "Room-${System.nanoTime()}",
             type = RoomType.PRIVATE,
             capacity = 1,
         )
         roomRepository.save(room)
-
         val triageCode = triageCodeRepository.findAll().first()
-
-        val admissionRequest = CreateAdmissionRequest(
-            patientId = patientId,
-            triageCodeId = if (type.requiresTriageCode()) triageCode.id!! else null,
-            roomId = if (type.requiresRoom()) room.id!! else null,
-            treatingPhysicianId = doctorId,
-            admissionDate = LocalDateTime.now(),
-            type = type,
-            inventory = null,
+        val patient1Id = createPatient(adminStaffToken)
+        hospitalizationAdmissionId = createAdmission(
+            adminStaffToken,
+            patient1Id,
+            doctorUser.id!!,
+            AdmissionType.HOSPITALIZATION,
+            room.id!!,
+            triageCode.id!!,
         )
 
-        val result = mockMvc.perform(
-            post("/api/v1/admissions")
-                .header("Authorization", "Bearer $adminStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(admissionRequest)),
-        ).andReturn()
-
-        return objectMapper.readTree(result.response.contentAsString)
-            .get("data").get("id").asLong()
-    }
-
-    private fun createPatient(): Long {
-        val request = CreatePatientRequest(
-            firstName = "Test",
-            lastName = "Patient ${System.nanoTime()}",
-            age = 30,
-            sex = Sex.MALE,
-            gender = "Male",
-            maritalStatus = MaritalStatus.SINGLE,
-            religion = "None",
-            educationLevel = EducationLevel.UNIVERSITY,
-            occupation = "Engineer",
-            address = "Test Address",
-            email = "patient${System.nanoTime()}@test.com",
-            emergencyContacts = listOf(
-                EmergencyContactRequest(
-                    name = "Emergency Contact",
-                    relationship = "Family",
-                    phone = "+502 5555-1234",
-                ),
-            ),
+        // Create ambulatory admission (different patient)
+        val patient2Id = createSecondPatient(adminStaffToken)
+        ambulatoryAdmissionId = createAdmission(
+            adminStaffToken,
+            patient2Id,
+            doctorUser.id!!,
+            AdmissionType.AMBULATORY,
         )
-
-        val result = mockMvc.perform(
-            post("/api/v1/patients")
-                .header("Authorization", "Bearer $adminStaffToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andReturn()
-
-        return objectMapper.readTree(result.response.contentAsString)
-            .get("data").get("id").asLong()
-    }
-
-    private fun createDoctor(): Long {
-        val doctorRole = roleRepository.findByCode("DOCTOR")!!
-        val doctor = User(
-            username = "doctor${System.nanoTime()}",
-            email = "doctor${System.nanoTime()}@example.com",
-            passwordHash = passwordEncoder.encode("password123")!!,
-            firstName = "Dr. Test",
-            lastName = "Doctor",
-            salutation = Salutation.DR,
-        )
-        doctor.roles.add(doctorRole)
-        userRepository.save(doctor)
-        return doctor.id!!
     }
 
     // ============ CREATE ACTIVITY TESTS ============
@@ -249,7 +95,7 @@ class PsychotherapyActivityControllerTest {
             .andExpect(jsonPath("$.data.description").value("Patient participated in art therapy workshop"))
             .andExpect(jsonPath("$.data.category.id").value(categoryId))
             .andExpect(jsonPath("$.data.admissionId").value(hospitalizationAdmissionId))
-            .andExpect(jsonPath("$.data.createdBy.firstName").value("Psychologist"))
+            .andExpect(jsonPath("$.data.createdBy.firstName").value("Psych"))
     }
 
     @Test
@@ -594,6 +440,56 @@ class PsychotherapyActivityControllerTest {
                 .header("Authorization", "Bearer $doctorToken"),
         )
             .andExpect(status().isForbidden)
+    }
+
+    // ============ UNAUTHENTICATED / NON-EXISTENT ADMISSION TESTS ============
+
+    @Test
+    fun `create activity fails without authentication`() {
+        val request = CreatePsychotherapyActivityRequest(
+            categoryId = categoryId,
+            description = "Test activity",
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$hospitalizationAdmissionId/psychotherapy-activities")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `list activities fails without authentication`() {
+        mockMvc.perform(
+            get("/api/v1/admissions/$hospitalizationAdmissionId/psychotherapy-activities"),
+        )
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `create activity for non-existent admission returns 404`() {
+        val request = CreatePsychotherapyActivityRequest(
+            categoryId = categoryId,
+            description = "Test activity",
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions/99999/psychotherapy-activities")
+                .header("Authorization", "Bearer $psychologistToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `list activities for non-existent admission returns 404`() {
+        mockMvc.perform(
+            get("/api/v1/admissions/99999/psychotherapy-activities")
+                .header("Authorization", "Bearer $doctorToken"),
+        )
+            .andExpect(status().isNotFound)
     }
 
     // ============ CATEGORY IN USE CHECK TEST ============
