@@ -71,7 +71,10 @@ class RoomService(
         val room = Room(
             number = request.number,
             type = request.type,
+            gender = request.gender,
             capacity = request.capacity,
+            price = request.price,
+            cost = request.cost,
         )
 
         val savedRoom = roomRepository.save(room)
@@ -96,7 +99,10 @@ class RoomService(
 
         room.number = request.number
         room.type = request.type
+        room.gender = request.gender
         room.capacity = request.capacity
+        room.price = request.price
+        room.cost = request.cost
 
         val savedRoom = roomRepository.save(room)
         return buildRoomResponse(savedRoom)

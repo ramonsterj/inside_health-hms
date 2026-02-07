@@ -13,6 +13,8 @@ import { useAdmissionStore } from '@/stores/admission'
 import { useTriageCodeStore } from '@/stores/triageCode'
 import { useRoomStore } from '@/stores/room'
 import type { PatientSummary } from '@/types'
+import { Sex } from '@/types/patient'
+import { RoomGender } from '@/types/room'
 import type { Doctor } from '@/types/admission'
 import {
   AdmissionType,
@@ -59,6 +61,13 @@ const roomRequired = computed(() => admissionTypeRequiresRoom(selectedType.value
 const triageCodeRequired = computed(() => admissionTypeRequiresTriageCode(selectedType.value))
 const showRoomField = computed(() => admissionTypeRequiresRoom(selectedType.value))
 const showTriageCodeField = computed(() => admissionTypeRequiresTriageCode(selectedType.value))
+
+const filteredAvailableRooms = computed(() => {
+  const patientSex = selectedPatient.value?.sex
+  if (!patientSex) return roomStore.availableRooms
+  const roomGender = patientSex === Sex.FEMALE ? RoomGender.FEMALE : RoomGender.MALE
+  return roomStore.availableRooms.filter(r => r.gender === roomGender)
+})
 
 // Watch for type changes and clear irrelevant values
 watch(selectedType, newType => {
@@ -219,9 +228,9 @@ function cancel() {
           <Button icon="pi pi-arrow-left" severity="secondary" text rounded @click="cancel" />
           <div>
             <h1 class="page-title">{{ isEditMode ? t('admission.edit') : t('admission.new') }}</h1>
-            <p class="patient-name">
+            <h2 class="patient-name">
               {{ selectedPatient.firstName }} {{ selectedPatient.lastName }}
-            </p>
+            </h2>
           </div>
         </div>
       </div>
@@ -272,7 +281,7 @@ function cancel() {
               <label>{{ t('admission.room') }} *</label>
               <Select
                 v-model="selectedRoom"
-                :options="roomStore.availableRooms"
+                :options="filteredAvailableRooms"
                 optionValue="id"
                 :optionLabel="getRoomLabel"
                 :placeholder="t('admission.selectRoom')"
@@ -362,8 +371,8 @@ function cancel() {
 
 .patient-name {
   margin: 0.25rem 0 0 0;
-  color: var(--p-text-muted-color);
-  font-size: 0.875rem;
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
 .active-admission-warning {

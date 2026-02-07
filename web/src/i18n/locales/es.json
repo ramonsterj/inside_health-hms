@@ -56,6 +56,10 @@
     "triageCodes": "Codigos de Triage",
     "rooms": "Habitaciones",
     "activityCategories": "Categorías de Actividades",
+    "inventory": "Inventario",
+    "inventoryItems": "Artículos de Inventario",
+    "inventoryCategories": "Categorías de Inventario",
+    "lowStockReport": "Reporte de Stock Bajo",
     "auditLogs": "Registros de Auditoria",
     "profile": "Perfil",
     "logout": "Cerrar Sesion"
@@ -658,6 +662,9 @@
       "type": {
         "required": "El tipo de habitacion es requerido"
       },
+      "gender": {
+        "required": "El sexo de la habitacion es requerido"
+      },
       "capacity": {
         "required": "La capacidad es requerida",
         "invalid": "La capacidad debe ser un numero",
@@ -737,8 +744,9 @@
     "title": "Habitaciones",
     "new": "Nueva Habitacion",
     "edit": "Editar Habitacion",
-    "number": "Numero de Habitacion",
-    "type": "Tipo de Habitacion",
+    "number": "Codigo",
+    "type": "Tipo",
+    "gender": "Sexo",
     "capacity": "Capacidad",
     "availableBeds": "Camas Disponibles",
     "bedsAvailable": "camas disponibles",
@@ -748,8 +756,12 @@
     "deleted": "Habitacion eliminada exitosamente.",
     "confirmDelete": "Esta seguro de que desea eliminar esta habitacion?",
     "types": {
-      "PRIVATE": "Privada",
-      "SHARED": "Compartida"
+      "PRIVATE": "Sencilla",
+      "SHARED": "Doble"
+    },
+    "genders": {
+      "MALE": "Hombres",
+      "FEMALE": "Mujeres"
     }
   },
   "admission": {
@@ -1134,7 +1146,139 @@
       "oldestFirst": "Más antiguas"
     }
   },
+  "inventory": {
+    "category": {
+      "title": "Categorías de Inventario",
+      "new": "Nueva Categoría",
+      "edit": "Editar Categoría",
+      "name": "Nombre",
+      "description": "Descripción",
+      "displayOrder": "Orden de Visualización",
+      "active": "Activo",
+      "empty": "No se encontraron categorías de inventario.",
+      "created": "Categoría creada exitosamente.",
+      "updated": "Categoría actualizada exitosamente.",
+      "deleted": "Categoría eliminada exitosamente.",
+      "confirmDelete": "¿Está seguro que desea eliminar esta categoría?"
+    },
+    "item": {
+      "title": "Inventario",
+      "new": "Nuevo Artículo",
+      "edit": "Editar Artículo",
+      "detail": "Detalle del Artículo",
+      "name": "Nombre",
+      "description": "Descripción",
+      "category": "Categoría",
+      "price": "Precio",
+      "cost": "Costo",
+      "quantity": "Cantidad",
+      "restockLevel": "Nivel de Reabastecimiento",
+      "pricingType": "Tipo de Precio",
+      "pricingTypes": {
+        "FLAT": "Fijo",
+        "TIME_BASED": "Por Tiempo"
+      },
+      "timeUnit": "Unidad de Tiempo",
+      "timeUnits": {
+        "MINUTES": "Minutos",
+        "HOURS": "Horas"
+      },
+      "timeInterval": "Intervalo de Tiempo",
+      "perTimeLabel": "por {interval} {unit}",
+      "active": "Activo",
+      "allCategories": "Todas las Categorías",
+      "searchPlaceholder": "Buscar por nombre...",
+      "empty": "No se encontraron artículos de inventario.",
+      "created": "Artículo creado exitosamente.",
+      "updated": "Artículo actualizado exitosamente.",
+      "deleted": "Artículo eliminado exitosamente.",
+      "confirmDelete": "¿Está seguro que desea eliminar este artículo?"
+    },
+    "movement": {
+      "title": "Movimientos de Stock",
+      "new": "Registrar Movimiento",
+      "type": "Tipo",
+      "types": {
+        "ENTRY": "Entrada",
+        "EXIT": "Salida"
+      },
+      "quantity": "Cantidad",
+      "notes": "Notas",
+      "previousQuantity": "Cant. Anterior",
+      "newQuantity": "Cant. Nueva",
+      "registeredBy": "Registrado por",
+      "registeredAt": "Fecha",
+      "empty": "No hay movimientos registrados.",
+      "created": "Movimiento registrado exitosamente."
+    },
+    "lowStock": {
+      "title": "Reporte de Stock Bajo",
+      "empty": "No hay artículos con stock bajo.",
+      "belowThreshold": "Bajo nivel de reabastecimiento"
+    },
+    "room": {
+      "price": "Precio",
+      "cost": "Costo"
+    }
+  },
   "validation": {
+    "inventory": {
+      "category": {
+        "name": {
+          "required": "El nombre de la categoría es requerido.",
+          "max": "El nombre debe tener como máximo 100 caracteres."
+        },
+        "description": {
+          "max": "La descripción debe tener como máximo 255 caracteres."
+        },
+        "displayOrder": {
+          "invalid": "El orden de visualización debe ser un número."
+        }
+      },
+      "item": {
+        "name": {
+          "required": "El nombre del artículo es requerido.",
+          "max": "El nombre debe tener como máximo 150 caracteres."
+        },
+        "description": {
+          "max": "La descripción debe tener como máximo 500 caracteres."
+        },
+        "category": {
+          "required": "La categoría es requerida."
+        },
+        "price": {
+          "required": "El precio es requerido.",
+          "min": "El precio debe ser mayor o igual a 0."
+        },
+        "cost": {
+          "required": "El costo es requerido.",
+          "min": "El costo debe ser mayor o igual a 0."
+        },
+        "timeBased": {
+          "required": "La unidad de tiempo y el intervalo son requeridos para precios por tiempo."
+        }
+      },
+      "movement": {
+        "type": {
+          "required": "El tipo de movimiento es requerido."
+        },
+        "quantity": {
+          "required": "La cantidad es requerida.",
+          "positive": "La cantidad debe ser mayor a 0."
+        },
+        "notes": {
+          "max": "Las notas deben tener como máximo 500 caracteres."
+        }
+      },
+      "room": {
+        "price": {
+          "min": "El precio debe ser mayor o igual a 0."
+        },
+        "cost": {
+          "min": "El costo debe ser mayor o igual a 0."
+        }
+      }
+    },
     "psychotherapy": {
       "category": {
         "name": {

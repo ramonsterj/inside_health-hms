@@ -3,7 +3,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { useRoomStore } from './room'
 import api from '@/services/api'
 import type { Room, RoomAvailability } from '@/types/room'
-import { RoomType } from '@/types/room'
+import { RoomType, RoomGender } from '@/types/room'
 
 vi.mock('@/services/api', () => ({
   default: {
@@ -25,7 +25,10 @@ const mockRoom: Room = {
   id: 1,
   number: '101',
   type: RoomType.PRIVATE,
+  gender: RoomGender.FEMALE,
   capacity: 1,
+  price: null,
+  cost: null,
   createdAt: null,
   createdBy: null,
   updatedAt: null,
@@ -36,6 +39,7 @@ const mockRoomAvailability: RoomAvailability = {
   id: 1,
   number: '101',
   type: RoomType.PRIVATE,
+  gender: RoomGender.FEMALE,
   capacity: 1,
   availableBeds: 1
 }
@@ -184,6 +188,7 @@ describe('useRoomStore', () => {
       const createData = {
         number: '101',
         type: RoomType.PRIVATE,
+        gender: RoomGender.FEMALE,
         capacity: 1
       }
 
@@ -202,6 +207,7 @@ describe('useRoomStore', () => {
       const createData = {
         number: '101',
         type: RoomType.PRIVATE,
+        gender: RoomGender.FEMALE,
         capacity: 1
       }
 
@@ -222,6 +228,7 @@ describe('useRoomStore', () => {
       const updateData = {
         number: '101',
         type: RoomType.PRIVATE,
+        gender: RoomGender.FEMALE,
         capacity: 2
       }
 
@@ -241,6 +248,7 @@ describe('useRoomStore', () => {
       const updateData = {
         number: '101',
         type: RoomType.PRIVATE,
+        gender: RoomGender.FEMALE,
         capacity: 2
       }
 

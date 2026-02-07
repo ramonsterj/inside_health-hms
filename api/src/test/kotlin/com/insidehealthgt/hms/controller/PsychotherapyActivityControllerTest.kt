@@ -3,6 +3,7 @@ package com.insidehealthgt.hms.controller
 import com.insidehealthgt.hms.dto.request.CreatePsychotherapyActivityRequest
 import com.insidehealthgt.hms.entity.AdmissionType
 import com.insidehealthgt.hms.entity.Room
+import com.insidehealthgt.hms.entity.RoomGender
 import com.insidehealthgt.hms.entity.RoomType
 import com.insidehealthgt.hms.entity.User
 import org.junit.jupiter.api.BeforeEach
@@ -51,6 +52,7 @@ class PsychotherapyActivityControllerTest : AbstractIntegrationTest() {
         val room = Room(
             number = "Room-${System.nanoTime()}",
             type = RoomType.PRIVATE,
+            gender = RoomGender.FEMALE,
             capacity = 1,
         )
         roomRepository.save(room)

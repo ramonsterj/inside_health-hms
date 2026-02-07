@@ -67,6 +67,25 @@ const model = computed<MenuItem[]>(() => {
     })
   }
 
+  // Inventory section - visible to users with inventory permissions
+  if (authStore.hasPermission('inventory-item:read')) {
+    items.push({
+      label: 'nav.inventory',
+      items: [
+        {
+          label: 'nav.inventoryItems',
+          icon: 'pi pi-fw pi-box',
+          to: '/inventory'
+        },
+        {
+          label: 'nav.lowStockReport',
+          icon: 'pi pi-fw pi-exclamation-triangle',
+          to: '/inventory/low-stock'
+        }
+      ]
+    })
+  }
+
   // Admin section - only visible to admins
   if (authStore.isAdmin) {
     items.push({
@@ -96,6 +115,11 @@ const model = computed<MenuItem[]>(() => {
           label: 'nav.activityCategories',
           icon: 'pi pi-fw pi-heart',
           to: '/admin/psychotherapy-categories'
+        },
+        {
+          label: 'nav.inventoryCategories',
+          icon: 'pi pi-fw pi-list',
+          to: '/admin/inventory-categories'
         },
         {
           label: 'nav.auditLogs',

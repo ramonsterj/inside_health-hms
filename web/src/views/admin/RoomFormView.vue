@@ -13,7 +13,7 @@ import Select from 'primevue/select'
 import Message from 'primevue/message'
 import { useRoomStore } from '@/stores/room'
 import { roomSchema, type RoomFormData } from '@/validation/room'
-import { RoomType } from '@/types/room'
+import { RoomType, RoomGender } from '@/types/room'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -30,18 +30,29 @@ const roomTypeOptions = computed(() => [
   { label: t('room.types.SHARED'), value: RoomType.SHARED }
 ])
 
+const roomGenderOptions = computed(() => [
+  { label: t('room.genders.FEMALE'), value: RoomGender.FEMALE },
+  { label: t('room.genders.MALE'), value: RoomGender.MALE }
+])
+
 const { defineField, handleSubmit, errors, setValues, setErrors } = useForm<RoomFormData>({
   validationSchema: toTypedSchema(roomSchema),
   initialValues: {
     number: '',
     type: RoomType.PRIVATE,
-    capacity: 1
+    gender: RoomGender.FEMALE,
+    capacity: 1,
+    price: null,
+    cost: null
   }
 })
 
 const [number] = defineField('number')
 const [type] = defineField('type')
+const [gender] = defineField('gender')
 const [capacity] = defineField('capacity')
+const [price] = defineField('price')
+const [cost] = defineField('cost')
 
 onMounted(async () => {
   if (isEditMode.value && roomId.value) {
@@ -56,7 +67,10 @@ async function loadRoom() {
     setValues({
       number: room.number,
       type: room.type,
-      capacity: room.capacity
+      gender: room.gender,
+      capacity: room.capacity,
+      price: room.price,
+      cost: room.cost
     })
   } catch (error) {
     showError(error)
@@ -127,6 +141,21 @@ function cancel() {
           </div>
 
           <div class="form-field">
+            <label for="gender">{{ t('room.gender') }} *</label>
+            <Select
+              id="gender"
+              v-model="gender"
+              :options="roomGenderOptions"
+              optionLabel="label"
+              optionValue="value"
+              :class="{ 'p-invalid': errors.gender }"
+            />
+            <Message v-if="errors.gender" severity="error" :closable="false">
+              {{ errors.gender }}
+            </Message>
+          </div>
+
+          <div class="form-field">
             <label for="capacity">{{ t('room.capacity') }} *</label>
             <InputNumber
               id="capacity"
@@ -136,6 +165,36 @@ function cancel() {
             />
             <Message v-if="errors.capacity" severity="error" :closable="false">
               {{ errors.capacity }}
+            </Message>
+          </div>
+
+          <div class="form-field">
+            <label for="price">{{ t('inventory.room.price') }}</label>
+            <InputNumber
+              id="price"
+              v-model="price"
+              :min="0"
+              :minFractionDigits="2"
+              :maxFractionDigits="2"
+              :class="{ 'p-invalid': errors.price }"
+            />
+            <Message v-if="errors.price" severity="error" :closable="false">
+              {{ errors.price }}
+            </Message>
+          </div>
+
+          <div class="form-field">
+            <label for="cost">{{ t('inventory.room.cost') }}</label>
+            <InputNumber
+              id="cost"
+              v-model="cost"
+              :min="0"
+              :minFractionDigits="2"
+              :maxFractionDigits="2"
+              :class="{ 'p-invalid': errors.cost }"
+            />
+            <Message v-if="errors.cost" severity="error" :closable="false">
+              {{ errors.cost }}
             </Message>
           </div>
 

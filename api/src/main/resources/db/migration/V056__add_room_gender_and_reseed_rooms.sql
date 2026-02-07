@@ -1,0 +1,43 @@
+-- Add gender column to rooms table
+ALTER TABLE rooms ADD COLUMN gender VARCHAR(10);
+
+-- Set default gender for existing rooms based on number prefix
+UPDATE rooms SET gender = CASE
+    WHEN number LIKE '1%' THEN 'FEMALE'
+    ELSE 'MALE'
+END WHERE gender IS NULL;
+
+-- Make gender NOT NULL after populating
+ALTER TABLE rooms ALTER COLUMN gender SET NOT NULL;
+
+CREATE INDEX idx_rooms_gender ON rooms(gender);
+
+-- Nullify room references in admissions so we can replace seed rooms
+UPDATE admissions SET room_id = NULL WHERE room_id IS NOT NULL;
+
+-- Hard-delete all existing seed rooms (unique constraint on number prevents soft-delete + re-insert)
+DELETE FROM rooms;
+
+-- Insert rooms matching the actual hospital layout
+INSERT INTO rooms (number, gender, type, capacity, price, created_at, updated_at) VALUES
+-- Floor 1: Women's rooms
+('101', 'FEMALE', 'SHARED', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('102', 'FEMALE', 'SHARED', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('103', 'FEMALE', 'SHARED', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('104', 'FEMALE', 'SHARED', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('105', 'FEMALE', 'SHARED', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('106', 'FEMALE', 'SHARED', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('107', 'FEMALE', 'SHARED', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('108', 'FEMALE', 'SHARED', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('109', 'FEMALE', 'PRIVATE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('110', 'FEMALE', 'PRIVATE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+-- Floor 2: Men's rooms
+('201', 'MALE', 'PRIVATE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('202', 'MALE', 'PRIVATE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('203', 'MALE', 'PRIVATE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('204', 'MALE', 'PRIVATE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+-- Floor 3: Men's rooms
+('301', 'MALE', 'PRIVATE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('302', 'MALE', 'PRIVATE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('303', 'MALE', 'SHARED', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('304', 'MALE', 'SHARED', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

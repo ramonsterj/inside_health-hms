@@ -31,17 +31,17 @@ const mockAdminStaffUser = {
 }
 
 const mockRooms = [
-  { id: 1, number: '101', type: 'PRIVATE', capacity: 1 },
-  { id: 2, number: '102', type: 'PRIVATE', capacity: 1 },
-  { id: 3, number: '201', type: 'SHARED', capacity: 4 },
-  { id: 4, number: '301', type: 'SHARED', capacity: 6 }
+  { id: 1, number: '101', type: 'PRIVATE', gender: 'FEMALE', capacity: 1 },
+  { id: 2, number: '102', type: 'PRIVATE', gender: 'FEMALE', capacity: 1 },
+  { id: 3, number: '201', type: 'SHARED', gender: 'MALE', capacity: 4 },
+  { id: 4, number: '301', type: 'SHARED', gender: 'MALE', capacity: 6 }
 ]
 
 const mockRoomsAvailability = [
-  { id: 1, number: '101', type: 'PRIVATE', capacity: 1, availableBeds: 1 },
-  { id: 2, number: '102', type: 'PRIVATE', capacity: 1, availableBeds: 0 },
-  { id: 3, number: '201', type: 'SHARED', capacity: 4, availableBeds: 3 },
-  { id: 4, number: '301', type: 'SHARED', capacity: 6, availableBeds: 6 }
+  { id: 1, number: '101', type: 'PRIVATE', gender: 'FEMALE', capacity: 1, availableBeds: 1 },
+  { id: 2, number: '102', type: 'PRIVATE', gender: 'FEMALE', capacity: 1, availableBeds: 0 },
+  { id: 3, number: '201', type: 'SHARED', gender: 'MALE', capacity: 4, availableBeds: 3 },
+  { id: 4, number: '301', type: 'SHARED', gender: 'MALE', capacity: 6, availableBeds: 6 }
 ]
 
 // Helper function to setup authenticated state
@@ -190,6 +190,7 @@ test.describe('Rooms - Admin Management', () => {
       id: 5,
       number: '401',
       type: 'PRIVATE',
+      gender: 'FEMALE',
       capacity: 1
     }
 
@@ -217,7 +218,8 @@ test.describe('Rooms - Admin Management', () => {
     // Select room type - click on combobox, then select option from dropdown
     const typeSelect = page.locator('#type')
     await typeSelect.click()
-    await page.locator('.p-select-option').filter({ hasText: 'Private' }).click()
+    await page.locator('.p-select-option').filter({ hasText: 'Single' }).click()
+    await waitForOverlaysToClear(page)
 
     // Fill capacity
     const capacityInput = page.locator('#capacity input, input[name="capacity"]')
@@ -238,6 +240,7 @@ test.describe('Rooms - Admin Management', () => {
       id: 5,
       number: '401',
       type: 'SHARED',
+      gender: 'MALE',
       capacity: 8
     }
 
@@ -474,9 +477,9 @@ test.describe('Rooms - Admin Management', () => {
 
     await page.goto('/admin/rooms')
 
-    // Should see both PRIVATE and SHARED room types
-    await expect(page.getByText('PRIVATE').first()).toBeVisible()
-    await expect(page.getByText('SHARED').first()).toBeVisible()
+    // Should see both Single and Double room types
+    await expect(page.getByText('Single').first()).toBeVisible()
+    await expect(page.getByText('Double').first()).toBeVisible()
   })
 
   test('displays room capacity', async ({ page }) => {

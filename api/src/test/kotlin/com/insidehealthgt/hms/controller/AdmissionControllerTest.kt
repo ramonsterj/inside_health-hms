@@ -4,6 +4,7 @@ import com.insidehealthgt.hms.dto.request.CreateAdmissionRequest
 import com.insidehealthgt.hms.dto.request.UpdateAdmissionRequest
 import com.insidehealthgt.hms.entity.AdmissionType
 import com.insidehealthgt.hms.entity.Room
+import com.insidehealthgt.hms.entity.RoomGender
 import com.insidehealthgt.hms.entity.RoomType
 import com.insidehealthgt.hms.entity.User
 import org.junit.jupiter.api.BeforeEach
@@ -47,6 +48,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
         val room = Room(
             number = "TEST-101",
             type = RoomType.PRIVATE,
+            gender = RoomGender.FEMALE,
             capacity = 2,
         )
         roomRepository.save(room)

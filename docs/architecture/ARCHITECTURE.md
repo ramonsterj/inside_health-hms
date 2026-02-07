@@ -47,6 +47,9 @@ All entities inherit from `BaseEntity` (providing `id`, `createdAt`, `updatedAt`
 | **RefreshToken** | `refresh_tokens` | `token`, `expiresAt` | ManyToOne → User |
 | **PasswordResetToken** | `password_reset_tokens` | `token`, `expiresAt` | ManyToOne → User |
 | **AuditLog** | `audit_logs` | `userId`, `username`, `action`, `entityType`, `entityId`, `oldValues` (JSONB), `newValues` (JSONB), `ipAddress`, `timestamp` | None (standalone) |
+| **InventoryCategory** | `inventory_categories` | `name`, `description`, `displayOrder`, `active` | None |
+| **InventoryItem** | `inventory_items` | `name`, `description`, `price`, `cost`, `quantity`, `restockLevel`, `pricingType`, `timeUnit`, `timeInterval`, `active` | ManyToOne → InventoryCategory |
+| **InventoryMovement** | `inventory_movements` | `movementType`, `quantity`, `previousQuantity`, `newQuantity`, `notes` | ManyToOne → InventoryItem |
 
 ### Data Flow: Backend to Frontend
 

@@ -56,6 +56,10 @@
     "triageCodes": "Triage Codes",
     "rooms": "Rooms",
     "activityCategories": "Activity Categories",
+    "inventory": "Inventory",
+    "inventoryItems": "Inventory Items",
+    "inventoryCategories": "Inventory Categories",
+    "lowStockReport": "Low Stock Report",
     "auditLogs": "Audit Logs",
     "profile": "Profile",
     "logout": "Logout"
@@ -658,6 +662,9 @@
       "type": {
         "required": "Room type is required"
       },
+      "gender": {
+        "required": "Room sex designation is required"
+      },
       "capacity": {
         "required": "Capacity is required",
         "invalid": "Capacity must be a number",
@@ -739,6 +746,7 @@
     "edit": "Edit Room",
     "number": "Room Number",
     "type": "Room Type",
+    "gender": "Sex",
     "capacity": "Capacity",
     "availableBeds": "Available Beds",
     "bedsAvailable": "beds available",
@@ -748,8 +756,12 @@
     "deleted": "Room deleted successfully.",
     "confirmDelete": "Are you sure you want to delete this room?",
     "types": {
-      "PRIVATE": "Private",
-      "SHARED": "Shared"
+      "PRIVATE": "Single",
+      "SHARED": "Double"
+    },
+    "genders": {
+      "MALE": "Men",
+      "FEMALE": "Women"
     }
   },
   "admission": {
@@ -1134,7 +1146,139 @@
       "oldestFirst": "Oldest first"
     }
   },
+  "inventory": {
+    "category": {
+      "title": "Inventory Categories",
+      "new": "New Category",
+      "edit": "Edit Category",
+      "name": "Name",
+      "description": "Description",
+      "displayOrder": "Display Order",
+      "active": "Active",
+      "empty": "No inventory categories found.",
+      "created": "Category created successfully.",
+      "updated": "Category updated successfully.",
+      "deleted": "Category deleted successfully.",
+      "confirmDelete": "Are you sure you want to delete this category?"
+    },
+    "item": {
+      "title": "Inventory",
+      "new": "New Item",
+      "edit": "Edit Item",
+      "detail": "Item Detail",
+      "name": "Name",
+      "description": "Description",
+      "category": "Category",
+      "price": "Price",
+      "cost": "Cost",
+      "quantity": "Quantity",
+      "restockLevel": "Restock Level",
+      "pricingType": "Pricing Type",
+      "pricingTypes": {
+        "FLAT": "Flat",
+        "TIME_BASED": "Time-based"
+      },
+      "timeUnit": "Time Unit",
+      "timeUnits": {
+        "MINUTES": "Minutes",
+        "HOURS": "Hours"
+      },
+      "timeInterval": "Time Interval",
+      "perTimeLabel": "per {interval} {unit}",
+      "active": "Active",
+      "allCategories": "All Categories",
+      "searchPlaceholder": "Search by name...",
+      "empty": "No inventory items found.",
+      "created": "Item created successfully.",
+      "updated": "Item updated successfully.",
+      "deleted": "Item deleted successfully.",
+      "confirmDelete": "Are you sure you want to delete this item?"
+    },
+    "movement": {
+      "title": "Stock Movements",
+      "new": "Record Movement",
+      "type": "Type",
+      "types": {
+        "ENTRY": "Entry",
+        "EXIT": "Exit"
+      },
+      "quantity": "Quantity",
+      "notes": "Notes",
+      "previousQuantity": "Previous Qty",
+      "newQuantity": "New Qty",
+      "registeredBy": "Registered by",
+      "registeredAt": "Date",
+      "empty": "No movements recorded.",
+      "created": "Movement recorded successfully."
+    },
+    "lowStock": {
+      "title": "Low Stock Report",
+      "empty": "No low stock items.",
+      "belowThreshold": "Below restock level"
+    },
+    "room": {
+      "price": "Price",
+      "cost": "Cost"
+    }
+  },
   "validation": {
+    "inventory": {
+      "category": {
+        "name": {
+          "required": "Category name is required.",
+          "max": "Name must be at most 100 characters."
+        },
+        "description": {
+          "max": "Description must be at most 255 characters."
+        },
+        "displayOrder": {
+          "invalid": "Display order must be a number."
+        }
+      },
+      "item": {
+        "name": {
+          "required": "Item name is required.",
+          "max": "Name must be at most 150 characters."
+        },
+        "description": {
+          "max": "Description must be at most 500 characters."
+        },
+        "category": {
+          "required": "Category is required."
+        },
+        "price": {
+          "required": "Price is required.",
+          "min": "Price must be greater than or equal to 0."
+        },
+        "cost": {
+          "required": "Cost is required.",
+          "min": "Cost must be greater than or equal to 0."
+        },
+        "timeBased": {
+          "required": "Time unit and interval are required for time-based pricing."
+        }
+      },
+      "movement": {
+        "type": {
+          "required": "Movement type is required."
+        },
+        "quantity": {
+          "required": "Quantity is required.",
+          "positive": "Quantity must be greater than 0."
+        },
+        "notes": {
+          "max": "Notes must be at most 500 characters."
+        }
+      },
+      "room": {
+        "price": {
+          "min": "Price must be greater than or equal to 0."
+        },
+        "cost": {
+          "min": "Cost must be greater than or equal to 0."
+        }
+      }
+    },
     "psychotherapy": {
       "category": {
         "name": {
