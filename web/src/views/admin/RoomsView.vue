@@ -11,7 +11,8 @@ import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import { useRoomStore } from '@/stores/room'
 import { useAuthStore } from '@/stores/auth'
-import { RoomType } from '@/types/room'
+import { RoomType, RoomGender } from '@/types/room'
+import { formatPrice } from '@/utils/format'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -67,6 +68,10 @@ async function deleteRoom(id: number) {
 function getRoomTypeSeverity(type: RoomType): 'info' | 'success' {
   return type === RoomType.PRIVATE ? 'info' : 'success'
 }
+
+function getRoomGenderSeverity(gender: RoomGender): 'warn' | 'secondary' {
+  return gender === RoomGender.FEMALE ? 'warn' : 'secondary'
+}
 </script>
 
 <template>
@@ -97,6 +102,17 @@ function getRoomTypeSeverity(type: RoomType): 'info' | 'success' {
 
           <Column field="number" :header="t('room.number')" style="width: 120px" />
 
+          <Column :header="t('room.gender')" style="width: 120px">
+            <template #body="{ data }">
+              <Tag
+                v-if="data.gender"
+                :value="t(`room.genders.${data.gender}`)"
+                :severity="getRoomGenderSeverity(data.gender)"
+              />
+              <span v-else>-</span>
+            </template>
+          </Column>
+
           <Column :header="t('room.type')" style="width: 120px">
             <template #body="{ data }">
               <Tag
@@ -107,6 +123,18 @@ function getRoomTypeSeverity(type: RoomType): 'info' | 'success' {
           </Column>
 
           <Column field="capacity" :header="t('room.capacity')" />
+
+          <Column :header="t('inventory.room.price')" style="width: 120px">
+            <template #body="{ data }">
+              {{ formatPrice(data.price) }}
+            </template>
+          </Column>
+
+          <Column :header="t('inventory.room.cost')" style="width: 120px">
+            <template #body="{ data }">
+              {{ formatPrice(data.cost) }}
+            </template>
+          </Column>
 
           <Column :header="t('common.actions')" style="width: 120px">
             <template #body="{ data }">

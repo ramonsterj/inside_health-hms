@@ -1,0 +1,2 @@
+ALTER TABLE rooms ADD COLUMN price DECIMAL(12,2) CHECK (price >= 0);
+ALTER TABLE rooms ADD COLUMN cost DECIMAL(12,2) CHECK (cost >= 0);

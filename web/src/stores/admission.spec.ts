@@ -5,7 +5,8 @@ import api from '@/services/api'
 import type { AdmissionDetail, AdmissionListItem, Doctor } from '@/types/admission'
 import type { PatientSummary } from '@/types'
 import { AdmissionStatus, AdmissionType } from '@/types/admission'
-import { RoomType } from '@/types/room'
+import { RoomType, RoomGender } from '@/types/room'
+import { Sex } from '@/types/patient'
 
 vi.mock('@/services/api', () => ({
   default: {
@@ -28,6 +29,7 @@ const mockPatient = {
   firstName: 'Juan',
   lastName: 'Pérez García',
   age: 45,
+  sex: Sex.MALE,
   idDocumentNumber: '1234567890101',
   hasIdDocument: false,
   hasActiveAdmission: false
@@ -43,7 +45,8 @@ const mockTriageCode = {
 const mockRoom = {
   id: 1,
   number: '101',
-  type: RoomType.PRIVATE
+  type: RoomType.PRIVATE,
+  gender: RoomGender.FEMALE
 }
 
 const mockDoctor: Doctor = {
@@ -366,6 +369,7 @@ describe('useAdmissionStore', () => {
           firstName: 'Juan',
           lastName: 'Pérez',
           age: 45,
+          sex: Sex.MALE,
           idDocumentNumber: '123',
           hasIdDocument: false,
           hasActiveAdmission: false

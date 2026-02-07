@@ -6,6 +6,7 @@ import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Table
 import org.hibernate.annotations.SQLRestriction
+import java.math.BigDecimal
 
 @Entity
 @Table(name = "rooms")
@@ -19,7 +20,17 @@ class Room(
     @Enumerated(EnumType.STRING)
     var type: RoomType,
 
+    @Column(nullable = false, length = 10)
+    @Enumerated(EnumType.STRING)
+    var gender: RoomGender,
+
     @Column(nullable = false)
     var capacity: Int = 1,
+
+    @Column(precision = 12, scale = 2)
+    var price: BigDecimal? = null,
+
+    @Column(precision = 12, scale = 2)
+    var cost: BigDecimal? = null,
 
 ) : BaseEntity()

@@ -126,7 +126,7 @@ com.insidehealthgt.hms/
 **Location**: `src/main/resources/db/migration/`
 **Naming**: `V{version}__{description}.sql`
 
-**Current migrations**: V001-V045 (users, audit_logs, roles/permissions, password_reset_tokens, locale, patients, admissions, file storage, admission types, document types, clinical histories, progress notes, medical orders, psychotherapy categories, psychotherapy activities, nursing notes, vital signs)
+**Current migrations**: V001-V050 (users, audit_logs, roles/permissions, password_reset_tokens, locale, patients, admissions, file storage, admission types, document types, clinical histories, progress notes, medical orders, psychotherapy categories, psychotherapy activities, nursing notes, vital signs, inventory categories, inventory items, inventory movements, inventory permissions, room pricing)
 
 ```sql
 -- Example: Always include BaseEntity fields in new tables
@@ -302,6 +302,7 @@ class GlobalExceptionHandler {
 - ✅ Medical Record System (clinical histories, progress notes, medical orders)
 - ✅ Psychotherapeutic Activities (activity registration for hospitalized patients, category management)
 - ✅ Nursing Module (nursing notes, vital signs with 24h edit window, discharge protection)
+- ✅ Inventory Management (categories, items with flat/time-based pricing, stock movements, low stock report, room pricing)
 
 ### Frontend (Complete)
 - ✅ Vue 3.5 + TypeScript 5.9 + Vite 7.x
@@ -315,6 +316,7 @@ class GlobalExceptionHandler {
 - ✅ Playwright for E2E testing
 - ✅ Patient Admission UI (multi-step wizard, admin CRUD for triage codes and rooms)
 - ✅ Psychotherapeutic Activities UI (activity list with sorting, admin category management)
+- ✅ Inventory Management UI (item list with filtering/search, category admin CRUD, movement dialog, low stock report, room pricing)
 
 ### Security Tooling
 - ✅ Detekt (Kotlin static analysis)

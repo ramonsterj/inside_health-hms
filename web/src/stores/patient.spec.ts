@@ -51,6 +51,7 @@ const mockPatientSummary: PatientSummary = {
   firstName: 'Juan',
   lastName: 'Pérez García',
   age: 45,
+  sex: Sex.MALE,
   idDocumentNumber: '1234567890101',
   hasIdDocument: false,
   hasActiveAdmission: false

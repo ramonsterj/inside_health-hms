@@ -4,6 +4,7 @@ import com.insidehealthgt.hms.dto.request.CreateAdmissionRequest
 import com.insidehealthgt.hms.dto.request.CreateRoomRequest
 import com.insidehealthgt.hms.dto.request.UpdateRoomRequest
 import com.insidehealthgt.hms.entity.AdmissionType
+import com.insidehealthgt.hms.entity.RoomGender
 import com.insidehealthgt.hms.entity.RoomType
 import com.insidehealthgt.hms.entity.User
 import org.junit.jupiter.api.BeforeEach
@@ -40,6 +41,7 @@ class RoomControllerTest : AbstractIntegrationTest() {
     private fun createValidRoomRequest(): CreateRoomRequest = CreateRoomRequest(
         number = "101",
         type = RoomType.PRIVATE,
+        gender = RoomGender.FEMALE,
         capacity = 1,
     )
 
@@ -59,6 +61,7 @@ class RoomControllerTest : AbstractIntegrationTest() {
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.data.number").value("101"))
             .andExpect(jsonPath("$.data.type").value("PRIVATE"))
+            .andExpect(jsonPath("$.data.gender").value("FEMALE"))
             .andExpect(jsonPath("$.data.capacity").value(1))
     }
 
@@ -115,6 +118,7 @@ class RoomControllerTest : AbstractIntegrationTest() {
         val request = mapOf(
             "number" to "",
             "type" to "PRIVATE",
+            "gender" to "FEMALE",
             "capacity" to 1,
         )
 
@@ -155,6 +159,7 @@ class RoomControllerTest : AbstractIntegrationTest() {
         val room2 = CreateRoomRequest(
             number = "201",
             type = RoomType.SHARED,
+            gender = RoomGender.MALE,
             capacity = 4,
         )
         mockMvc.perform(
@@ -377,6 +382,7 @@ class RoomControllerTest : AbstractIntegrationTest() {
         val updateRequest = UpdateRoomRequest(
             number = "101-Updated",
             type = RoomType.SHARED,
+            gender = RoomGender.MALE,
             capacity = 4,
         )
 
@@ -389,6 +395,7 @@ class RoomControllerTest : AbstractIntegrationTest() {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.data.number").value("101-Updated"))
             .andExpect(jsonPath("$.data.type").value("SHARED"))
+            .andExpect(jsonPath("$.data.gender").value("MALE"))
             .andExpect(jsonPath("$.data.capacity").value(4))
     }
 
@@ -408,6 +415,7 @@ class RoomControllerTest : AbstractIntegrationTest() {
         val updateRequest = UpdateRoomRequest(
             number = "101-Updated",
             type = RoomType.SHARED,
+            gender = RoomGender.FEMALE,
             capacity = 4,
         )
 
@@ -425,6 +433,7 @@ class RoomControllerTest : AbstractIntegrationTest() {
         val updateRequest = UpdateRoomRequest(
             number = "101-Updated",
             type = RoomType.SHARED,
+            gender = RoomGender.FEMALE,
             capacity = 4,
         )
 
@@ -449,7 +458,7 @@ class RoomControllerTest : AbstractIntegrationTest() {
         ).andExpect(status().isCreated)
 
         // Create second room
-        val room2 = CreateRoomRequest(number = "202", type = RoomType.SHARED, capacity = 2)
+        val room2 = CreateRoomRequest(number = "202", type = RoomType.SHARED, gender = RoomGender.MALE, capacity = 2)
         val room2Result = mockMvc.perform(
             post("/api/v1/rooms")
                 .header("Authorization", "Bearer $adminToken")
@@ -461,7 +470,13 @@ class RoomControllerTest : AbstractIntegrationTest() {
             .get("data").get("id").asLong()
 
         // Try to update room2 with room1's number
-        val updateRequest = UpdateRoomRequest(number = "101", type = RoomType.SHARED, capacity = 2)
+        val updateRequest =
+            UpdateRoomRequest(
+                number = "101",
+                type = RoomType.SHARED,
+                gender = RoomGender.FEMALE,
+                capacity = 2,
+            )
 
         mockMvc.perform(
             put("/api/v1/rooms/$room2Id")
@@ -518,7 +533,13 @@ class RoomControllerTest : AbstractIntegrationTest() {
         ).andExpect(status().isCreated)
 
         // Try to reduce capacity to 1 (below the 2 active admissions)
-        val updateRequest = UpdateRoomRequest(number = "101", type = RoomType.PRIVATE, capacity = 1)
+        val updateRequest =
+            UpdateRoomRequest(
+                number = "101",
+                type = RoomType.PRIVATE,
+                gender = RoomGender.FEMALE,
+                capacity = 1,
+            )
 
         mockMvc.perform(
             put("/api/v1/rooms/$roomId")

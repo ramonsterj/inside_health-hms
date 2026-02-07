@@ -183,6 +183,56 @@ const router = createRouter({
           name: 'psychotherapy-category-edit',
           component: () => import('@/views/admin/PsychotherapyCategoryFormView.vue'),
           meta: { requiresPermission: 'psychotherapy-category:update' }
+        },
+        // Admin - Inventory Categories
+        {
+          path: 'admin/inventory-categories',
+          name: 'inventory-categories',
+          component: () => import('@/views/admin/InventoryCategoriesView.vue'),
+          meta: { requiresPermission: 'inventory-category:read' }
+        },
+        {
+          path: 'admin/inventory-categories/new',
+          name: 'inventory-category-create',
+          component: () => import('@/views/admin/InventoryCategoryFormView.vue'),
+          meta: { requiresPermission: 'inventory-category:create' }
+        },
+        {
+          path: 'admin/inventory-categories/:id/edit',
+          name: 'inventory-category-edit',
+          component: () => import('@/views/admin/InventoryCategoryFormView.vue'),
+          meta: { requiresPermission: 'inventory-category:update' }
+        },
+        // Inventory Items (static routes before dynamic)
+        {
+          path: 'inventory',
+          name: 'inventory-items',
+          component: () => import('@/views/inventory/InventoryItemsView.vue'),
+          meta: { requiresPermission: 'inventory-item:read' }
+        },
+        {
+          path: 'inventory/low-stock',
+          name: 'inventory-low-stock',
+          component: () => import('@/views/inventory/LowStockReportView.vue'),
+          meta: { requiresPermission: 'inventory-item:read' }
+        },
+        {
+          path: 'inventory/new',
+          name: 'inventory-item-create',
+          component: () => import('@/views/inventory/InventoryItemFormView.vue'),
+          meta: { requiresPermission: 'inventory-item:create' }
+        },
+        {
+          path: 'inventory/:id',
+          name: 'inventory-item-detail',
+          component: () => import('@/views/inventory/InventoryItemDetailView.vue'),
+          meta: { requiresPermission: 'inventory-item:read' }
+        },
+        {
+          path: 'inventory/:id/edit',
+          name: 'inventory-item-edit',
+          component: () => import('@/views/inventory/InventoryItemFormView.vue'),
+          meta: { requiresPermission: 'inventory-item:update' }
         }
       ]
     },

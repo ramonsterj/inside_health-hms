@@ -21,6 +21,9 @@ import com.insidehealthgt.hms.repository.AuditLogRepository
 import com.insidehealthgt.hms.repository.ClinicalHistoryRepository
 import com.insidehealthgt.hms.repository.DocumentTypeRepository
 import com.insidehealthgt.hms.repository.EmergencyContactRepository
+import com.insidehealthgt.hms.repository.InventoryCategoryRepository
+import com.insidehealthgt.hms.repository.InventoryItemRepository
+import com.insidehealthgt.hms.repository.InventoryMovementRepository
 import com.insidehealthgt.hms.repository.MedicalOrderRepository
 import com.insidehealthgt.hms.repository.NursingNoteRepository
 import com.insidehealthgt.hms.repository.PasswordResetTokenRepository
@@ -91,6 +94,15 @@ abstract class AbstractIntegrationTest {
     protected lateinit var documentTypeRepository: DocumentTypeRepository
 
     @Autowired
+    protected lateinit var inventoryCategoryRepository: InventoryCategoryRepository
+
+    @Autowired
+    protected lateinit var inventoryItemRepository: InventoryItemRepository
+
+    @Autowired
+    protected lateinit var inventoryMovementRepository: InventoryMovementRepository
+
+    @Autowired
     protected lateinit var emergencyContactRepository: EmergencyContactRepository
 
     @Autowired
@@ -150,6 +162,9 @@ abstract class AbstractIntegrationTest {
         // Reference tables (triage_codes, psychotherapy_categories)
         // contain migration-seeded data. Only test-created rows are removed
         // (seeded rows have created_by IS NULL since they come from Flyway).
+        jdbcTemplate.execute("DELETE FROM inventory_movements")
+        jdbcTemplate.execute("DELETE FROM inventory_items")
+        jdbcTemplate.execute("DELETE FROM inventory_categories WHERE created_by IS NOT NULL")
         jdbcTemplate.execute("DELETE FROM nursing_notes")
         jdbcTemplate.execute("DELETE FROM vital_signs")
         jdbcTemplate.execute("DELETE FROM psychotherapy_activities")
