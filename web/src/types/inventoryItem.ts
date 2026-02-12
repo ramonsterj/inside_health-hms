@@ -77,4 +77,5 @@ export interface CreateInventoryMovementRequest {
   type: MovementType
   quantity: number
   notes?: string | null
+  admissionId?: number | null
 }

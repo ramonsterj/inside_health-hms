@@ -690,6 +690,228 @@
         "integer": "El orden de visualizacion debe ser un numero entero",
         "min": "El orden de visualizacion debe ser al menos 0"
       }
+    },
+    "document": {
+      "file": {
+        "required": "Por favor seleccione un archivo para subir.",
+        "size": "El archivo es demasiado grande. Tamano maximo permitido es 25MB.",
+        "type": "Este tipo de archivo no es compatible. Por favor suba un archivo PDF, JPEG o PNG."
+      },
+      "type": {
+        "required": "Por favor seleccione un tipo de documento.",
+        "invalid": "Tipo de documento invalido."
+      },
+      "displayName": {
+        "max": "El nombre a mostrar debe tener 255 caracteres o menos."
+      }
+    },
+    "documentType": {
+      "code": {
+        "required": "El codigo es obligatorio.",
+        "max": "El codigo debe tener 50 caracteres o menos.",
+        "pattern": "El codigo solo debe contener letras mayusculas y guiones bajos."
+      },
+      "name": {
+        "required": "El nombre es obligatorio.",
+        "max": "El nombre debe tener 100 caracteres o menos."
+      },
+      "description": {
+        "max": "La descripcion debe tener 255 caracteres o menos."
+      },
+      "displayOrder": {
+        "required": "El orden de visualizacion es obligatorio.",
+        "invalid": "El orden de visualizacion debe ser un numero.",
+        "integer": "El orden de visualizacion debe ser un numero entero.",
+        "min": "El orden de visualizacion debe ser 0 o mayor."
+      }
+    },
+    "medicalRecord": {
+      "progressNote": {
+        "subjectiveData": {
+          "required": "Los datos subjetivos son requeridos"
+        },
+        "objectiveData": {
+          "required": "Los datos objetivos son requeridos"
+        },
+        "analysis": {
+          "required": "El analisis es requerido"
+        },
+        "actionPlans": {
+          "required": "El plan de accion es requerido"
+        }
+      },
+      "medicalOrder": {
+        "category": {
+          "required": "La categoria es requerida"
+        },
+        "startDate": {
+          "required": "La fecha de inicio es requerida"
+        },
+        "medication": {
+          "max": "El medicamento debe tener como maximo 255 caracteres"
+        },
+        "dosage": {
+          "max": "La dosis debe tener como maximo 100 caracteres"
+        },
+        "route": {
+          "invalid": "Via de administracion invalida"
+        },
+        "frequency": {
+          "max": "La frecuencia debe tener como maximo 100 caracteres"
+        },
+        "schedule": {
+          "max": "El horario debe tener como maximo 255 caracteres"
+        }
+      }
+    },
+    "inventory": {
+      "category": {
+        "name": {
+          "required": "El nombre de la categoría es requerido.",
+          "max": "El nombre debe tener como máximo 100 caracteres."
+        },
+        "description": {
+          "max": "La descripción debe tener como máximo 255 caracteres."
+        },
+        "displayOrder": {
+          "invalid": "El orden de visualización debe ser un número."
+        }
+      },
+      "item": {
+        "name": {
+          "required": "El nombre del artículo es requerido.",
+          "max": "El nombre debe tener como máximo 150 caracteres."
+        },
+        "description": {
+          "max": "La descripción debe tener como máximo 500 caracteres."
+        },
+        "category": {
+          "required": "La categoría es requerida."
+        },
+        "price": {
+          "required": "El precio es requerido.",
+          "min": "El precio debe ser mayor o igual a 0."
+        },
+        "cost": {
+          "required": "El costo es requerido.",
+          "min": "El costo debe ser mayor o igual a 0."
+        },
+        "timeBased": {
+          "required": "La unidad de tiempo y el intervalo son requeridos para precios por tiempo."
+        }
+      },
+      "movement": {
+        "type": {
+          "required": "El tipo de movimiento es requerido."
+        },
+        "quantity": {
+          "required": "La cantidad es requerida.",
+          "positive": "La cantidad debe ser mayor a 0."
+        },
+        "notes": {
+          "max": "Las notas deben tener como máximo 500 caracteres."
+        }
+      },
+      "room": {
+        "price": {
+          "min": "El precio debe ser mayor o igual a 0."
+        },
+        "cost": {
+          "min": "El costo debe ser mayor o igual a 0."
+        }
+      }
+    },
+    "psychotherapy": {
+      "category": {
+        "name": {
+          "required": "El nombre de la categoría es requerido.",
+          "max": "El nombre debe tener como máximo 100 caracteres."
+        },
+        "description": {
+          "max": "La descripción debe tener como máximo 255 caracteres."
+        },
+        "displayOrder": {
+          "invalid": "El orden de visualización debe ser un número.",
+          "integer": "El orden de visualización debe ser un número entero.",
+          "min": "El orden de visualización debe ser 0 o mayor."
+        }
+      },
+      "activity": {
+        "category": {
+          "required": "La categoría es requerida."
+        },
+        "description": {
+          "required": "La descripción es requerida.",
+          "max": "La descripción debe tener como máximo 2000 caracteres."
+        }
+      }
+    },
+    "nursing": {
+      "note": {
+        "description": {
+          "required": "La descripción es requerida.",
+          "max": "La descripción debe tener como máximo 5000 caracteres."
+        }
+      },
+      "vitalSign": {
+        "systolicBp": {
+          "required": "La presión arterial sistólica es requerida.",
+          "integer": "La presión arterial sistólica debe ser un número entero.",
+          "min": "La presión arterial sistólica debe ser al menos 60 mmHg.",
+          "max": "La presión arterial sistólica debe ser como máximo 250 mmHg."
+        },
+        "diastolicBp": {
+          "required": "La presión arterial diastólica es requerida.",
+          "integer": "La presión arterial diastólica debe ser un número entero.",
+          "min": "La presión arterial diastólica debe ser al menos 30 mmHg.",
+          "max": "La presión arterial diastólica debe ser como máximo 150 mmHg."
+        },
+        "bpComparison": "La presión arterial sistólica debe ser mayor que la diastólica.",
+        "heartRate": {
+          "required": "La frecuencia cardiaca es requerida.",
+          "integer": "La frecuencia cardiaca debe ser un número entero.",
+          "min": "La frecuencia cardiaca debe ser al menos 20 lpm.",
+          "max": "La frecuencia cardiaca debe ser como máximo 250 lpm."
+        },
+        "respiratoryRate": {
+          "required": "La frecuencia respiratoria es requerida.",
+          "integer": "La frecuencia respiratoria debe ser un número entero.",
+          "min": "La frecuencia respiratoria debe ser al menos 5 resp/min.",
+          "max": "La frecuencia respiratoria debe ser como máximo 60 resp/min."
+        },
+        "temperature": {
+          "required": "La temperatura es requerida.",
+          "min": "La temperatura debe ser al menos 30.0°C.",
+          "max": "La temperatura debe ser como máximo 45.0°C."
+        },
+        "oxygenSaturation": {
+          "required": "La oximetría es requerida.",
+          "integer": "La oximetría debe ser un número entero.",
+          "min": "La oximetría debe ser al menos 50%.",
+          "max": "La oximetría debe ser como máximo 100%."
+        },
+        "other": {
+          "max": "Las otras observaciones deben tener como máximo 1000 caracteres."
+        },
+        "recordedAt": {
+          "future": "La hora de registro no puede ser en el futuro."
+        }
+      }
+    },
+    "billing": {
+      "chargeTypeRequired": "El tipo de cargo es requerido",
+      "invalidManualChargeType": "Tipo de cargo inválido para entrada manual",
+      "descriptionRequired": "La descripción es requerida",
+      "descriptionMaxLength": "La descripción no debe exceder 500 caracteres",
+      "quantityRequired": "La cantidad es requerida",
+      "quantityMustBeInt": "La cantidad debe ser un número entero",
+      "quantityPositive": "La cantidad debe ser mayor que 0",
+      "unitPriceRequired": "El precio unitario es requerido",
+      "unitPriceNonNegative": "El precio unitario debe ser 0 o mayor",
+      "amountRequired": "El monto es requerido",
+      "amountMustBeNegative": "El monto del ajuste debe ser negativo",
+      "reasonRequired": "La razón es requerida para ajustes",
+      "reasonMaxLength": "La razón no debe exceder 500 caracteres"
     }
   },
   "errors": {
@@ -899,81 +1121,6 @@
     "updated": "Tipo de documento actualizado exitosamente.",
     "deleted": "Tipo de documento eliminado exitosamente.",
     "confirmDelete": "Esta seguro que desea eliminar este tipo de documento?"
-  },
-  "validation": {
-    "document": {
-      "file": {
-        "required": "Por favor seleccione un archivo para subir.",
-        "size": "El archivo es demasiado grande. Tamano maximo permitido es 25MB.",
-        "type": "Este tipo de archivo no es compatible. Por favor suba un archivo PDF, JPEG o PNG."
-      },
-      "type": {
-        "required": "Por favor seleccione un tipo de documento.",
-        "invalid": "Tipo de documento invalido."
-      },
-      "displayName": {
-        "max": "El nombre a mostrar debe tener 255 caracteres o menos."
-      }
-    },
-    "documentType": {
-      "code": {
-        "required": "El codigo es obligatorio.",
-        "max": "El codigo debe tener 50 caracteres o menos.",
-        "pattern": "El codigo solo debe contener letras mayusculas y guiones bajos."
-      },
-      "name": {
-        "required": "El nombre es obligatorio.",
-        "max": "El nombre debe tener 100 caracteres o menos."
-      },
-      "description": {
-        "max": "La descripcion debe tener 255 caracteres o menos."
-      },
-      "displayOrder": {
-        "required": "El orden de visualizacion es obligatorio.",
-        "invalid": "El orden de visualizacion debe ser un numero.",
-        "integer": "El orden de visualizacion debe ser un numero entero.",
-        "min": "El orden de visualizacion debe ser 0 o mayor."
-      }
-    },
-    "medicalRecord": {
-      "progressNote": {
-        "subjectiveData": {
-          "required": "Los datos subjetivos son requeridos"
-        },
-        "objectiveData": {
-          "required": "Los datos objetivos son requeridos"
-        },
-        "analysis": {
-          "required": "El analisis es requerido"
-        },
-        "actionPlans": {
-          "required": "El plan de accion es requerido"
-        }
-      },
-      "medicalOrder": {
-        "category": {
-          "required": "La categoria es requerida"
-        },
-        "startDate": {
-          "required": "La fecha de inicio es requerida"
-        },
-        "medication": {
-          "max": "El medicamento debe tener como maximo 255 caracteres"
-        },
-        "dosage": {
-          "max": "La dosis debe tener como maximo 100 caracteres"
-        },
-        "route": {
-          "invalid": "Via de administracion invalida"
-        },
-        "frequency": {
-          "max": "La frecuencia debe tener como maximo 100 caracteres"
-        },
-        "schedule": {
-          "max": "El horario debe tener como maximo 255 caracteres"
-        }
-      }
-    }
   },
   "medicalRecord": {
     "title": "Expediente Medico",
@@ -1221,142 +1368,6 @@
       "cost": "Costo"
     }
   },
-  "validation": {
-    "inventory": {
-      "category": {
-        "name": {
-          "required": "El nombre de la categoría es requerido.",
-          "max": "El nombre debe tener como máximo 100 caracteres."
-        },
-        "description": {
-          "max": "La descripción debe tener como máximo 255 caracteres."
-        },
-        "displayOrder": {
-          "invalid": "El orden de visualización debe ser un número."
-        }
-      },
-      "item": {
-        "name": {
-          "required": "El nombre del artículo es requerido.",
-          "max": "El nombre debe tener como máximo 150 caracteres."
-        },
-        "description": {
-          "max": "La descripción debe tener como máximo 500 caracteres."
-        },
-        "category": {
-          "required": "La categoría es requerida."
-        },
-        "price": {
-          "required": "El precio es requerido.",
-          "min": "El precio debe ser mayor o igual a 0."
-        },
-        "cost": {
-          "required": "El costo es requerido.",
-          "min": "El costo debe ser mayor o igual a 0."
-        },
-        "timeBased": {
-          "required": "La unidad de tiempo y el intervalo son requeridos para precios por tiempo."
-        }
-      },
-      "movement": {
-        "type": {
-          "required": "El tipo de movimiento es requerido."
-        },
-        "quantity": {
-          "required": "La cantidad es requerida.",
-          "positive": "La cantidad debe ser mayor a 0."
-        },
-        "notes": {
-          "max": "Las notas deben tener como máximo 500 caracteres."
-        }
-      },
-      "room": {
-        "price": {
-          "min": "El precio debe ser mayor o igual a 0."
-        },
-        "cost": {
-          "min": "El costo debe ser mayor o igual a 0."
-        }
-      }
-    },
-    "psychotherapy": {
-      "category": {
-        "name": {
-          "required": "El nombre de la categoría es requerido.",
-          "max": "El nombre debe tener como máximo 100 caracteres."
-        },
-        "description": {
-          "max": "La descripción debe tener como máximo 255 caracteres."
-        },
-        "displayOrder": {
-          "invalid": "El orden de visualización debe ser un número.",
-          "integer": "El orden de visualización debe ser un número entero.",
-          "min": "El orden de visualización debe ser 0 o mayor."
-        }
-      },
-      "activity": {
-        "category": {
-          "required": "La categoría es requerida."
-        },
-        "description": {
-          "required": "La descripción es requerida.",
-          "max": "La descripción debe tener como máximo 2000 caracteres."
-        }
-      }
-    },
-    "nursing": {
-      "note": {
-        "description": {
-          "required": "La descripción es requerida.",
-          "max": "La descripción debe tener como máximo 5000 caracteres."
-        }
-      },
-      "vitalSign": {
-        "systolicBp": {
-          "required": "La presión arterial sistólica es requerida.",
-          "integer": "La presión arterial sistólica debe ser un número entero.",
-          "min": "La presión arterial sistólica debe ser al menos 60 mmHg.",
-          "max": "La presión arterial sistólica debe ser como máximo 250 mmHg."
-        },
-        "diastolicBp": {
-          "required": "La presión arterial diastólica es requerida.",
-          "integer": "La presión arterial diastólica debe ser un número entero.",
-          "min": "La presión arterial diastólica debe ser al menos 30 mmHg.",
-          "max": "La presión arterial diastólica debe ser como máximo 150 mmHg."
-        },
-        "bpComparison": "La presión arterial sistólica debe ser mayor que la diastólica.",
-        "heartRate": {
-          "required": "La frecuencia cardiaca es requerida.",
-          "integer": "La frecuencia cardiaca debe ser un número entero.",
-          "min": "La frecuencia cardiaca debe ser al menos 20 lpm.",
-          "max": "La frecuencia cardiaca debe ser como máximo 250 lpm."
-        },
-        "respiratoryRate": {
-          "required": "La frecuencia respiratoria es requerida.",
-          "integer": "La frecuencia respiratoria debe ser un número entero.",
-          "min": "La frecuencia respiratoria debe ser al menos 5 resp/min.",
-          "max": "La frecuencia respiratoria debe ser como máximo 60 resp/min."
-        },
-        "temperature": {
-          "required": "La temperatura es requerida.",
-          "min": "La temperatura debe ser al menos 30.0°C.",
-          "max": "La temperatura debe ser como máximo 45.0°C."
-        },
-        "oxygenSaturation": {
-          "required": "La oximetría es requerida.",
-          "integer": "La oximetría debe ser un número entero.",
-          "min": "La oximetría debe ser al menos 50%.",
-          "max": "La oximetría debe ser como máximo 100%."
-        },
-        "other": {
-          "max": "Las otras observaciones deben tener como máximo 1000 caracteres."
-        },
-        "recordedAt": {
-          "future": "La hora de registro no puede ser en el futuro."
-        }
-      }
-    }
-  },
   "nursing": {
     "title": "Enfermería",
     "tabs": {
@@ -1436,6 +1447,55 @@
       },
       "editWindowClosed": "Ventana de edición cerrada (límite de 24 horas excedido)",
       "cannotEditOthers": "Solo puede editar registros que usted creó"
+    }
+  },
+  "billing": {
+    "title": "Facturación",
+    "charges": "Cargos",
+    "balance": "Balance",
+    "invoice": "Factura",
+    "newCharge": "Nuevo Cargo",
+    "newAdjustment": "Nuevo Ajuste",
+    "chargeType": "Tipo de Cargo",
+    "selectChargeType": "Seleccionar tipo de cargo",
+    "description": "Descripción",
+    "quantity": "Cantidad",
+    "unitPrice": "Precio Unitario",
+    "totalAmount": "Monto Total",
+    "amount": "Monto",
+    "reason": "Razón",
+    "date": "Fecha",
+    "invoiced": "Facturado",
+    "filterByType": "Filtrar por tipo",
+    "noCharges": "No se encontraron cargos",
+    "chargeCreated": "Cargo creado exitosamente",
+    "adjustmentCreated": "Ajuste creado exitosamente",
+    "adjustmentAmountHint": "Ingrese un monto negativo para créditos/ajustes",
+    "totalBalance": "Balance Total",
+    "dailyTotal": "Total Diario",
+    "cumulative": "Acumulado",
+    "admittedOn": "Admitido el",
+    "generateInvoice": "Generar Factura",
+    "generateInvoiceConfirmation": "¿Está seguro de que desea generar la factura final? Esto consolidará todos los cargos no facturados en una sola factura.",
+    "generate": "Generar",
+    "invoiceGenerated": "Factura generada exitosamente",
+    "noInvoice": "Aún no se ha generado una factura para esta admisión.",
+    "invoiceRequiresDischarged": "El paciente debe ser dado de alta antes de generar una factura.",
+    "chargeSummary": "Resumen de Cargos",
+    "count": "Cantidad",
+    "subtotal": "Subtotal",
+    "chargeCount": "Total de Cargos",
+    "admissionDate": "Fecha de Admisión",
+    "dischargeDate": "Fecha de Alta",
+    "generatedAt": "Generada el",
+    "generatedBy": "Generada por",
+    "chargeTypes": {
+      "MEDICATION": "Medicamento",
+      "ROOM": "Habitación",
+      "PROCEDURE": "Procedimiento",
+      "LAB": "Laboratorio",
+      "SERVICE": "Servicio",
+      "ADJUSTMENT": "Ajuste"
     }
   }
 }

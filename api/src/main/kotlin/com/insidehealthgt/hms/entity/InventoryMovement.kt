@@ -35,4 +35,8 @@ class InventoryMovement(
     @Column(length = 500)
     var notes: String? = null,
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "admission_id")
+    var admission: Admission? = null,
+
 ) : BaseEntity()

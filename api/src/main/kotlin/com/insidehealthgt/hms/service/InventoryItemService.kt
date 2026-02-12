@@ -9,12 +9,15 @@ import com.insidehealthgt.hms.entity.InventoryItem
 import com.insidehealthgt.hms.entity.InventoryMovement
 import com.insidehealthgt.hms.entity.MovementType
 import com.insidehealthgt.hms.entity.PricingType
+import com.insidehealthgt.hms.event.InventoryDispensedEvent
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
+import com.insidehealthgt.hms.repository.AdmissionRepository
 import com.insidehealthgt.hms.repository.InventoryCategoryRepository
 import com.insidehealthgt.hms.repository.InventoryItemRepository
 import com.insidehealthgt.hms.repository.InventoryMovementRepository
 import com.insidehealthgt.hms.repository.UserRepository
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -27,6 +30,8 @@ class InventoryItemService(
     private val categoryRepository: InventoryCategoryRepository,
     private val movementRepository: InventoryMovementRepository,
     private val userRepository: UserRepository,
+    private val admissionRepository: AdmissionRepository,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
 
     @Transactional(readOnly = true)
@@ -120,6 +125,11 @@ class InventoryItemService(
         val actualNewQuantity = itemRepository.findCurrentQuantity(itemId)
         val previousQuantity = actualNewQuantity - delta
 
+        val admission = request.admissionId?.let { admissionId ->
+            admissionRepository.findById(admissionId)
+                .orElseThrow { BadRequestException("Admission not found with id: $admissionId") }
+        }
+
         val movement = InventoryMovement(
             item = item,
             movementType = request.type,
@@ -127,9 +137,24 @@ class InventoryItemService(
             previousQuantity = previousQuantity,
             newQuantity = actualNewQuantity,
             notes = request.notes,
+            admission = admission,
         )
 
         val savedMovement = movementRepository.save(movement)
+
+        // Publish event for billing when dispensing to a patient
+        if (request.type == MovementType.EXIT && admission != null) {
+            eventPublisher.publishEvent(
+                InventoryDispensedEvent(
+                    admissionId = admission.id!!,
+                    inventoryItemId = item.id!!,
+                    itemName = item.name,
+                    quantity = request.quantity,
+                    unitPrice = item.price,
+                ),
+            )
+        }
+
         val createdByUser = savedMovement.createdBy?.let { userRepository.findById(it).orElse(null) }
         return InventoryMovementResponse.from(savedMovement, createdByUser)
     }

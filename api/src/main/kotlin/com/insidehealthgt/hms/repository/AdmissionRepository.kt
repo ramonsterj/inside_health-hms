@@ -113,6 +113,15 @@ interface AdmissionRepository : JpaRepository<Admission, Long> {
     )
     fun existsActiveByPatientId(@Param("patientId") patientId: Long): Boolean
 
+    @Query(
+        """
+        SELECT a FROM Admission a
+        LEFT JOIN FETCH a.room
+        WHERE a.status = :status AND a.deletedAt IS NULL
+        """,
+    )
+    fun findAllByStatusWithRoom(@Param("status") status: AdmissionStatus): List<Admission>
+
     /**
      * Delete all admissions including soft-deleted ones (for test cleanup).
      */

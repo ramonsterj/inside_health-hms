@@ -126,7 +126,7 @@ com.insidehealthgt.hms/
 **Location**: `src/main/resources/db/migration/`
 **Naming**: `V{version}__{description}.sql`
 
-**Current migrations**: V001-V050 (users, audit_logs, roles/permissions, password_reset_tokens, locale, patients, admissions, file storage, admission types, document types, clinical histories, progress notes, medical orders, psychotherapy categories, psychotherapy activities, nursing notes, vital signs, inventory categories, inventory items, inventory movements, inventory permissions, room pricing)
+**Current migrations**: V001-V062 (users, audit_logs, roles/permissions, password_reset_tokens, locale, patients, admissions, file storage, admission types, document types, clinical histories, progress notes, medical orders, psychotherapy categories, psychotherapy activities, nursing notes, vital signs, inventory categories, inventory items, inventory movements, inventory permissions, room pricing, patient charges, invoices, billing permissions, billing adjustments)
 
 ```sql
 -- Example: Always include BaseEntity fields in new tables
@@ -303,6 +303,7 @@ class GlobalExceptionHandler {
 - ✅ Psychotherapeutic Activities (activity registration for hospitalized patients, category management)
 - ✅ Nursing Module (nursing notes, vital signs with 24h edit window, discharge protection)
 - ✅ Inventory Management (categories, items with flat/time-based pricing, stock movements, low stock report, room pricing)
+- ✅ Hospital Billing System (real-time charge capture, scheduled daily room charges, daily balance, adjustments, invoice generation at discharge, event-driven integration)
 
 ### Frontend (Complete)
 - ✅ Vue 3.5 + TypeScript 5.9 + Vite 7.x
@@ -317,6 +318,7 @@ class GlobalExceptionHandler {
 - ✅ Patient Admission UI (multi-step wizard, admin CRUD for triage codes and rooms)
 - ✅ Psychotherapeutic Activities UI (activity list with sorting, admin category management)
 - ✅ Inventory Management UI (item list with filtering/search, category admin CRUD, movement dialog, low stock report, room pricing)
+- ✅ Billing UI (charge list with filtering, balance view with daily breakdown, invoice view with charge summary, create charge/adjustment dialogs)
 
 ### Security Tooling
 - ✅ Detekt (Kotlin static analysis)
@@ -381,4 +383,4 @@ See **ARCHITECTURE.md** for full documentation, **VERSION_UPDATES.md** for versi
 
 ---
 
-**Last Updated**: February 5, 2026
+**Last Updated**: February 12, 2026

@@ -24,9 +24,11 @@ import com.insidehealthgt.hms.repository.EmergencyContactRepository
 import com.insidehealthgt.hms.repository.InventoryCategoryRepository
 import com.insidehealthgt.hms.repository.InventoryItemRepository
 import com.insidehealthgt.hms.repository.InventoryMovementRepository
+import com.insidehealthgt.hms.repository.InvoiceRepository
 import com.insidehealthgt.hms.repository.MedicalOrderRepository
 import com.insidehealthgt.hms.repository.NursingNoteRepository
 import com.insidehealthgt.hms.repository.PasswordResetTokenRepository
+import com.insidehealthgt.hms.repository.PatientChargeRepository
 import com.insidehealthgt.hms.repository.PatientIdDocumentRepository
 import com.insidehealthgt.hms.repository.PatientRepository
 import com.insidehealthgt.hms.repository.PermissionRepository
@@ -103,6 +105,9 @@ abstract class AbstractIntegrationTest {
     protected lateinit var inventoryMovementRepository: InventoryMovementRepository
 
     @Autowired
+    protected lateinit var invoiceRepository: InvoiceRepository
+
+    @Autowired
     protected lateinit var emergencyContactRepository: EmergencyContactRepository
 
     @Autowired
@@ -113,6 +118,9 @@ abstract class AbstractIntegrationTest {
 
     @Autowired
     protected lateinit var passwordResetTokenRepository: PasswordResetTokenRepository
+
+    @Autowired
+    protected lateinit var patientChargeRepository: PatientChargeRepository
 
     @Autowired
     protected lateinit var patientIdDocumentRepository: PatientIdDocumentRepository
@@ -162,6 +170,8 @@ abstract class AbstractIntegrationTest {
         // Reference tables (triage_codes, psychotherapy_categories)
         // contain migration-seeded data. Only test-created rows are removed
         // (seeded rows have created_by IS NULL since they come from Flyway).
+        jdbcTemplate.execute("DELETE FROM patient_charges")
+        jdbcTemplate.execute("DELETE FROM invoices")
         jdbcTemplate.execute("DELETE FROM inventory_movements")
         jdbcTemplate.execute("DELETE FROM inventory_items")
         jdbcTemplate.execute("DELETE FROM inventory_categories WHERE created_by IS NOT NULL")
