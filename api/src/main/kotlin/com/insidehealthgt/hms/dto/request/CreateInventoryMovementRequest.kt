@@ -15,4 +15,6 @@ data class CreateInventoryMovementRequest(
 
     @field:Size(max = 500, message = "Notes must not exceed 500 characters")
     val notes: String? = null,
+
+    val admissionId: Long? = null,
 )

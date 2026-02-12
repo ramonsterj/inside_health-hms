@@ -690,6 +690,228 @@
         "integer": "Display order must be an integer",
         "min": "Display order must be at least 0"
       }
+    },
+    "document": {
+      "file": {
+        "required": "Please select a file to upload.",
+        "size": "The file is too large. Maximum allowed size is 25MB.",
+        "type": "This file type is not supported. Please upload a PDF, JPEG, or PNG file."
+      },
+      "type": {
+        "required": "Please select a document type.",
+        "invalid": "Invalid document type."
+      },
+      "displayName": {
+        "max": "Display name must be 255 characters or less."
+      }
+    },
+    "documentType": {
+      "code": {
+        "required": "Code is required.",
+        "max": "Code must be 50 characters or less.",
+        "pattern": "Code must contain only uppercase letters and underscores."
+      },
+      "name": {
+        "required": "Name is required.",
+        "max": "Name must be 100 characters or less."
+      },
+      "description": {
+        "max": "Description must be 255 characters or less."
+      },
+      "displayOrder": {
+        "required": "Display order is required.",
+        "invalid": "Display order must be a number.",
+        "integer": "Display order must be a whole number.",
+        "min": "Display order must be 0 or greater."
+      }
+    },
+    "medicalRecord": {
+      "progressNote": {
+        "subjectiveData": {
+          "required": "Subjective data is required"
+        },
+        "objectiveData": {
+          "required": "Objective data is required"
+        },
+        "analysis": {
+          "required": "Analysis is required"
+        },
+        "actionPlans": {
+          "required": "Action plan is required"
+        }
+      },
+      "medicalOrder": {
+        "category": {
+          "required": "Category is required"
+        },
+        "startDate": {
+          "required": "Start date is required"
+        },
+        "medication": {
+          "max": "Medication must be at most 255 characters"
+        },
+        "dosage": {
+          "max": "Dosage must be at most 100 characters"
+        },
+        "route": {
+          "invalid": "Invalid administration route"
+        },
+        "frequency": {
+          "max": "Frequency must be at most 100 characters"
+        },
+        "schedule": {
+          "max": "Schedule must be at most 255 characters"
+        }
+      }
+    },
+    "inventory": {
+      "category": {
+        "name": {
+          "required": "Category name is required.",
+          "max": "Name must be at most 100 characters."
+        },
+        "description": {
+          "max": "Description must be at most 255 characters."
+        },
+        "displayOrder": {
+          "invalid": "Display order must be a number."
+        }
+      },
+      "item": {
+        "name": {
+          "required": "Item name is required.",
+          "max": "Name must be at most 150 characters."
+        },
+        "description": {
+          "max": "Description must be at most 500 characters."
+        },
+        "category": {
+          "required": "Category is required."
+        },
+        "price": {
+          "required": "Price is required.",
+          "min": "Price must be greater than or equal to 0."
+        },
+        "cost": {
+          "required": "Cost is required.",
+          "min": "Cost must be greater than or equal to 0."
+        },
+        "timeBased": {
+          "required": "Time unit and interval are required for time-based pricing."
+        }
+      },
+      "movement": {
+        "type": {
+          "required": "Movement type is required."
+        },
+        "quantity": {
+          "required": "Quantity is required.",
+          "positive": "Quantity must be greater than 0."
+        },
+        "notes": {
+          "max": "Notes must be at most 500 characters."
+        }
+      },
+      "room": {
+        "price": {
+          "min": "Price must be greater than or equal to 0."
+        },
+        "cost": {
+          "min": "Cost must be greater than or equal to 0."
+        }
+      }
+    },
+    "psychotherapy": {
+      "category": {
+        "name": {
+          "required": "Category name is required.",
+          "max": "Name must be at most 100 characters."
+        },
+        "description": {
+          "max": "Description must be at most 255 characters."
+        },
+        "displayOrder": {
+          "invalid": "Display order must be a number.",
+          "integer": "Display order must be a whole number.",
+          "min": "Display order must be 0 or greater."
+        }
+      },
+      "activity": {
+        "category": {
+          "required": "Category is required."
+        },
+        "description": {
+          "required": "Description is required.",
+          "max": "Description must be at most 2000 characters."
+        }
+      }
+    },
+    "nursing": {
+      "note": {
+        "description": {
+          "required": "Description is required.",
+          "max": "Description must be at most 5000 characters."
+        }
+      },
+      "vitalSign": {
+        "systolicBp": {
+          "required": "Systolic blood pressure is required.",
+          "integer": "Systolic blood pressure must be a whole number.",
+          "min": "Systolic blood pressure must be at least 60 mmHg.",
+          "max": "Systolic blood pressure must be at most 250 mmHg."
+        },
+        "diastolicBp": {
+          "required": "Diastolic blood pressure is required.",
+          "integer": "Diastolic blood pressure must be a whole number.",
+          "min": "Diastolic blood pressure must be at least 30 mmHg.",
+          "max": "Diastolic blood pressure must be at most 150 mmHg."
+        },
+        "bpComparison": "Systolic blood pressure must be greater than diastolic.",
+        "heartRate": {
+          "required": "Heart rate is required.",
+          "integer": "Heart rate must be a whole number.",
+          "min": "Heart rate must be at least 20 bpm.",
+          "max": "Heart rate must be at most 250 bpm."
+        },
+        "respiratoryRate": {
+          "required": "Respiratory rate is required.",
+          "integer": "Respiratory rate must be a whole number.",
+          "min": "Respiratory rate must be at least 5 breaths/min.",
+          "max": "Respiratory rate must be at most 60 breaths/min."
+        },
+        "temperature": {
+          "required": "Temperature is required.",
+          "min": "Temperature must be at least 30.0°C.",
+          "max": "Temperature must be at most 45.0°C."
+        },
+        "oxygenSaturation": {
+          "required": "Oxygen saturation is required.",
+          "integer": "Oxygen saturation must be a whole number.",
+          "min": "Oxygen saturation must be at least 50%.",
+          "max": "Oxygen saturation must be at most 100%."
+        },
+        "other": {
+          "max": "Other observations must be at most 1000 characters."
+        },
+        "recordedAt": {
+          "future": "Recorded time cannot be in the future."
+        }
+      }
+    },
+    "billing": {
+      "chargeTypeRequired": "Charge type is required",
+      "invalidManualChargeType": "Invalid charge type for manual entry",
+      "descriptionRequired": "Description is required",
+      "descriptionMaxLength": "Description must not exceed 500 characters",
+      "quantityRequired": "Quantity is required",
+      "quantityMustBeInt": "Quantity must be a whole number",
+      "quantityPositive": "Quantity must be greater than 0",
+      "unitPriceRequired": "Unit price is required",
+      "unitPriceNonNegative": "Unit price must be 0 or greater",
+      "amountRequired": "Amount is required",
+      "amountMustBeNegative": "Adjustment amount must be negative",
+      "reasonRequired": "Reason is required for adjustments",
+      "reasonMaxLength": "Reason must not exceed 500 characters"
     }
   },
   "errors": {
@@ -899,81 +1121,6 @@
     "updated": "Document type updated successfully.",
     "deleted": "Document type deleted successfully.",
     "confirmDelete": "Are you sure you want to delete this document type?"
-  },
-  "validation": {
-    "document": {
-      "file": {
-        "required": "Please select a file to upload.",
-        "size": "The file is too large. Maximum allowed size is 25MB.",
-        "type": "This file type is not supported. Please upload a PDF, JPEG, or PNG file."
-      },
-      "type": {
-        "required": "Please select a document type.",
-        "invalid": "Invalid document type."
-      },
-      "displayName": {
-        "max": "Display name must be 255 characters or less."
-      }
-    },
-    "documentType": {
-      "code": {
-        "required": "Code is required.",
-        "max": "Code must be 50 characters or less.",
-        "pattern": "Code must contain only uppercase letters and underscores."
-      },
-      "name": {
-        "required": "Name is required.",
-        "max": "Name must be 100 characters or less."
-      },
-      "description": {
-        "max": "Description must be 255 characters or less."
-      },
-      "displayOrder": {
-        "required": "Display order is required.",
-        "invalid": "Display order must be a number.",
-        "integer": "Display order must be a whole number.",
-        "min": "Display order must be 0 or greater."
-      }
-    },
-    "medicalRecord": {
-      "progressNote": {
-        "subjectiveData": {
-          "required": "Subjective data is required"
-        },
-        "objectiveData": {
-          "required": "Objective data is required"
-        },
-        "analysis": {
-          "required": "Analysis is required"
-        },
-        "actionPlans": {
-          "required": "Action plan is required"
-        }
-      },
-      "medicalOrder": {
-        "category": {
-          "required": "Category is required"
-        },
-        "startDate": {
-          "required": "Start date is required"
-        },
-        "medication": {
-          "max": "Medication must be at most 255 characters"
-        },
-        "dosage": {
-          "max": "Dosage must be at most 100 characters"
-        },
-        "route": {
-          "invalid": "Invalid administration route"
-        },
-        "frequency": {
-          "max": "Frequency must be at most 100 characters"
-        },
-        "schedule": {
-          "max": "Schedule must be at most 255 characters"
-        }
-      }
-    }
   },
   "medicalRecord": {
     "title": "Medical Record",
@@ -1221,142 +1368,6 @@
       "cost": "Cost"
     }
   },
-  "validation": {
-    "inventory": {
-      "category": {
-        "name": {
-          "required": "Category name is required.",
-          "max": "Name must be at most 100 characters."
-        },
-        "description": {
-          "max": "Description must be at most 255 characters."
-        },
-        "displayOrder": {
-          "invalid": "Display order must be a number."
-        }
-      },
-      "item": {
-        "name": {
-          "required": "Item name is required.",
-          "max": "Name must be at most 150 characters."
-        },
-        "description": {
-          "max": "Description must be at most 500 characters."
-        },
-        "category": {
-          "required": "Category is required."
-        },
-        "price": {
-          "required": "Price is required.",
-          "min": "Price must be greater than or equal to 0."
-        },
-        "cost": {
-          "required": "Cost is required.",
-          "min": "Cost must be greater than or equal to 0."
-        },
-        "timeBased": {
-          "required": "Time unit and interval are required for time-based pricing."
-        }
-      },
-      "movement": {
-        "type": {
-          "required": "Movement type is required."
-        },
-        "quantity": {
-          "required": "Quantity is required.",
-          "positive": "Quantity must be greater than 0."
-        },
-        "notes": {
-          "max": "Notes must be at most 500 characters."
-        }
-      },
-      "room": {
-        "price": {
-          "min": "Price must be greater than or equal to 0."
-        },
-        "cost": {
-          "min": "Cost must be greater than or equal to 0."
-        }
-      }
-    },
-    "psychotherapy": {
-      "category": {
-        "name": {
-          "required": "Category name is required.",
-          "max": "Name must be at most 100 characters."
-        },
-        "description": {
-          "max": "Description must be at most 255 characters."
-        },
-        "displayOrder": {
-          "invalid": "Display order must be a number.",
-          "integer": "Display order must be a whole number.",
-          "min": "Display order must be 0 or greater."
-        }
-      },
-      "activity": {
-        "category": {
-          "required": "Category is required."
-        },
-        "description": {
-          "required": "Description is required.",
-          "max": "Description must be at most 2000 characters."
-        }
-      }
-    },
-    "nursing": {
-      "note": {
-        "description": {
-          "required": "Description is required.",
-          "max": "Description must be at most 5000 characters."
-        }
-      },
-      "vitalSign": {
-        "systolicBp": {
-          "required": "Systolic blood pressure is required.",
-          "integer": "Systolic blood pressure must be a whole number.",
-          "min": "Systolic blood pressure must be at least 60 mmHg.",
-          "max": "Systolic blood pressure must be at most 250 mmHg."
-        },
-        "diastolicBp": {
-          "required": "Diastolic blood pressure is required.",
-          "integer": "Diastolic blood pressure must be a whole number.",
-          "min": "Diastolic blood pressure must be at least 30 mmHg.",
-          "max": "Diastolic blood pressure must be at most 150 mmHg."
-        },
-        "bpComparison": "Systolic blood pressure must be greater than diastolic.",
-        "heartRate": {
-          "required": "Heart rate is required.",
-          "integer": "Heart rate must be a whole number.",
-          "min": "Heart rate must be at least 20 bpm.",
-          "max": "Heart rate must be at most 250 bpm."
-        },
-        "respiratoryRate": {
-          "required": "Respiratory rate is required.",
-          "integer": "Respiratory rate must be a whole number.",
-          "min": "Respiratory rate must be at least 5 breaths/min.",
-          "max": "Respiratory rate must be at most 60 breaths/min."
-        },
-        "temperature": {
-          "required": "Temperature is required.",
-          "min": "Temperature must be at least 30.0°C.",
-          "max": "Temperature must be at most 45.0°C."
-        },
-        "oxygenSaturation": {
-          "required": "Oxygen saturation is required.",
-          "integer": "Oxygen saturation must be a whole number.",
-          "min": "Oxygen saturation must be at least 50%.",
-          "max": "Oxygen saturation must be at most 100%."
-        },
-        "other": {
-          "max": "Other observations must be at most 1000 characters."
-        },
-        "recordedAt": {
-          "future": "Recorded time cannot be in the future."
-        }
-      }
-    }
-  },
   "nursing": {
     "title": "Nursing",
     "tabs": {
@@ -1436,6 +1447,55 @@
       },
       "editWindowClosed": "Edit window closed (24-hour limit exceeded)",
       "cannotEditOthers": "You can only edit records you created"
+    }
+  },
+  "billing": {
+    "title": "Billing",
+    "charges": "Charges",
+    "balance": "Balance",
+    "invoice": "Invoice",
+    "newCharge": "New Charge",
+    "newAdjustment": "New Adjustment",
+    "chargeType": "Charge Type",
+    "selectChargeType": "Select charge type",
+    "description": "Description",
+    "quantity": "Quantity",
+    "unitPrice": "Unit Price",
+    "totalAmount": "Total Amount",
+    "amount": "Amount",
+    "reason": "Reason",
+    "date": "Date",
+    "invoiced": "Invoiced",
+    "filterByType": "Filter by type",
+    "noCharges": "No charges found",
+    "chargeCreated": "Charge created successfully",
+    "adjustmentCreated": "Adjustment created successfully",
+    "adjustmentAmountHint": "Enter a negative amount for credits/adjustments",
+    "totalBalance": "Total Balance",
+    "dailyTotal": "Daily Total",
+    "cumulative": "Cumulative",
+    "admittedOn": "Admitted on",
+    "generateInvoice": "Generate Invoice",
+    "generateInvoiceConfirmation": "Are you sure you want to generate the final invoice? This will consolidate all unbilled charges into a single invoice.",
+    "generate": "Generate",
+    "invoiceGenerated": "Invoice generated successfully",
+    "noInvoice": "No invoice has been generated for this admission yet.",
+    "invoiceRequiresDischarged": "The patient must be discharged before generating an invoice.",
+    "chargeSummary": "Charge Summary",
+    "count": "Count",
+    "subtotal": "Subtotal",
+    "chargeCount": "Total Charges",
+    "admissionDate": "Admission Date",
+    "dischargeDate": "Discharge Date",
+    "generatedAt": "Generated At",
+    "generatedBy": "Generated By",
+    "chargeTypes": {
+      "MEDICATION": "Medication",
+      "ROOM": "Room",
+      "PROCEDURE": "Procedure",
+      "LAB": "Lab",
+      "SERVICE": "Service",
+      "ADJUSTMENT": "Adjustment"
     }
   }
 }

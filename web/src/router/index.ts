@@ -108,6 +108,25 @@ const router = createRouter({
           component: () => import('@/views/admissions/AdmissionFormView.vue'),
           meta: { requiresPermission: 'admission:update' }
         },
+        // Billing routes
+        {
+          path: 'admissions/:id/charges',
+          name: 'admission-charges',
+          component: () => import('@/views/billing/AdmissionCharges.vue'),
+          meta: { requiresPermission: 'billing:read' }
+        },
+        {
+          path: 'admissions/:id/balance',
+          name: 'admission-balance',
+          component: () => import('@/views/billing/AdmissionBalance.vue'),
+          meta: { requiresPermission: 'billing:read' }
+        },
+        {
+          path: 'admissions/:id/invoice',
+          name: 'admission-invoice',
+          component: () => import('@/views/billing/InvoiceView.vue'),
+          meta: { requiresPermission: 'invoice:read' }
+        },
         // Admin - Triage Codes
         {
           path: 'admin/triage-codes',

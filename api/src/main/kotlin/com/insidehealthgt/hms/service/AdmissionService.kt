@@ -13,6 +13,7 @@ import com.insidehealthgt.hms.entity.AdmissionConsentDocument
 import com.insidehealthgt.hms.entity.AdmissionConsultingPhysician
 import com.insidehealthgt.hms.entity.AdmissionStatus
 import com.insidehealthgt.hms.entity.AdmissionType
+import com.insidehealthgt.hms.event.PatientDischargedEvent
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
 import com.insidehealthgt.hms.repository.AdmissionConsentDocumentRepository
@@ -22,6 +23,7 @@ import com.insidehealthgt.hms.repository.PatientRepository
 import com.insidehealthgt.hms.repository.RoomRepository
 import com.insidehealthgt.hms.repository.TriageCodeRepository
 import com.insidehealthgt.hms.repository.UserRepository
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -40,6 +42,7 @@ class AdmissionService(
     private val roomRepository: RoomRepository,
     private val userRepository: UserRepository,
     private val fileStorageService: FileStorageService,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
 
     @Transactional(readOnly = true)
@@ -208,6 +211,14 @@ class AdmissionService(
         admission.dischargeDate = LocalDateTime.now()
 
         val savedAdmission = admissionRepository.save(admission)
+
+        eventPublisher.publishEvent(
+            PatientDischargedEvent(
+                admissionId = savedAdmission.id!!,
+                patientId = savedAdmission.patient.id!!,
+            ),
+        )
+
         return buildAdmissionDetailResponse(savedAdmission)
     }
 

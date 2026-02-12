@@ -850,7 +850,7 @@ test.describe('Psychotherapy Activities - Hospitalization', () => {
     await page.getByRole('button', { name: /Save/i }).click()
 
     // Should show validation error for category
-    await expect(page.getByText(/Category is required|La categoría es requerida/i)).toBeVisible()
+    await expect(page.getByText(/Category is required\.?|La categoría es requerida\.?/i)).toBeVisible()
   })
 
   test('shows validation error when description is empty', async ({ page }) => {
@@ -896,7 +896,7 @@ test.describe('Psychotherapy Activities - Hospitalization', () => {
     await page.getByRole('button', { name: /Save/i }).click()
 
     // Should show validation error for description
-    await expect(page.getByText(/Description is required|La descripción es requerida/i)).toBeVisible()
+    await expect(page.getByText(/Description is required\.?|La descripción es requerida\.?/i)).toBeVisible()
   })
 
   // Note: Locale-specific tests are covered implicitly through regex patterns

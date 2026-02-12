@@ -33,6 +33,8 @@ const admission = computed(() => admissionStore.currentAdmission)
 
 const canUpdate = computed(() => authStore.hasPermission('admission:update'))
 const canDelete = computed(() => authStore.hasPermission('admission:delete'))
+const canViewBilling = computed(() => authStore.hasPermission('billing:read'))
+const canViewInvoice = computed(() => authStore.hasPermission('invoice:read'))
 const canViewMedicalRecord = computed(
   () =>
     authStore.hasPermission('clinical-history:read') ||
@@ -298,6 +300,37 @@ function handleDocumentUploaded() {
         @remove-consulting-physician="confirmRemoveConsultingPhysicianById"
       />
 
+      <!-- Billing Section -->
+      <Card v-if="canViewBilling" class="full-width">
+        <template #title>{{ t('billing.title') }}</template>
+        <template #content>
+          <div class="billing-links">
+            <Button
+              icon="pi pi-list"
+              :label="t('billing.charges')"
+              severity="secondary"
+              outlined
+              @click="router.push({ name: 'admission-charges', params: { id: admissionId } })"
+            />
+            <Button
+              icon="pi pi-chart-bar"
+              :label="t('billing.balance')"
+              severity="secondary"
+              outlined
+              @click="router.push({ name: 'admission-balance', params: { id: admissionId } })"
+            />
+            <Button
+              v-if="canViewInvoice"
+              icon="pi pi-file"
+              :label="t('billing.invoice')"
+              severity="secondary"
+              outlined
+              @click="router.push({ name: 'admission-invoice', params: { id: admissionId } })"
+            />
+          </div>
+        </template>
+      </Card>
+
       <Card class="full-width">
         <template #title>{{ t('common.auditInfo') }}</template>
         <template #content>
@@ -407,6 +440,12 @@ function handleDocumentUploaded() {
 
 .info-value {
   font-weight: 500;
+}
+
+.billing-links {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .triage-badge {

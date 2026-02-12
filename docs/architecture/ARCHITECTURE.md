@@ -39,17 +39,74 @@ This section documents what is currently implemented in the template.
 
 All entities inherit from `BaseEntity` (providing `id`, `createdAt`, `updatedAt`, `createdBy`, `updatedBy`, `deletedAt`) and use `@SQLRestriction("deleted_at IS NULL")` for automatic soft-delete filtering.
 
+**User & Authentication:**
+
 | Entity | Table | Key Fields | Relationships |
 |--------|-------|------------|---------------|
-| **User** | `users` | `username`, `email`, `passwordHash`, `firstName`, `lastName`, `status`, `emailVerified`, `localePreference` | ManyToMany → Role |
+| **User** | `users` | `username`, `email`, `passwordHash`, `firstName`, `lastName`, `status`, `emailVerified`, `localePreference`, `salutation`, `mustChangePassword` | ManyToMany → Role, OneToMany → UserPhoneNumber |
+| **UserPhoneNumber** | `user_phone_numbers` | `phoneNumber`, `phoneType`, `isPrimary` | ManyToOne → User |
 | **Role** | `roles` | `code`, `name`, `description`, `isSystem` | ManyToMany → Permission, User |
 | **Permission** | `permissions` | `code`, `name`, `description`, `resource`, `action` | ManyToMany → Role |
 | **RefreshToken** | `refresh_tokens` | `token`, `expiresAt` | ManyToOne → User |
 | **PasswordResetToken** | `password_reset_tokens` | `token`, `expiresAt` | ManyToOne → User |
-| **AuditLog** | `audit_logs` | `userId`, `username`, `action`, `entityType`, `entityId`, `oldValues` (JSONB), `newValues` (JSONB), `ipAddress`, `timestamp` | None (standalone) |
+| **AuditLog** | `audit_logs` | `userId`, `username`, `action`, `entityType`, `entityId`, `oldValues` (JSONB), `newValues` (JSONB), `ipAddress`, `changedFields`, `timestamp` | None (standalone, does not extend BaseEntity) |
+
+**Patient Management:**
+
+| Entity | Table | Key Fields | Relationships |
+|--------|-------|------------|---------------|
+| **Patient** | `patients` | `firstName`, `lastName`, `age`, `sex`, `gender`, `maritalStatus`, `religion`, `educationLevel`, `occupation`, `address`, `email`, `idDocumentNumber`, `notes` | OneToMany → EmergencyContact, OneToOne → PatientIdDocument, OneToMany → Admission |
+| **EmergencyContact** | `emergency_contacts` | `name`, `relationship`, `phone` | ManyToOne → Patient |
+| **PatientIdDocument** | `patient_id_documents` | `fileName`, `contentType`, `fileSize`, `storagePath` | OneToOne → Patient |
+
+**Admission Management:**
+
+| Entity | Table | Key Fields | Relationships |
+|--------|-------|------------|---------------|
+| **Admission** | `admissions` | `admissionDate`, `dischargeDate`, `status`, `type`, `inventory` | ManyToOne → Patient, TriageCode, Room, User (treating physician); OneToOne → AdmissionConsentDocument, ClinicalHistory; OneToMany → AdmissionConsultingPhysician, AdmissionDocument, ProgressNote, MedicalOrder, PsychotherapyActivity, NursingNote, VitalSign, PatientCharge, Invoice |
+| **TriageCode** | `triage_codes` | `code`, `color`, `description`, `displayOrder` | None |
+| **Room** | `rooms` | `number`, `type`, `gender`, `capacity`, `price`, `cost` | None |
+| **AdmissionConsentDocument** | `admission_consent_documents` | `fileName`, `contentType`, `fileSize`, `storagePath` | OneToOne → Admission |
+| **AdmissionConsultingPhysician** | `admission_consulting_physicians` | `reason`, `requestedDate` | ManyToOne → Admission, User (physician) |
+| **DocumentType** | `document_types` | `code`, `name`, `description`, `displayOrder` | None |
+| **AdmissionDocument** | `admission_documents` | `displayName`, `fileName`, `contentType`, `fileSize`, `storagePath`, `thumbnailPath` | ManyToOne → Admission, DocumentType |
+
+**Medical Records:**
+
+| Entity | Table | Key Fields | Relationships |
+|--------|-------|------------|---------------|
+| **ClinicalHistory** | `clinical_histories` | 21 TEXT fields (reasonForAdmission, historyOfPresentIllness, psychiatricHistory, medicalHistory, familyHistory, etc.) | OneToOne → Admission |
+| **ProgressNote** | `progress_notes` | `subjectiveData`, `objectiveData`, `analysis`, `actionPlans` (SOAP format) | ManyToOne → Admission |
+| **MedicalOrder** | `medical_orders` | `category`, `startDate`, `endDate`, `medication`, `dosage`, `route`, `frequency`, `schedule`, `observations`, `status`, `discontinuedAt`, `discontinuedBy` | ManyToOne → Admission |
+
+**Psychotherapy:**
+
+| Entity | Table | Key Fields | Relationships |
+|--------|-------|------------|---------------|
+| **PsychotherapyCategory** | `psychotherapy_categories` | `name`, `description`, `displayOrder`, `active` | None |
+| **PsychotherapyActivity** | `psychotherapy_activities` | `description` | ManyToOne → Admission, PsychotherapyCategory |
+
+**Nursing:**
+
+| Entity | Table | Key Fields | Relationships |
+|--------|-------|------------|---------------|
+| **NursingNote** | `nursing_notes` | `description` | ManyToOne → Admission |
+| **VitalSign** | `vital_signs` | `recordedAt`, `systolicBp`, `diastolicBp`, `heartRate`, `respiratoryRate`, `temperature`, `oxygenSaturation`, `other` | ManyToOne → Admission |
+
+**Inventory Management:**
+
+| Entity | Table | Key Fields | Relationships |
+|--------|-------|------------|---------------|
 | **InventoryCategory** | `inventory_categories` | `name`, `description`, `displayOrder`, `active` | None |
 | **InventoryItem** | `inventory_items` | `name`, `description`, `price`, `cost`, `quantity`, `restockLevel`, `pricingType`, `timeUnit`, `timeInterval`, `active` | ManyToOne → InventoryCategory |
-| **InventoryMovement** | `inventory_movements` | `movementType`, `quantity`, `previousQuantity`, `newQuantity`, `notes` | ManyToOne → InventoryItem |
+| **InventoryMovement** | `inventory_movements` | `movementType`, `quantity`, `previousQuantity`, `newQuantity`, `notes` | ManyToOne → InventoryItem, Admission (optional) |
+
+**Billing:**
+
+| Entity | Table | Key Fields | Relationships |
+|--------|-------|------------|---------------|
+| **PatientCharge** | `patient_charges` | `chargeType`, `description`, `quantity`, `unitPrice`, `totalAmount`, `chargeDate`, `reason` | ManyToOne → Admission, InventoryItem (optional), Room (optional), Invoice (optional) |
+| **Invoice** | `invoices` | `invoiceNumber`, `totalAmount`, `chargeCount`, `notes` | ManyToOne → Admission |
 
 ### Data Flow: Backend to Frontend
 
@@ -1600,11 +1657,21 @@ This architecture provides a solid, secure, and scalable foundation for building
 
 ---
 
-**Version**: 1.7
-**Last Updated**: January 19, 2026
+**Version**: 1.8
+**Last Updated**: February 12, 2026
 **Maintained By**: [Your Name/Team]
 
 **Changelog**:
+- v1.8: **Complete entity inventory update**
+  - Updated Backend Entities section with all 29 entities (was 9, now 29) organized by module
+  - Added Patient Management entities (Patient, EmergencyContact, PatientIdDocument)
+  - Added Admission Management entities (Admission, TriageCode, Room, AdmissionConsentDocument, AdmissionConsultingPhysician, DocumentType, AdmissionDocument)
+  - Added Medical Records entities (ClinicalHistory, ProgressNote, MedicalOrder)
+  - Added Psychotherapy entities (PsychotherapyCategory, PsychotherapyActivity)
+  - Added Nursing entities (NursingNote, VitalSign)
+  - Added Billing entities (PatientCharge, Invoice)
+  - Updated Inventory entities with Admission relationship on InventoryMovement
+  - Updated entity class diagram with all entities, enums, and relationships
 - v1.7: **Role & Permission System**
   - Implemented database-driven role and permission system
   - Users can now have multiple roles (many-to-many)
