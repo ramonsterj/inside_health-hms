@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useConfirm } from 'primevue/useconfirm'
 import Card from 'primevue/card'
@@ -7,6 +7,9 @@ import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import { MedicalOrderStatus, MedicalOrderCategory } from '@/types/medicalRecord'
 import type { MedicalOrderResponse } from '@/types/medicalRecord'
+import { useAuthStore } from '@/stores/auth'
+import MedicationAdministrationDialog from './MedicationAdministrationDialog.vue'
+import MedicationAdministrationHistory from './MedicationAdministrationHistory.vue'
 
 const props = defineProps<{
   order: MedicalOrderResponse
@@ -20,10 +23,22 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const confirm = useConfirm()
+const authStore = useAuthStore()
+
+const showAdministrationDialog = ref(false)
+const showHistory = ref(false)
+const historyRef = ref<InstanceType<typeof MedicationAdministrationHistory> | null>(null)
 
 const isActive = computed(() => props.order.status === MedicalOrderStatus.ACTIVE)
 const isMedicationCategory = computed(
   () => props.order.category === MedicalOrderCategory.MEDICAMENTOS
+)
+const canAdminister = computed(
+  () =>
+    authStore.hasPermission('medication-administration:create') &&
+    isMedicationCategory.value &&
+    isActive.value &&
+    props.order.inventoryItemId !== null
 )
 
 const statusSeverity = computed(() => (isActive.value ? 'success' : 'secondary'))
@@ -62,6 +77,21 @@ function confirmDiscontinue() {
     acceptClass: 'p-button-warning',
     accept: () => emit('discontinue')
   })
+}
+
+function openAdministrationDialog() {
+  showAdministrationDialog.value = true
+}
+
+function onAdministrationSaved() {
+  showAdministrationDialog.value = false
+  if (showHistory.value) {
+    historyRef.value?.refresh()
+  }
+}
+
+function toggleHistory() {
+  showHistory.value = !showHistory.value
 }
 </script>
 
@@ -145,10 +175,44 @@ function confirmDiscontinue() {
             severity="warning"
             @click="confirmDiscontinue"
           />
+          <Button
+            v-if="canAdminister"
+            icon="pi pi-plus"
+            :label="t('medicationAdministration.administer')"
+            text
+            size="small"
+            severity="success"
+            @click="openAdministrationDialog"
+          />
+          <Button
+            v-if="isMedicationCategory && order.inventoryItemId"
+            icon="pi pi-history"
+            :label="showHistory ? t('common.collapse') : t('medicationAdministration.history')"
+            text
+            size="small"
+            @click="toggleHistory"
+          />
         </div>
+
+        <!-- Administration History -->
+        <MedicationAdministrationHistory
+          v-if="showHistory && order.inventoryItemId"
+          ref="historyRef"
+          :admissionId="order.admissionId"
+          :orderId="order.id"
+        />
       </div>
     </template>
   </Card>
+
+  <!-- Administration Dialog -->
+  <MedicationAdministrationDialog
+    v-model:visible="showAdministrationDialog"
+    :admissionId="order.admissionId"
+    :orderId="order.id"
+    :medicationName="order.medication"
+    @saved="onAdministrationSaved"
+  />
 </template>
 
 <style scoped>

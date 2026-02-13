@@ -170,6 +170,7 @@ abstract class AbstractIntegrationTest {
         // Reference tables (triage_codes, psychotherapy_categories)
         // contain migration-seeded data. Only test-created rows are removed
         // (seeded rows have created_by IS NULL since they come from Flyway).
+        jdbcTemplate.execute("DELETE FROM medication_administrations")
         jdbcTemplate.execute("DELETE FROM patient_charges")
         jdbcTemplate.execute("DELETE FROM invoices")
         jdbcTemplate.execute("DELETE FROM inventory_movements")

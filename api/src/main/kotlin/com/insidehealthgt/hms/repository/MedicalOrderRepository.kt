@@ -14,6 +14,7 @@ interface MedicalOrderRepository : JpaRepository<MedicalOrder, Long> {
         SELECT mo FROM MedicalOrder mo
         LEFT JOIN FETCH mo.admission a
         LEFT JOIN FETCH a.patient
+        LEFT JOIN FETCH mo.inventoryItem
         WHERE mo.admission.id = :admissionId
         ORDER BY mo.category, mo.startDate DESC
         """,
@@ -25,6 +26,7 @@ interface MedicalOrderRepository : JpaRepository<MedicalOrder, Long> {
         SELECT mo FROM MedicalOrder mo
         LEFT JOIN FETCH mo.admission a
         LEFT JOIN FETCH a.patient
+        LEFT JOIN FETCH mo.inventoryItem
         WHERE mo.id = :orderId AND mo.admission.id = :admissionId
         """,
     )

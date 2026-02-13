@@ -33,6 +33,12 @@ interface PatientChargeRepository : JpaRepository<PatientCharge, Long> {
         roomId: Long,
     ): Boolean
 
+    fun existsByAdmissionIdAndChargeTypeAndChargeDate(
+        admissionId: Long,
+        chargeType: ChargeType,
+        chargeDate: LocalDate,
+    ): Boolean
+
     @Modifying
     @Transactional
     @Query("DELETE FROM patient_charges", nativeQuery = true)

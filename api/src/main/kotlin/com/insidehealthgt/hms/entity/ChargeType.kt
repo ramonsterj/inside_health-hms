@@ -6,5 +6,6 @@ enum class ChargeType {
     PROCEDURE,
     LAB,
     SERVICE,
+    DIET,
     ADJUSTMENT,
 }

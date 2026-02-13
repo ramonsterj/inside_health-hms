@@ -1,7 +1,9 @@
 package com.insidehealthgt.hms.dto.request
 
+import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
+import java.math.BigDecimal
 
 data class UpdatePsychotherapyCategoryRequest(
     @field:NotBlank(message = "Name is required")
@@ -14,4 +16,10 @@ data class UpdatePsychotherapyCategoryRequest(
     val displayOrder: Int = 0,
 
     val active: Boolean = true,
+
+    @field:DecimalMin(value = "0", message = "Price cannot be negative")
+    val price: BigDecimal? = null,
+
+    @field:DecimalMin(value = "0", message = "Cost cannot be negative")
+    val cost: BigDecimal? = null,
 )

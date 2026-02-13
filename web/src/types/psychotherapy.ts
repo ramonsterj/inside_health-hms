@@ -7,6 +7,8 @@ export interface PsychotherapyCategory {
   description: string | null
   displayOrder: number
   active: boolean
+  price: number | null
+  cost: number | null
   createdAt: string | null
   updatedAt: string | null
 }
@@ -21,6 +23,8 @@ export interface CreatePsychotherapyCategoryRequest {
   description?: string | null
   displayOrder?: number
   active?: boolean
+  price?: number | null
+  cost?: number | null
 }
 
 export interface UpdatePsychotherapyCategoryRequest {
@@ -28,6 +32,8 @@ export interface UpdatePsychotherapyCategoryRequest {
   description?: string | null
   displayOrder?: number
   active?: boolean
+  price?: number | null
+  cost?: number | null
 }
 
 // Psychotherapy Activity types

@@ -63,7 +63,7 @@ All entities inherit from `BaseEntity` (providing `id`, `createdAt`, `updatedAt`
 
 | Entity | Table | Key Fields | Relationships |
 |--------|-------|------------|---------------|
-| **Admission** | `admissions` | `admissionDate`, `dischargeDate`, `status`, `type`, `inventory` | ManyToOne → Patient, TriageCode, Room, User (treating physician); OneToOne → AdmissionConsentDocument, ClinicalHistory; OneToMany → AdmissionConsultingPhysician, AdmissionDocument, ProgressNote, MedicalOrder, PsychotherapyActivity, NursingNote, VitalSign, PatientCharge, Invoice |
+| **Admission** | `admissions` | `admissionDate`, `dischargeDate`, `status`, `type`, `inventory` | ManyToOne → Patient, TriageCode, Room, User (treating physician); OneToOne → AdmissionConsentDocument, ClinicalHistory; OneToMany → AdmissionConsultingPhysician, AdmissionDocument, ProgressNote, MedicalOrder, MedicationAdministration, PsychotherapyActivity, NursingNote, VitalSign, PatientCharge, Invoice |
 | **TriageCode** | `triage_codes` | `code`, `color`, `description`, `displayOrder` | None |
 | **Room** | `rooms` | `number`, `type`, `gender`, `capacity`, `price`, `cost` | None |
 | **AdmissionConsentDocument** | `admission_consent_documents` | `fileName`, `contentType`, `fileSize`, `storagePath` | OneToOne → Admission |
@@ -77,13 +77,13 @@ All entities inherit from `BaseEntity` (providing `id`, `createdAt`, `updatedAt`
 |--------|-------|------------|---------------|
 | **ClinicalHistory** | `clinical_histories` | 21 TEXT fields (reasonForAdmission, historyOfPresentIllness, psychiatricHistory, medicalHistory, familyHistory, etc.) | OneToOne → Admission |
 | **ProgressNote** | `progress_notes` | `subjectiveData`, `objectiveData`, `analysis`, `actionPlans` (SOAP format) | ManyToOne → Admission |
-| **MedicalOrder** | `medical_orders` | `category`, `startDate`, `endDate`, `medication`, `dosage`, `route`, `frequency`, `schedule`, `observations`, `status`, `discontinuedAt`, `discontinuedBy` | ManyToOne → Admission |
+| **MedicalOrder** | `medical_orders` | `category`, `startDate`, `endDate`, `medication`, `dosage`, `route`, `frequency`, `schedule`, `observations`, `status`, `discontinuedAt`, `discontinuedBy` | ManyToOne → Admission, InventoryItem (optional) |
 
 **Psychotherapy:**
 
 | Entity | Table | Key Fields | Relationships |
 |--------|-------|------------|---------------|
-| **PsychotherapyCategory** | `psychotherapy_categories` | `name`, `description`, `displayOrder`, `active` | None |
+| **PsychotherapyCategory** | `psychotherapy_categories` | `name`, `description`, `displayOrder`, `active`, `price`, `cost` | None |
 | **PsychotherapyActivity** | `psychotherapy_activities` | `description` | ManyToOne → Admission, PsychotherapyCategory |
 
 **Nursing:**
@@ -107,6 +107,12 @@ All entities inherit from `BaseEntity` (providing `id`, `createdAt`, `updatedAt`
 |--------|-------|------------|---------------|
 | **PatientCharge** | `patient_charges` | `chargeType`, `description`, `quantity`, `unitPrice`, `totalAmount`, `chargeDate`, `reason` | ManyToOne → Admission, InventoryItem (optional), Room (optional), Invoice (optional) |
 | **Invoice** | `invoices` | `invoiceNumber`, `totalAmount`, `chargeCount`, `notes` | ManyToOne → Admission |
+
+**Medication Administration:**
+
+| Entity | Table | Key Fields | Relationships |
+|--------|-------|------------|---------------|
+| **MedicationAdministration** | `medication_administrations` | `status`, `notes`, `administeredAt` | ManyToOne → MedicalOrder, Admission |
 
 ### Data Flow: Backend to Frontend
 
@@ -144,7 +150,6 @@ Backend DTOs (Kotlin) map directly to frontend types (TypeScript):
 | Backend DTO | Frontend Type | Location |
 |-------------|---------------|----------|
 | `LoginRequest` | `LoginRequest` | `web/src/types/auth.ts` |
-| `RegisterRequest` | `RegisterRequest` | `web/src/types/auth.ts` |
 | `AuthResponse` | `AuthResponse` | `web/src/types/auth.ts` |
 | `UserResponse` | `User` | `web/src/types/user.ts` |
 | `UpdateUserRequest` | `UpdateUserRequest` | `web/src/types/user.ts` |
@@ -154,6 +159,14 @@ Backend DTOs (Kotlin) map directly to frontend types (TypeScript):
 | `RoleResponse` | `Role` | `web/src/types/role.ts` |
 | `PermissionResponse` | `Permission` | `web/src/types/role.ts` |
 | `AuditLogResponse` | `AuditLog` | `web/src/types/audit.ts` |
+| `PatientResponse` | `Patient` | `web/src/types/patient.ts` |
+| `AdmissionListResponse` | `AdmissionListItem` | `web/src/types/admission.ts` |
+| `MedicalOrderResponse` | `MedicalOrder` | `web/src/types/medicalRecord.ts` |
+| `PsychotherapyCategoryResponse` | `PsychotherapyCategory` | `web/src/types/psychotherapy.ts` |
+| `MedicationAdministrationResponse` | `MedicationAdministration` | `web/src/types/medicationAdministration.ts` |
+| `PatientChargeResponse` | `PatientCharge` | `web/src/types/billing.ts` |
+| `InvoiceResponse` | `Invoice` | `web/src/types/billing.ts` |
+| `InventoryItemResponse` | `InventoryItem` | `web/src/types/inventory.ts` |
 | `ApiResponse<T>` | `ApiResponse<T>` | `web/src/types/api.ts` |
 | `ErrorResponse` | `ErrorResponse` | `web/src/types/api.ts` |
 | `PageResponse<T>` | `PageResponse<T>` | `web/src/types/api.ts` |
@@ -162,16 +175,19 @@ Backend DTOs (Kotlin) map directly to frontend types (TypeScript):
 
 | Store | State | Key Methods |
 |-------|-------|-------------|
-| **auth** (`stores/auth.ts`) | `user`, `loading` | `login()`, `register()`, `logout()`, `refreshToken()`, `fetchCurrentUser()` |
+| **auth** (`stores/auth.ts`) | `user`, `loading` | `login()`, `logout()`, `refreshToken()`, `fetchCurrentUser()` |
 | **user** (`stores/user.ts`) | `users`, `deletedUsers`, `loading` | `fetchUsers()`, `createUser()`, `updateUser()`, `deleteUser()`, `restoreUser()`, `resetUserPassword()` |
 | **audit** (`stores/audit.ts`) | `logs`, `filters`, `loading` | `fetchLogs()`, `fetchLogsForEntity()`, `setFilters()` |
+| **locale** (`stores/locale.ts`) | `locale` | `setLocale()`, `initLocale()` |
+| **notification** (`stores/notification.ts`) | `notifications` | `showSuccess()`, `showError()`, `showInfo()` |
+| **psychotherapyCategory** (`stores/psychotherapyCategory.ts`) | `categories`, `loading` | `fetchCategories()`, `createCategory()`, `updateCategory()`, `deleteCategory()` |
+| **medicationAdministration** (`stores/medicationAdministration.ts`) | `administrations`, `loading` | `fetchAdministrations()`, `createAdministration()` |
 
 ### API Endpoints Summary
 
 **Authentication** (`/api/auth`):
 | Method | Endpoint | Request DTO | Response |
 |--------|----------|-------------|----------|
-| POST | `/register` | `RegisterRequest` | `ApiResponse<AuthResponse>` |
 | POST | `/login` | `LoginRequest` | `ApiResponse<AuthResponse>` |
 | POST | `/refresh` | `RefreshTokenRequest` | `ApiResponse<AuthResponse>` |
 | POST | `/logout` | - | `ApiResponse<Unit>` |
@@ -265,18 +281,20 @@ Backend DTOs (Kotlin) map directly to frontend types (TypeScript):
 **Package Structure**:
 ```
 com.insidehealthgt.hms
+├── audit/                  # Audit logging (AuditEntityListener, AuditContext)
 ├── config/                 # Spring configuration
 ├── controller/             # REST controllers
 ├── dto/                    # Data Transfer Objects
 │   ├── request/
 │   └── response/
 ├── entity/                 # Database entities
-├── repository/             # Spring Data JPA repository interfaces
-├── service/                # Business logic
-├── security/               # Auth, JWT, filters
+├── event/                  # Domain events (billing automation events, listeners)
 ├── exception/              # Custom exceptions, handlers
-├── util/                   # Utilities, helpers
-└── audit/                  # Audit logging
+├── repository/             # Spring Data JPA repository interfaces
+├── scheduler/              # Scheduled tasks (DailyChargeScheduler)
+├── security/               # Auth, JWT, filters
+├── service/                # Business logic
+└── util/                   # Utilities, helpers
 ```
 
 ### Frontend Architecture
@@ -368,7 +386,6 @@ src/
 - See "Role & Permission System" section for full details
 
 **Endpoints**:
-- `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - Login
 - `POST /api/auth/logout` - Logout
 - `POST /api/auth/refresh` - Refresh token
@@ -404,7 +421,7 @@ src/
 
 **Soft Delete Strategy**:
 - All entity deletions are soft deletes by default (via `deleted_at` in BaseEntity)
-- Soft-deleted records are excluded from queries automatically (use `@Where(clause = "deleted_at IS NULL")`)
+- Soft-deleted records are excluded from queries automatically (use `@SQLRestriction("deleted_at IS NULL")` — Hibernate 6+ / Spring Boot 4)
 - Hard deletes should only be done for compliance/GDPR requirements
 
 ### 3. Role & Permission System
@@ -477,7 +494,7 @@ fun updateUser(id: Long, request: UpdateUserRequest): UserResponse
 - Details: Before/after values for updates
 
 **Implementation**:
-- Database table: `audit_log`
+- Database table: `audit_logs`
 - Automatic tracking via **JPA Entity Listeners** (`@EntityListeners`)
 - Use `@PrePersist`, `@PreUpdate`, `@PreRemove` lifecycle callbacks
 - Capture user context from Spring Security
@@ -485,7 +502,7 @@ fun updateUser(id: Long, request: UpdateUserRequest): UserResponse
 
 **Schema**:
 ```sql
-CREATE TABLE audit_log (
+CREATE TABLE audit_logs (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT,
     username VARCHAR(255),
@@ -493,9 +510,11 @@ CREATE TABLE audit_log (
     entity_type VARCHAR(255),
     entity_id BIGINT,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    old_value JSONB,
-    new_value JSONB,
-    ip_address VARCHAR(45)
+    old_values JSONB,
+    new_values JSONB,
+    ip_address VARCHAR(45),
+    changed_fields JSONB,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
@@ -835,24 +854,27 @@ class User(
 
     @Column(nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
-    var role: UserRole = UserRole.USER,
-
-    @Column(nullable = false, length = 50)
-    @Enumerated(EnumType.STRING)
     var status: UserStatus = UserStatus.ACTIVE,
 
     @Column(name = "email_verified", nullable = false)
-    var emailVerified: Boolean = false
+    var emailVerified: Boolean = false,
+
+    @Column(name = "locale_preference", length = 10)
+    var localePreference: String? = null,
+
+    @Column(length = 10)
+    @Enumerated(EnumType.STRING)
+    var salutation: Salutation? = null,
+
+    @Column(name = "must_change_password", nullable = false)
+    var mustChangePassword: Boolean = true
 
     // Note: id, createdAt, updatedAt, etc. are inherited from BaseEntity
+    // Roles assigned via ManyToMany user_roles junction table
 ) : BaseEntity()
 
-enum class UserRole {
-    ADMIN, USER
-}
-
 enum class UserStatus {
-    ACTIVE, INACTIVE, SUSPENDED
+    ACTIVE, INACTIVE, SUSPENDED, DELETED
 }
 
 // Do NOT use data classes for JPA entities
@@ -862,10 +884,11 @@ enum class UserStatus {
 **Key Points**:
 - **ID is inherited from BaseEntity** - don't redeclare it
 - Always specify column lengths with `@Column(length = ...)`
-- Use enums for fixed value sets (role, status)
+- Use enums for fixed value sets (status, salutation)
 - Nullable fields should be `String?` with default values
-- Use `@Where` annotation to automatically exclude soft-deleted records
+- Use `@SQLRestriction` annotation to automatically exclude soft-deleted records (Hibernate 6+)
 - Use `var` for mutable properties (entities need to be mutable)
+- Roles are assigned via `user_roles` junction table (ManyToMany), not a single column
 - kotlin-jpa plugin automatically makes this class open (non-final)
 
 ## Database Schema
@@ -881,9 +904,11 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     first_name VARCHAR(100),
     last_name VARCHAR(100),
-    role VARCHAR(50) NOT NULL DEFAULT 'USER',
     status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
     email_verified BOOLEAN DEFAULT FALSE,
+    locale_preference VARCHAR(10),
+    salutation VARCHAR(10),
+    must_change_password BOOLEAN NOT NULL DEFAULT TRUE,
     -- BaseEntity fields (inherited by all entities)
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -891,6 +916,7 @@ CREATE TABLE users (
     updated_by BIGINT,
     deleted_at TIMESTAMP
 );
+-- Roles assigned via user_roles junction table (ManyToMany)
 
 CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_email ON users(email);
@@ -925,7 +951,7 @@ CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 CREATE INDEX idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);  -- For cleanup jobs
 ```
 
-**audit_log**: (See Audit Logging section above)
+**audit_logs**: (See Audit Logging section above)
 
 **permissions**:
 ```sql
@@ -1657,13 +1683,26 @@ This architecture provides a solid, secure, and scalable foundation for building
 
 ---
 
-**Version**: 1.8
-**Last Updated**: February 12, 2026
+**Version**: 1.9
+**Last Updated**: February 13, 2026
 **Maintained By**: [Your Name/Team]
 
 **Changelog**:
+- v1.9: **Clinical event billing automation sync**
+  - Added MedicationAdministration entity to Backend Entities (30 entities total)
+  - Updated MedicalOrder with inventoryItem relationship
+  - Updated PsychotherapyCategory with price/cost fields
+  - Updated Admission relationships to include MedicationAdministration
+  - Fixed @Where → @SQLRestriction annotation reference (Hibernate 6+)
+  - Fixed User entity example (removed old role column, added salutation/locale/mustChangePassword)
+  - Added event/ and scheduler/ packages to package structure
+  - Removed non-existent /api/auth/register endpoint
+  - Updated Pinia Stores table with all implemented stores
+  - Updated DTO ↔ TypeScript mapping table with clinical/billing/inventory types
+  - Fixed audit_log → audit_logs table name
+  - Updated users schema (removed role column, added locale/salutation/mustChangePassword)
 - v1.8: **Complete entity inventory update**
-  - Updated Backend Entities section with all 29 entities (was 9, now 29) organized by module
+  - Updated Backend Entities section with all entities (was 9, now 29 at the time) organized by module
   - Added Patient Management entities (Patient, EmergencyContact, PatientIdDocument)
   - Added Admission Management entities (Admission, TriageCode, Room, AdmissionConsentDocument, AdmissionConsultingPhysician, DocumentType, AdmissionDocument)
   - Added Medical Records entities (ClinicalHistory, ProgressNote, MedicalOrder)

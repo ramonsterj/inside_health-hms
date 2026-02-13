@@ -49,9 +49,6 @@ class InvoiceService(
         }
 
         val unbilledCharges = chargeRepository.findUnbilledByAdmissionId(admissionId)
-        if (unbilledCharges.isEmpty()) {
-            throw BadRequestException("No unbilled charges found for admission: $admissionId")
-        }
 
         val totalAmount = unbilledCharges.sumOf { it.totalAmount }
 

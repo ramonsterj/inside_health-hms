@@ -105,14 +105,18 @@ class InvoiceServiceTest {
     }
 
     @Test
-    fun `generateInvoice with no charges should throw 400`() {
+    fun `generateInvoice with no charges should create empty invoice`() {
         whenever(admissionRepository.findByIdWithRelations(10L)).thenReturn(testAdmission)
         whenever(invoiceRepository.existsByAdmissionId(10L)).thenReturn(false)
         whenever(chargeRepository.findUnbilledByAdmissionId(10L)).thenReturn(emptyList())
-
-        assertThrows<BadRequestException> {
-            invoiceService.generateInvoice(10L)
+        whenever(invoiceRepository.save(any<Invoice>())).thenAnswer { invocation ->
+            (invocation.arguments[0] as Invoice).apply { id = 1L }
         }
+
+        val result = invoiceService.generateInvoice(10L)
+
+        assertEquals(BigDecimal.ZERO, result.totalAmount)
+        assertEquals(0, result.chargeCount)
     }
 
     @Test

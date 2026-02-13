@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest
 import org.springframework.context.annotation.Import
+import org.springframework.jdbc.core.JdbcTemplate
 import java.time.LocalDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -25,35 +26,41 @@ class PasswordResetTokenRepositoryTest {
     private lateinit var userRepository: UserRepository
 
     @Autowired
-    private lateinit var admissionConsentDocumentRepository: AdmissionConsentDocumentRepository
-
-    @Autowired
-    private lateinit var admissionRepository: AdmissionRepository
-
-    @Autowired
-    private lateinit var emergencyContactRepository: EmergencyContactRepository
-
-    @Autowired
-    private lateinit var patientRepository: PatientRepository
-
-    @Autowired
-    private lateinit var nursingNoteRepository: NursingNoteRepository
-
-    @Autowired
-    private lateinit var vitalSignRepository: VitalSignRepository
+    private lateinit var jdbcTemplate: JdbcTemplate
 
     private lateinit var testUser: User
 
     @BeforeEach
     fun setUp() {
-        nursingNoteRepository.deleteAllHard()
-        vitalSignRepository.deleteAllHard()
-        admissionConsentDocumentRepository.deleteAllHard()
-        admissionRepository.deleteAllHard()
-        emergencyContactRepository.deleteAllHard()
-        patientRepository.deleteAllHard()
-        passwordResetTokenRepository.deleteAll()
-        userRepository.deleteAll()
+        // Clean all data in FK dependency order using jdbcTemplate
+        jdbcTemplate.execute("DELETE FROM medication_administrations")
+        jdbcTemplate.execute("DELETE FROM patient_charges")
+        jdbcTemplate.execute("DELETE FROM invoices")
+        jdbcTemplate.execute("DELETE FROM inventory_movements")
+        jdbcTemplate.execute("DELETE FROM inventory_items")
+        jdbcTemplate.execute("DELETE FROM inventory_categories WHERE created_by IS NOT NULL")
+        jdbcTemplate.execute("DELETE FROM triage_codes WHERE created_by IS NOT NULL")
+        jdbcTemplate.execute("DELETE FROM psychotherapy_categories WHERE created_by IS NOT NULL")
+        jdbcTemplate.execute("DELETE FROM nursing_notes")
+        jdbcTemplate.execute("DELETE FROM vital_signs")
+        jdbcTemplate.execute("DELETE FROM psychotherapy_activities")
+        jdbcTemplate.execute("DELETE FROM medical_orders")
+        jdbcTemplate.execute("DELETE FROM progress_notes")
+        jdbcTemplate.execute("DELETE FROM clinical_histories")
+        jdbcTemplate.execute("DELETE FROM admission_consulting_physicians")
+        jdbcTemplate.execute("DELETE FROM admission_consent_documents")
+        jdbcTemplate.execute("DELETE FROM admission_documents")
+        jdbcTemplate.execute("DELETE FROM admissions")
+        jdbcTemplate.execute("DELETE FROM emergency_contacts")
+        jdbcTemplate.execute("DELETE FROM patient_id_documents")
+        jdbcTemplate.execute("DELETE FROM patients")
+        jdbcTemplate.execute("DELETE FROM rooms")
+        jdbcTemplate.execute("DELETE FROM password_reset_tokens")
+        jdbcTemplate.execute("DELETE FROM refresh_tokens")
+        jdbcTemplate.execute("DELETE FROM audit_logs")
+        jdbcTemplate.execute("DELETE FROM user_phone_numbers")
+        jdbcTemplate.execute("DELETE FROM user_roles")
+        jdbcTemplate.execute("DELETE FROM users")
 
         testUser = userRepository.save(
             User(

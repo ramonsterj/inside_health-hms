@@ -1,11 +1,11 @@
 package com.insidehealthgt.hms.event
 
 import com.insidehealthgt.hms.service.BillingService
+import com.insidehealthgt.hms.service.InvoiceService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.math.BigDecimal
@@ -13,12 +13,14 @@ import java.math.BigDecimal
 class BillingEventListenerTest {
 
     private lateinit var billingService: BillingService
+    private lateinit var invoiceService: InvoiceService
     private lateinit var listener: BillingEventListener
 
     @BeforeEach
     fun setUp() {
         billingService = mock()
-        listener = BillingEventListener(billingService)
+        invoiceService = mock()
+        listener = BillingEventListener(billingService, invoiceService)
     }
 
     @Test
@@ -55,18 +57,44 @@ class BillingEventListenerTest {
     }
 
     @Test
-    fun `handlePatientDischarged completes without error`() {
+    fun `handlePatientDischargedCharges delegates to billingService`() {
         val event = PatientDischargedEvent(admissionId = 10L, patientId = 1L)
 
-        listener.handlePatientDischarged(event)
+        listener.handlePatientDischargedCharges(event)
+
+        verify(billingService).createFinalDayCharges(10L)
     }
 
     @Test
-    fun `handlePatientDischarged does not invoke any billing service methods`() {
+    fun `handlePatientDischargedCharges catches exceptions without rethrowing`() {
         val event = PatientDischargedEvent(admissionId = 10L, patientId = 1L)
 
-        listener.handlePatientDischarged(event)
+        whenever(billingService.createFinalDayCharges(any()))
+            .thenThrow(RuntimeException("DB error"))
 
-        verify(billingService, never()).createChargeFromInventoryDispensed(any())
+        listener.handlePatientDischargedCharges(event)
+
+        verify(billingService).createFinalDayCharges(10L)
+    }
+
+    @Test
+    fun `handlePatientDischargedInvoice delegates to invoiceService`() {
+        val event = PatientDischargedEvent(admissionId = 10L, patientId = 1L)
+
+        listener.handlePatientDischargedInvoice(event)
+
+        verify(invoiceService).generateInvoice(10L)
+    }
+
+    @Test
+    fun `handlePatientDischargedInvoice catches exceptions without rethrowing`() {
+        val event = PatientDischargedEvent(admissionId = 10L, patientId = 1L)
+
+        whenever(invoiceService.generateInvoice(any()))
+            .thenThrow(RuntimeException("Invoice error"))
+
+        listener.handlePatientDischargedInvoice(event)
+
+        verify(invoiceService).generateInvoice(10L)
     }
 }

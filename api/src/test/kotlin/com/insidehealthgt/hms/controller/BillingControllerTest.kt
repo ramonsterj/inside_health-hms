@@ -243,19 +243,18 @@ class BillingControllerTest : AbstractIntegrationTest() {
     // ============ INVOICE TESTS ============
 
     @Test
-    fun `generate invoice for discharged admission should return 201`() {
+    fun `discharge should auto-generate invoice`() {
         createCharge("SERVICE", "Therapy", 1, BigDecimal("100.00"))
         dischargeAdmission(admissionId, adminToken)
 
+        // Invoice is auto-generated on discharge via event listener
         mockMvc.perform(
-            post("/api/v1/admissions/$admissionId/invoice")
+            get("/api/v1/admissions/$admissionId/invoice")
                 .header("Authorization", "Bearer $adminToken"),
         )
-            .andExpect(status().isCreated)
+            .andExpect(status().isOk)
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.data.invoiceNumber").exists())
-            .andExpect(jsonPath("$.data.totalAmount").value(100.00))
-            .andExpect(jsonPath("$.data.chargeCount").value(1))
     }
 
     @Test
@@ -270,17 +269,11 @@ class BillingControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `generate duplicate invoice should return 409`() {
+    fun `generate duplicate invoice after auto-invoice should return 409`() {
         createCharge("SERVICE", "Therapy", 1, BigDecimal("100.00"))
         dischargeAdmission(admissionId, adminToken)
 
-        // First invoice
-        mockMvc.perform(
-            post("/api/v1/admissions/$admissionId/invoice")
-                .header("Authorization", "Bearer $adminToken"),
-        ).andExpect(status().isCreated)
-
-        // Duplicate
+        // Auto-invoice was already generated on discharge, manual attempt should be 409
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/invoice")
                 .header("Authorization", "Bearer $adminToken"),
@@ -288,14 +281,16 @@ class BillingControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `generate invoice with no charges should return 400`() {
+    fun `generate invoice with no charges should auto-generate empty invoice on discharge`() {
         dischargeAdmission(admissionId, adminToken)
 
+        // Auto-invoice was generated on discharge even with no charges
+        // Manual attempt should return 409 Conflict
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/invoice")
                 .header("Authorization", "Bearer $adminToken"),
         )
-            .andExpect(status().isBadRequest)
+            .andExpect(status().isConflict)
     }
 
     // ============ INVENTORY INTEGRATION TEST ============
