@@ -27,20 +27,6 @@ const mockAdminUser = {
   localePreference: 'en'
 }
 
-const mockReadOnlyUser = {
-  id: 2,
-  username: 'staff',
-  email: 'staff@example.com',
-  firstName: 'Staff',
-  lastName: 'User',
-  roles: ['USER'],
-  permissions: ['inventory-item:read', 'inventory-category:read'],
-  status: 'ACTIVE',
-  emailVerified: true,
-  createdAt: '2026-01-01T00:00:00Z',
-  localePreference: 'en'
-}
-
 const mockCategories = [
   { id: 1, name: 'Medicamentos', description: 'Pharmaceutical products', displayOrder: 1, active: true },
   { id: 2, name: 'Suministros', description: 'Medical supplies', displayOrder: 2, active: true },

@@ -233,7 +233,7 @@ function cancel() {
               <div v-for="field in section.fields" :key="field" class="form-field">
                 <RichTextEditor
                   :modelValue="fieldRefs[field].value || ''"
-                  @update:modelValue="fieldRefs[field].value = $event"
+                  @update:model-value="fieldRefs[field].value = $event"
                   :label="t(`medicalRecord.clinicalHistory.fields.${field}`)"
                   :rows="4"
                 />

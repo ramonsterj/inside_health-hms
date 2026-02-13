@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test'
 import {
   confirmDialogAccept,
   confirmDialogCancel,
-  waitForOverlaysToClear,
   waitForMedicalRecordTabs,
   selectMedicalRecordTab,
   expandAccordionPanel

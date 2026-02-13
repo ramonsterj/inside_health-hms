@@ -85,7 +85,7 @@ class SecurityConfig(
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers("/api/auth/**").permitAll()
-                    .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                    .requestMatchers("/actuator/health").permitAll()
                     .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                     .anyRequest().authenticated()
             }
@@ -98,11 +98,13 @@ class SecurityConfig(
                 headers.contentSecurityPolicy { csp ->
                     csp.policyDirectives(
                         "default-src 'self'; " +
-                            "script-src 'self' 'unsafe-eval'; " + // PrimeVue requires unsafe-eval for dynamic rendering
-                            "style-src 'self' 'unsafe-inline'; " + // PrimeVue inline styles
+                            "script-src 'self' 'unsafe-eval'; " +
+                            "style-src 'self' 'unsafe-inline'; " +
                             "img-src 'self' data: blob:; " +
                             "font-src 'self' data:; " +
-                            "connect-src 'self'",
+                            "connect-src 'self'; " +
+                            "frame-ancestors 'none'; " +
+                            "form-action 'self'",
                     )
                 }
             }
