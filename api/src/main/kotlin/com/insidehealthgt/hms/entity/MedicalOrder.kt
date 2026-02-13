@@ -60,4 +60,8 @@ class MedicalOrder(
     @Column(name = "discontinued_by")
     var discontinuedBy: Long? = null,
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "inventory_item_id")
+    var inventoryItem: InventoryItem? = null,
+
 ) : BaseEntity()

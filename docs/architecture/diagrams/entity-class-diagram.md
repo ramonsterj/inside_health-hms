@@ -177,7 +177,16 @@ classDiagram
         PROCEDURE
         LAB
         SERVICE
+        DIET
         ADJUSTMENT
+    }
+
+    class AdministrationStatus {
+        <<enumeration>>
+        GIVEN
+        MISSED
+        REFUSED
+        HELD
     }
 
     %% ══════════════════════════════════════
@@ -389,6 +398,16 @@ classDiagram
     }
 
     %% ══════════════════════════════════════
+    %% ENTITIES - Medication Administration
+    %% ══════════════════════════════════════
+
+    class MedicationAdministration {
+        +AdministrationStatus status
+        +String? notes
+        +LocalDateTime administeredAt
+    }
+
+    %% ══════════════════════════════════════
     %% ENTITIES - Psychotherapy
     %% ══════════════════════════════════════
 
@@ -397,6 +416,8 @@ classDiagram
         +String? description
         +Integer displayOrder
         +Boolean active
+        +BigDecimal? price
+        +BigDecimal? cost
     }
 
     class PsychotherapyActivity {
@@ -507,6 +528,7 @@ classDiagram
     BaseEntity <|-- InventoryMovement : extends
     BaseEntity <|-- PatientCharge : extends
     BaseEntity <|-- Invoice : extends
+    BaseEntity <|-- MedicationAdministration : extends
 
     %% ══════════════════════════════════════
     %% ASSOCIATIONS
@@ -538,6 +560,7 @@ classDiagram
     Admission "1" -- "0..1" ClinicalHistory : has
     Admission "1" -- "*" ProgressNote : has
     Admission "1" -- "*" MedicalOrder : has
+    MedicalOrder "*" -- "0..1" InventoryItem : references
 
     %% Psychotherapy
     Admission "1" -- "*" PsychotherapyActivity : has
@@ -551,6 +574,10 @@ classDiagram
     InventoryItem "*" -- "1" InventoryCategory : belongs to
     InventoryMovement "*" -- "1" InventoryItem : tracks
     InventoryMovement "*" -- "0..1" Admission : linked to
+
+    %% Medication Administration
+    Admission "1" -- "*" MedicationAdministration : has
+    MedicationAdministration "*" -- "1" MedicalOrder : records administration
 
     %% Billing
     PatientCharge "*" -- "1" Admission : charged to
@@ -581,6 +608,7 @@ classDiagram
     InventoryItem ..> TimeUnit : uses
     InventoryMovement ..> MovementType : uses
     PatientCharge ..> ChargeType : uses
+    MedicationAdministration ..> AdministrationStatus : uses
 ```
 
 ## Entity Relationships
@@ -606,6 +634,9 @@ classDiagram
 | Admission → ClinicalHistory | OneToOne | - | Each admission has one clinical history (optional) |
 | Admission → ProgressNote | OneToMany | - | Admissions can have multiple SOAP progress notes |
 | Admission → MedicalOrder | OneToMany | - | Admissions can have multiple medical orders |
+| MedicalOrder → InventoryItem | ManyToOne | - | Medical order can reference an inventory item for billing (optional) |
+| Admission → MedicationAdministration | OneToMany | - | Admissions can have multiple medication administration records |
+| MedicationAdministration → MedicalOrder | ManyToOne | - | Each administration records a dose for a medical order |
 | Admission → PsychotherapyActivity | OneToMany | - | Admissions can have multiple psychotherapy activities |
 | PsychotherapyActivity → PsychotherapyCategory | ManyToOne | - | Each activity belongs to a category |
 | Admission → NursingNote | OneToMany | - | Admissions can have multiple nursing notes |
@@ -627,4 +658,5 @@ classDiagram
 - **Audit Trail**: All entities extending BaseEntity track who created/updated them via createdBy/updatedBy fields (reference User)
 - **File Storage**: PatientIdDocument, AdmissionConsentDocument, and AdmissionDocument store files on the local file system via `storagePath` (not in database BYTEA columns)
 - **Immutable Charges**: PatientCharge records are append-only; corrections are made via ADJUSTMENT charge type with negative amounts
-- **Admission as Hub**: The Admission entity is the central hub connecting patients to all clinical modules (medical records, nursing, psychotherapy, inventory, billing)
+- **Immutable Administrations**: MedicationAdministration records are append-only (no edits) for compliance and audit
+- **Admission as Hub**: The Admission entity is the central hub connecting patients to all clinical modules (medical records, nursing, psychotherapy, inventory, billing, medication administration)

@@ -764,6 +764,14 @@
         }
       }
     },
+    "medicationAdministration": {
+      "status": {
+        "required": "Status is required"
+      },
+      "notes": {
+        "max": "Notes must be at most 1000 characters"
+      }
+    },
     "inventory": {
       "category": {
         "name": {
@@ -834,6 +842,12 @@
           "invalid": "Display order must be a number.",
           "integer": "Display order must be a whole number.",
           "min": "Display order must be 0 or greater."
+        },
+        "price": {
+          "min": "Price cannot be negative"
+        },
+        "cost": {
+          "min": "Cost cannot be negative"
         }
       },
       "activity": {
@@ -1247,15 +1261,36 @@
         "route": "Administration Route",
         "frequency": "Frequency",
         "schedule": "Schedule",
-        "observations": "Observations"
+        "observations": "Observations",
+        "inventoryItem": "Linked Service/Item"
       },
       "placeholders": {
         "medication": "Medication name",
         "dosage": "e.g., 500mg, 10ml",
         "frequency": "e.g., every 8 hours, 3 times a day",
         "schedule": "e.g., 8am, 4pm, 12am",
-        "observations": "Special instructions, precautions..."
+        "observations": "Special instructions, precautions...",
+        "inventoryItem": "Select item for billing/inventory tracking"
       }
+    }
+  },
+  "medicationAdministration": {
+    "title": "Medication Administration",
+    "administer": "Administer",
+    "history": "Administration History",
+    "status": "Status",
+    "notes": "Notes",
+    "administeredAt": "Administered At",
+    "administeredBy": "Administered By",
+    "billable": "Billable",
+    "empty": "No administration records yet.",
+    "created": "Medication administration recorded successfully.",
+    "confirmGiven": "Confirm medication was given to the patient?",
+    "statuses": {
+      "GIVEN": "Given",
+      "MISSED": "Missed",
+      "REFUSED": "Refused",
+      "HELD": "Held"
     }
   },
   "psychotherapy": {
@@ -1267,6 +1302,8 @@
       "description": "Description",
       "displayOrder": "Display Order",
       "active": "Active",
+      "price": "Price",
+      "cost": "Cost",
       "empty": "No activity categories found.",
       "created": "Activity category created successfully.",
       "updated": "Activity category updated successfully.",
@@ -1495,6 +1532,7 @@
       "PROCEDURE": "Procedure",
       "LAB": "Lab",
       "SERVICE": "Service",
+      "DIET": "Diet",
       "ADJUSTMENT": "Adjustment"
     }
   }

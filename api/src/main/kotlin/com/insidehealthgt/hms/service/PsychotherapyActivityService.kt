@@ -4,6 +4,7 @@ import com.insidehealthgt.hms.dto.request.CreatePsychotherapyActivityRequest
 import com.insidehealthgt.hms.dto.response.PsychotherapyActivityResponse
 import com.insidehealthgt.hms.entity.AdmissionType
 import com.insidehealthgt.hms.entity.PsychotherapyActivity
+import com.insidehealthgt.hms.event.PsychotherapyActivityCreatedEvent
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ForbiddenException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
@@ -13,9 +14,11 @@ import com.insidehealthgt.hms.repository.PsychotherapyActivityRepository
 import com.insidehealthgt.hms.repository.PsychotherapyCategoryRepository
 import com.insidehealthgt.hms.repository.UserRepository
 import com.insidehealthgt.hms.security.CustomUserDetails
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 @Service
@@ -24,6 +27,7 @@ class PsychotherapyActivityService(
     private val admissionRepository: AdmissionRepository,
     private val categoryRepository: PsychotherapyCategoryRepository,
     private val userRepository: UserRepository,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
 
     @Transactional(readOnly = true)
@@ -94,6 +98,19 @@ class PsychotherapyActivityService(
         )
 
         val saved = activityRepository.save(activity)
+
+        // Publish event for billing if category has a price configured
+        val price = category.price
+        if (price != null && price > BigDecimal.ZERO) {
+            eventPublisher.publishEvent(
+                PsychotherapyActivityCreatedEvent(
+                    admissionId = admission.id!!,
+                    categoryName = category.name,
+                    price = price,
+                ),
+            )
+        }
+
         return buildResponse(saved)
     }
 

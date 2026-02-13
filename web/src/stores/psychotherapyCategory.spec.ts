@@ -26,6 +26,8 @@ const mockCategory: PsychotherapyCategory = {
   description: 'Workshop activities',
   displayOrder: 1,
   active: true,
+  price: null,
+  cost: null,
   createdAt: '2026-02-05T10:00:00Z',
   updatedAt: '2026-02-05T10:00:00Z'
 }
@@ -37,6 +39,8 @@ const mockCategories: PsychotherapyCategory[] = [
     description: 'Workshop activities',
     displayOrder: 1,
     active: true,
+    price: null,
+    cost: null,
     createdAt: null,
     updatedAt: null
   },
@@ -46,6 +50,8 @@ const mockCategories: PsychotherapyCategory[] = [
     description: 'Private one-on-one sessions',
     displayOrder: 2,
     active: true,
+    price: 500.00,
+    cost: 200.00,
     createdAt: null,
     updatedAt: null
   },
@@ -55,6 +61,8 @@ const mockCategories: PsychotherapyCategory[] = [
     description: 'Group therapy sessions',
     displayOrder: 3,
     active: false,
+    price: null,
+    cost: null,
     createdAt: null,
     updatedAt: null
   }

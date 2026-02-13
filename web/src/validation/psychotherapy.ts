@@ -21,7 +21,9 @@ export const psychotherapyCategorySchema = z.object({
     .int('validation.psychotherapy.category.displayOrder.integer')
     .min(0, 'validation.psychotherapy.category.displayOrder.min')
     .default(0),
-  active: z.boolean().default(true)
+  active: z.boolean().default(true),
+  price: z.number().min(0, 'validation.psychotherapy.category.price.min').optional().nullable(),
+  cost: z.number().min(0, 'validation.psychotherapy.category.cost.min').optional().nullable()
 })
 
 // Psychotherapy activity schema (create form)

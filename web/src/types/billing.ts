@@ -4,6 +4,7 @@ export enum ChargeType {
   PROCEDURE = 'PROCEDURE',
   LAB = 'LAB',
   SERVICE = 'SERVICE',
+  DIET = 'DIET',
   ADJUSTMENT = 'ADJUSTMENT'
 }
 
@@ -90,6 +91,7 @@ const chargeTypeSeverityMap: Record<ChargeType, TagSeverity> = {
   [ChargeType.PROCEDURE]: 'warn',
   [ChargeType.LAB]: 'secondary',
   [ChargeType.SERVICE]: 'info',
+  [ChargeType.DIET]: 'secondary',
   [ChargeType.ADJUSTMENT]: 'danger'
 }
 

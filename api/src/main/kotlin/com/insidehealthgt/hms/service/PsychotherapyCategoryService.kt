@@ -50,6 +50,8 @@ class PsychotherapyCategoryService(
             description = request.description,
             displayOrder = request.displayOrder,
             active = request.active,
+            price = request.price,
+            cost = request.cost,
         )
 
         val savedCategory = categoryRepository.save(category)
@@ -68,6 +70,8 @@ class PsychotherapyCategoryService(
         category.description = request.description
         category.displayOrder = request.displayOrder
         category.active = request.active
+        category.price = request.price
+        category.cost = request.cost
 
         val savedCategory = categoryRepository.save(category)
         return buildCategoryResponse(savedCategory)

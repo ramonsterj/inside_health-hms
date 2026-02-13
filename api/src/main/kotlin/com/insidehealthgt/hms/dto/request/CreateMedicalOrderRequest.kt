@@ -3,6 +3,7 @@ package com.insidehealthgt.hms.dto.request
 import com.insidehealthgt.hms.entity.AdministrationRoute
 import com.insidehealthgt.hms.entity.MedicalOrderCategory
 import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
 import java.time.LocalDate
 
@@ -30,4 +31,7 @@ data class CreateMedicalOrderRequest(
     val schedule: String? = null,
 
     val observations: String? = null,
+
+    @field:Positive(message = "Inventory item ID must be positive")
+    val inventoryItemId: Long? = null,
 )

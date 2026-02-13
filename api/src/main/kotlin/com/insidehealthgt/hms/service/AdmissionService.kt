@@ -13,6 +13,7 @@ import com.insidehealthgt.hms.entity.AdmissionConsentDocument
 import com.insidehealthgt.hms.entity.AdmissionConsultingPhysician
 import com.insidehealthgt.hms.entity.AdmissionStatus
 import com.insidehealthgt.hms.entity.AdmissionType
+import com.insidehealthgt.hms.event.AdmissionCreatedEvent
 import com.insidehealthgt.hms.event.PatientDischargedEvent
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
@@ -137,6 +138,17 @@ class AdmissionService(
         )
 
         val savedAdmission = admissionRepository.save(admission)
+
+        // Publish event for procedure admission types (billing)
+        if (request.type in setOf(AdmissionType.ELECTROSHOCK_THERAPY, AdmissionType.KETAMINE_INFUSION)) {
+            eventPublisher.publishEvent(
+                AdmissionCreatedEvent(
+                    admissionId = savedAdmission.id!!,
+                    admissionType = request.type,
+                ),
+            )
+        }
+
         return buildAdmissionDetailResponse(savedAdmission)
     }
 

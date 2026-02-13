@@ -167,6 +167,8 @@ export interface MedicalOrderResponse {
   status: MedicalOrderStatus
   discontinuedAt: string | null
   discontinuedBy: MedicalStaffResponse | null
+  inventoryItemId: number | null
+  inventoryItemName: string | null
   createdAt: string | null
   updatedAt: string | null
   createdBy: MedicalStaffResponse | null
@@ -183,6 +185,7 @@ export interface CreateMedicalOrderRequest {
   frequency?: string | null
   schedule?: string | null
   observations?: string | null
+  inventoryItemId?: number | null
 }
 
 export interface UpdateMedicalOrderRequest {
@@ -195,6 +198,7 @@ export interface UpdateMedicalOrderRequest {
   frequency?: string | null
   schedule?: string | null
   observations?: string | null
+  inventoryItemId?: number | null
 }
 
 // Grouped medical orders by category

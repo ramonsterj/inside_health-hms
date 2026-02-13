@@ -45,6 +45,10 @@ jwt:
 app:
   file-storage:
     base-path: ${FILE_STORAGE_PATH:./data/files}
+  billing:
+    daily-meal-rate: 150.00
+    electroshock-base-price: 2500.00
+    ketamine-base-price: 3000.00
 
 springdoc:
   api-docs:

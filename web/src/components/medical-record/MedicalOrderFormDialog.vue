@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useForm } from 'vee-validate'
 import Dialog from 'primevue/dialog'
@@ -11,6 +11,7 @@ import Message from 'primevue/message'
 import { toTypedSchema } from '@/validation/zodI18n'
 import { medicalOrderSchema, type MedicalOrderFormData } from '@/validation/medicalRecord'
 import { useMedicalOrderStore } from '@/stores/medicalOrder'
+import { useInventoryItemStore } from '@/stores/inventoryItem'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useFormDateField } from '@/composables/useFormDateField'
 import { MedicalOrderCategory, AdministrationRoute } from '@/types/medicalRecord'
@@ -31,9 +32,20 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const { showError } = useErrorHandler()
 const medicalOrderStore = useMedicalOrderStore()
+const inventoryItemStore = useInventoryItemStore()
 
 const loading = ref(false)
 const isEditMode = computed(() => !!props.order)
+
+// Billable categories that should show inventory item selector
+const billableCategories = [
+  MedicalOrderCategory.MEDICAMENTOS,
+  MedicalOrderCategory.LABORATORIOS,
+  MedicalOrderCategory.CUIDADOS_ESPECIALES,
+  MedicalOrderCategory.REFERENCIAS_MEDICAS,
+  MedicalOrderCategory.PRUEBAS_PSICOMETRICAS,
+  MedicalOrderCategory.ACTIVIDAD_FISICA
+]
 
 // Category options
 const categoryOptions = computed(() =>
@@ -42,6 +54,15 @@ const categoryOptions = computed(() =>
     value: cat
   }))
 )
+
+// Inventory item options
+const inventoryItemOptions = computed(() => [
+  { label: '-', value: null },
+  ...inventoryItemStore.items.map(item => ({
+    label: item.name,
+    value: item.id
+  }))
+])
 
 // Route options
 const routeOptions = computed(() => [
@@ -64,7 +85,8 @@ const { defineField, handleSubmit, errors, values, setValues, resetForm } =
       route: null,
       frequency: '',
       schedule: '',
-      observations: ''
+      observations: '',
+      inventoryItemId: null
     }
   })
 
@@ -77,9 +99,27 @@ const [route] = defineField('route')
 const [frequency] = defineField('frequency')
 const [schedule] = defineField('schedule')
 const [observations] = defineField('observations')
+const [inventoryItemId] = defineField('inventoryItemId')
 
 // Show medication fields when MEDICAMENTOS category is selected
 const showMedicationFields = computed(() => values.category === MedicalOrderCategory.MEDICAMENTOS)
+
+// Show inventory item selector for billable categories
+const showInventoryItemSelector = computed(() =>
+  billableCategories.includes(values.category as MedicalOrderCategory)
+)
+
+onMounted(() => {
+  loadInventoryItems()
+})
+
+async function loadInventoryItems() {
+  try {
+    await inventoryItemStore.fetchItems(0, 100)
+  } catch {
+    // Ignore errors when loading inventory items
+  }
+}
 
 // Use composable for type-safe Date ↔ string synchronization
 const startDatePicker = useFormDateField(startDate)
@@ -99,7 +139,8 @@ watch(
           route: props.order.route || null,
           frequency: props.order.frequency || '',
           schedule: props.order.schedule || '',
-          observations: props.order.observations || ''
+          observations: props.order.observations || '',
+          inventoryItemId: props.order.inventoryItemId || null
         })
       } else {
         resetForm()
@@ -121,7 +162,8 @@ const onSubmit = handleSubmit(async formValues => {
       route: formValues.route || null,
       frequency: formValues.frequency || null,
       schedule: formValues.schedule || null,
-      observations: formValues.observations || null
+      observations: formValues.observations || null,
+      inventoryItemId: formValues.inventoryItemId || null
     }
 
     if (isEditMode.value && props.order) {
@@ -271,6 +313,24 @@ function closeDialog() {
           :placeholder="t('medicalRecord.medicalOrder.placeholders.schedule')"
           class="w-full"
         />
+      </div>
+
+      <!-- Inventory Item (for billable categories) -->
+      <div v-if="showInventoryItemSelector" class="form-field">
+        <label for="inventoryItemId">{{ t('medicalRecord.medicalOrder.fields.inventoryItem') }}</label>
+        <Select
+          id="inventoryItemId"
+          v-model="inventoryItemId"
+          :options="inventoryItemOptions"
+          optionLabel="label"
+          optionValue="value"
+          filter
+          :placeholder="t('medicalRecord.medicalOrder.placeholders.inventoryItem')"
+          class="w-full"
+        />
+        <Message v-if="errors.inventoryItemId" severity="error" :closable="false">
+          {{ errors.inventoryItemId }}
+        </Message>
       </div>
 
       <!-- Observations -->

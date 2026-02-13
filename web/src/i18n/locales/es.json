@@ -764,6 +764,14 @@
         }
       }
     },
+    "medicationAdministration": {
+      "status": {
+        "required": "El estado es requerido"
+      },
+      "notes": {
+        "max": "Las notas deben tener como máximo 1000 caracteres"
+      }
+    },
     "inventory": {
       "category": {
         "name": {
@@ -834,6 +842,12 @@
           "invalid": "El orden de visualización debe ser un número.",
           "integer": "El orden de visualización debe ser un número entero.",
           "min": "El orden de visualización debe ser 0 o mayor."
+        },
+        "price": {
+          "min": "El precio no puede ser negativo"
+        },
+        "cost": {
+          "min": "El costo no puede ser negativo"
         }
       },
       "activity": {
@@ -1247,15 +1261,36 @@
         "route": "Via de Administracion",
         "frequency": "Frecuencia",
         "schedule": "Horario",
-        "observations": "Observaciones"
+        "observations": "Observaciones",
+        "inventoryItem": "Servicio/Artículo vinculado"
       },
       "placeholders": {
         "medication": "Nombre del medicamento",
         "dosage": "ej. 500mg, 10ml",
         "frequency": "ej. cada 8 horas, 3 veces al dia",
         "schedule": "ej. 8am, 4pm, 12am",
-        "observations": "Indicaciones especiales, precauciones..."
+        "observations": "Indicaciones especiales, precauciones...",
+        "inventoryItem": "Seleccionar artículo para facturación/seguimiento de inventario"
       }
+    }
+  },
+  "medicationAdministration": {
+    "title": "Administración de Medicamentos",
+    "administer": "Administrar",
+    "history": "Historial de Administración",
+    "status": "Estado",
+    "notes": "Notas",
+    "administeredAt": "Administrado el",
+    "administeredBy": "Administrado por",
+    "billable": "Facturable",
+    "empty": "No hay registros de administración aún.",
+    "created": "Administración de medicamento registrada exitosamente.",
+    "confirmGiven": "¿Confirmar que el medicamento fue administrado al paciente?",
+    "statuses": {
+      "GIVEN": "Administrado",
+      "MISSED": "Omitido",
+      "REFUSED": "Rechazado",
+      "HELD": "Retenido"
     }
   },
   "psychotherapy": {
@@ -1267,6 +1302,8 @@
       "description": "Descripción",
       "displayOrder": "Orden de Visualización",
       "active": "Activo",
+      "price": "Precio",
+      "cost": "Costo",
       "empty": "No se encontraron categorías de actividades.",
       "created": "Categoría creada exitosamente.",
       "updated": "Categoría actualizada exitosamente.",
@@ -1495,6 +1532,7 @@
       "PROCEDURE": "Procedimiento",
       "LAB": "Laboratorio",
       "SERVICE": "Servicio",
+      "DIET": "Dieta",
       "ADJUSTMENT": "Ajuste"
     }
   }

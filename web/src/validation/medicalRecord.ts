@@ -105,7 +105,8 @@ export const medicalOrderSchema = z.object({
     .max(100, 'validation.medicalRecord.medicalOrder.schedule.max')
     .optional()
     .or(z.literal('')),
-  observations: z.string().optional().or(z.literal(''))
+  observations: z.string().optional().or(z.literal('')),
+  inventoryItemId: z.number().int().positive().optional().nullable()
 })
 
 export type MedicalOrderFormData = z.infer<typeof medicalOrderSchema>

@@ -34,7 +34,9 @@ const { defineField, handleSubmit, errors, setValues } = useForm<PsychotherapyCa
     name: '',
     description: '',
     displayOrder: 0,
-    active: true
+    active: true,
+    price: null,
+    cost: null
   }
 })
 
@@ -42,6 +44,8 @@ const [name] = defineField('name')
 const [description] = defineField('description')
 const [displayOrder] = defineField('displayOrder')
 const [active] = defineField('active')
+const [price] = defineField('price')
+const [cost] = defineField('cost')
 
 onMounted(async () => {
   if (isEditMode.value && categoryId.value) {
@@ -57,7 +61,9 @@ async function loadCategory() {
       name: category.name,
       description: category.description || '',
       displayOrder: category.displayOrder,
-      active: category.active
+      active: category.active,
+      price: category.price,
+      cost: category.cost
     })
   } catch (error) {
     showError(error)
@@ -72,7 +78,9 @@ const onSubmit = handleSubmit(async values => {
   try {
     const data = {
       ...values,
-      description: values.description || null
+      description: values.description || null,
+      price: values.price || null,
+      cost: values.cost || null
     }
 
     if (isEditMode.value && categoryId.value) {
@@ -137,6 +145,36 @@ function cancel() {
             />
             <Message v-if="errors.displayOrder" severity="error" :closable="false">
               {{ errors.displayOrder }}
+            </Message>
+          </div>
+
+          <div class="form-field">
+            <label for="price">{{ t('psychotherapy.category.price') }}</label>
+            <InputNumber
+              id="price"
+              v-model="price"
+              mode="currency"
+              currency="GTQ"
+              :min="0"
+              :class="{ 'p-invalid': errors.price }"
+            />
+            <Message v-if="errors.price" severity="error" :closable="false">
+              {{ errors.price }}
+            </Message>
+          </div>
+
+          <div class="form-field">
+            <label for="cost">{{ t('psychotherapy.category.cost') }}</label>
+            <InputNumber
+              id="cost"
+              v-model="cost"
+              mode="currency"
+              currency="GTQ"
+              :min="0"
+              :class="{ 'p-invalid': errors.cost }"
+            />
+            <Message v-if="errors.cost" severity="error" :closable="false">
+              {{ errors.cost }}
             </Message>
           </div>
 

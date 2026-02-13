@@ -2,6 +2,7 @@ package com.insidehealthgt.hms.dto.response
 
 import com.insidehealthgt.hms.entity.PsychotherapyCategory
 import com.insidehealthgt.hms.entity.User
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 data class PsychotherapyCategoryResponse(
@@ -10,6 +11,8 @@ data class PsychotherapyCategoryResponse(
     val description: String?,
     val displayOrder: Int,
     val active: Boolean,
+    val price: BigDecimal?,
+    val cost: BigDecimal?,
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?,
     val createdBy: UserSummaryResponse?,
@@ -26,6 +29,8 @@ data class PsychotherapyCategoryResponse(
             description = category.description,
             displayOrder = category.displayOrder,
             active = category.active,
+            price = category.price,
+            cost = category.cost,
             createdAt = category.createdAt,
             updatedAt = category.updatedAt,
             createdBy = createdByUser?.let { UserSummaryResponse.from(it) },
@@ -38,6 +43,8 @@ data class PsychotherapyCategoryResponse(
             description = category.description,
             displayOrder = category.displayOrder,
             active = category.active,
+            price = category.price,
+            cost = category.cost,
             createdAt = category.createdAt,
             updatedAt = category.updatedAt,
             createdBy = null,

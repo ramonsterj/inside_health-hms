@@ -5,13 +5,18 @@ import com.insidehealthgt.hms.dto.request.UpdateMedicalOrderRequest
 import com.insidehealthgt.hms.dto.response.GroupedMedicalOrdersResponse
 import com.insidehealthgt.hms.dto.response.MedicalOrderResponse
 import com.insidehealthgt.hms.entity.MedicalOrder
+import com.insidehealthgt.hms.entity.MedicalOrderCategory
 import com.insidehealthgt.hms.entity.MedicalOrderStatus
+import com.insidehealthgt.hms.event.MedicalOrderCreatedEvent
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
 import com.insidehealthgt.hms.repository.AdmissionRepository
+import com.insidehealthgt.hms.repository.InventoryItemRepository
 import com.insidehealthgt.hms.repository.MedicalOrderRepository
 import com.insidehealthgt.hms.repository.UserRepository
 import com.insidehealthgt.hms.security.CustomUserDetails
+import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -21,8 +26,12 @@ import java.time.LocalDateTime
 class MedicalOrderService(
     private val medicalOrderRepository: MedicalOrderRepository,
     private val admissionRepository: AdmissionRepository,
+    private val inventoryItemRepository: InventoryItemRepository,
     private val userRepository: UserRepository,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
+
+    private val log = LoggerFactory.getLogger(MedicalOrderService::class.java)
 
     @Transactional(readOnly = true)
     fun listMedicalOrders(admissionId: Long): GroupedMedicalOrdersResponse {
@@ -69,6 +78,11 @@ class MedicalOrderService(
         val admission = admissionRepository.findByIdWithRelations(admissionId)
             ?: throw ResourceNotFoundException("Admission not found with id: $admissionId")
 
+        val inventoryItem = request.inventoryItemId?.let { itemId ->
+            inventoryItemRepository.findById(itemId)
+                .orElseThrow { ResourceNotFoundException("Inventory item not found with id: $itemId") }
+        }
+
         val order = MedicalOrder(
             admission = admission,
             category = request.category,
@@ -80,9 +94,29 @@ class MedicalOrderService(
             frequency = request.frequency,
             schedule = request.schedule,
             observations = request.observations,
+            inventoryItem = inventoryItem,
         )
 
         val saved = medicalOrderRepository.save(order)
+
+        // Publish event for billing if order has linked inventory item and billable category
+        if (inventoryItem != null && request.category in BILLABLE_ORDER_CATEGORIES) {
+            eventPublisher.publishEvent(
+                MedicalOrderCreatedEvent(
+                    admissionId = admission.id!!,
+                    category = request.category,
+                    inventoryItemId = inventoryItem.id!!,
+                    itemName = inventoryItem.name,
+                    unitPrice = inventoryItem.price,
+                ),
+            )
+        } else if (inventoryItem == null && request.category in BILLABLE_ORDER_CATEGORIES) {
+            log.info(
+                "Medical order {} has no linked inventory item, no auto-charge created",
+                saved.id,
+            )
+        }
+
         return buildResponse(saved)
     }
 
@@ -101,6 +135,11 @@ class MedicalOrderService(
             throw BadRequestException("Cannot update a discontinued medical order")
         }
 
+        val inventoryItem = request.inventoryItemId?.let { itemId ->
+            inventoryItemRepository.findById(itemId)
+                .orElseThrow { ResourceNotFoundException("Inventory item not found with id: $itemId") }
+        }
+
         order.category = request.category
         order.startDate = request.startDate
         order.endDate = request.endDate
@@ -110,6 +149,7 @@ class MedicalOrderService(
         order.frequency = request.frequency
         order.schedule = request.schedule
         order.observations = request.observations
+        order.inventoryItem = inventoryItem
 
         val saved = medicalOrderRepository.save(order)
         return buildResponse(saved)
@@ -150,6 +190,16 @@ class MedicalOrderService(
         } else {
             throw IllegalStateException("Unable to get current user ID")
         }
+    }
+
+    companion object {
+        private val BILLABLE_ORDER_CATEGORIES = setOf(
+            MedicalOrderCategory.LABORATORIOS,
+            MedicalOrderCategory.CUIDADOS_ESPECIALES,
+            MedicalOrderCategory.REFERENCIAS_MEDICAS,
+            MedicalOrderCategory.PRUEBAS_PSICOMETRICAS,
+            MedicalOrderCategory.ACTIVIDAD_FISICA,
+        )
     }
 
     private fun buildResponse(order: MedicalOrder): MedicalOrderResponse {

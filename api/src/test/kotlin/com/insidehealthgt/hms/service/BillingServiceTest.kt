@@ -52,7 +52,15 @@ class BillingServiceTest {
         inventoryItemRepository = mock()
         userRepository = mock()
 
-        billingService = BillingService(chargeRepository, admissionRepository, inventoryItemRepository, userRepository)
+        billingService = BillingService(
+            chargeRepository,
+            admissionRepository,
+            inventoryItemRepository,
+            userRepository,
+            dailyMealRate = BigDecimal("150.00"),
+            electroshockBasePrice = BigDecimal("2500.00"),
+            ketamineBasePrice = BigDecimal("3000.00"),
+        )
 
         testPatient = mock<Patient>().apply {
             whenever(id).thenReturn(1L)

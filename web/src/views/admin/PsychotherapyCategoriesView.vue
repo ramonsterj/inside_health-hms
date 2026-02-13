@@ -114,6 +114,12 @@ async function deleteCategory(id: number) {
             style="width: 120px"
           />
 
+          <Column :header="t('psychotherapy.category.price')" style="width: 120px">
+            <template #body="{ data }">
+              {{ data.price != null ? `Q${data.price.toFixed(2)}` : '-' }}
+            </template>
+          </Column>
+
           <Column :header="t('psychotherapy.category.active')" style="width: 100px">
             <template #body="{ data }">
               <Tag
