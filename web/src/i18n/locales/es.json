@@ -16,7 +16,7 @@
     "success": "Exito",
     "error": "Error",
     "warning": "Advertencia",
-    "info": "Informacion",
+    "info": "Información",
     "close": "Cerrar",
     "back": "Atras",
     "next": "Siguiente",
@@ -27,11 +27,11 @@
     "download": "Descargar",
     "all": "Todos",
     "more": "Mas",
-    "createdAt": "Fecha de Creacion",
+    "createdAt": "Fecha de Creación",
     "createdBy": "Creado Por",
-    "updatedAt": "Fecha de Actualizacion",
+    "updatedAt": "Fecha de Actualización",
     "updatedBy": "Actualizado Por",
-    "auditInfo": "Informacion de Auditoria",
+    "auditInfo": "Información de Auditoria",
     "expand": "Expandir",
     "collapse": "Contraer",
     "unknown": "Desconocido",
@@ -46,14 +46,14 @@
   "nav": {
     "home": "Inicio",
     "account": "Cuenta",
-    "clinical": "Clinico",
-    "administration": "Administracion",
+    "clinical": "Clínico",
+    "administration": "Administración",
     "dashboard": "Panel",
     "patients": "Pacientes",
     "admissions": "Hospitalizaciones",
     "users": "Usuarios",
     "roles": "Roles",
-    "triageCodes": "Codigos de Triage",
+    "triageCodes": "Códigos de Triage",
     "rooms": "Habitaciones",
     "activityCategories": "Categorías de Actividades",
     "inventory": "Inventario",
@@ -62,23 +62,23 @@
     "lowStockReport": "Reporte de Stock Bajo",
     "auditLogs": "Registros de Auditoria",
     "profile": "Perfil",
-    "logout": "Cerrar Sesion"
+    "logout": "Cerrar Sesión"
   },
   "auth": {
     "login": {
       "title": "Bienvenido de Nuevo",
-      "subtitle": "Inicia sesion en tu cuenta",
+      "subtitle": "Inicia sesión en tu cuenta",
       "identifier": "Correo o Usuario",
       "identifierPlaceholder": "Ingresa tu correo o usuario",
-      "password": "Contrasena",
-      "passwordPlaceholder": "Ingresa tu contrasena",
-      "submit": "Iniciar Sesion",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Ingresa tu contraseña",
+      "submit": "Iniciar Sesión",
       "noAccount": "No tienes una cuenta?",
       "createOne": "Crea una",
       "success": "Bienvenido de nuevo!",
-      "successDetail": "Has iniciado sesion exitosamente.",
-      "failed": "Error de Inicio de Sesion",
-      "failedDetail": "Error al iniciar sesion. Verifica tus credenciales."
+      "successDetail": "Has iniciado sesión éxitosamente.",
+      "failed": "Error de Inicio de Sesión",
+      "failedDetail": "Error al iniciar sesión. Verifica tus credenciales."
     },
     "register": {
       "title": "Crear Cuenta",
@@ -89,32 +89,32 @@
       "firstNamePlaceholder": "Nombre",
       "lastName": "Apellido",
       "lastNamePlaceholder": "Apellido",
-      "email": "Correo Electronico",
-      "emailPlaceholder": "Ingresa tu correo electronico",
-      "password": "Contrasena",
-      "passwordPlaceholder": "Crea una contrasena",
-      "confirmPassword": "Confirmar Contrasena",
-      "confirmPasswordPlaceholder": "Confirma tu contrasena",
+      "email": "Correo Electrónico",
+      "emailPlaceholder": "Ingresa tu correo electrónico",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Crea una contraseña",
+      "confirmPassword": "Confirmar Contraseña",
+      "confirmPasswordPlaceholder": "Confirma tu contraseña",
       "submit": "Crear Cuenta",
       "hasAccount": "Ya tienes una cuenta?",
-      "signIn": "Inicia sesion",
+      "signIn": "Inicia sesión",
       "success": "Cuenta Creada",
-      "successDetail": "Bienvenido! Tu cuenta se ha creado exitosamente.",
+      "successDetail": "Bienvenido! Tu cuenta se ha creado éxitosamente.",
       "failed": "Error de Registro",
       "failedDetail": "Error en el registro. Por favor intenta de nuevo."
     },
-    "forgotPassword": "Olvidaste tu contrasena?",
-    "resetPassword": "Restablecer Contrasena",
-    "changePassword": "Cambiar Contrasena",
-    "currentPassword": "Contrasena Actual",
-    "newPassword": "Nueva Contrasena",
-    "confirmNewPassword": "Confirmar Nueva Contrasena",
-    "passwordChangeRequired": "Debe cambiar su contrasena antes de continuar",
-    "passwordChanged": "Contrasena cambiada exitosamente",
+    "forgotPassword": "Olvidaste tu contraseña?",
+    "resetPassword": "Restablecer Contraseña",
+    "changePassword": "Cambiar Contraseña",
+    "currentPassword": "Contraseña Actual",
+    "newPassword": "Nueva Contraseña",
+    "confirmNewPassword": "Confirmar Nueva Contraseña",
+    "passwordChangeRequired": "Debe cambiar su contraseña antes de continuar",
+    "passwordChanged": "Contraseña cambiada éxitosamente",
     "sessionExpired": {
-      "title": "Sesion Expirada",
-      "message": "Tu sesion ha expirado por inactividad. Por favor inicia sesion nuevamente para continuar.",
-      "loginButton": "Iniciar Sesion"
+      "title": "Sesión Expirada",
+      "message": "Tu sesión ha expirado por inactividad. Por favor inicia sesión nuevamente para continuar.",
+      "loginButton": "Iniciar Sesión"
     }
   },
   "dashboard": {
@@ -129,16 +129,16 @@
     "cards": {
       "profile": {
         "title": "Tu Perfil",
-        "description": "Administra tu informacion personal y configuracion de cuenta.",
+        "description": "Administra tu información personal y configuracion de cuenta.",
         "link": "Ver Perfil"
       },
       "users": {
-        "title": "Gestion de Usuarios",
+        "title": "Gestión de Usuarios",
         "description": "Ver y administrar todos los usuarios del sistema.",
         "link": "Administrar Usuarios"
       },
       "accountInfo": {
-        "title": "Informacion de Cuenta",
+        "title": "Información de Cuenta",
         "email": "Correo",
         "roles": "Roles",
         "status": "Estado"
@@ -147,41 +147,41 @@
   },
   "profile": {
     "title": "Configuracion del Perfil",
-    "personalInfo": "Informacion Personal",
-    "changePassword": "Cambiar Contrasena",
+    "personalInfo": "Información Personal",
+    "changePassword": "Cambiar Contraseña",
     "preferences": "Preferencias",
-    "email": "Correo Electronico",
-    "emailHint": "El correo electronico no se puede cambiar",
+    "email": "Correo Electrónico",
+    "emailHint": "El correo electrónico no se puede cambiar",
     "username": "Nombre de Usuario",
     "usernameHint": "El nombre de usuario no se puede cambiar",
     "firstName": "Nombre",
     "firstNamePlaceholder": "Ingresa tu nombre",
     "lastName": "Apellido",
     "lastNamePlaceholder": "Ingresa tu apellido",
-    "currentPassword": "Contrasena Actual",
-    "currentPasswordPlaceholder": "Ingresa la contrasena actual",
-    "newPassword": "Nueva Contrasena",
-    "newPasswordPlaceholder": "Ingresa la nueva contrasena",
-    "confirmPassword": "Confirmar Nueva Contrasena",
-    "confirmPasswordPlaceholder": "Confirma la nueva contrasena",
+    "currentPassword": "Contraseña Actual",
+    "currentPasswordPlaceholder": "Ingresa la contraseña actual",
+    "newPassword": "Nueva Contraseña",
+    "newPasswordPlaceholder": "Ingresa la nueva contraseña",
+    "confirmPassword": "Confirmar Nueva Contraseña",
+    "confirmPasswordPlaceholder": "Confirma la nueva contraseña",
     "saveChanges": "Guardar Cambios",
-    "changePasswordBtn": "Cambiar Contrasena",
+    "changePasswordBtn": "Cambiar Contraseña",
     "updateSuccess": "Perfil Actualizado",
-    "updateSuccessDetail": "Tu perfil se ha actualizado exitosamente.",
-    "updateFailed": "Error de Actualizacion",
-    "passwordSuccess": "Contrasena Cambiada",
-    "passwordSuccessDetail": "Tu contrasena se ha cambiado exitosamente.",
-    "passwordFailed": "Error al Cambiar Contrasena",
+    "updateSuccessDetail": "Tu perfil se ha actualizado éxitosamente.",
+    "updateFailed": "Error de Actualización",
+    "passwordSuccess": "Contraseña Cambiada",
+    "passwordSuccessDetail": "Tu contraseña se ha cambiado éxitosamente.",
+    "passwordFailed": "Error al Cambiar Contraseña",
     "language": "Idioma",
     "languageHint": "Selecciona tu idioma preferido"
   },
   "users": {
-    "title": "Gestion de Usuarios",
+    "title": "Gestión de Usuarios",
     "addUser": "Agregar Usuario",
     "createUser": "Crear Usuario",
     "editUser": "Editar Usuario",
     "deleteUser": "Eliminar Usuario",
-    "deleteConfirm": "Estas seguro de que deseas eliminar a {email}?",
+    "deleteConfirm": "¿Estás seguro de que deseas eliminar a {email}?",
     "deleteConfirmHeader": "Confirmar Eliminacion",
     "deleteSuccess": "Usuario Eliminado",
     "deleteSuccessDetail": "{email} ha sido eliminado.",
@@ -192,32 +192,32 @@
     "restoreSuccess": "Usuario Restaurado",
     "restoreSuccessDetail": "{email} ha sido restaurado.",
     "restoreFailed": "Error al Restaurar",
-    "resetPassword": "Restablecer Contrasena",
-    "resetPasswordConfirm": "Estas seguro de que deseas restablecer la contrasena de {email}?",
-    "resetPasswordSuccess": "Contrasena Restablecida Exitosamente",
-    "resetPasswordSuccessDetail": "La contrasena se ha restablecido. Contrasena temporal: {password}",
+    "resetPassword": "Restablecer Contraseña",
+    "resetPasswordConfirm": "¿Estás seguro de que deseas restablecer la contraseña de {email}?",
+    "resetPasswordSuccess": "Contraseña Restablecida Exitosamente",
+    "resetPasswordSuccessDetail": "La contraseña se ha restablecido. Contraseña temporal: {password}",
     "resetPasswordFailed": "Error al Restablecer",
-    "temporaryPasswordNote": "Por favor comparte esta contrasena de forma segura con el usuario. Debera cambiarla despues de iniciar sesion.",
-    "temporaryPasswordLabel": "La contrasena temporal para este usuario es:",
+    "temporaryPasswordNote": "Por favor comparte esta contraseña de forma segura con el usuario. Debera cambiarla despues de iniciar sesión.",
+    "temporaryPasswordLabel": "La contraseña temporal para este usuario es:",
     "refresh": "Actualizar",
     "copied": "Copiado",
-    "copiedToClipboard": "Contrasena copiada al portapapeles",
+    "copiedToClipboard": "Contraseña copiada al portapapeles",
     "done": "Listo",
     "you": "Tu",
     "createSuccess": "Usuario Creado",
     "createSuccessDetail": "El usuario {email} ha sido creado.",
     "createFailed": "Error al Crear",
     "updateSuccess": "Usuario Actualizado",
-    "updateSuccessDetail": "El usuario se ha actualizado exitosamente.",
+    "updateSuccessDetail": "El usuario se ha actualizado éxitosamente.",
     "updateFailed": "Error al Actualizar",
     "addUserDialog": {
       "title": "Agregar Nuevo Usuario",
       "username": "Nombre de Usuario",
       "usernamePlaceholder": "Ingresa nombre de usuario",
-      "email": "Correo Electronico",
-      "emailPlaceholder": "Ingresa correo electronico",
-      "password": "Contrasena",
-      "passwordPlaceholder": "Ingresa contrasena (min 8 caracteres)",
+      "email": "Correo Electrónico",
+      "emailPlaceholder": "Ingresa correo electrónico",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Ingresa contraseña (min 8 caracteres)",
       "firstName": "Nombre",
       "firstNamePlaceholder": "Nombre",
       "lastName": "Apellido",
@@ -274,7 +274,7 @@
     },
     "tooltips": {
       "edit": "Editar usuario",
-      "resetPassword": "Restablecer contrasena",
+      "resetPassword": "Restablecer contraseña",
       "delete": "Eliminar usuario",
       "restore": "Restaurar usuario"
     }
@@ -293,8 +293,8 @@
       "MRS": "Sra.",
       "MISS": "Srta."
     },
-    "phoneNumbers": "Telefonos",
-    "phoneNumber": "Numero de Telefono",
+    "phoneNumbers": "Teléfonos",
+    "phoneNumber": "Número de Teléfono",
     "phoneType": "Tipo",
     "phoneTypes": {
       "MOBILE": "Movil",
@@ -303,59 +303,59 @@
       "WORK": "Trabajo",
       "OTHER": "Otro"
     },
-    "addPhoneNumber": "Agregar Telefono",
+    "addPhoneNumber": "Agregar Teléfono",
     "removePhoneNumber": "Eliminar",
     "primaryPhone": "Principal",
-    "noPhoneNumbers": "No se han agregado telefonos",
-    "confirmPassword": "Confirmar Contrasena",
+    "noPhoneNumbers": "No se han agregado teléfonos",
+    "confirmPassword": "Confirmar Contraseña",
     "filterByRole": "Filtrar por Rol",
     "allRoles": "Todos los Roles",
-    "mustChangePassword": "Debe cambiar contrasena en proximo inicio",
+    "mustChangePassword": "Debe cambiar contraseña en proximo inicio",
     "password": {
-      "mismatch": "Las contrasenas no coinciden",
-      "minLength": "La contrasena debe tener al menos 8 caracteres",
-      "currentRequired": "La contrasena actual es requerida",
-      "mustBeDifferent": "La nueva contrasena debe ser diferente a la actual"
+      "mismatch": "Las contraseñas no coinciden",
+      "minLength": "La contraseña debe tener al menos 8 caracteres",
+      "currentRequired": "La contraseña actual es requerida",
+      "mustBeDifferent": "La nueva contraseña debe ser diferente a la actual"
     }
   },
   "roles": {
-    "title": "Gestion de Roles",
+    "title": "Gestión de Roles",
     "addRole": "Agregar Rol",
     "editRole": "Editar Rol",
     "managePermissions": "Gestionar Permisos",
     "deleteRole": "Eliminar Rol",
-    "deleteConfirm": "Estas seguro de que deseas eliminar el rol \"{name}\"?",
+    "deleteConfirm": "¿Estás seguro de que deseas eliminar el rol \"{name}\"?",
     "deleteConfirmHeader": "Confirmar Eliminacion",
     "systemRoleWarning": "Los roles del sistema no se pueden modificar ni eliminar.",
     "refresh": "Actualizar",
     "columns": {
-      "code": "Codigo",
+      "code": "Código",
       "name": "Nombre",
-      "description": "Descripcion",
+      "description": "Descripción",
       "permissions": "Permisos",
       "system": "Sistema",
       "actions": "Acciones"
     },
     "addDialog": {
       "title": "Agregar Nuevo Rol",
-      "code": "Codigo",
+      "code": "Código",
       "codePlaceholder": "ej., GESTOR_CONTENIDO",
-      "codeHint": "Solo letras mayusculas, numeros y guiones bajos",
+      "codeHint": "Solo letras mayúsculas, números y guiones bajos",
       "name": "Nombre",
       "namePlaceholder": "ej., Gestor de Contenido",
-      "description": "Descripcion",
-      "descriptionPlaceholder": "Describe el proposito del rol",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Describe el propósito del rol",
       "permissions": "Permisos Iniciales",
       "permissionsPlaceholder": "Selecciona permisos (opcional)"
     },
     "editDialog": {
       "title": "Editar Rol",
-      "code": "Codigo",
-      "codeHint": "El codigo no se puede cambiar",
+      "code": "Código",
+      "codeHint": "El código no se puede cambiar",
       "name": "Nombre",
       "namePlaceholder": "Nombre del rol",
-      "description": "Descripcion",
-      "descriptionPlaceholder": "Describe el proposito del rol"
+      "description": "Descripción",
+      "descriptionPlaceholder": "Describe el propósito del rol"
     },
     "permissionsDialog": {
       "title": "Gestionar Permisos para {role}",
@@ -364,8 +364,8 @@
       "noPermissions": "No hay permisos disponibles"
     },
     "permissionGroups": {
-      "user": "Gestion de Usuarios",
-      "role": "Gestion de Roles",
+      "user": "Gestión de Usuarios",
+      "role": "Gestión de Roles",
       "audit": "Auditoria"
     },
     "badges": {
@@ -378,7 +378,7 @@
       "createSuccessDetail": "El rol \"{name}\" ha sido creado.",
       "createFailed": "Error al Crear",
       "updateSuccess": "Rol Actualizado",
-      "updateSuccessDetail": "El rol se ha actualizado exitosamente.",
+      "updateSuccessDetail": "El rol se ha actualizado éxitosamente.",
       "updateFailed": "Error al Actualizar",
       "deleteSuccess": "Rol Eliminado",
       "deleteSuccessDetail": "El rol \"{name}\" ha sido eliminado.",
@@ -394,19 +394,19 @@
       "systemRole": "Los roles del sistema no se pueden modificar"
     },
     "validation": {
-      "codeRequired": "El codigo del rol es requerido",
-      "codeFormat": "El codigo debe comenzar con una letra y contener solo letras mayusculas, numeros y guiones bajos",
-      "codeMin": "El codigo debe tener al menos 2 caracteres",
-      "codeMax": "El codigo debe tener como maximo 50 caracteres",
+      "codeRequired": "El código del rol es requerido",
+      "codeFormat": "El código debe comenzar con una letra y contener solo letras mayúsculas, números y guiones bajos",
+      "codeMin": "El código debe tener al menos 2 caracteres",
+      "codeMax": "El código debe tener como máximo 50 caracteres",
       "nameRequired": "El nombre del rol es requerido",
-      "nameMax": "El nombre debe tener como maximo 255 caracteres"
+      "nameMax": "El nombre debe tener como máximo 255 caracteres"
     }
   },
   "auditLogs": {
     "title": "Registros de Auditoria",
     "refresh": "Actualizar",
     "filters": {
-      "action": "Accion",
+      "action": "Acción",
       "entityType": "Tipo de Entidad",
       "userId": "ID de Usuario",
       "allActions": "Todas las Acciones",
@@ -419,11 +419,11 @@
       "id": "ID",
       "timestamp": "Fecha y Hora",
       "user": "Usuario",
-      "action": "Accion",
+      "action": "Acción",
       "entity": "Entidad",
       "entityType": "Tipo de Entidad",
       "entityId": "ID de Entidad",
-      "ipAddress": "Direccion IP",
+      "ipAddress": "Dirección IP",
       "changes": "Cambios",
       "details": "Detalles"
     },
@@ -431,8 +431,8 @@
       "CREATE": "Crear",
       "UPDATE": "Actualizar",
       "DELETE": "Eliminar",
-      "LOGIN": "Iniciar Sesion",
-      "LOGOUT": "Cerrar Sesion"
+      "LOGIN": "Iniciar Sesión",
+      "LOGOUT": "Cerrar Sesión"
     },
     "expansion": {
       "oldValues": "Valores Anteriores",
@@ -464,9 +464,9 @@
     "religion": "Religion",
     "educationLevel": "Escolaridad",
     "occupation": "Ocupacion",
-    "address": "Direccion Domicilio",
-    "email": "Correo Electronico",
-    "idDocumentNumber": "Numero de Documento",
+    "address": "Dirección Domicilio",
+    "email": "Correo Electrónico",
+    "idDocumentNumber": "Número de Documento",
     "notes": "Anotaciones",
     "emergencyContacts": "Contactos de Emergencia",
     "idDocument": "Documento de Identidad",
@@ -476,18 +476,18 @@
     "replaceIdDocument": "Reemplazar con un nuevo documento:",
     "uploadNewDocument": "Subir Nuevo Documento",
     "dragDropIdDocument": "Arrastra y suelta el archivo aqui o haz clic para buscar",
-    "idDocumentHint": "Formatos aceptados: imagenes o PDF (max 5MB)",
+    "idDocumentHint": "Formatos aceptados: imágenes o PDF (max 5MB)",
     "registeredBy": "Registrado por",
-    "lastModifiedBy": "Ultima modificacion por",
+    "lastModifiedBy": "Última modificacion por",
     "search": "Buscar pacientes...",
     "empty": "No se encontraron pacientes.",
-    "auditInfo": "Informacion de Auditoria",
-    "createSuccess": "Paciente creado exitosamente.",
-    "updateSuccess": "Paciente actualizado exitosamente.",
-    "idDocumentUploaded": "Documento de identidad subido exitosamente.",
-    "idDocumentDeleted": "Documento de identidad eliminado exitosamente.",
+    "auditInfo": "Información de Auditoria",
+    "createSuccess": "Paciente creado éxitosamente.",
+    "updateSuccess": "Paciente actualizado éxitosamente.",
+    "idDocumentUploaded": "Documento de identidad subido éxitosamente.",
+    "idDocumentDeleted": "Documento de identidad eliminado éxitosamente.",
     "duplicateFound": "Posible Duplicado Encontrado",
-    "duplicateMessage": "Un paciente con informacion similar ya existe. Por favor revise antes de crear un nuevo registro.",
+    "duplicateMessage": "Un paciente con información similar ya existe. Por favor revise antes de crear un nuevo registro.",
     "sexOptions": {
       "MALE": "Masculino",
       "FEMALE": "Femenino"
@@ -512,47 +512,47 @@
   "contact": {
     "name": "Persona de Contacto",
     "relationship": "Parentesco",
-    "phone": "Telefono",
+    "phone": "Teléfono",
     "addContact": "Agregar Contacto",
     "removeContact": "Eliminar Contacto"
   },
   "validation": {
     "required": "{field} es requerido",
-    "email": "Formato de correo electronico invalido",
+    "email": "Formato de correo electrónico invalido",
     "minLength": "{field} debe tener al menos {min} caracteres",
-    "maxLength": "{field} debe tener como maximo {max} caracteres",
-    "passwordMatch": "Las contrasenas no coinciden",
+    "maxLength": "{field} debe tener como máximo {max} caracteres",
+    "passwordMatch": "Las contraseñas no coinciden",
     "admission": {
       "patientId": {
         "required": "Paciente es requerido"
       },
       "triageCodeId": {
-        "required": "Codigo de triage es requerido",
-        "requiredForType": "Codigo de triage es requerido para este tipo de admision"
+        "required": "Código de triage es requerido",
+        "requiredForType": "Código de triage es requerido para este tipo de admisión"
       },
       "roomId": {
-        "required": "Habitacion es requerida",
-        "requiredForType": "Habitacion es requerida para este tipo de admision"
+        "required": "Habitación es requerida",
+        "requiredForType": "Habitación es requerida para este tipo de admisión"
       },
       "type": {
-        "required": "Tipo de admision es requerido"
+        "required": "Tipo de admisión es requerido"
       },
       "treatingPhysicianId": {
-        "required": "Medico tratante es requerido"
+        "required": "Médico tratante es requerido"
       },
       "admissionDate": {
-        "required": "Fecha de admision es requerida"
+        "required": "Fecha de admisión es requerida"
       },
       "consultingPhysicians": {
         "physicianId": {
-          "required": "Medico es requerido"
+          "required": "Médico es requerido"
         },
         "reason": {
-          "max": "El motivo debe tener como maximo 500 caracteres"
+          "max": "El motivo debe tener como máximo 500 caracteres"
         }
       },
       "inventory": {
-        "max": "El inventario debe tener como maximo 2000 caracteres"
+        "max": "El inventario debe tener como máximo 2000 caracteres"
       },
       "consent": {
         "required": "Por favor selecciona un archivo",
@@ -563,138 +563,138 @@
     "username": {
       "required": "El nombre de usuario es requerido",
       "min": "El nombre de usuario debe tener al menos 3 caracteres",
-      "max": "El nombre de usuario debe tener como maximo 50 caracteres",
+      "max": "El nombre de usuario debe tener como máximo 50 caracteres",
       "available": "Nombre de usuario disponible",
       "taken": "El nombre de usuario ya esta en uso",
       "checking": "Verificando disponibilidad..."
     },
     "emailField": {
-      "required": "El correo electronico es requerido",
-      "invalid": "Formato de correo electronico invalido"
+      "required": "El correo electrónico es requerido",
+      "invalid": "Formato de correo electrónico invalido"
     },
     "password": {
-      "required": "La contrasena es requerida",
-      "min": "La contrasena debe tener al menos 8 caracteres",
-      "current": "La contrasena actual es requerida",
-      "new": "La nueva contrasena es requerida",
-      "confirm": "Por favor confirma tu contrasena",
-      "mustBeDifferent": "La nueva contrasena debe ser diferente a la actual"
+      "required": "La contraseña es requerida",
+      "min": "La contraseña debe tener al menos 8 caracteres",
+      "current": "La contraseña actual es requerida",
+      "new": "La nueva contraseña es requerida",
+      "confirm": "Por favor confirma tu contraseña",
+      "mustBeDifferent": "La nueva contraseña debe ser diferente a la actual"
     },
     "name": {
-      "max": "El nombre debe tener como maximo 100 caracteres"
+      "max": "El nombre debe tener como máximo 100 caracteres"
     },
     "phone": {
-      "required": "Se requiere al menos un numero de telefono",
+      "required": "Se requiere al menos un número de teléfono",
       "number": {
-        "required": "El numero de telefono es requerido",
-        "max": "El numero de telefono debe tener como maximo 20 caracteres"
+        "required": "El número de teléfono es requerido",
+        "max": "El número de teléfono debe tener como máximo 20 caracteres"
       }
     },
     "patient": {
       "firstName": {
         "required": "El nombre es requerido",
-        "max": "El nombre debe tener como maximo 100 caracteres"
+        "max": "El nombre debe tener como máximo 100 caracteres"
       },
       "lastName": {
         "required": "El apellido es requerido",
-        "max": "El apellido debe tener como maximo 100 caracteres"
+        "max": "El apellido debe tener como máximo 100 caracteres"
       },
       "age": {
         "required": "La edad es requerida",
-        "invalid": "La edad debe ser un numero",
+        "invalid": "La edad debe ser un número",
         "min": "La edad debe ser al menos 0",
-        "max": "La edad debe ser como maximo 150"
+        "max": "La edad debe ser como máximo 150"
       },
       "sex": {
         "required": "El sexo es requerido"
       },
       "gender": {
         "required": "El genero es requerido",
-        "max": "El genero debe tener como maximo 50 caracteres"
+        "max": "El genero debe tener como máximo 50 caracteres"
       },
       "maritalStatus": {
         "required": "El estado civil es requerido"
       },
       "religion": {
         "required": "La religion es requerida",
-        "max": "La religion debe tener como maximo 100 caracteres"
+        "max": "La religion debe tener como máximo 100 caracteres"
       },
       "educationLevel": {
-        "required": "El nivel de educacion es requerido"
+        "required": "El nivel de educación es requerido"
       },
       "occupation": {
         "required": "La ocupacion es requerida",
-        "max": "La ocupacion debe tener como maximo 100 caracteres"
+        "max": "La ocupacion debe tener como máximo 100 caracteres"
       },
       "address": {
-        "required": "La direccion es requerida",
-        "max": "La direccion debe tener como maximo 500 caracteres"
+        "required": "La dirección es requerida",
+        "max": "La dirección debe tener como máximo 500 caracteres"
       },
       "email": {
-        "required": "El correo electronico es requerido",
-        "invalid": "Formato de correo electronico invalido",
-        "max": "El correo debe tener como maximo 255 caracteres"
+        "required": "El correo electrónico es requerido",
+        "invalid": "Formato de correo electrónico invalido",
+        "max": "El correo debe tener como máximo 255 caracteres"
       },
       "idDocumentNumber": {
-        "max": "El numero de documento debe tener como maximo 50 caracteres"
+        "max": "El número de documento debe tener como máximo 50 caracteres"
       },
       "emergencyContacts": {
         "required": "Se requiere al menos un contacto de emergencia",
         "name": {
           "required": "El nombre del contacto es requerido",
-          "max": "El nombre del contacto debe tener como maximo 200 caracteres"
+          "max": "El nombre del contacto debe tener como máximo 200 caracteres"
         },
         "relationship": {
           "required": "El parentesco es requerido",
-          "max": "El parentesco debe tener como maximo 100 caracteres"
+          "max": "El parentesco debe tener como máximo 100 caracteres"
         },
         "phone": {
-          "required": "El telefono es requerido",
-          "max": "El telefono debe tener como maximo 20 caracteres"
+          "required": "El teléfono es requerido",
+          "max": "El teléfono debe tener como máximo 20 caracteres"
         }
       }
     },
     "room": {
       "number": {
-        "required": "El numero de habitacion es requerido",
-        "max": "El numero de habitacion debe tener como maximo 50 caracteres"
+        "required": "El número de habitación es requerido",
+        "max": "El número de habitación debe tener como máximo 50 caracteres"
       },
       "type": {
-        "required": "El tipo de habitacion es requerido"
+        "required": "El tipo de habitación es requerido"
       },
       "gender": {
-        "required": "El sexo de la habitacion es requerido"
+        "required": "El sexo de la habitación es requerido"
       },
       "capacity": {
         "required": "La capacidad es requerida",
-        "invalid": "La capacidad debe ser un numero",
+        "invalid": "La capacidad debe ser un número",
         "min": "La capacidad debe ser al menos 1",
-        "integer": "La capacidad debe ser un numero entero"
+        "integer": "La capacidad debe ser un número entero"
       }
     },
     "triageCode": {
       "code": {
-        "required": "El codigo es requerido",
-        "max": "El codigo debe tener como maximo 10 caracteres"
+        "required": "El código es requerido",
+        "max": "El código debe tener como máximo 10 caracteres"
       },
       "color": {
         "required": "El color es requerido",
-        "invalid": "Debe ser un color hexadecimal valido (ej. #FF0000)"
+        "invalid": "Debe ser un color hexadecimal válido (ej. #FF0000)"
       },
       "description": {
-        "max": "La descripcion debe tener como maximo 255 caracteres"
+        "max": "La descripción debe tener como máximo 255 caracteres"
       },
       "displayOrder": {
-        "required": "El orden de visualizacion es requerido",
-        "invalid": "El orden de visualizacion debe ser un numero",
-        "integer": "El orden de visualizacion debe ser un numero entero",
-        "min": "El orden de visualizacion debe ser al menos 0"
+        "required": "El orden de visualización es requerido",
+        "invalid": "El orden de visualización debe ser un número",
+        "integer": "El orden de visualización debe ser un número entero",
+        "min": "El orden de visualización debe ser al menos 0"
       }
     },
     "document": {
       "file": {
         "required": "Por favor seleccione un archivo para subir.",
-        "size": "El archivo es demasiado grande. Tamano maximo permitido es 25MB.",
+        "size": "El archivo es demasiado grande. Tamano máximo permitido es 25MB.",
         "type": "Este tipo de archivo no es compatible. Por favor suba un archivo PDF, JPEG o PNG."
       },
       "type": {
@@ -707,22 +707,22 @@
     },
     "documentType": {
       "code": {
-        "required": "El codigo es obligatorio.",
-        "max": "El codigo debe tener 50 caracteres o menos.",
-        "pattern": "El codigo solo debe contener letras mayusculas y guiones bajos."
+        "required": "El código es obligatorio.",
+        "max": "El código debe tener 50 caracteres o menos.",
+        "pattern": "El código solo debe contener letras mayúsculas y guiones bajos."
       },
       "name": {
         "required": "El nombre es obligatorio.",
         "max": "El nombre debe tener 100 caracteres o menos."
       },
       "description": {
-        "max": "La descripcion debe tener 255 caracteres o menos."
+        "max": "La descripción debe tener 255 caracteres o menos."
       },
       "displayOrder": {
-        "required": "El orden de visualizacion es obligatorio.",
-        "invalid": "El orden de visualizacion debe ser un numero.",
-        "integer": "El orden de visualizacion debe ser un numero entero.",
-        "min": "El orden de visualizacion debe ser 0 o mayor."
+        "required": "El orden de visualización es obligatorio.",
+        "invalid": "El orden de visualización debe ser un número.",
+        "integer": "El orden de visualización debe ser un número entero.",
+        "min": "El orden de visualización debe ser 0 o mayor."
       }
     },
     "medicalRecord": {
@@ -734,33 +734,33 @@
           "required": "Los datos objetivos son requeridos"
         },
         "analysis": {
-          "required": "El analisis es requerido"
+          "required": "El análisis es requerido"
         },
         "actionPlans": {
-          "required": "El plan de accion es requerido"
+          "required": "El plan de acción es requerido"
         }
       },
       "medicalOrder": {
         "category": {
-          "required": "La categoria es requerida"
+          "required": "La categoría es requerida"
         },
         "startDate": {
-          "required": "La fecha de inicio es requerida"
+          "required": "La fecha de inició es requerida"
         },
         "medication": {
-          "max": "El medicamento debe tener como maximo 255 caracteres"
+          "max": "El medicamento debe tener como máximo 255 caracteres"
         },
         "dosage": {
-          "max": "La dosis debe tener como maximo 100 caracteres"
+          "max": "La dosis debe tener como máximo 100 caracteres"
         },
         "route": {
-          "invalid": "Via de administracion invalida"
+          "invalid": "Via de administración invalida"
         },
         "frequency": {
-          "max": "La frecuencia debe tener como maximo 100 caracteres"
+          "max": "La frecuencia debe tener como máximo 100 caracteres"
         },
         "schedule": {
-          "max": "El horario debe tener como maximo 255 caracteres"
+          "max": "El horario debe tener como máximo 255 caracteres"
         }
       }
     },
@@ -905,10 +905,10 @@
           "max": "La oximetría debe ser como máximo 100%."
         },
         "other": {
-          "max": "Las otras observaciones deben tener como máximo 1000 caracteres."
+          "max": "Las otras observacíones deben tener como máximo 1000 caracteres."
         },
         "recordedAt": {
-          "future": "La hora de registro no puede ser en el futuro."
+          "future": "La hora de registró no puede ser en el futuro."
         }
       }
     },
@@ -931,31 +931,31 @@
   "errors": {
     "generic": "Ha ocurrido un error. Por favor intenta de nuevo.",
     "network": "Error de red. Por favor verifica tu conexion.",
-    "unauthorized": "No estas autorizado para realizar esta accion.",
+    "unauthorized": "No estas autorizado para realizar esta acción.",
     "notFound": "El recurso solicitado no fue encontrado.",
-    "serverError": "Error del servidor. Por favor intenta mas tarde.",
-    "sessionExpired": "Tu sesion ha expirado. Por favor inicia sesion de nuevo.",
+    "serverError": "Error del servidor. Por favor intenta más tarde.",
+    "sessionExpired": "Tu sesión ha expirado. Por favor inicia sesión de nuevo.",
     "badRequest": "Solicitud invalida. Por favor verifica tu entrada.",
     "forbidden": "Acceso denegado. No tienes permiso.",
     "conflict": "Esta operacion entra en conflicto con datos existentes.",
     "validation": "Por favor corrige los errores en el formulario.",
-    "invalidToken": "Tu sesion es invalida. Por favor inicia sesion de nuevo.",
-    "authenticationFailed": "Error de autenticacion. Por favor verifica tus credenciales.",
+    "invalidToken": "Tu sesión es invalida. Por favor inicia sesión de nuevo.",
+    "authenticationFailed": "Error de autenticación. Por favor verifica tus credenciales.",
     "accountDisabled": "Tu cuenta no esta activa.",
     "user": {
       "notFound": "Usuario no encontrado.",
       "emailExists": "Este correo ya esta registrado.",
       "usernameExists": "Este nombre de usuario ya esta en uso.",
-      "passwordIncorrect": "La contrasena actual es incorrecta.",
+      "passwordIncorrect": "La contraseña actual es incorrecta.",
       "cannotDeleteSelf": "No puedes eliminar tu propia cuenta."
     },
     "role": {
       "notFound": "Rol no encontrado.",
-      "codeExists": "Este codigo de rol ya existe.",
+      "codeExists": "Este código de rol ya existe.",
       "systemCannotDelete": "Los roles del sistema no pueden ser eliminados."
     },
     "patient": {
-      "alreadyAdmitted": "El paciente ya tiene una admision activa."
+      "alreadyAdmitted": "El paciente ya tiene una admisión activa."
     }
   },
   "locale": {
@@ -963,34 +963,34 @@
     "es": "Espanol"
   },
   "triageCode": {
-    "title": "Codigos de Triage",
-    "new": "Nuevo Codigo de Triage",
-    "edit": "Editar Codigo de Triage",
-    "code": "Codigo",
+    "title": "Códigos de Triage",
+    "new": "Nuevo Código de Triage",
+    "edit": "Editar Código de Triage",
+    "code": "Código",
     "color": "Color",
-    "description": "Descripcion",
-    "displayOrder": "Orden de Visualizacion",
-    "empty": "No se encontraron codigos de triage.",
-    "created": "Codigo de triage creado exitosamente.",
-    "updated": "Codigo de triage actualizado exitosamente.",
-    "deleted": "Codigo de triage eliminado exitosamente.",
-    "confirmDelete": "Esta seguro de que desea eliminar este codigo de triage?"
+    "description": "Descripción",
+    "displayOrder": "Orden de Visualización",
+    "empty": "No se encontraron códigos de triage.",
+    "created": "Código de triage creado éxitosamente.",
+    "updated": "Código de triage actualizado éxitosamente.",
+    "deleted": "Código de triage eliminado éxitosamente.",
+    "confirmDelete": "¿Está seguro de que desea eliminar este código de triage?"
   },
   "room": {
     "title": "Habitaciones",
-    "new": "Nueva Habitacion",
-    "edit": "Editar Habitacion",
-    "number": "Codigo",
+    "new": "Nueva Habitación",
+    "edit": "Editar Habitación",
+    "number": "Código",
     "type": "Tipo",
     "gender": "Sexo",
     "capacity": "Capacidad",
     "availableBeds": "Camas Disponibles",
     "bedsAvailable": "camas disponibles",
     "empty": "No se encontraron habitaciones.",
-    "created": "Habitacion creada exitosamente.",
-    "updated": "Habitacion actualizada exitosamente.",
-    "deleted": "Habitacion eliminada exitosamente.",
-    "confirmDelete": "Esta seguro de que desea eliminar esta habitacion?",
+    "created": "Habitación creada éxitosamente.",
+    "updated": "Habitación actualizada éxitosamente.",
+    "deleted": "Habitación eliminada éxitosamente.",
+    "confirmDelete": "¿Está seguro de que desea eliminar esta habitación?",
     "types": {
       "PRIVATE": "Sencilla",
       "SHARED": "Doble"
@@ -1002,21 +1002,21 @@
   },
   "admission": {
     "title": "Hospitalizaciones",
-    "new": "Nueva Hospitalizacion",
-    "edit": "Editar Admision",
-    "details": "Detalles de Admision",
+    "new": "Nueva Hospitalización",
+    "edit": "Editar Admisión",
+    "details": "Detalles de Admisión",
     "patient": "Paciente",
-    "patientInfo": "Informacion del Paciente",
-    "admissionInfo": "Informacion de Admision",
-    "triageCode": "Codigo de Triage",
-    "room": "Habitacion",
-    "treatingPhysician": "Medico Tratante",
-    "admissionDate": "Fecha de Admision",
+    "patientInfo": "Información del Paciente",
+    "admissionInfo": "Información de Admisión",
+    "triageCode": "Código de Triage",
+    "room": "Habitación",
+    "treatingPhysician": "Médico Tratante",
+    "admissionDate": "Fecha de Admisión",
     "dischargeDate": "Fecha de Alta",
     "status": "Estado",
     "inventory": "Inventario del Paciente",
     "inventoryPlaceholder": "Lista de pertenencias del paciente...",
-    "noInventory": "No se registro inventario.",
+    "noInventory": "No se registró inventario.",
     "consent": "Documento de Consentimiento",
     "uploadConsent": "Subir Documento de Consentimiento",
     "downloadConsent": "Descargar Consentimiento",
@@ -1024,49 +1024,49 @@
     "selectConsent": "Seleccionar Archivo",
     "noConsent": "No se ha subido documento de consentimiento.",
     "dragDropConsent": "Arrastra y suelta el archivo aqui o haz clic para buscar",
-    "consentHint": "Formatos aceptados: PDF o imagenes (max 25MB)",
-    "consentUploaded": "Documento de consentimiento subido exitosamente.",
+    "consentHint": "Formatos aceptados: PDF o imágenes (max 25MB)",
+    "consentUploaded": "Documento de consentimiento subido éxitosamente.",
     "discharge": "Dar de Alta al Paciente",
-    "submit": "Crear Admision",
+    "submit": "Crear Admisión",
     "searchPatient": "Buscar Paciente",
     "searchPatientPlaceholder": "Buscar por nombre o documento de identidad...",
-    "patientNotFound": "No encuentra al paciente?",
+    "patientNotFound": "¿No encuentra al paciente?",
     "registerNewPatient": "Registrar Nuevo Paciente",
     "selectedPatient": "Paciente Seleccionado",
-    "selectTriageCode": "Seleccione codigo de triage",
-    "selectRoom": "Seleccione habitacion",
-    "selectPhysician": "Seleccione medico tratante",
-    "empty": "No se encontraron admisiones.",
-    "created": "Admision creada exitosamente.",
-    "updated": "Admision actualizada exitosamente.",
-    "deleted": "Admision eliminada exitosamente.",
-    "patientAlreadyAdmitted": "El paciente ya tiene una admision activa. Por favor de de alta la admision existente primero.",
-    "patientAlreadyAdmittedWarning": "Este paciente ya tiene una admision activa. Debe dar de alta la admision existente antes de crear una nueva.",
-    "discharged": "Paciente dado de alta exitosamente.",
-    "confirmDischarge": "Esta seguro de que desea dar de alta a este paciente?",
-    "confirmDelete": "Esta seguro de que desea eliminar esta admision?",
+    "selectTriageCode": "Seleccione código de triage",
+    "selectRoom": "Seleccione habitación",
+    "selectPhysician": "Seleccione médico tratante",
+    "empty": "No se encontraron admisiónes.",
+    "created": "Admisión creada éxitosamente.",
+    "updated": "Admisión actualizada éxitosamente.",
+    "deleted": "Admisión eliminada éxitosamente.",
+    "patientAlreadyAdmitted": "El paciente ya tiene una admisión activa. Por favor de de alta la admisión existente primero.",
+    "patientAlreadyAdmittedWarning": "Este paciente ya tiene una admisión activa. Debe dar de alta la admisión existente antes de crear una nueva.",
+    "discharged": "Paciente dado de alta éxitosamente.",
+    "confirmDischarge": "¿Está seguro de que desea dar de alta a este paciente?",
+    "confirmDelete": "¿Está seguro de que desea eliminar esta admisión?",
     "statuses": {
       "ACTIVE": "Activo",
       "DISCHARGED": "De Alta"
     },
-    "type": "Tipo de Admision",
-    "selectType": "Seleccionar tipo de admision",
-    "roomOptionalHint": "La habitacion es opcional para este tipo de admision",
+    "type": "Tipo de Admisión",
+    "selectType": "Seleccionar tipo de admisión",
+    "roomOptionalHint": "La habitación es opcional para este tipo de admisión",
     "types": {
-      "HOSPITALIZATION": "Hospitalizacion",
+      "HOSPITALIZATION": "Hospitalización",
       "AMBULATORY": "Ambulatorio",
       "ELECTROSHOCK_THERAPY": "Terapia Electroconvulsiva",
-      "KETAMINE_INFUSION": "Infusion de Ketamina",
+      "KETAMINE_INFUSION": "Infusión de Ketamina",
       "EMERGENCY": "Emergencia"
     },
     "steps": {
       "patient": "Paciente",
       "details": "Detalles",
-      "confirmation": "Confirmacion",
-      "review": "Revision"
+      "confirmation": "Confirmación",
+      "review": "Revisión"
     },
-    "documentsInfoMessage": "Despues de crear la admision, puede subir documentos como formularios de consentimiento e inventario del paciente desde la pagina de detalles de la admision.",
-    "confirmationSummary": "Resumen de Admision",
+    "documentsInfoMessage": "Despues de crear la admisión, puede subir documentos como formularios de consentimiento e inventario del paciente desde la página de detalles de la admisión.",
+    "confirmationSummary": "Resumen de Admisión",
     "consultingPhysicians": {
       "title": "Interconsultas",
       "add": "Agregar Interconsulta",
@@ -1079,9 +1079,9 @@
       "addedAt": "Agregado",
       "addedBy": "Agregado Por",
       "selectPhysician": "Seleccionar medico",
-      "added": "Interconsulta agregada exitosamente.",
-      "removed": "Interconsulta eliminada exitosamente.",
-      "confirmRemove": "Esta seguro que desea eliminar esta interconsulta?"
+      "added": "Interconsulta agregada éxitosamente.",
+      "removed": "Interconsulta eliminada éxitosamente.",
+      "confirmRemove": "¿Está seguro que desea eliminar esta interconsulta?"
     },
     "errors": {
       "invalidPatient": "Paciente no encontrado. Por favor seleccione un paciente de la lista."
@@ -1102,20 +1102,20 @@
     "selectType": "Seleccione tipo de documento",
     "displayName": "Nombre a Mostrar",
     "displayNamePlaceholder": "Ingrese un nombre personalizado para el documento",
-    "displayNameHelp": "Si se deja vacio, se usara el nombre original del archivo",
-    "empty": "No hay documentos subidos aun.",
-    "uploaded": "Documento subido exitosamente.",
-    "deleted": "Documento eliminado exitosamente.",
-    "confirmDelete": "Esta seguro que desea eliminar '{name}'?",
+    "displayNameHelp": "Si se deja vacío, se usara el nombre original del archivo",
+    "empty": "No hay documentos subidos aún.",
+    "uploaded": "Documento subido éxitosamente.",
+    "deleted": "Documento eliminado éxitosamente.",
+    "confirmDelete": "¿Está seguro que desea eliminar '{name}'?",
     "unsupportedType": "Este tipo de archivo no se puede previsualizar. Por favor descargue para ver.",
     "pdfNotSupported": "La vista previa del PDF no esta disponible. Por favor descargue para ver.",
     "dragDropFile": "Arrastra y suelta el archivo aqui o haz clic para buscar",
-    "fileHint": "Formatos aceptados: PDF o imagenes (max 25MB)",
+    "fileHint": "Formatos aceptados: PDF o imágenes (max 25MB)",
     "types": {
-      "CONSENT_ADMISSION": "Consentimiento de Admision",
+      "CONSENT_ADMISSION": "Consentimiento de Admisión",
       "CONSENT_ISOLATION": "Consentimiento de Aislamiento",
-      "CONSENT_RESTRAINT": "Consentimiento de Inmovilizacion",
-      "CONSENT_SEDATION": "Consentimiento de Sedacion",
+      "CONSENT_RESTRAINT": "Consentimiento de Inmovilización",
+      "CONSENT_SEDATION": "Consentimiento de Sedación",
       "INVENTORY_LIST": "Lista de Inventario",
       "INVENTORY_PHOTO": "Fotos de Inventario",
       "OTHER": "Otro Documento"
@@ -1125,46 +1125,46 @@
     "title": "Tipos de Documento",
     "new": "Nuevo Tipo de Documento",
     "edit": "Editar Tipo de Documento",
-    "code": "Codigo",
-    "codeHelp": "Solo letras mayusculas y guiones bajos (ej. CONSENTIMIENTO_ADMISION)",
+    "code": "Código",
+    "codeHelp": "Solo letras mayúsculas y guiones bajos (ej. CONSENTIMIENTO_ADMISION)",
     "name": "Nombre",
-    "description": "Descripcion",
-    "displayOrder": "Orden de Visualizacion",
+    "description": "Descripción",
+    "displayOrder": "Orden de Visualización",
     "empty": "No se encontraron tipos de documento.",
-    "created": "Tipo de documento creado exitosamente.",
-    "updated": "Tipo de documento actualizado exitosamente.",
-    "deleted": "Tipo de documento eliminado exitosamente.",
-    "confirmDelete": "Esta seguro que desea eliminar este tipo de documento?"
+    "created": "Tipo de documento creado éxitosamente.",
+    "updated": "Tipo de documento actualizado éxitosamente.",
+    "deleted": "Tipo de documento eliminado éxitosamente.",
+    "confirmDelete": "¿Está seguro que desea eliminar este tipo de documento?"
   },
   "medicalRecord": {
     "title": "Expediente Medico",
     "tabs": {
-      "clinicalHistory": "Historia Clinica",
-      "progressNotes": "Notas de Evolucion",
-      "medicalOrders": "Ordenes Medicas",
-      "psychotherapyActivities": "Actividades Psicoterapeuticas"
+      "clinicalHistory": "Historia Clínica",
+      "progressNotes": "Notas de Evolución",
+      "medicalOrders": "Órdenes Médicas",
+      "psychotherapyActivities": "Actividades Psicoterapéuticas"
     },
     "clinicalHistory": {
-      "title": "Historia Clinica",
-      "create": "Crear Historia Clinica",
-      "edit": "Editar Historia Clinica",
-      "empty": "No se ha creado la historia clinica para esta admision.",
-      "created": "Historia clinica creada exitosamente.",
-      "updated": "Historia clinica actualizada exitosamente.",
+      "title": "Historia Clínica",
+      "create": "Crear Historia Clínica",
+      "edit": "Editar Historia Clínica",
+      "empty": "No se ha creado la historia clínica para esta admisión.",
+      "created": "Historia clínica creada éxitosamente.",
+      "updated": "Historia clínica actualizada éxitosamente.",
       "noData": "Sin datos",
       "sections": {
-        "presentation": "Presentacion",
+        "presentation": "Presentación",
         "history": "Antecedentes",
         "social": "Historia Social",
         "exam": "Examen",
-        "assessment": "Evaluacion",
+        "assessment": "Evaluación",
         "notes": "Notas Adicionales"
       },
       "fields": {
-        "reasonForAdmission": "Motivo de Admision",
+        "reasonForAdmission": "Motivo de Admisión",
         "historyOfPresentIllness": "Historia de la Enfermedad Actual",
-        "psychiatricHistory": "Antecedentes Psiquiatricos",
-        "medicalHistory": "Antecedentes Medicos",
+        "psychiatricHistory": "Antecedentes Psiquiátricos",
+        "medicalHistory": "Antecedentes Médicos",
         "familyHistory": "Antecedentes Familiares",
         "personalHistory": "Historia Personal",
         "substanceUseHistory": "Historia de Uso de Sustancias",
@@ -1175,62 +1175,62 @@
         "sexualHistory": "Historia Sexual",
         "religiousSpiritualHistory": "Historia Religiosa/Espiritual",
         "mentalStatusExam": "Examen del Estado Mental",
-        "physicalExam": "Examen Fisico",
-        "diagnosticImpression": "Impresion Diagnostica",
+        "physicalExam": "Examen Físico",
+        "diagnosticImpression": "Impresion Diagnóstica",
         "treatmentPlan": "Plan de Tratamiento",
-        "riskAssessment": "Evaluacion de Riesgo",
-        "prognosis": "Pronostico",
+        "riskAssessment": "Evaluación de Riesgo",
+        "prognosis": "Pronóstico",
         "informedConsentNotes": "Notas de Consentimiento Informado",
         "additionalNotes": "Notas Adicionales"
       }
     },
     "progressNote": {
-      "title": "Notas de Evolucion",
+      "title": "Notas de Evolución",
       "add": "Agregar Nota",
       "addFirst": "Agregar Primera Nota",
-      "edit": "Editar Nota de Evolucion",
-      "empty": "No hay notas de evolucion registradas.",
-      "created": "Nota de evolucion creada exitosamente.",
-      "updated": "Nota de evolucion actualizada exitosamente.",
+      "edit": "Editar Nota de Evolución",
+      "empty": "No hay notas de evolución registradas.",
+      "created": "Nota de evolución creada éxitosamente.",
+      "updated": "Nota de evolución actualizada éxitosamente.",
       "notes": "notas",
-      "newestFirst": "Mas recientes",
-      "oldestFirst": "Mas antiguas",
+      "newestFirst": "Más recientes",
+      "oldestFirst": "Más antiguas",
       "edited": "editada",
-      "soapDescription": "Registre la evolucion del paciente usando el formato SOAP (Subjetivo, Objetivo, Analisis, Plan).",
+      "soapDescription": "Registre la evolución del paciente usando el formato SOAP (Subjetivo, Objetivo, Análisis, Plan).",
       "fields": {
         "subjectiveData": "Datos Subjetivos (S)",
         "objectiveData": "Datos Objetivos (O)",
-        "analysis": "Analisis (A)",
-        "actionPlans": "Plan de Accion (P)"
+        "analysis": "Análisis (A)",
+        "actionPlans": "Plan de Acción (P)"
       },
       "placeholders": {
-        "subjectiveData": "Sintomas, quejas y percepcion del paciente...",
+        "subjectiveData": "Síntomas, quejas y percepción del paciente...",
         "objectiveData": "Signos vitales, hallazgos del examen, resultados de laboratorio...",
-        "analysis": "Diagnostico diferencial, interpretacion de hallazgos...",
+        "analysis": "Diagnóstico diferencial, interpretacion de hallazgos...",
         "actionPlans": "Tratamiento, intervenciones, seguimiento..."
       }
     },
     "medicalOrder": {
-      "title": "Ordenes Medicas",
+      "title": "Órdenes Médicas",
       "add": "Agregar Orden",
       "addFirst": "Agregar Primera Orden",
       "edit": "Editar Orden Medica",
-      "empty": "No hay ordenes medicas registradas.",
-      "created": "Orden medica creada exitosamente.",
-      "updated": "Orden medica actualizada exitosamente.",
-      "discontinued": "Orden medica descontinuada exitosamente.",
+      "empty": "No hay órdenes médicas registradas.",
+      "created": "Orden médica creada éxitosamente.",
+      "updated": "Orden médica actualizada éxitosamente.",
+      "discontinued": "Orden médica descontinuada éxitosamente.",
       "discontinue": "Descontinuar",
-      "confirmDiscontinue": "Esta seguro que desea descontinuar esta orden medica?",
+      "confirmDiscontinue": "¿Está seguro que desea descontinuar esta orden medica?",
       "orders": "ordenes",
       "orderedBy": "Ordenado por",
       "discontinuedBy": "Descontinuado por",
       "categories": {
-        "ORDENES_MEDICAS": "Ordenes Medicas Generales",
+        "ORDENES_MEDICAS": "Órdenes Médicas Generales",
         "MEDICAMENTOS": "Medicamentos",
         "LABORATORIOS": "Laboratorios",
-        "REFERENCIAS_MEDICAS": "Referencias Medicas",
-        "PRUEBAS_PSICOMETRICAS": "Pruebas Psicometricas",
-        "ACTIVIDAD_FISICA": "Actividad Fisica",
+        "REFERENCIAS_MEDICAS": "Referencias Médicas",
+        "PRUEBAS_PSICOMETRICAS": "Pruebas Psicométricas",
+        "ACTIVIDAD_FISICA": "Actividad Física",
         "CUIDADOS_ESPECIALES": "Cuidados Especiales",
         "DIETA": "Dieta",
         "RESTRICCIONES_MOVILIDAD": "Restricciones de Movilidad",
@@ -1245,23 +1245,23 @@
         "ORAL": "Oral",
         "IV": "Intravenosa (IV)",
         "IM": "Intramuscular (IM)",
-        "SC": "Subcutanea (SC)",
-        "TOPICAL": "Topica",
-        "INHALATION": "Inhalacion",
+        "SC": "Subcutánea (SC)",
+        "TOPICAL": "Tópica",
+        "INHALATION": "Inhalación",
         "RECTAL": "Rectal",
         "SUBLINGUAL": "Sublingual",
         "OTHER": "Otra"
       },
       "fields": {
-        "category": "Categoria",
+        "category": "Categoría",
         "startDate": "Fecha de Inicio",
         "endDate": "Fecha de Fin",
         "medication": "Medicamento",
         "dosage": "Dosis",
-        "route": "Via de Administracion",
+        "route": "Via de Administración",
         "frequency": "Frecuencia",
         "schedule": "Horario",
-        "observations": "Observaciones",
+        "observations": "Observacíones",
         "inventoryItem": "Servicio/Artículo vinculado"
       },
       "placeholders": {
@@ -1284,7 +1284,7 @@
     "administeredBy": "Administrado por",
     "billable": "Facturable",
     "empty": "No hay registros de administración aún.",
-    "created": "Administración de medicamento registrada exitosamente.",
+    "created": "Administración de medicamento registrada éxitosamente.",
     "confirmGiven": "¿Confirmar que el medicamento fue administrado al paciente?",
     "statuses": {
       "GIVEN": "Administrado",
@@ -1305,9 +1305,9 @@
       "price": "Precio",
       "cost": "Costo",
       "empty": "No se encontraron categorías de actividades.",
-      "created": "Categoría creada exitosamente.",
-      "updated": "Categoría actualizada exitosamente.",
-      "deleted": "Categoría eliminada exitosamente.",
+      "created": "Categoría creada éxitosamente.",
+      "updated": "Categoría actualizada éxitosamente.",
+      "deleted": "Categoría eliminada éxitosamente.",
       "confirmDelete": "¿Está seguro que desea eliminar esta categoría?"
     },
     "activity": {
@@ -1317,8 +1317,8 @@
       "add": "Agregar Actividad",
       "addFirst": "Agregar Primera Actividad",
       "empty": "No hay actividades registradas aún.",
-      "created": "Actividad registrada exitosamente.",
-      "deleted": "Actividad eliminada exitosamente.",
+      "created": "Actividad registrada éxitosamente.",
+      "deleted": "Actividad eliminada éxitosamente.",
       "confirmDelete": "¿Está seguro que desea eliminar esta actividad?",
       "category": "Categoría",
       "selectCategory": "Seleccionar categoría",
@@ -1340,9 +1340,9 @@
       "displayOrder": "Orden de Visualización",
       "active": "Activo",
       "empty": "No se encontraron categorías de inventario.",
-      "created": "Categoría creada exitosamente.",
-      "updated": "Categoría actualizada exitosamente.",
-      "deleted": "Categoría eliminada exitosamente.",
+      "created": "Categoría creada éxitosamente.",
+      "updated": "Categoría actualizada éxitosamente.",
+      "deleted": "Categoría eliminada éxitosamente.",
       "confirmDelete": "¿Está seguro que desea eliminar esta categoría?"
     },
     "item": {
@@ -1373,9 +1373,9 @@
       "allCategories": "Todas las Categorías",
       "searchPlaceholder": "Buscar por nombre...",
       "empty": "No se encontraron artículos de inventario.",
-      "created": "Artículo creado exitosamente.",
-      "updated": "Artículo actualizado exitosamente.",
-      "deleted": "Artículo eliminado exitosamente.",
+      "created": "Artículo creado éxitosamente.",
+      "updated": "Artículo actualizado éxitosamente.",
+      "deleted": "Artículo eliminado éxitosamente.",
       "confirmDelete": "¿Está seguro que desea eliminar este artículo?"
     },
     "movement": {
@@ -1393,7 +1393,7 @@
       "registeredBy": "Registrado por",
       "registeredAt": "Fecha",
       "empty": "No hay movimientos registrados.",
-      "created": "Movimiento registrado exitosamente."
+      "created": "Movimiento registrado éxitosamente."
     },
     "lowStock": {
       "title": "Reporte de Stock Bajo",
@@ -1417,10 +1417,10 @@
       "addFirst": "Agregar Primera Nota",
       "edit": "Editar Nota",
       "description": "Descripción",
-      "descriptionPlaceholder": "Ingrese observaciones, cuidados brindados y otras notas relevantes...",
+      "descriptionPlaceholder": "Ingrese observacíones, cuidados brindados y otras notas relevantes...",
       "empty": "No hay notas de enfermería registradas.",
-      "created": "Nota de enfermería creada exitosamente.",
-      "updated": "Nota de enfermería actualizada exitosamente.",
+      "created": "Nota de enfermería creada éxitosamente.",
+      "updated": "Nota de enfermería actualizada éxitosamente.",
       "edited": "editada",
       "newestFirst": "Más recientes",
       "oldestFirst": "Más antiguas",
@@ -1436,8 +1436,8 @@
       "charts": "Gráficos",
       "empty": "No hay signos vitales registrados.",
       "noChartData": "No hay datos disponibles para gráficos.",
-      "created": "Signos vitales registrados exitosamente.",
-      "updated": "Signos vitales actualizados exitosamente.",
+      "created": "Signos vitales registrados éxitosamente.",
+      "updated": "Signos vitales actualizados éxitosamente.",
       "fields": {
         "recordedAt": "Fecha/Hora de Registro",
         "bloodPressure": "Presión Arterial (s/d)",
@@ -1447,11 +1447,11 @@
         "respiratoryRate": "Frecuencia Respiratoria",
         "temperature": "Temperatura",
         "oxygenSaturation": "Oximetría",
-        "other": "Otras Observaciones"
+        "other": "Otras Observacíones"
       },
       "placeholders": {
         "recordedAt": "Seleccione fecha y hora",
-        "other": "Observaciones adicionales..."
+        "other": "Observacíones adicionales..."
       },
       "hints": {
         "recordedAt": "Deje vacío para usar la hora actual"
@@ -1505,8 +1505,8 @@
     "invoiced": "Facturado",
     "filterByType": "Filtrar por tipo",
     "noCharges": "No se encontraron cargos",
-    "chargeCreated": "Cargo creado exitosamente",
-    "adjustmentCreated": "Ajuste creado exitosamente",
+    "chargeCreated": "Cargo creado éxitosamente",
+    "adjustmentCreated": "Ajuste creado éxitosamente",
     "adjustmentAmountHint": "Ingrese un monto negativo para créditos/ajustes",
     "totalBalance": "Balance Total",
     "dailyTotal": "Total Diario",
@@ -1515,7 +1515,7 @@
     "generateInvoice": "Generar Factura",
     "generateInvoiceConfirmation": "¿Está seguro de que desea generar la factura final? Esto consolidará todos los cargos no facturados en una sola factura.",
     "generate": "Generar",
-    "invoiceGenerated": "Factura generada exitosamente",
+    "invoiceGenerated": "Factura generada éxitosamente",
     "noInvoice": "Aún no se ha generado una factura para esta admisión.",
     "invoiceRequiresDischarged": "El paciente debe ser dado de alta antes de generar una factura.",
     "chargeSummary": "Resumen de Cargos",
