@@ -35,12 +35,39 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:8081',
         changeOrigin: true
       }
     },
     headers: {
-      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' ws: wss:"
+      'Content-Security-Policy': [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob:",
+        "font-src 'self' data:",
+        "connect-src 'self' ws://localhost:* wss://localhost:*",
+        "frame-ancestors 'self'",
+        "form-action 'self'"
+      ].join('; '),
+      'X-Frame-Options': 'DENY',
+      'X-Content-Type-Options': 'nosniff'
+    }
+  },
+  preview: {
+    headers: {
+      'Content-Security-Policy': [
+        "default-src 'self'",
+        "script-src 'self'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob:",
+        "font-src 'self' data:",
+        "connect-src 'self'",
+        "frame-ancestors 'self'",
+        "form-action 'self'"
+      ].join('; '),
+      'X-Frame-Options': 'DENY',
+      'X-Content-Type-Options': 'nosniff'
     }
   }
 })

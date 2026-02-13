@@ -100,13 +100,13 @@ export function useErrorHandler() {
     const rawMessage = extractErrorMessage(error)
 
     // First try code-based translation
-    if (code && ERROR_CODE_MAP[code]) {
-      return t(ERROR_CODE_MAP[code])
+    if (code && Object.hasOwn(ERROR_CODE_MAP, code)) {
+      return t(ERROR_CODE_MAP[code]!)
     }
 
     // Then try message-based translation for specific known messages
-    if (ERROR_MESSAGE_MAP[rawMessage]) {
-      return t(ERROR_MESSAGE_MAP[rawMessage])
+    if (Object.hasOwn(ERROR_MESSAGE_MAP, rawMessage)) {
+      return t(ERROR_MESSAGE_MAP[rawMessage]!)
     }
 
     // Fall back to raw message (backend messages are already localized)
@@ -126,7 +126,7 @@ export function useErrorHandler() {
     const fieldErrors = extractFieldErrors(error)
     if (fieldErrors && Object.keys(fieldErrors).length > 0) {
       // Convert string[] to single string (VeeValidate expects string per field)
-      const veeErrors: Record<string, string> = {}
+      const veeErrors: Record<string, string> = Object.create(null)
       for (const [field, messages] of Object.entries(fieldErrors)) {
         const firstMessage = messages[0]
         if (firstMessage) {

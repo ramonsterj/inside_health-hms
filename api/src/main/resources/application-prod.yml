@@ -19,7 +19,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics  # Minimal endpoints in prod
+        include: health  # Only health check for load balancers in prod
   endpoint:
     health:
       show-details: never  # Hide health details from public

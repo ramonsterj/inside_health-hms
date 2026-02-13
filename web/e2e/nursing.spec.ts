@@ -30,30 +30,6 @@ const mockNurseUser = {
   localePreference: 'en'
 }
 
-const mockAdminUser = {
-  id: 1,
-  username: 'admin',
-  email: 'admin@example.com',
-  firstName: 'Admin',
-  lastName: 'User',
-  roles: ['ADMIN'],
-  permissions: [
-    'admission:read',
-    'nursing-note:read',
-    'nursing-note:create',
-    'nursing-note:update',
-    'vital-sign:read',
-    'vital-sign:create',
-    'vital-sign:update',
-    'clinical-history:read',
-    'psychotherapy-activity:read'
-  ],
-  status: 'ACTIVE',
-  emailVerified: true,
-  createdAt: '2026-01-01T00:00:00Z',
-  localePreference: 'en'
-}
-
 const mockActiveAdmission = {
   id: 100,
   patient: {
@@ -171,7 +147,7 @@ const mockVitalSigns = [
 // Helper function to setup authenticated state
 async function setupAuth(
   page: import('@playwright/test').Page,
-  user: typeof mockNurseUser | typeof mockAdminUser
+  user: typeof mockNurseUser
 ) {
   await page.addInitScript(userData => {
     localStorage.setItem('access_token', 'mock-access-token')
@@ -182,7 +158,7 @@ async function setupAuth(
 
 async function setupCommonMocks(
   page: import('@playwright/test').Page,
-  user: typeof mockNurseUser | typeof mockAdminUser
+  user: typeof mockNurseUser
 ) {
   await page.route('**/api/users/me', async route => {
     await route.fulfill({

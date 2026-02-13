@@ -88,27 +88,6 @@ const mockNurseUser = {
   localePreference: 'en'
 }
 
-const mockSpanishPsychologistUser = {
-  id: 5,
-  username: 'psychologist_es',
-  email: 'psychologist_es@example.com',
-  firstName: 'Carlos',
-  lastName: 'Ruiz',
-  salutation: 'LIC',
-  roles: ['PSYCHOLOGIST'],
-  permissions: [
-    'admission:read',
-    'psychotherapy-activity:read',
-    'psychotherapy-activity:create',
-    'psychotherapy-category:read',
-    'clinical-history:read'
-  ],
-  status: 'ACTIVE',
-  emailVerified: true,
-  createdAt: '2026-01-01T00:00:00Z',
-  localePreference: 'es'
-}
-
 const mockHospitalizationAdmission = {
   id: 100,
   patient: {

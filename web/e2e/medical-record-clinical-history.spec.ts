@@ -1,9 +1,7 @@
 import { test, expect } from '@playwright/test'
 import {
-  confirmDialogAccept,
   waitForOverlaysToClear,
   waitForMedicalRecordTabs,
-  fillRichTextEditor,
   expandAccordionPanel
 } from './utils/test-helpers'
 

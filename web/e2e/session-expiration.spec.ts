@@ -342,12 +342,8 @@ test.describe('Session Expiration', () => {
         localStorage.setItem('refresh_token', 'mock-refresh')
       })
 
-      let requestCount = 0
-
       // Intercept all API calls to return 401
       await page.route('**/api/**', async route => {
-        requestCount++
-
         if (route.request().url().includes('/auth/refresh')) {
           await route.fulfill({
             status: 401,

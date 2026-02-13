@@ -187,7 +187,10 @@ class AdmissionController(
 
     @GetMapping("/{id}/documents/{docId}")
     @PreAuthorize("hasAuthority('admission:view-documents')")
-    fun getDocument(@PathVariable id: Long, @PathVariable docId: Long): ResponseEntity<ApiResponse<AdmissionDocumentResponse>> {
+    fun getDocument(
+        @PathVariable id: Long,
+        @PathVariable docId: Long,
+    ): ResponseEntity<ApiResponse<AdmissionDocumentResponse>> {
         val document = admissionDocumentService.getDocument(id, docId)
         return ResponseEntity.ok(ApiResponse.success(document))
     }
