@@ -50,9 +50,12 @@ VALUES ('PSYCHOLOGIST', 'Psychologist', 'Mental health professionals', TRUE, CUR
 ON CONFLICT (code) DO NOTHING;
 
 -- ============================================================================
--- STEP 3: REBUILD ROLE PERMISSIONS (ADMIN gets all permissions)
+-- STEP 3: REBUILD ROLE PERMISSIONS
 -- ============================================================================
--- Clear existing role_permissions
+-- This section must replicate ALL permission grants from versioned migrations
+-- V020-V067, since the seed file runs after migrations and the DELETE below
+-- wipes any migration-granted role_permissions.
+-- ============================================================================
 DELETE FROM role_permissions;
 
 -- ADMIN gets all permissions
@@ -62,56 +65,119 @@ FROM roles r
 CROSS JOIN permissions p
 WHERE r.code = 'ADMIN' AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
--- USER gets mínimal permissions
+-- USER gets minimal permissions
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
 WHERE r.code = 'USER' AND p.code IN ('user:read') AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
--- ADMINISTRATIVE_STAFF gets patient management permissions
+-- ADMINISTRATIVE_STAFF: patient management + admission + documents
+-- Sources: V020, V025, V034
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
 WHERE r.code = 'ADMINISTRATIVE_STAFF'
-  AND p.code IN ('patient:create', 'patient:read', 'patient:update', 'patient:list', 'admission:create', 'admission:read', 'admission:update', 'admission:list')
+  AND p.code IN (
+    'user:read',
+    'patient:create', 'patient:read', 'patient:update',
+    'patient:upload-id', 'patient:view-id',
+    'triage-code:read', 'room:read',
+    'admission:create', 'admission:read', 'admission:update',
+    'admission:upload-consent', 'admission:view-consent',
+    'admission:view-documents', 'admission:upload-documents', 'admission:download-documents',
+    'document-type:read'
+  )
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
--- DOCTOR gets clínical permissions
+-- DOCTOR: clinical + nursing + psychotherapy read + billing read + MAR read
+-- Sources: V020, V025, V038, V042, V045, V061, V066
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
 WHERE r.code = 'DOCTOR'
-  AND p.code IN ('patient:read', 'patient:update', 'patient:list', 'admission:read', 'admission:update', 'admission:list', 'admission:discharge')
+  AND p.code IN (
+    'user:read',
+    'patient:read', 'patient:update',
+    'triage-code:read', 'room:read',
+    'admission:read', 'admission:update',
+    'admission:view-consent', 'admission:view-documents', 'admission:download-documents',
+    'clinical-history:create', 'clinical-history:read',
+    'progress-note:create', 'progress-note:read',
+    'medical-order:create', 'medical-order:read', 'medical-order:discontinue',
+    'nursing-note:read', 'nursing-note:create', 'nursing-note:update',
+    'vital-sign:read', 'vital-sign:create', 'vital-sign:update',
+    'psychotherapy-activity:read', 'psychotherapy-category:read',
+    'billing:read',
+    'medication-administration:read'
+  )
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
--- PSYCHOLOGIST gets similar permissions to DOCTOR
+-- PSYCHOLOGIST: psychotherapy + patient/admission read
+-- Sources: V042 + base patient/admission access
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
 WHERE r.code = 'PSYCHOLOGIST'
-  AND p.code IN ('patient:read', 'patient:update', 'patient:list', 'admission:read', 'admission:list')
+  AND p.code IN (
+    'patient:read', 'patient:update',
+    'triage-code:read', 'room:read',
+    'admission:read',
+    'admission:view-consent', 'admission:view-documents', 'admission:download-documents',
+    'psychotherapy-activity:create', 'psychotherapy-activity:read',
+    'psychotherapy-category:read'
+  )
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
--- NURSE gets patient care permissions
+-- NURSE: nursing + clinical read + MAR + psychotherapy read + billing read
+-- Sources: V020, V025, V038, V042, V045, V061, V066
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
 WHERE r.code = 'NURSE'
-  AND p.code IN ('patient:read', 'patient:list', 'admission:read', 'admission:list')
+  AND p.code IN (
+    'user:read',
+    'patient:read',
+    'triage-code:read', 'room:read',
+    'admission:read',
+    'admission:view-consent', 'admission:view-documents', 'admission:download-documents',
+    'clinical-history:read',
+    'progress-note:create', 'progress-note:read',
+    'medical-order:read',
+    'nursing-note:read', 'nursing-note:create', 'nursing-note:update',
+    'vital-sign:read', 'vital-sign:create', 'vital-sign:update',
+    'psychotherapy-activity:read', 'psychotherapy-category:read',
+    'billing:read',
+    'medication-administration:create', 'medication-administration:read'
+  )
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
--- CHIEF_NURSE gets extended nursing permissions
+-- CHIEF_NURSE: same as NURSE + patient:update, admission:update, progress-note:update
+-- Sources: V020, V025, V038 (extended), V042, V045, V066
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
 WHERE r.code = 'CHIEF_NURSE'
-  AND p.code IN ('patient:read', 'patient:update', 'patient:list', 'admission:read', 'admission:update', 'admission:list')
+  AND p.code IN (
+    'user:read',
+    'patient:read', 'patient:update',
+    'triage-code:read', 'room:read',
+    'admission:read', 'admission:update',
+    'admission:view-consent', 'admission:view-documents', 'admission:download-documents',
+    'clinical-history:read',
+    'progress-note:create', 'progress-note:read', 'progress-note:update',
+    'medical-order:read',
+    'nursing-note:read', 'nursing-note:create', 'nursing-note:update',
+    'vital-sign:read', 'vital-sign:create', 'vital-sign:update',
+    'psychotherapy-activity:read', 'psychotherapy-category:read',
+    'billing:read',
+    'medication-administration:create', 'medication-administration:read'
+  )
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
 -- ============================================================================
