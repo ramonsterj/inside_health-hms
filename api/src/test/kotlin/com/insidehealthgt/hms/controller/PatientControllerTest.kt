@@ -23,6 +23,8 @@ class PatientControllerTest : AbstractIntegrationTest() {
     private lateinit var adminToken: String
     private lateinit var administrativeStaffToken: String
     private lateinit var doctorToken: String
+    private lateinit var psychologistToken: String
+    private var doctorId: Long = 0
 
     @BeforeEach
     fun setUp() {
@@ -32,8 +34,12 @@ class PatientControllerTest : AbstractIntegrationTest() {
         val (_, staffTkn) = createAdminStaffUser()
         administrativeStaffToken = staffTkn
 
-        val (_, doctorTkn) = createDoctorUser()
+        val (doctor, doctorTkn) = createDoctorUser()
         doctorToken = doctorTkn
+        doctorId = doctor.id!!
+
+        val (_, psychTkn) = createPsychologistUser()
+        psychologistToken = psychTkn
     }
 
     private fun createValidPatientRequest(): CreatePatientRequest = CreatePatientRequest(
@@ -314,6 +320,49 @@ class PatientControllerTest : AbstractIntegrationTest() {
                 .header("Authorization", "Bearer $doctorToken"),
         )
             .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `get patient should deny psychologist access to patient without active admission`() {
+        val patientId = createPatient(administrativeStaffToken)
+
+        mockMvc.perform(
+            get("/api/v1/patients/$patientId")
+                .header("Authorization", "Bearer $psychologistToken"),
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `get patient should allow psychologist access to patient with active admission`() {
+        val patientId = createPatient(administrativeStaffToken)
+        createAdmission(administrativeStaffToken, patientId, doctorId)
+
+        mockMvc.perform(
+            get("/api/v1/patients/$patientId")
+                .header("Authorization", "Bearer $psychologistToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.id").value(patientId))
+    }
+
+    @Test
+    fun `list patients should only return admitted patients for psychologist`() {
+        val admittedPatientId = createPatient(administrativeStaffToken)
+        createAdmission(administrativeStaffToken, admittedPatientId, doctorId)
+        createSecondPatient(administrativeStaffToken)
+
+        val result = mockMvc.perform(
+            get("/api/v1/patients")
+                .header("Authorization", "Bearer $psychologistToken"),
+        )
+            .andExpect(status().isOk)
+            .andReturn()
+
+        val content = objectMapper.readTree(result.response.contentAsString)
+        val patients = content.get("data").get("content")
+        assert(patients.size() == 1) { "Psychologist should only see 1 admitted patient, got ${patients.size()}" }
+        assert(patients[0].get("id").asLong() == admittedPatientId)
     }
 
     // ============ UPDATE PATIENT TESTS ============

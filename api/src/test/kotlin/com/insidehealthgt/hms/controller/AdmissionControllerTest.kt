@@ -24,6 +24,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
     private lateinit var administrativeStaffToken: String
     private lateinit var doctorToken: String
     private lateinit var doctorUser: User
+    private lateinit var psychologistToken: String
     private var patientId: Long = 0
     private var triageCodeId: Long = 0
     private var roomId: Long = 0
@@ -39,6 +40,9 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
         val (doctorUsr, doctorTkn) = createDoctorUser()
         doctorUser = doctorUsr
         doctorToken = doctorTkn
+
+        val (_, psychTkn) = createPsychologistUser()
+        psychologistToken = psychTkn
 
         patientId = createPatient(administrativeStaffToken)
 
@@ -281,6 +285,76 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.data.content[0].status").value("DISCHARGED"))
+    }
+
+    @Test
+    fun `list admissions should only return active admissions for psychologist`() {
+        val request = createValidAdmissionRequest()
+        val createResult = mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        ).andReturn()
+
+        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
+            .get("data").get("id").asLong()
+
+        // Psychologist should see the active admission
+        mockMvc.perform(
+            get("/api/v1/admissions")
+                .header("Authorization", "Bearer $psychologistToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content[0].status").value("ACTIVE"))
+
+        // Discharge the patient
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/discharge")
+                .header("Authorization", "Bearer $administrativeStaffToken"),
+        ).andExpect(status().isOk)
+
+        // Psychologist should no longer see the discharged admission
+        mockMvc.perform(
+            get("/api/v1/admissions")
+                .header("Authorization", "Bearer $psychologistToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content").isEmpty)
+    }
+
+    @Test
+    fun `get admission should deny psychologist access to discharged admission`() {
+        val request = createValidAdmissionRequest()
+        val createResult = mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        ).andReturn()
+
+        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
+            .get("data").get("id").asLong()
+
+        // Psychologist can access active admission
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId")
+                .header("Authorization", "Bearer $psychologistToken"),
+        )
+            .andExpect(status().isOk)
+
+        // Discharge the patient
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/discharge")
+                .header("Authorization", "Bearer $administrativeStaffToken"),
+        ).andExpect(status().isOk)
+
+        // Psychologist cannot access discharged admission
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId")
+                .header("Authorization", "Bearer $psychologistToken"),
+        )
+            .andExpect(status().isForbidden)
     }
 
     // ============ GET ADMISSION TESTS ============
