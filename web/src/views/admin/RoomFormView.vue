@@ -249,6 +249,7 @@ function cancel() {
 }
 
 .form-actions {
+  grid-column: span 2;
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
