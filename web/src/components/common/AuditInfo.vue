@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import type { MedicalStaffResponse } from '@/types/medicalRecord'
+import { formatDateTime } from '@/utils/format'
 
 defineProps<{
   createdAt: string | null
@@ -10,11 +11,6 @@ defineProps<{
 }>()
 
 const { t } = useI18n()
-
-function formatDateTime(dateString: string | null): string {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleString()
-}
 
 function formatStaffName(staff: MedicalStaffResponse | null): string {
   if (!staff) return '-'

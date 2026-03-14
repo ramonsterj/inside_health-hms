@@ -5,6 +5,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
+import { formatDateTime, formatDate } from '@/utils/format'
 import { MedicalOrderStatus, MedicalOrderCategory } from '@/types/medicalRecord'
 import type { MedicalOrderResponse } from '@/types/medicalRecord'
 import { useAuthStore } from '@/stores/auth'
@@ -58,16 +59,6 @@ const discontinuedByName = computed(() => {
   const fullName = `${staff.firstName || ''} ${staff.lastName || ''}`.trim()
   return `${salutationLabel} ${fullName}`.trim() || '-'
 })
-
-function formatDate(dateString: string | null): string {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleDateString()
-}
-
-function formatDateTime(dateString: string | null): string {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleString()
-}
 
 function confirmDiscontinue() {
   confirm.require({

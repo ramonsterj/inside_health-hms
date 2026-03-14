@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { formatDateTime, formatDate } from '@/utils/format'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -43,15 +44,6 @@ function formatDoctorName(doctor: {
   return `${salutationLabel} ${getFullName(doctor.firstName, doctor.lastName)}`.trim()
 }
 
-function formatDate(dateString: string | null): string {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleDateString()
-}
-
-function formatDateTime(dateString: string | null): string {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleString()
-}
 </script>
 
 <template>
