@@ -27,6 +27,7 @@ import com.insidehealthgt.hms.repository.UserRepository
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -78,8 +79,11 @@ class AdmissionService(
     }
 
     @Transactional(readOnly = true)
-    fun getAdmission(id: Long): AdmissionDetailResponse {
+    fun getAdmission(id: Long, activeOnly: Boolean = false): AdmissionDetailResponse {
         val admission = findById(id)
+        if (activeOnly && admission.status != AdmissionStatus.ACTIVE) {
+            throw AccessDeniedException("Access denied")
+        }
         return buildAdmissionDetailResponse(admission)
     }
 
@@ -297,13 +301,15 @@ class AdmissionService(
     }
 
     @Transactional(readOnly = true)
-    fun searchPatients(query: String): List<PatientSummaryResponse> {
+    fun searchPatients(query: String, activeAdmissionsOnly: Boolean = false): List<PatientSummaryResponse> {
         if (query.isBlank()) return emptyList()
 
-        val patients = patientRepository.searchByNameOrDocument(
-            query.trim(),
-            org.springframework.data.domain.PageRequest.of(0, PATIENT_SEARCH_LIMIT),
-        )
+        val pageable = org.springframework.data.domain.PageRequest.of(0, PATIENT_SEARCH_LIMIT)
+        val patients = if (activeAdmissionsOnly) {
+            patientRepository.searchByNameOrDocumentWithActiveAdmission(query.trim(), pageable)
+        } else {
+            patientRepository.searchByNameOrDocument(query.trim(), pageable)
+        }
         return patients.content.map { patient ->
             val hasActiveAdmission = admissionRepository.existsActiveByPatientId(patient.id!!)
             PatientSummaryResponse.from(patient, hasActiveAdmission = hasActiveAdmission)
@@ -311,10 +317,13 @@ class AdmissionService(
     }
 
     @Transactional(readOnly = true)
-    fun getPatientSummary(patientId: Long): PatientSummaryResponse {
+    fun getPatientSummary(patientId: Long, activeAdmissionsOnly: Boolean = false): PatientSummaryResponse {
         val patient = patientRepository.findById(patientId)
             .orElseThrow { ResourceNotFoundException("Patient not found with id: $patientId") }
         val hasActiveAdmission = admissionRepository.existsActiveByPatientId(patient.id!!)
+        if (activeAdmissionsOnly && !hasActiveAdmission) {
+            throw AccessDeniedException("Access denied")
+        }
         return PatientSummaryResponse.from(patient, hasActiveAdmission = hasActiveAdmission)
     }
 
@@ -329,9 +338,12 @@ class AdmissionService(
     }
 
     @Transactional(readOnly = true)
-    fun listConsultingPhysicians(admissionId: Long): List<ConsultingPhysicianResponse> {
-        // Verify admission exists
-        findById(admissionId)
+    fun listConsultingPhysicians(admissionId: Long, activeOnly: Boolean = false): List<ConsultingPhysicianResponse> {
+        // Verify admission exists and check active status
+        val admission = findById(admissionId)
+        if (activeOnly && admission.status != AdmissionStatus.ACTIVE) {
+            throw AccessDeniedException("Access denied")
+        }
 
         val consultingPhysicians = admissionConsultingPhysicianRepository.findByAdmissionIdWithPhysician(admissionId)
 

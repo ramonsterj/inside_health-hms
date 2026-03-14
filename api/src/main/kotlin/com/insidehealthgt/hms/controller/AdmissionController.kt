@@ -52,21 +52,27 @@ class AdmissionController(
         @RequestParam(required = false) type: AdmissionType?,
         @AuthenticationPrincipal currentUser: CustomUserDetails,
     ): ResponseEntity<ApiResponse<PageResponse<AdmissionListResponse>>> {
-        val doctorId = if (currentUser.hasRole("DOCTOR") && !currentUser.hasRole("ADMIN")) {
-            currentUser.id
-        } else {
-            null
-        }
-        val admissions = admissionService.findAll(pageable, status, type, doctorId)
+        val doctorId = resolveDoctorId(currentUser)
+        val effectiveStatus = if (resolveActiveAdmissionsOnly(currentUser)) AdmissionStatus.ACTIVE else status
+        val admissions = admissionService.findAll(pageable, effectiveStatus, type, doctorId)
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(admissions)))
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('admission:read')")
-    fun getAdmission(@PathVariable id: Long): ResponseEntity<ApiResponse<AdmissionDetailResponse>> {
-        val admission = admissionService.getAdmission(id)
+    fun getAdmission(
+        @PathVariable id: Long,
+        @AuthenticationPrincipal currentUser: CustomUserDetails,
+    ): ResponseEntity<ApiResponse<AdmissionDetailResponse>> {
+        val admission = admissionService.getAdmission(id, resolveActiveAdmissionsOnly(currentUser))
         return ResponseEntity.ok(ApiResponse.success(admission))
     }
+
+    private fun resolveDoctorId(currentUser: CustomUserDetails): Long? =
+        if (currentUser.hasRole("DOCTOR") && !currentUser.hasRole("ADMIN")) currentUser.id else null
+
+    private fun resolveActiveAdmissionsOnly(currentUser: CustomUserDetails): Boolean =
+        currentUser.hasRole("PSYCHOLOGIST") && !currentUser.hasRole("ADMIN")
 
     @PostMapping
     @PreAuthorize("hasAuthority('admission:create')")
@@ -124,15 +130,21 @@ class AdmissionController(
 
     @GetMapping("/patients/search")
     @PreAuthorize("hasAuthority('patient:read')")
-    fun searchPatients(@RequestParam q: String): ResponseEntity<ApiResponse<List<PatientSummaryResponse>>> {
-        val patients = admissionService.searchPatients(q)
+    fun searchPatients(
+        @RequestParam q: String,
+        @AuthenticationPrincipal currentUser: CustomUserDetails,
+    ): ResponseEntity<ApiResponse<List<PatientSummaryResponse>>> {
+        val patients = admissionService.searchPatients(q, resolveActiveAdmissionsOnly(currentUser))
         return ResponseEntity.ok(ApiResponse.success(patients))
     }
 
     @GetMapping("/patients/{patientId}")
     @PreAuthorize("hasAuthority('patient:read')")
-    fun getPatientSummary(@PathVariable patientId: Long): ResponseEntity<ApiResponse<PatientSummaryResponse>> {
-        val patient = admissionService.getPatientSummary(patientId)
+    fun getPatientSummary(
+        @PathVariable patientId: Long,
+        @AuthenticationPrincipal currentUser: CustomUserDetails,
+    ): ResponseEntity<ApiResponse<PatientSummaryResponse>> {
+        val patient = admissionService.getPatientSummary(patientId, resolveActiveAdmissionsOnly(currentUser))
         return ResponseEntity.ok(ApiResponse.success(patient))
     }
 
@@ -147,8 +159,12 @@ class AdmissionController(
     @PreAuthorize("hasAuthority('admission:read')")
     fun listConsultingPhysicians(
         @PathVariable id: Long,
+        @AuthenticationPrincipal currentUser: CustomUserDetails,
     ): ResponseEntity<ApiResponse<List<ConsultingPhysicianResponse>>> {
-        val consultingPhysicians = admissionService.listConsultingPhysicians(id)
+        val consultingPhysicians = admissionService.listConsultingPhysicians(
+            id,
+            resolveActiveAdmissionsOnly(currentUser),
+        )
         return ResponseEntity.ok(ApiResponse.success(consultingPhysicians))
     }
 

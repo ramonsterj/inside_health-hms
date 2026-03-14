@@ -111,6 +111,42 @@ interface PatientRepository : JpaRepository<Patient, Long> {
     )
     fun isPatientAssignedToDoctor(@Param("patientId") patientId: Long, @Param("doctorId") doctorId: Long): Boolean
 
+    @Suppress("MaxLineLength", "MaximumLineLength")
+    @Query(
+        value = "SELECT DISTINCT p.* FROM patients p " +
+            "JOIN admissions a ON a.patient_id = p.id AND a.status = 'ACTIVE' AND a.deleted_at IS NULL " +
+            "WHERE p.deleted_at IS NULL",
+        countQuery = "SELECT COUNT(DISTINCT p.id) FROM patients p " +
+            "JOIN admissions a ON a.patient_id = p.id AND a.status = 'ACTIVE' AND a.deleted_at IS NULL " +
+            "WHERE p.deleted_at IS NULL",
+        nativeQuery = true,
+    )
+    fun findAllWithActiveAdmission(pageable: Pageable): Page<Patient>
+
+    @Suppress("MaxLineLength", "MaximumLineLength")
+    @Query(
+        value = "SELECT DISTINCT p.* FROM patients p " +
+            "JOIN admissions a ON a.patient_id = p.id AND a.status = 'ACTIVE' AND a.deleted_at IS NULL " +
+            "WHERE p.deleted_at IS NULL " +
+            "AND (" +
+            "LOWER(unaccent(p.first_name)) LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(unaccent(p.last_name)) LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(unaccent(CONCAT(p.first_name, ' ', p.last_name))) " +
+            "LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(p.id_document_number) LIKE LOWER(CONCAT('%', :search, '%')) ESCAPE '\\')",
+        countQuery = "SELECT COUNT(DISTINCT p.id) FROM patients p " +
+            "JOIN admissions a ON a.patient_id = p.id AND a.status = 'ACTIVE' AND a.deleted_at IS NULL " +
+            "WHERE p.deleted_at IS NULL " +
+            "AND (" +
+            "LOWER(unaccent(p.first_name)) LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(unaccent(p.last_name)) LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(unaccent(CONCAT(p.first_name, ' ', p.last_name))) " +
+            "LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(p.id_document_number) LIKE LOWER(CONCAT('%', :search, '%')) ESCAPE '\\')",
+        nativeQuery = true,
+    )
+    fun searchByNameOrDocumentWithActiveAdmission(@Param("search") search: String, pageable: Pageable): Page<Patient>
+
     /**
      * Delete all patients including soft-deleted ones (for test cleanup).
      */

@@ -43,7 +43,12 @@ class PatientService(
         ?: throw ResourceNotFoundException("Patient not found with id: $id")
 
     @Transactional(readOnly = true)
-    fun findAll(pageable: Pageable, search: String? = null, doctorId: Long? = null): Page<PatientSummaryResponse> {
+    fun findAll(
+        pageable: Pageable,
+        search: String? = null,
+        doctorId: Long? = null,
+        activeAdmissionsOnly: Boolean = false,
+    ): Page<PatientSummaryResponse> {
         val sanitizedSearch = search?.takeIf { it.isNotBlank() }
             ?.trim()?.replace("\\", "\\\\")?.replace("%", "\\%")?.replace("_", "\\_")
 
@@ -52,6 +57,12 @@ class PatientService(
                 patientRepository.searchByNameOrDocumentForPhysician(sanitizedSearch, doctorId, pageable)
             } else {
                 patientRepository.findAllByPhysician(doctorId, pageable)
+            }
+        } else if (activeAdmissionsOnly) {
+            if (sanitizedSearch != null) {
+                patientRepository.searchByNameOrDocumentWithActiveAdmission(sanitizedSearch, pageable)
+            } else {
+                patientRepository.findAllWithActiveAdmission(pageable)
             }
         } else if (sanitizedSearch != null) {
             patientRepository.searchByNameOrDocument(sanitizedSearch, pageable)
@@ -80,12 +91,15 @@ class PatientService(
     }
 
     @Transactional(readOnly = true)
-    fun getPatient(id: Long, doctorId: Long? = null): PatientResponse {
+    fun getPatient(id: Long, doctorId: Long? = null, activeAdmissionsOnly: Boolean = false): PatientResponse {
         val patient = findByIdWithContacts(id)
         if (doctorId != null && !patientRepository.isPatientAssignedToDoctor(id, doctorId)) {
             throw AccessDeniedException("Access denied")
         }
         val hasActiveAdmission = admissionRepository.existsActiveByPatientId(id)
+        if (activeAdmissionsOnly && !hasActiveAdmission) {
+            throw AccessDeniedException("Access denied")
+        }
         return buildPatientResponse(patient, hasActiveAdmission)
     }
 

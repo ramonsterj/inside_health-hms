@@ -48,7 +48,12 @@ class PatientController(private val patientService: PatientService) {
         @RequestParam(required = false) search: String?,
         @AuthenticationPrincipal currentUser: CustomUserDetails,
     ): ResponseEntity<ApiResponse<PageResponse<PatientSummaryResponse>>> {
-        val patients = patientService.findAll(pageable, search, resolveDoctorId(currentUser))
+        val patients = patientService.findAll(
+            pageable,
+            search,
+            resolveDoctorId(currentUser),
+            resolveActiveAdmissionsOnly(currentUser),
+        )
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(patients)))
     }
 
@@ -58,12 +63,19 @@ class PatientController(private val patientService: PatientService) {
         @PathVariable id: Long,
         @AuthenticationPrincipal currentUser: CustomUserDetails,
     ): ResponseEntity<ApiResponse<PatientResponse>> {
-        val patient = patientService.getPatient(id, resolveDoctorId(currentUser))
+        val patient = patientService.getPatient(
+            id,
+            resolveDoctorId(currentUser),
+            resolveActiveAdmissionsOnly(currentUser),
+        )
         return ResponseEntity.ok(ApiResponse.success(patient))
     }
 
     private fun resolveDoctorId(currentUser: CustomUserDetails): Long? =
         if (currentUser.hasRole("DOCTOR") && !currentUser.hasRole("ADMIN")) currentUser.id else null
+
+    private fun resolveActiveAdmissionsOnly(currentUser: CustomUserDetails): Boolean =
+        currentUser.hasRole("PSYCHOLOGIST") && !currentUser.hasRole("ADMIN")
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('patient:update')")
