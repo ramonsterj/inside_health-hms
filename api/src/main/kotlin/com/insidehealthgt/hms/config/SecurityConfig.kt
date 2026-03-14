@@ -3,7 +3,7 @@ package com.insidehealthgt.hms.config
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.insidehealthgt.hms.security.JwtAuthenticationFilter
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
@@ -25,11 +25,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
+@EnableConfigurationProperties(AppProperties::class)
 class SecurityConfig(
     private val jwtAuthenticationFilter: JwtAuthenticationFilter,
     private val objectMapper: ObjectMapper,
-    @Value("\${app.cors.additional-origins:}") private val additionalOrigins: List<String>,
-    @Value("\${app.csp.connect-src-extra:}") private val cspConnectSrcExtra: List<String>,
+    private val appProperties: AppProperties,
 ) {
 
     companion object {
@@ -106,7 +106,7 @@ class SecurityConfig(
                             "img-src 'self' data: blob:; " +
                             "font-src 'self' data:; " +
                             "connect-src 'self'" +
-                            cspConnectSrcExtra.filter { it.isNotBlank() }.joinToString("") { " $it" } +
+                            appProperties.csp.connectSrcExtra.filter { it.isNotBlank() }.joinToString("") { " $it" } +
                             "; " +
                             "frame-ancestors 'none'; " +
                             "form-action 'self'",
@@ -121,7 +121,7 @@ class SecurityConfig(
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        configuration.allowedOriginPatterns = additionalOrigins.filter { it.isNotBlank() }
+        configuration.allowedOriginPatterns = appProperties.cors.additionalOrigins.filter { it.isNotBlank() }
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
         configuration.allowedHeaders = listOf("*")
         configuration.allowCredentials = true

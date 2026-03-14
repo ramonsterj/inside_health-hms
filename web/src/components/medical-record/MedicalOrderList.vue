@@ -291,7 +291,8 @@ function handleOrderSaved() {
 }
 
 .count-badge {
-  margin-left: 0.5rem;
+  margin-left: auto;
+  margin-right: 0.75rem;
 }
 
 .category-orders {
