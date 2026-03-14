@@ -1,0 +1,43 @@
+.filter-card {
+  margin-bottom: 1rem;
+}
+
+.filter-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-field label {
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.triage-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.admission-date {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.date-time {
+  font-weight: 500;
+}
+
+.relative-time {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+}

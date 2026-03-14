@@ -315,6 +315,7 @@ class GlobalExceptionHandler {
 - ✅ vue-i18n for internationalization
 - ✅ VeeValidate + Zod for form validation
 - ✅ Axios with auth interceptors
+- ✅ Dashboard shows admitted patients with role-based filtering (doctors see their patients, all other roles see all)
 - ✅ Session expiration handling with modal notification, redirect preservation, and proactive token monitoring
 - ✅ Vitest for unit testing (happy-dom, @vue/test-utils, @pinia/testing)
 - ✅ Playwright for E2E testing

@@ -18,6 +18,7 @@ import { usePatientStore } from '@/stores/patient'
 import { useAuthStore } from '@/stores/auth'
 import type { PatientSummary } from '@/types'
 import { MAX_ID_DOCUMENT_SIZE, ACCEPTED_ID_DOCUMENT_TYPES } from '@/validation/patient'
+import { getFullName } from '@/utils/format'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -81,10 +82,6 @@ function admitPatient(patientId: number) {
 
 function createNewPatient() {
   router.push({ name: 'patient-create' })
-}
-
-function getFullName(firstName: string, lastName: string): string {
-  return `${firstName} ${lastName}`.trim()
 }
 
 function openUploadDialog(patient: PatientSummary) {

@@ -16,6 +16,19 @@ export function getContrastColor(hexColor: string): string {
   return luminance > 0.5 ? '#000000' : '#FFFFFF'
 }
 
+export function getFullName(firstName: string | null, lastName: string | null): string {
+  return `${firstName || ''} ${lastName || ''}`.trim()
+}
+
+export function formatShortDateTime(dateString: string, locale: string): string {
+  return new Date(dateString).toLocaleDateString(locale, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 export function formatPrice(value: number | null | undefined): string {
   if (value == null) return '-'
   return `Q${value.toFixed(2)}`

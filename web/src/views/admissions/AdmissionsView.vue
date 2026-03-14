@@ -3,13 +3,14 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { useRelativeTime } from '@/composables/useRelativeTime'
 import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
-import { getContrastColor } from '@/utils/format'
+import { getContrastColor, getFullName, formatShortDateTime } from '@/utils/format'
 import { useAdmissionStore } from '@/stores/admission'
 import { AdmissionStatus, AdmissionType } from '@/types/admission'
 import AdmissionTypeBadge from '@/components/admissions/AdmissionTypeBadge.vue'
@@ -17,6 +18,7 @@ import AdmissionTypeBadge from '@/components/admissions/AdmissionTypeBadge.vue'
 const { t, locale } = useI18n()
 const router = useRouter()
 const { showError } = useErrorHandler()
+const { getRelativeTime } = useRelativeTime()
 const admissionStore = useAdmissionStore()
 
 const first = ref(0)
@@ -65,45 +67,9 @@ function viewAdmission(id: number) {
   router.push({ name: 'admission-detail', params: { id } })
 }
 
-function getFullName(firstName: string, lastName: string): string {
-  return `${firstName} ${lastName}`.trim()
-}
-
 function getStatusSeverity(status: AdmissionStatus): 'success' | 'secondary' {
   return status === AdmissionStatus.ACTIVE ? 'success' : 'secondary'
 }
-
-function formatDateTime(dateString: string): string {
-  const date = new Date(dateString)
-  return date.toLocaleDateString(locale.value, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-function getRelativeTime(dateString: string): string {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMinutes = Math.floor(diffMs / (1000 * 60))
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-  if (diffMinutes < 1) {
-    return t('common.time.justNow')
-  } else if (diffMinutes < 60) {
-    return t('common.time.minutesAgo', { count: diffMinutes })
-  } else if (diffHours < 24) {
-    return t('common.time.hoursAgo', { count: diffHours })
-  } else if (diffDays === 1) {
-    return t('common.time.yesterday')
-  } else {
-    return t('common.time.daysAgo', { count: diffDays })
-  }
-}
-
 </script>
 
 <template>
@@ -210,7 +176,7 @@ function getRelativeTime(dateString: string): string {
           <Column :header="t('admission.admissionDate')" style="width: 180px">
             <template #body="{ data }">
               <div class="admission-date">
-                <span class="date-time">{{ formatDateTime(data.admissionDate) }}</span>
+                <span class="date-time">{{ formatShortDateTime(data.admissionDate, locale) }}</span>
                 <span class="relative-time">{{ getRelativeTime(data.admissionDate) }}</span>
               </div>
             </template>
@@ -244,6 +210,8 @@ function getRelativeTime(dateString: string): string {
 </template>
 
 <style scoped>
+@import '@/assets/admission-table.css';
+
 .admissions-page {
   max-width: 1200px;
   margin: 0 auto;
@@ -263,49 +231,5 @@ function getRelativeTime(dateString: string): string {
 .header-actions {
   display: flex;
   gap: 0.5rem;
-}
-
-.filter-card {
-  margin-bottom: 1rem;
-}
-
-.filter-bar {
-  display: flex;
-  align-items: flex-end;
-  gap: 1rem;
-}
-
-.filter-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.filter-field label {
-  font-weight: 500;
-  font-size: 0.875rem;
-}
-
-.triage-badge {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.admission-date {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.date-time {
-  font-weight: 500;
-}
-
-.relative-time {
-  font-size: 0.75rem;
-  color: var(--p-text-muted-color);
 }
 </style>

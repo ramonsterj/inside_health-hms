@@ -7,7 +7,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
-import { formatDateTime, getContrastColor } from '@/utils/format'
+import { formatDateTime, getContrastColor, getFullName } from '@/utils/format'
 import { useAdmissionStore } from '@/stores/admission'
 import { useAuthStore } from '@/stores/auth'
 import { AdmissionStatus } from '@/types/admission'
@@ -123,10 +123,6 @@ async function deleteAdmission() {
   } finally {
     loading.value = false
   }
-}
-
-function getFullName(firstName: string | null, lastName: string | null): string {
-  return `${firstName || ''} ${lastName || ''}`.trim()
 }
 
 function getStatusSeverity(status: AdmissionStatus): 'success' | 'secondary' {

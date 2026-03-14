@@ -1,11 +1,30 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
+import { useErrorHandler } from '@/composables/useErrorHandler'
+import { useRelativeTime } from '@/composables/useRelativeTime'
 import Card from 'primevue/card'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import Button from 'primevue/button'
+import Select from 'primevue/select'
+import { getContrastColor, getFullName, formatShortDateTime } from '@/utils/format'
+import { useAdmissionStore } from '@/stores/admission'
 import { useAuthStore } from '@/stores/auth'
+import { AdmissionStatus, AdmissionType } from '@/types/admission'
+import AdmissionTypeBadge from '@/components/admissions/AdmissionTypeBadge.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const router = useRouter()
+const { showError } = useErrorHandler()
+const { getRelativeTime } = useRelativeTime()
+const admissionStore = useAdmissionStore()
 const authStore = useAuthStore()
+
+const first = ref(0)
+const rows = ref(20)
+const typeFilter = ref<AdmissionType | null>(null)
 
 const greeting = computed(() => {
   const hour = new Date().getHours()
@@ -20,123 +39,197 @@ const displayName = computed(() => {
   }
   return authStore.user?.email?.split('@')[0] || ''
 })
+
+const typeOptions = computed(() => [
+  { label: t('common.all'), value: null },
+  { label: t('admission.types.HOSPITALIZATION'), value: AdmissionType.HOSPITALIZATION },
+  { label: t('admission.types.AMBULATORY'), value: AdmissionType.AMBULATORY },
+  { label: t('admission.types.ELECTROSHOCK_THERAPY'), value: AdmissionType.ELECTROSHOCK_THERAPY },
+  { label: t('admission.types.KETAMINE_INFUSION'), value: AdmissionType.KETAMINE_INFUSION },
+  { label: t('admission.types.EMERGENCY'), value: AdmissionType.EMERGENCY }
+])
+
+onMounted(() => {
+  loadAdmissions()
+})
+
+async function loadAdmissions() {
+  try {
+    const page = Math.floor(first.value / rows.value)
+    await admissionStore.fetchAdmissions(page, rows.value, AdmissionStatus.ACTIVE, typeFilter.value)
+  } catch (error) {
+    showError(error)
+  }
+}
+
+function onFilterChange() {
+  first.value = 0
+  loadAdmissions()
+}
+
+function onPageChange() {
+  loadAdmissions()
+}
+
+function viewAdmission(id: number) {
+  router.push({ name: 'admission-detail', params: { id } })
+}
+
+function formatDoctorName(doctor: {
+  salutation: string | null
+  firstName: string | null
+  lastName: string | null
+}): string {
+  const salutationLabel = doctor.salutation ? t(`user.salutations.${doctor.salutation}`) : ''
+  return `${salutationLabel} ${getFullName(doctor.firstName, doctor.lastName)}`.trim()
+}
 </script>
 
 <template>
   <div class="dashboard">
-    <h1 class="dashboard-title">{{ greeting }}, {{ displayName }}!</h1>
-
-    <div class="dashboard-grid">
-      <Card class="dashboard-card">
-        <template #title>
-          <i class="pi pi-user" style="margin-right: 0.5rem"></i>
-          {{ t('dashboard.cards.profile.title') }}
-        </template>
-        <template #content>
-          <p>{{ t('dashboard.cards.profile.description') }}</p>
-        </template>
-        <template #footer>
-          <router-link :to="{ name: 'profile' }" class="card-link">
-            {{ t('dashboard.cards.profile.link') }} <i class="pi pi-arrow-right"></i>
-          </router-link>
-        </template>
-      </Card>
-
-      <Card v-if="authStore.isAdmin" class="dashboard-card">
-        <template #title>
-          <i class="pi pi-users" style="margin-right: 0.5rem"></i>
-          {{ t('dashboard.cards.users.title') }}
-        </template>
-        <template #content>
-          <p>{{ t('dashboard.cards.users.description') }}</p>
-        </template>
-        <template #footer>
-          <router-link :to="{ name: 'users' }" class="card-link">
-            {{ t('dashboard.cards.users.link') }} <i class="pi pi-arrow-right"></i>
-          </router-link>
-        </template>
-      </Card>
-
-      <Card class="dashboard-card info-card">
-        <template #title>
-          <i class="pi pi-info-circle" style="margin-right: 0.5rem"></i>
-          {{ t('dashboard.cards.accountInfo.title') }}
-        </template>
-        <template #content>
-          <div class="info-list">
-            <div class="info-item">
-              <span class="info-label">{{ t('dashboard.cards.accountInfo.email') }}</span>
-              <span class="info-value">{{ authStore.user?.email }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">{{ t('dashboard.cards.accountInfo.roles') }}</span>
-              <span class="info-value">{{ authStore.user?.roles?.join(', ') || '-' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">{{ t('dashboard.cards.accountInfo.status') }}</span>
-              <span class="info-value">{{ authStore.user?.status }}</span>
-            </div>
-          </div>
-        </template>
-      </Card>
+    <div class="page-header">
+      <h1 class="dashboard-title">{{ greeting }}, {{ displayName }}!</h1>
+      <div class="header-actions">
+        <Button
+          icon="pi pi-refresh"
+          :label="t('common.refresh')"
+          severity="secondary"
+          outlined
+          @click="loadAdmissions"
+          :loading="admissionStore.loading"
+        />
+      </div>
     </div>
+
+    <Card class="filter-card">
+      <template #content>
+        <div class="filter-bar">
+          <div class="filter-field">
+            <label>{{ t('admission.type') }}</label>
+            <Select
+              v-model="typeFilter"
+              :options="typeOptions"
+              optionLabel="label"
+              optionValue="value"
+              @change="onFilterChange"
+              style="width: 200px"
+            />
+          </div>
+        </div>
+      </template>
+    </Card>
+
+    <Card>
+      <template #content>
+        <DataTable
+          :value="admissionStore.admissions"
+          :loading="admissionStore.loading"
+          :paginator="true"
+          v-model:rows="rows"
+          v-model:first="first"
+          :totalRecords="admissionStore.totalAdmissions"
+          :lazy="true"
+          @page="onPageChange"
+          :rowsPerPageOptions="[10, 20, 50]"
+          dataKey="id"
+          stripedRows
+          scrollable
+        >
+          <template #empty>
+            <div class="text-center p-4">
+              {{ t('dashboard.noPatients') }}
+            </div>
+          </template>
+
+          <Column :header="t('admission.patient')">
+            <template #body="{ data }">
+              {{ getFullName(data.patient.firstName, data.patient.lastName) }}
+            </template>
+          </Column>
+
+          <Column :header="t('admission.treatingPhysician')">
+            <template #body="{ data }">
+              {{ formatDoctorName(data.treatingPhysician) }}
+            </template>
+          </Column>
+
+          <Column :header="t('admission.triageCode')" style="width: 100px">
+            <template #body="{ data }">
+              <span
+                v-if="data.triageCode"
+                class="triage-badge"
+                :style="{
+                  backgroundColor: data.triageCode.color,
+                  color: getContrastColor(data.triageCode.color)
+                }"
+              >
+                {{ data.triageCode.code }}
+              </span>
+              <span v-else>-</span>
+            </template>
+          </Column>
+
+          <Column :header="t('admission.room')" style="width: 100px">
+            <template #body="{ data }">
+              {{ data.room?.number || '-' }}
+            </template>
+          </Column>
+
+          <Column :header="t('admission.type')" style="width: 150px">
+            <template #body="{ data }">
+              <AdmissionTypeBadge :type="data.type" />
+            </template>
+          </Column>
+
+          <Column :header="t('admission.admissionDate')" style="width: 180px">
+            <template #body="{ data }">
+              <div class="admission-date">
+                <span class="date-time">{{ formatShortDateTime(data.admissionDate, locale) }}</span>
+                <span class="relative-time">{{ getRelativeTime(data.admissionDate) }}</span>
+              </div>
+            </template>
+          </Column>
+
+          <Column :header="t('common.actions')" style="width: 80px">
+            <template #body="{ data }">
+              <Button
+                icon="pi pi-eye"
+                severity="info"
+                text
+                rounded
+                @click="viewAdmission(data.id)"
+                v-tooltip.top="t('common.view')"
+              />
+            </template>
+          </Column>
+        </DataTable>
+      </template>
+    </Card>
   </div>
 </template>
 
 <style scoped>
+@import '@/assets/admission-table.css';
+
 .dashboard {
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.dashboard-title {
-  margin-bottom: 2rem;
-  font-size: 1.75rem;
-}
-
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-}
-
-.dashboard-card {
-  height: 100%;
-}
-
-.card-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
-}
-
-.card-link:hover {
-  text-decoration: none;
-}
-
-.card-link:hover i {
-  transform: translateX(4px);
-  transition: transform 0.2s;
-}
-
-.info-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.info-item {
+.page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 1.5rem;
 }
 
-.info-label {
-  color: var(--text-color-secondary);
+.dashboard-title {
+  margin: 0;
+  font-size: 1.75rem;
 }
 
-.info-value {
-  font-weight: 500;
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 </style>

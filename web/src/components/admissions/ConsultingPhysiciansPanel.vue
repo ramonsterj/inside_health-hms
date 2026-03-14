@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { formatDateTime, formatDate } from '@/utils/format'
+import { formatDateTime, formatDate, getFullName } from '@/utils/format'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -30,10 +30,6 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-
-function getFullName(firstName: string | null, lastName: string | null): string {
-  return `${firstName || ''} ${lastName || ''}`.trim()
-}
 
 function formatDoctorName(doctor: {
   salutation: string | null
