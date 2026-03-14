@@ -126,24 +126,7 @@
       "afternoon": "Buenas tardes",
       "evening": "Buenas noches"
     },
-    "cards": {
-      "profile": {
-        "title": "Tu Perfil",
-        "description": "Administra tu información personal y configuracion de cuenta.",
-        "link": "Ver Perfil"
-      },
-      "users": {
-        "title": "Gestión de Usuarios",
-        "description": "Ver y administrar todos los usuarios del sistema.",
-        "link": "Administrar Usuarios"
-      },
-      "accountInfo": {
-        "title": "Información de Cuenta",
-        "email": "Correo",
-        "roles": "Roles",
-        "status": "Estado"
-      }
-    }
+    "noPatients": "No se encontraron pacientes internados."
   },
   "profile": {
     "title": "Configuracion del Perfil",

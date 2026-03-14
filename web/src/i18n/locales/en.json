@@ -126,24 +126,7 @@
       "afternoon": "Good afternoon",
       "evening": "Good evening"
     },
-    "cards": {
-      "profile": {
-        "title": "Your Profile",
-        "description": "Manage your personal information and account settings.",
-        "link": "View Profile"
-      },
-      "users": {
-        "title": "User Management",
-        "description": "View and manage all users in the system.",
-        "link": "Manage Users"
-      },
-      "accountInfo": {
-        "title": "Account Info",
-        "email": "Email",
-        "roles": "Roles",
-        "status": "Status"
-      }
-    }
+    "noPatients": "No admitted patients found."
   },
   "profile": {
     "title": "Profile Settings",
