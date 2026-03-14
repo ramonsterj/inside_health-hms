@@ -7,6 +7,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
+import { formatDateTime, getContrastColor } from '@/utils/format'
 import { useAdmissionStore } from '@/stores/admission'
 import { useAuthStore } from '@/stores/auth'
 import { AdmissionStatus } from '@/types/admission'
@@ -128,21 +129,8 @@ function getFullName(firstName: string | null, lastName: string | null): string 
   return `${firstName || ''} ${lastName || ''}`.trim()
 }
 
-function formatDateTime(dateString: string | null): string {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleString()
-}
-
 function getStatusSeverity(status: AdmissionStatus): 'success' | 'secondary' {
   return status === AdmissionStatus.ACTIVE ? 'success' : 'secondary'
-}
-
-function getContrastColor(hexColor: string): string {
-  const r = parseInt(hexColor.slice(1, 3), 16)
-  const g = parseInt(hexColor.slice(3, 5), 16)
-  const b = parseInt(hexColor.slice(5, 7), 16)
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  return luminance > 0.5 ? '#000000' : '#FFFFFF'
 }
 
 function formatDoctorName(doctor: {

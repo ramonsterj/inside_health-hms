@@ -9,8 +9,8 @@ import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
+import { getContrastColor } from '@/utils/format'
 import { useAdmissionStore } from '@/stores/admission'
-import { useAuthStore } from '@/stores/auth'
 import { AdmissionStatus, AdmissionType } from '@/types/admission'
 import AdmissionTypeBadge from '@/components/admissions/AdmissionTypeBadge.vue'
 
@@ -18,7 +18,6 @@ const { t, locale } = useI18n()
 const router = useRouter()
 const { showError } = useErrorHandler()
 const admissionStore = useAdmissionStore()
-const authStore = useAuthStore()
 
 const first = ref(0)
 const rows = ref(20)
@@ -105,13 +104,6 @@ function getRelativeTime(dateString: string): string {
   }
 }
 
-function getContrastColor(hexColor: string): string {
-  const r = parseInt(hexColor.slice(1, 3), 16)
-  const g = parseInt(hexColor.slice(3, 5), 16)
-  const b = parseInt(hexColor.slice(5, 7), 16)
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  return luminance > 0.5 ? '#000000' : '#FFFFFF'
-}
 </script>
 
 <template>
@@ -119,12 +111,6 @@ function getContrastColor(hexColor: string): string {
     <div class="page-header">
       <h1 class="page-title">{{ t('admission.title') }}</h1>
       <div class="header-actions">
-        <Button
-          v-if="authStore.hasPermission('admission:create')"
-          icon="pi pi-plus"
-          :label="t('admission.new')"
-          @click="router.push({ name: 'admission-create' })"
-        />
         <Button
           icon="pi pi-refresh"
           :label="t('common.refresh')"

@@ -18,9 +18,9 @@ Hospital admission management with multi-step wizard, room capacity tracking, tr
 **Role**: ADMINISTRATIVE_STAFF
 **Precondition**: Logged in as staff1, patients/rooms/triage codes exist in seed data
 **Steps**:
-1. Navigate to Admissions page
-2. Click "New Admission"
-3. **Step 1 - Patient**: Select/confirm a patient (e.g., "Juan Perez Gonzalez")
+1. Navigate to Patients page
+2. Click "Admit" action on a patient row (e.g., "Juan Perez Gonzalez")
+3. **Step 1 - Patient**: Confirm patient details (read-only summary)
 4. **Step 2 - Details**: Select type HOSPITALIZATION, triage code, room (with available beds), treating physician (doctor1 or doctor2), admission date
 5. **Step 3 - Additional**: Optionally add patient belongings, upload consent document
 6. **Step 4 - Review**: Verify all entered data, submit
@@ -367,9 +367,9 @@ Hospital admission management with multi-step wizard, room capacity tracking, tr
 **Precondition**: Logged in as nurse1
 **Steps**:
 1. Navigate to Admissions page (should see list - admission:list)
-2. Look for "New Admission" button (should be hidden - no admission:create)
+2. Navigate to Patients page - "Admit" action should not be visible (no admission:create)
 3. Try API: `POST /api/v1/admissions`
-**Expected Result**: Can view admissions. Cannot create. API returns 403.
+**Expected Result**: Can view admissions. Cannot create admissions (no "Admit" button on patient rows). API returns 403.
 **Type**: Permission
 
 ---

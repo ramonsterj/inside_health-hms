@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
+import { formatDateTime } from '@/utils/format'
 import { useMedicationAdministrationStore } from '@/stores/medicationAdministration'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import MedicationAdministrationBadge from './MedicationAdministrationBadge.vue'
@@ -49,11 +50,6 @@ function onPageChange(event: { page: number; rows: number }) {
   page.value = event.page
   pageSize.value = event.rows
   loadAdministrations()
-}
-
-function formatDateTime(dateString: string | null): string {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleString()
 }
 
 defineExpose({ refresh: loadAdministrations })
