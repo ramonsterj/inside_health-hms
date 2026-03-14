@@ -276,7 +276,7 @@ function cancel() {
             </div>
           </template>
 
-          <div class="form-actions full-width">
+          <div class="form-actions">
             <Button
               type="button"
               :label="t('common.cancel')"
@@ -337,6 +337,7 @@ function cancel() {
 }
 
 .form-actions {
+  grid-column: span 2;
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
