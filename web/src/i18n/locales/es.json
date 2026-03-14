@@ -1310,7 +1310,7 @@
       "description": "Descripción",
       "displayOrder": "Orden de Visualización",
       "active": "Activo",
-      "price": "Precio",
+      "price": "Precio de Venta",
       "cost": "Costo",
       "empty": "No se encontraron categorías de actividades.",
       "created": "Categoría creada éxitosamente.",

@@ -79,8 +79,8 @@ const onSubmit = handleSubmit(async values => {
     const data = {
       ...values,
       description: values.description || null,
-      price: values.price || null,
-      cost: values.cost || null
+      price: values.price ?? null,
+      cost: values.cost ?? null
     }
 
     if (isEditMode.value && categoryId.value) {
@@ -136,15 +136,17 @@ function cancel() {
           </div>
 
           <div class="form-field">
-            <label for="displayOrder">{{ t('psychotherapy.category.displayOrder') }}</label>
+            <label for="cost">{{ t('psychotherapy.category.cost') }}</label>
             <InputNumber
-              id="displayOrder"
-              v-model="displayOrder"
+              id="cost"
+              v-model="cost"
+              mode="currency"
+              currency="GTQ"
               :min="0"
-              :class="{ 'p-invalid': errors.displayOrder }"
+              :class="{ 'p-invalid': errors.cost }"
             />
-            <Message v-if="errors.displayOrder" severity="error" :closable="false">
-              {{ errors.displayOrder }}
+            <Message v-if="errors.cost" severity="error" :closable="false">
+              {{ errors.cost }}
             </Message>
           </div>
 
@@ -164,17 +166,15 @@ function cancel() {
           </div>
 
           <div class="form-field">
-            <label for="cost">{{ t('psychotherapy.category.cost') }}</label>
+            <label for="displayOrder">{{ t('psychotherapy.category.displayOrder') }}</label>
             <InputNumber
-              id="cost"
-              v-model="cost"
-              mode="currency"
-              currency="GTQ"
+              id="displayOrder"
+              v-model="displayOrder"
               :min="0"
-              :class="{ 'p-invalid': errors.cost }"
+              :class="{ 'p-invalid': errors.displayOrder }"
             />
-            <Message v-if="errors.cost" severity="error" :closable="false">
-              {{ errors.cost }}
+            <Message v-if="errors.displayOrder" severity="error" :closable="false">
+              {{ errors.displayOrder }}
             </Message>
           </div>
 
@@ -186,7 +186,7 @@ function cancel() {
             </div>
           </div>
 
-          <div class="form-actions full-width">
+          <div class="form-actions">
             <Button
               type="button"
               :label="t('common.cancel')"
@@ -247,6 +247,7 @@ function cancel() {
 }
 
 .form-actions {
+  grid-column: span 2;
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
