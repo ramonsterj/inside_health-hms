@@ -17,15 +17,16 @@ import java.time.LocalDateTime
 class DocumentTypeService(
     private val documentTypeRepository: DocumentTypeRepository,
     private val userRepository: UserRepository,
+    private val messageService: MessageService,
 ) {
 
     @Transactional(readOnly = true)
     fun findById(id: Long): DocumentType = documentTypeRepository.findById(id)
-        .orElseThrow { ResourceNotFoundException("Document type not found with id: $id") }
+        .orElseThrow { ResourceNotFoundException(messageService.errorDocumentTypeNotFound(id)) }
 
     @Transactional(readOnly = true)
     fun findByCode(code: String): DocumentType = documentTypeRepository.findByCode(code)
-        ?: throw ResourceNotFoundException("Document type not found with code: $code")
+        ?: throw ResourceNotFoundException(messageService.errorDocumentTypeCodeNotFound(code))
 
     @Transactional(readOnly = true)
     fun findAll(): List<DocumentTypeResponse> = documentTypeRepository.findAllByOrderByDisplayOrderAsc()
@@ -44,7 +45,7 @@ class DocumentTypeService(
     @Transactional
     fun createDocumentType(request: CreateDocumentTypeRequest): DocumentTypeResponse {
         if (documentTypeRepository.existsByCode(request.code)) {
-            throw BadRequestException("Document type with code '${request.code}' already exists")
+            throw BadRequestException(messageService.errorDocumentTypeCodeExists(request.code))
         }
 
         val documentType = DocumentType(
@@ -63,7 +64,7 @@ class DocumentTypeService(
         val documentType = findById(id)
 
         if (documentTypeRepository.existsByCodeExcludingId(request.code, id)) {
-            throw BadRequestException("Document type with code '${request.code}' already exists")
+            throw BadRequestException(messageService.errorDocumentTypeCodeExists(request.code))
         }
 
         documentType.code = request.code
@@ -80,7 +81,7 @@ class DocumentTypeService(
         val documentType = findById(id)
 
         if (documentTypeRepository.hasDocuments(id)) {
-            throw BadRequestException("Cannot delete document type. Documents of this type exist.")
+            throw BadRequestException(messageService.errorDocumentTypeHasDocuments())
         }
 
         documentType.deletedAt = LocalDateTime.now()

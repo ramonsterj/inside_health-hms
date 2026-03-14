@@ -32,11 +32,12 @@ class InventoryItemService(
     private val userRepository: UserRepository,
     private val admissionRepository: AdmissionRepository,
     private val eventPublisher: ApplicationEventPublisher,
+    private val messageService: MessageService,
 ) {
 
     @Transactional(readOnly = true)
     fun findById(id: Long): InventoryItem = itemRepository.findById(id)
-        .orElseThrow { ResourceNotFoundException("Inventory item not found with id: $id") }
+        .orElseThrow { ResourceNotFoundException(messageService.errorInventoryItemNotFound(id)) }
 
     @Transactional(readOnly = true)
     fun findAll(categoryId: Long?, search: String?, pageable: Pageable): Page<InventoryItemResponse> =
@@ -52,7 +53,7 @@ class InventoryItemService(
     @Transactional
     fun createItem(request: CreateInventoryItemRequest): InventoryItemResponse {
         val category = categoryRepository.findById(request.categoryId)
-            .orElseThrow { BadRequestException("Inventory category not found with id: ${request.categoryId}") }
+            .orElseThrow { BadRequestException(messageService.errorInventoryCategoryNotFound(request.categoryId)) }
 
         validateTimeBased(request.pricingType, request.timeUnit, request.timeInterval)
 
@@ -78,7 +79,7 @@ class InventoryItemService(
         val item = findById(id)
 
         val category = categoryRepository.findById(request.categoryId)
-            .orElseThrow { BadRequestException("Inventory category not found with id: ${request.categoryId}") }
+            .orElseThrow { BadRequestException(messageService.errorInventoryCategoryNotFound(request.categoryId)) }
 
         validateTimeBased(request.pricingType, request.timeUnit, request.timeInterval)
 
@@ -117,7 +118,7 @@ class InventoryItemService(
         val updatedRows = itemRepository.updateQuantityAtomically(itemId, delta)
         if (updatedRows == 0) {
             throw BadRequestException(
-                "Insufficient stock. Current quantity: ${item.quantity}, requested: ${request.quantity}",
+                messageService.errorInventoryInsufficientStock(item.quantity, request.quantity),
             )
         }
 
@@ -127,7 +128,7 @@ class InventoryItemService(
 
         val admission = request.admissionId?.let { admissionId ->
             admissionRepository.findById(admissionId)
-                .orElseThrow { BadRequestException("Admission not found with id: $admissionId") }
+                .orElseThrow { BadRequestException(messageService.errorInventoryAdmissionNotFound(admissionId)) }
         }
 
         val movement = InventoryMovement(
@@ -184,10 +185,10 @@ class InventoryItemService(
     ) {
         if (pricingType == PricingType.TIME_BASED) {
             if (timeUnit == null) {
-                throw BadRequestException("Time unit is required for time-based pricing")
+                throw BadRequestException(messageService.errorInventoryTimeUnitRequired())
             }
             if (timeInterval == null || timeInterval <= 0) {
-                throw BadRequestException("Time interval must be greater than 0 for time-based pricing")
+                throw BadRequestException(messageService.errorInventoryTimeIntervalRequired())
             }
         }
     }

@@ -28,6 +28,7 @@ class PsychotherapyActivityService(
     private val categoryRepository: PsychotherapyCategoryRepository,
     private val userRepository: UserRepository,
     private val eventPublisher: ApplicationEventPublisher,
+    private val messageService: MessageService,
 ) {
 
     @Transactional(readOnly = true)
@@ -62,7 +63,7 @@ class PsychotherapyActivityService(
 
         val activity = activityRepository.findByIdAndAdmissionId(activityId, admissionId)
             ?: throw ResourceNotFoundException(
-                "Psychotherapy activity not found with id: $activityId for admission: $admissionId",
+                messageService.errorPsychotherapyActivityNotFound(activityId, admissionId),
             )
 
         return buildResponse(activity)
@@ -74,21 +75,21 @@ class PsychotherapyActivityService(
         // Verify PSYCHOLOGIST role
         val currentUser = getCurrentUserDetails()
         if (!currentUser.hasRole("PSYCHOLOGIST")) {
-            throw ForbiddenException("Only psychologists can register psychotherapy activities")
+            throw ForbiddenException(messageService.errorPsychotherapyActivityOnlyPsychologist())
         }
 
         val admission = admissionRepository.findByIdWithRelations(admissionId)
-            ?: throw ResourceNotFoundException("Admission not found with id: $admissionId")
+            ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
 
         // Verify admission type is HOSPITALIZATION
         if (admission.type != AdmissionType.HOSPITALIZATION) {
             throw BadRequestException(
-                "Psychotherapeutic activities can only be registered for hospitalized patients",
+                messageService.errorPsychotherapyActivityOnlyHospitalized(),
             )
         }
 
         val category = categoryRepository.findById(request.categoryId).orElseThrow {
-            ResourceNotFoundException("Psychotherapy category not found with id: ${request.categoryId}")
+            ResourceNotFoundException(messageService.errorPsychotherapyCategoryNotFound(request.categoryId))
         }
 
         val activity = PsychotherapyActivity(
@@ -120,7 +121,7 @@ class PsychotherapyActivityService(
 
         val activity = activityRepository.findByIdAndAdmissionId(activityId, admissionId)
             ?: throw ResourceNotFoundException(
-                "Psychotherapy activity not found with id: $activityId for admission: $admissionId",
+                messageService.errorPsychotherapyActivityNotFound(activityId, admissionId),
             )
 
         activity.deletedAt = LocalDateTime.now()
@@ -129,13 +130,13 @@ class PsychotherapyActivityService(
 
     private fun verifyAdmissionExists(admissionId: Long) {
         if (!admissionRepository.existsById(admissionId)) {
-            throw ResourceNotFoundException("Admission not found with id: $admissionId")
+            throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
         }
     }
 
     private fun getCurrentUserDetails(): CustomUserDetails {
         val auth = SecurityContextHolder.getContext().authentication
-            ?: throw UnauthorizedException("Not authenticated")
+            ?: throw UnauthorizedException(messageService.errorNotAuthenticated())
         return auth.principal as CustomUserDetails
     }
 

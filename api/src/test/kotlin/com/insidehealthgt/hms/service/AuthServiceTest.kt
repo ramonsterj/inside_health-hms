@@ -14,6 +14,7 @@ import com.insidehealthgt.hms.security.JwtTokenProvider
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
@@ -32,6 +33,7 @@ class AuthServiceTest {
     private lateinit var passwordEncoder: PasswordEncoder
     private lateinit var jwtTokenProvider: JwtTokenProvider
     private lateinit var refreshTokenService: RefreshTokenService
+    private lateinit var messageService: MessageService
     private lateinit var authService: AuthService
 
     private lateinit var activeUser: User
@@ -44,6 +46,13 @@ class AuthServiceTest {
         passwordEncoder = mock()
         jwtTokenProvider = mock()
         refreshTokenService = mock()
+        messageService = mock {
+            on { errorAuthAccountStatus(org.mockito.kotlin.any()) } doReturn "Account disabled"
+            on { errorAuthAccountStatusInactive() } doReturn "inactive"
+            on { errorAuthAccountStatusSuspended() } doReturn "suspended"
+            on { errorAuthAccountStatusDeleted() } doReturn "deleted"
+            on { errorAuthAccountStatusActive() } doReturn "active"
+        }
 
         authService = AuthService(
             userRepository,
@@ -51,6 +60,7 @@ class AuthServiceTest {
             passwordEncoder,
             jwtTokenProvider,
             refreshTokenService,
+            messageService,
         )
 
         activeUser = User(
@@ -119,10 +129,10 @@ class AuthServiceTest {
             .thenReturn(inactiveUser)
         whenever(passwordEncoder.matches("password123", "hashedpassword")).thenReturn(true)
 
-        val exception = assertThrows<AccountDisabledException> {
+        assertThrows<AccountDisabledException> {
             authService.login(LoginRequest(identifier = "inactive@example.com", password = "password123"))
         }
-        assertEquals("Your account is inactive. Please contact support.", exception.message)
+        verify(messageService).errorAuthAccountStatusInactive()
     }
 
     @Test
@@ -138,10 +148,10 @@ class AuthServiceTest {
             .thenReturn(suspendedUser)
         whenever(passwordEncoder.matches("password123", "hashedpassword")).thenReturn(true)
 
-        val exception = assertThrows<AccountDisabledException> {
+        assertThrows<AccountDisabledException> {
             authService.login(LoginRequest(identifier = "suspended@example.com", password = "password123"))
         }
-        assertEquals("Your account is suspended. Please contact support.", exception.message)
+        verify(messageService).errorAuthAccountStatusSuspended()
     }
 
     @Test

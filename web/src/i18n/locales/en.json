@@ -966,7 +966,14 @@
     "created": "Triage code created successfully.",
     "updated": "Triage code updated successfully.",
     "deleted": "Triage code deleted successfully.",
-    "confirmDelete": "Are you sure you want to delete this triage code?"
+    "confirmDelete": "Are you sure you want to delete this triage code?",
+    "codes": {
+      "A": "Critical - Immediate attention required",
+      "B": "Urgent - Requires prompt attention",
+      "C": "Less Urgent - Can wait for care",
+      "D": "Non-Urgent - Minor issues",
+      "E": "Referral - Scheduled admission"
+    }
   },
   "room": {
     "title": "Rooms",
@@ -1527,5 +1534,25 @@
       "DIET": "Diet",
       "ADJUSTMENT": "Adjustment"
     }
+  },
+  "app": {
+    "name": "InsideHealth HMS",
+    "logoAlt": "Inside Health"
+  },
+  "configurator": {
+    "primary": "Primary",
+    "surface": "Surface",
+    "presets": "Presets",
+    "menuMode": "Menu Mode",
+    "static": "Static",
+    "overlay": "Overlay"
+  },
+  "editor": {
+    "bold": "Bold",
+    "italic": "Italic",
+    "underline": "Underline",
+    "numberedList": "Numbered List",
+    "bulletList": "Bullet List",
+    "clearFormatting": "Clear Formatting"
   }
 }

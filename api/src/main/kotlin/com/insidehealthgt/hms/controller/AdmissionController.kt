@@ -16,6 +16,7 @@ import com.insidehealthgt.hms.entity.AdmissionType
 import com.insidehealthgt.hms.security.CustomUserDetails
 import com.insidehealthgt.hms.service.AdmissionDocumentService
 import com.insidehealthgt.hms.service.AdmissionService
+import com.insidehealthgt.hms.service.MessageService
 import jakarta.validation.Valid
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
@@ -42,6 +43,7 @@ import org.springframework.web.multipart.MultipartFile
 class AdmissionController(
     private val admissionService: AdmissionService,
     private val admissionDocumentService: AdmissionDocumentService,
+    private val messageService: MessageService,
 ) {
 
     @GetMapping
@@ -104,7 +106,7 @@ class AdmissionController(
     @PreAuthorize("hasAuthority('admission:delete')")
     fun deleteAdmission(@PathVariable id: Long): ResponseEntity<ApiResponse<Unit>> {
         admissionService.deleteAdmission(id)
-        return ResponseEntity.ok(ApiResponse.success("Admission deleted successfully"))
+        return ResponseEntity.ok(ApiResponse.success(messageService.admissionDeleted()))
     }
 
     @PostMapping("/{id}/consent")
@@ -245,6 +247,6 @@ class AdmissionController(
     @PreAuthorize("hasAuthority('admission:delete-documents')")
     fun deleteDocument(@PathVariable id: Long, @PathVariable docId: Long): ResponseEntity<ApiResponse<Unit>> {
         admissionDocumentService.deleteDocument(id, docId)
-        return ResponseEntity.ok(ApiResponse.success("Document deleted successfully"))
+        return ResponseEntity.ok(ApiResponse.success(messageService.admissionDocumentDeleted()))
     }
 }

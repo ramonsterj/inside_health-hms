@@ -26,6 +26,7 @@ class NursingNoteService(
     private val nursingNoteRepository: NursingNoteRepository,
     private val admissionRepository: AdmissionRepository,
     private val userRepository: UserRepository,
+    private val messageService: MessageService,
 ) {
     companion object {
         private const val EDIT_WINDOW_HOURS = 24L
@@ -62,7 +63,7 @@ class NursingNoteService(
         val currentUser = getCurrentUserDetails()
 
         val note = nursingNoteRepository.findByIdAndAdmissionId(noteId, admissionId)
-            ?: throw ResourceNotFoundException("Nursing note not found with id: $noteId for admission: $admissionId")
+            ?: throw ResourceNotFoundException(messageService.errorNursingNoteNotFound(noteId, admissionId))
 
         return buildResponse(note, currentUser, admission.isActive())
     }
@@ -70,7 +71,7 @@ class NursingNoteService(
     @Transactional
     fun createNursingNote(admissionId: Long, request: CreateNursingNoteRequest): NursingNoteResponse {
         val admission = admissionRepository.findByIdWithRelations(admissionId)
-            ?: throw ResourceNotFoundException("Admission not found with id: $admissionId")
+            ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
 
         validateAdmissionActive(admission)
         val currentUser = getCurrentUserDetails()
@@ -90,7 +91,7 @@ class NursingNoteService(
         validateAdmissionActive(admission)
 
         val note = nursingNoteRepository.findByIdAndAdmissionId(noteId, admissionId)
-            ?: throw ResourceNotFoundException("Nursing note not found with id: $noteId for admission: $admissionId")
+            ?: throw ResourceNotFoundException(messageService.errorNursingNoteNotFound(noteId, admissionId))
 
         val currentUser = getCurrentUserDetails()
         validateEditPermission(note, currentUser)
@@ -103,11 +104,11 @@ class NursingNoteService(
 
     private fun getAdmissionOrThrow(admissionId: Long): Admission =
         admissionRepository.findByIdWithRelations(admissionId)
-            ?: throw ResourceNotFoundException("Admission not found with id: $admissionId")
+            ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
 
     private fun validateAdmissionActive(admission: Admission) {
         if (admission.isDischarged()) {
-            throw BadRequestException("Cannot modify records for discharged admissions")
+            throw BadRequestException(messageService.errorAdmissionDischargedRecords())
         }
     }
 
@@ -116,14 +117,14 @@ class NursingNoteService(
         if (currentUser.hasRole("ADMIN")) return
 
         if (entity.createdBy != currentUser.id) {
-            throw ForbiddenException("You can only edit records you created")
+            throw ForbiddenException(messageService.errorEditOnlyOwnRecords())
         }
 
         val createdAt = entity.createdAt
-            ?: throw ForbiddenException("This record can no longer be edited (24-hour limit exceeded)")
+            ?: throw ForbiddenException(messageService.errorEditWindowClosed())
 
         if (!createdAt.plusHours(EDIT_WINDOW_HOURS).isAfter(LocalDateTime.now())) {
-            throw ForbiddenException("This record can no longer be edited (24-hour limit exceeded)")
+            throw ForbiddenException(messageService.errorEditWindowClosed())
         }
     }
 
@@ -138,7 +139,7 @@ class NursingNoteService(
 
     private fun getCurrentUserDetails(): CustomUserDetails {
         val auth = SecurityContextHolder.getContext().authentication
-            ?: throw UnauthorizedException("Not authenticated")
+            ?: throw UnauthorizedException(messageService.errorNotAuthenticated())
         return auth.principal as CustomUserDetails
     }
 

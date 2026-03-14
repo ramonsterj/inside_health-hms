@@ -17,6 +17,7 @@ class ClinicalHistoryService(
     private val clinicalHistoryRepository: ClinicalHistoryRepository,
     private val admissionRepository: AdmissionRepository,
     private val userRepository: UserRepository,
+    private val messageService: MessageService,
 ) {
 
     @Transactional(readOnly = true)
@@ -32,10 +33,10 @@ class ClinicalHistoryService(
     @Transactional
     fun createClinicalHistory(admissionId: Long, request: CreateClinicalHistoryRequest): ClinicalHistoryResponse {
         val admission = admissionRepository.findByIdWithRelations(admissionId)
-            ?: throw ResourceNotFoundException("Admission not found with id: $admissionId")
+            ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
 
         if (clinicalHistoryRepository.existsByAdmissionId(admissionId)) {
-            throw BadRequestException("Clinical history already exists for this admission")
+            throw BadRequestException(messageService.errorClinicalHistoryAlreadyExists())
         }
 
         val clinicalHistory = ClinicalHistory(
@@ -72,7 +73,7 @@ class ClinicalHistoryService(
         verifyAdmissionExists(admissionId)
 
         val clinicalHistory = clinicalHistoryRepository.findByAdmissionIdWithRelations(admissionId)
-            ?: throw ResourceNotFoundException("Clinical history not found for admission: $admissionId")
+            ?: throw ResourceNotFoundException(messageService.errorClinicalHistoryNotFound(admissionId))
 
         clinicalHistory.reasonForAdmission = request.reasonForAdmission
         clinicalHistory.historyOfPresentIllness = request.historyOfPresentIllness
@@ -102,7 +103,7 @@ class ClinicalHistoryService(
 
     private fun verifyAdmissionExists(admissionId: Long) {
         if (!admissionRepository.existsById(admissionId)) {
-            throw ResourceNotFoundException("Admission not found with id: $admissionId")
+            throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
         }
     }
 

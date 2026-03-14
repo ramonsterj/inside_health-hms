@@ -62,7 +62,7 @@ const onSubmit = handleSubmit(async values => {
     <Card class="login-card">
       <template #title>
         <div class="text-center">
-          <img src="@/assets/logo.svg" alt="Inside Health" class="login-logo" />
+          <img src="@/assets/logo.svg" :alt="t('app.logoAlt')" class="login-logo" />
         </div>
       </template>
       <template #content>

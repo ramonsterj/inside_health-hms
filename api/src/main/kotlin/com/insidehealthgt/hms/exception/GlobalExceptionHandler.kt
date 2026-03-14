@@ -136,7 +136,7 @@ class GlobalExceptionHandler(private val messageService: MessageService) {
             .body(
                 DuplicatePatientResponse(
                     success = false,
-                    message = ex.message ?: "Potential duplicate patient found",
+                    message = ex.message ?: messageService.errorPatientDuplicateFound(),
                     data = DuplicatePatientData(potentialDuplicates = ex.potentialDuplicates),
                 ),
             )

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
+import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.springframework.boot.DefaultApplicationArguments
@@ -22,11 +23,21 @@ class FileStorageServiceTest {
     @TempDir
     lateinit var tempDir: Path
 
+    private lateinit var messageService: MessageService
     private lateinit var fileStorageService: FileStorageService
 
     @BeforeEach
     fun setUp() {
-        fileStorageService = FileStorageService(tempDir.toString())
+        messageService = mock {
+            on { errorFileStorageInit(org.mockito.kotlin.any()) } doReturn "Could not initialize storage"
+            on { errorFileStorageNotWritable(org.mockito.kotlin.any()) } doReturn "Not writable"
+            on { errorFileStorageRead() } doReturn "Read error"
+            on { errorFileStorageWrite() } doReturn "Write error"
+            on { errorFileStorageInvalidPath() } doReturn "Invalid path"
+            on { errorFileStorageInvalidFilename() } doReturn "Invalid filename"
+            on { errorFileStorageNotFound() } doReturn "File not found"
+        }
+        fileStorageService = FileStorageService(tempDir.toString(), messageService)
         fileStorageService.run(DefaultApplicationArguments())
     }
 
@@ -219,7 +230,7 @@ class FileStorageServiceTest {
             fileStorageService.loadFile("patients/999/id-documents/nonexistent.pdf")
         }
 
-        assertTrue(exception.message!!.contains("could not be found"))
+        assertEquals("File not found", exception.message)
     }
 
     @Test

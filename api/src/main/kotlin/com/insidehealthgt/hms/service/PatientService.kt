@@ -36,11 +36,11 @@ class PatientService(
 
     @Transactional(readOnly = true)
     fun findById(id: Long): Patient = patientRepository.findById(id)
-        .orElseThrow { ResourceNotFoundException("Patient not found with id: $id") }
+        .orElseThrow { ResourceNotFoundException(messageService.errorPatientNotFound(id)) }
 
     @Transactional(readOnly = true)
     fun findByIdWithContacts(id: Long): Patient = patientRepository.findByIdWithContacts(id)
-        ?: throw ResourceNotFoundException("Patient not found with id: $id")
+        ?: throw ResourceNotFoundException(messageService.errorPatientNotFound(id))
 
     @Transactional(readOnly = true)
     fun findAll(
@@ -94,7 +94,7 @@ class PatientService(
     fun getPatient(id: Long, doctorId: Long? = null, activeAdmissionsOnly: Boolean = false): PatientResponse {
         val patient = findByIdWithContacts(id)
         if (doctorId != null && !patientRepository.isPatientAssignedToDoctor(id, doctorId)) {
-            throw AccessDeniedException("Access denied")
+            throw AccessDeniedException(messageService.errorPatientAccessDenied())
         }
         val hasActiveAdmission = admissionRepository.existsActiveByPatientId(id)
         if (activeAdmissionsOnly && !hasActiveAdmission) {
@@ -115,7 +115,7 @@ class PatientService(
 
         if (duplicates.isNotEmpty()) {
             throw DuplicatePatientException(
-                message = "Potential duplicate patient found",
+                message = messageService.errorPatientDuplicateFound(),
                 potentialDuplicates = duplicates.map { p: Patient ->
                     DuplicatePatientInfo(
                         id = p.id!!,
@@ -172,7 +172,7 @@ class PatientService(
 
         if (duplicates.isNotEmpty()) {
             throw DuplicatePatientException(
-                message = "Potential duplicate patient found",
+                message = messageService.errorPatientDuplicateFound(),
                 potentialDuplicates = duplicates.map { p: Patient ->
                     DuplicatePatientInfo(
                         id = p.id!!,
@@ -243,7 +243,7 @@ class PatientService(
     @Transactional(readOnly = true)
     fun getIdDocument(patientId: Long): DocumentFileData {
         val document = patientIdDocumentRepository.findByPatientId(patientId)
-            ?: throw ResourceNotFoundException("ID document not found for patient: $patientId")
+            ?: throw ResourceNotFoundException(messageService.errorPatientIdDocumentNotFound(patientId))
 
         val fileData = fileStorageService.loadFile(document.storagePath)
 
@@ -262,7 +262,7 @@ class PatientService(
         patient.idDocument?.let {
             it.deletedAt = LocalDateTime.now()
             patient.idDocument = null
-        } ?: throw ResourceNotFoundException("ID document not found for patient: $patientId")
+        } ?: throw ResourceNotFoundException(messageService.errorPatientIdDocumentNotFound(patientId))
 
         val savedPatient = patientRepository.save(patient)
         return buildPatientResponse(savedPatient)
@@ -270,12 +270,12 @@ class PatientService(
 
     private fun validateFile(file: MultipartFile) {
         val error = when {
-            file.isEmpty -> "File is empty"
+            file.isEmpty -> messageService.errorPatientFileEmpty()
 
-            file.size > PatientIdDocument.MAX_FILE_SIZE -> "File size exceeds maximum allowed size of 5MB"
+            file.size > PatientIdDocument.MAX_FILE_SIZE -> messageService.errorPatientFileSize()
 
             file.contentType == null || file.contentType !in PatientIdDocument.ALLOWED_CONTENT_TYPES ->
-                "Invalid file type. Allowed types: JPEG, PNG, PDF"
+                messageService.errorPatientFileType()
 
             else -> null
         }

@@ -39,6 +39,7 @@ class BillingService(
     @Value("\${app.billing.daily-meal-rate:#{null}}") private val dailyMealRate: BigDecimal?,
     @Value("\${app.billing.electroshock-base-price:#{null}}") private val electroshockBasePrice: BigDecimal?,
     @Value("\${app.billing.ketamine-base-price:#{null}}") private val ketamineBasePrice: BigDecimal?,
+    private val messageService: MessageService,
 ) {
 
     private val log = LoggerFactory.getLogger(BillingService::class.java)
@@ -64,7 +65,7 @@ class BillingService(
     @Transactional(readOnly = true)
     fun getBalance(admissionId: Long): AdmissionBalanceResponse {
         val admission = admissionRepository.findByIdWithRelations(admissionId)
-            ?: throw ResourceNotFoundException("Admission not found with id: $admissionId")
+            ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
 
         val charges = chargeRepository.findByAdmissionIdOrderByChargeDateDesc(admissionId)
 
@@ -121,12 +122,12 @@ class BillingService(
 
         val allowedTypes = setOf(ChargeType.MEDICATION, ChargeType.PROCEDURE, ChargeType.LAB, ChargeType.SERVICE)
         if (request.chargeType !in allowedTypes) {
-            throw BadRequestException("Charge type ${request.chargeType} is not allowed for manual charges")
+            throw BadRequestException(messageService.errorBillingChargeTypeNotAllowed(request.chargeType.toString()))
         }
 
         val inventoryItem = request.inventoryItemId?.let { itemId ->
             inventoryItemRepository.findById(itemId)
-                .orElseThrow { ResourceNotFoundException("Inventory item not found with id: $itemId") }
+                .orElseThrow { ResourceNotFoundException(messageService.errorInventoryItemNotFound(itemId)) }
         }
 
         val totalAmount = request.unitPrice.multiply(BigDecimal(request.quantity))
@@ -149,7 +150,7 @@ class BillingService(
     @Transactional
     fun createAdjustment(admissionId: Long, request: CreateAdjustmentRequest): PatientChargeResponse {
         val admission = admissionRepository.findByIdWithRelations(admissionId)
-            ?: throw ResourceNotFoundException("Admission not found with id: $admissionId")
+            ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
 
         val charge = PatientCharge(
             admission = admission,
@@ -169,10 +170,10 @@ class BillingService(
     @Transactional
     fun createChargeFromInventoryDispensed(event: InventoryDispensedEvent) {
         val admission = admissionRepository.findByIdWithRelations(event.admissionId)
-            ?: throw ResourceNotFoundException("Admission not found with id: ${event.admissionId}")
+            ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(event.admissionId))
 
         val inventoryItem = inventoryItemRepository.findById(event.inventoryItemId)
-            .orElseThrow { ResourceNotFoundException("Inventory item not found with id: ${event.inventoryItemId}") }
+            .orElseThrow { ResourceNotFoundException(messageService.errorInventoryItemNotFound(event.inventoryItemId)) }
 
         val totalAmount = event.unitPrice.multiply(BigDecimal(event.quantity))
 
@@ -197,7 +198,7 @@ class BillingService(
     @Transactional
     fun createChargeFromPsychotherapyActivity(event: PsychotherapyActivityCreatedEvent) {
         val admission = admissionRepository.findByIdWithRelations(event.admissionId)
-            ?: throw ResourceNotFoundException("Admission not found with id: ${event.admissionId}")
+            ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(event.admissionId))
 
         val charge = PatientCharge(
             admission = admission,
@@ -219,10 +220,10 @@ class BillingService(
     @Transactional
     fun createChargeFromMedicalOrder(event: MedicalOrderCreatedEvent) {
         val admission = admissionRepository.findByIdWithRelations(event.admissionId)
-            ?: throw ResourceNotFoundException("Admission not found with id: ${event.admissionId}")
+            ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(event.admissionId))
 
         val inventoryItem = inventoryItemRepository.findById(event.inventoryItemId)
-            .orElseThrow { ResourceNotFoundException("Inventory item not found with id: ${event.inventoryItemId}") }
+            .orElseThrow { ResourceNotFoundException(messageService.errorInventoryItemNotFound(event.inventoryItemId)) }
 
         val chargeType = mapCategoryToChargeType(event.category)
 
@@ -262,7 +263,7 @@ class BillingService(
         }
 
         val admission = admissionRepository.findById(event.admissionId)
-            .orElseThrow { ResourceNotFoundException("Admission not found with id: ${event.admissionId}") }
+            .orElseThrow { ResourceNotFoundException(messageService.errorAdmissionNotFound(event.admissionId)) }
 
         val charge = PatientCharge(
             admission = admission,
@@ -296,7 +297,7 @@ class BillingService(
         }
 
         val admission = admissionRepository.findById(admissionId)
-            .orElseThrow { ResourceNotFoundException("Admission not found with id: $admissionId") }
+            .orElseThrow { ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId)) }
 
         val price = room.price!!
 
@@ -334,7 +335,7 @@ class BillingService(
         }
 
         val admission = admissionRepository.findById(admissionId)
-            .orElseThrow { ResourceNotFoundException("Admission not found with id: $admissionId") }
+            .orElseThrow { ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId)) }
 
         val charge = PatientCharge(
             admission = admission,
@@ -353,7 +354,7 @@ class BillingService(
     @Transactional
     fun createFinalDayCharges(admissionId: Long) {
         val admission = admissionRepository.findByIdWithRelations(admissionId)
-            ?: throw ResourceNotFoundException("Admission not found with id: $admissionId")
+            ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
 
         val today = LocalDate.now()
 
@@ -371,16 +372,16 @@ class BillingService(
 
     private fun findActiveAdmission(admissionId: Long): Admission {
         val admission = admissionRepository.findByIdWithRelations(admissionId)
-            ?: throw ResourceNotFoundException("Admission not found with id: $admissionId")
+            ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
         if (!admission.isActive()) {
-            throw BadRequestException("Cannot add charges to a non-active admission")
+            throw BadRequestException(messageService.errorBillingAdmissionNotActive())
         }
         return admission
     }
 
     private fun validateAdmissionExists(admissionId: Long) {
         if (!admissionRepository.existsById(admissionId)) {
-            throw ResourceNotFoundException("Admission not found with id: $admissionId")
+            throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
         }
     }
 
