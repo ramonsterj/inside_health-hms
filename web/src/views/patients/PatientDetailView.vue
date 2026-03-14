@@ -22,6 +22,7 @@ const patient = computed(() => patientStore.currentPatient)
 const loading = ref(false)
 const showIdDocumentDialog = ref(false)
 const idDocumentUrl = ref<string | null>(null)
+const idDocumentType = ref<string | null>(null)
 
 const canEdit = computed(() => authStore.hasPermission('patient:update'))
 const canViewId = computed(() => authStore.hasPermission('patient:view-id'))
@@ -48,7 +49,7 @@ function editPatient() {
 }
 
 function admitPatient() {
-  router.push({ name: 'admission-create', query: { patientId: patientId.value } })
+  router.push({ name: 'admission-create', query: { patientId: patientId.value.toString() } })
 }
 
 function goBack() {
@@ -59,6 +60,7 @@ async function viewIdDocument() {
   try {
     const blob = await patientStore.downloadIdDocument(patientId.value)
     idDocumentUrl.value = URL.createObjectURL(blob)
+    idDocumentType.value = blob.type
     showIdDocumentDialog.value = true
   } catch (error) {
     showError(error)
@@ -86,6 +88,7 @@ function closeIdDocumentDialog() {
   if (idDocumentUrl.value) {
     URL.revokeObjectURL(idDocumentUrl.value)
     idDocumentUrl.value = null
+    idDocumentType.value = null
   }
 }
 
@@ -270,7 +273,17 @@ function formatUserName(
       @hide="closeIdDocumentDialog"
     >
       <div class="document-preview">
-        <img v-if="idDocumentUrl" :src="idDocumentUrl" alt="ID Document" class="document-image" />
+        <iframe
+          v-if="idDocumentUrl && idDocumentType === 'application/pdf'"
+          :src="idDocumentUrl"
+          class="document-pdf"
+        />
+        <img
+          v-else-if="idDocumentUrl"
+          :src="idDocumentUrl"
+          alt="ID Document"
+          class="document-image"
+        />
       </div>
       <template #footer>
         <Button :label="t('common.close')" @click="closeIdDocumentDialog" />
@@ -401,6 +414,12 @@ function formatUserName(
   max-width: 100%;
   max-height: 70vh;
   object-fit: contain;
+}
+
+.document-pdf {
+  width: 100%;
+  height: 70vh;
+  border: none;
 }
 
 @media (max-width: 768px) {

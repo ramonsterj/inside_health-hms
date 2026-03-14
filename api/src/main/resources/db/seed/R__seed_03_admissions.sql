@@ -211,11 +211,11 @@ SELECT p.id, u.id,
 FROM patients p, users u
 WHERE p.first_name = 'Andres' AND p.last_name = 'Ortiz Barrios' AND u.username = 'doctor9';
 
--- Gabriela Reyes - KETAMINE_INFUSIÓN
+-- Gabriela Reyes - KETAMINE_INFUSION
 INSERT INTO admissions (patient_id, treating_physician_id, admission_date, status, type, created_at, updated_at, created_by)
 SELECT p.id, u.id,
   (CURRENT_DATE - INTERVAL '2 days') + TIME '09:00',
-  'ACTIVE', 'KETAMINE_INFUSIÓN',
+  'ACTIVE', 'KETAMINE_INFUSION',
   (CURRENT_DATE - INTERVAL '2 days') + TIME '09:00', CURRENT_TIMESTAMP, u.id
 FROM patients p, users u
 WHERE p.first_name = 'Gabriela' AND p.last_name = 'Reyes Soto' AND u.username = 'doctor9';

@@ -21,4 +21,11 @@ export interface AuditLogFilters {
   userId?: number
   entityType?: string
   action?: AuditAction
+  startDate?: string
+  endDate?: string
+}
+
+export interface AuditUser {
+  id: number
+  username: string
 }

@@ -1,0 +1,18 @@
+# Local testing override — adds port mappings since Uncloud's x-ports
+# only works on a real cluster. Use with compose.prod.yml:
+#
+#   docker compose -f compose.prod.yml -f compose.local-test.yml up --build
+#
+# Then access:
+#   Frontend: http://localhost:3000
+
+services:
+  backend:
+    deploy:
+      replicas: 1
+
+  frontend:
+    ports:
+      - "3000:8080"
+    deploy:
+      replicas: 1

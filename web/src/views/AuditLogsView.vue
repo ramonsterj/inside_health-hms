@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useToast } from 'primevue/usetoast'
+import { useErrorHandler } from '@/composables/useErrorHandler'
 import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
-import InputNumber from 'primevue/inputnumber'
+import DatePicker from 'primevue/datepicker'
 import { useAuditStore } from '@/stores/audit'
 import { AuditAction, type AuditLog } from '@/types/audit'
 
 const { t } = useI18n()
-const toast = useToast()
+const { showError } = useErrorHandler()
 const auditStore = useAuditStore()
 
 const first = ref(0)
@@ -24,6 +24,8 @@ const expandedRows = ref<AuditLog[]>([])
 const selectedAction = ref<AuditAction | null>(null)
 const selectedEntityType = ref<string | null>(null)
 const selectedUserId = ref<number | null>(null)
+const startDate = ref<Date | null>(null)
+const endDate = ref<Date | null>(null)
 
 // Action options for dropdown
 const actionOptions = computed(() => [
@@ -39,8 +41,15 @@ const entityTypeOptions = computed(() => [
   ...auditStore.entityTypes.map(type => ({ label: type, value: type }))
 ])
 
+// User options for dropdown (fetched from API)
+const userOptions = computed(() => [
+  { label: t('auditLogs.filters.anyUser'), value: null },
+  ...auditStore.users.map(user => ({ label: user.username, value: user.id }))
+])
+
 onMounted(() => {
   auditStore.fetchEntityTypes()
+  auditStore.fetchUsers()
   loadLogs()
 })
 
@@ -50,18 +59,14 @@ async function loadLogs() {
     auditStore.setFilters({
       action: selectedAction.value ?? undefined,
       entityType: selectedEntityType.value ?? undefined,
-      userId: selectedUserId.value ?? undefined
+      userId: selectedUserId.value ?? undefined,
+      startDate: startDate.value ? startDate.value.toISOString() : undefined,
+      endDate: endDate.value ? endDate.value.toISOString() : undefined
     })
     const page = Math.floor(first.value / rows.value)
     await auditStore.fetchLogs(page, rows.value)
   } catch (error) {
-    const message = error instanceof Error ? error.message : t('auditLogs.loadFailed')
-    toast.add({
-      severity: 'error',
-      summary: t('common.error'),
-      detail: message,
-      life: 5000
-    })
+    showError(error)
   }
 }
 
@@ -80,6 +85,8 @@ function clearFilters() {
   selectedAction.value = null
   selectedEntityType.value = null
   selectedUserId.value = null
+  startDate.value = null
+  endDate.value = null
   first.value = 0
   auditStore.clearFilters()
   loadLogs()
@@ -175,13 +182,39 @@ function getChangedFields(oldValues: string | null, newValues: string | null): s
             />
           </div>
           <div class="filter-item">
-            <label id="label-filter-user-id">{{ t('auditLogs.filters.userId') }}</label>
-            <InputNumber
+            <label id="label-filter-user">{{ t('auditLogs.filters.user') }}</label>
+            <Select
               v-model="selectedUserId"
+              :options="userOptions"
+              optionLabel="label"
+              optionValue="value"
               :placeholder="t('auditLogs.filters.anyUser')"
+              class="filter-select"
+              aria-labelledby="label-filter-user"
+            />
+          </div>
+          <div class="filter-item">
+            <label id="label-filter-start-date">{{ t('auditLogs.filters.startDate') }}</label>
+            <DatePicker
+              v-model="startDate"
+              showTime
+              hourFormat="24"
+              :placeholder="t('auditLogs.filters.startDate')"
               class="filter-input"
-              :useGrouping="false"
-              aria-labelledby="label-filter-user-id"
+              aria-labelledby="label-filter-start-date"
+              showButtonBar
+            />
+          </div>
+          <div class="filter-item">
+            <label id="label-filter-end-date">{{ t('auditLogs.filters.endDate') }}</label>
+            <DatePicker
+              v-model="endDate"
+              showTime
+              hourFormat="24"
+              :placeholder="t('auditLogs.filters.endDate')"
+              class="filter-input"
+              aria-labelledby="label-filter-end-date"
+              showButtonBar
             />
           </div>
           <div class="filter-actions">
@@ -268,25 +301,24 @@ function getChangedFields(oldValues: string | null, newValues: string | null): s
 
           <Column :header="t('auditLogs.columns.changes')" style="width: 150px">
             <template #body="{ data }">
-              <div v-if="data.action === 'UPDATE'" class="changed-fields">
-                <Tag
-                  v-for="field in getChangedFields(data.oldValues, data.newValues).slice(0, 3)"
-                  :key="field"
-                  :value="field"
-                  severity="secondary"
-                  class="field-tag"
-                />
-                <span
-                  v-if="getChangedFields(data.oldValues, data.newValues).length > 3"
-                  class="more-fields"
+              <template v-if="data.action === 'UPDATE'">
+                <div
+                  v-for="(fields, idx) in [getChangedFields(data.oldValues, data.newValues)]"
+                  :key="idx"
+                  class="changed-fields"
                 >
-                  {{
-                    t('auditLogs.moreFields', {
-                      count: getChangedFields(data.oldValues, data.newValues).length - 3
-                    })
-                  }}
-                </span>
-              </div>
+                  <Tag
+                    v-for="field in fields.slice(0, 3)"
+                    :key="field"
+                    :value="field"
+                    severity="secondary"
+                    class="field-tag"
+                  />
+                  <span v-if="fields.length > 3" class="more-fields">
+                    {{ t('auditLogs.moreFields', { count: fields.length - 3 }) }}
+                  </span>
+                </div>
+              </template>
               <span v-else class="text-muted">-</span>
             </template>
           </Column>

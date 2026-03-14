@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/services/api'
 import { tokenStorage } from '@/utils/tokenStorage'
+import { extractApiErrorMessage } from '@/utils/errorUtils'
 import { useLocaleStore } from '@/stores/locale'
 import type {
   User,
@@ -41,6 +42,8 @@ export const useAuthStore = defineStore('auth', () => {
       } else {
         throw new Error(response.data.message || 'Login failed')
       }
+    } catch (error) {
+      throw new Error(extractApiErrorMessage(error, 'Login failed'))
     } finally {
       loading.value = false
     }

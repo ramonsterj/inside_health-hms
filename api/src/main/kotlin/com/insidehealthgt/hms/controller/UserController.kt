@@ -6,12 +6,12 @@ import com.insidehealthgt.hms.dto.request.ChangePasswordRequest
 import com.insidehealthgt.hms.dto.request.CreateUserRequest
 import com.insidehealthgt.hms.dto.request.UpdateUserRequest
 import com.insidehealthgt.hms.dto.response.ApiResponse
+import com.insidehealthgt.hms.dto.response.PageResponse
 import com.insidehealthgt.hms.dto.response.UserResponse
 import com.insidehealthgt.hms.entity.UserStatus
 import com.insidehealthgt.hms.service.MessageService
 import com.insidehealthgt.hms.service.UserService
 import jakarta.validation.Valid
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
@@ -74,9 +74,9 @@ class UserController(private val userService: UserService, private val messageSe
         @RequestParam(required = false) status: UserStatus?,
         @RequestParam(required = false) search: String?,
         @RequestParam(required = false) roleCode: String?,
-    ): ResponseEntity<ApiResponse<Page<UserResponse>>> {
+    ): ResponseEntity<ApiResponse<PageResponse<UserResponse>>> {
         val users = userService.findAll(pageable, status, search, roleCode)
-        return ResponseEntity.ok(ApiResponse.success(users))
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(users)))
     }
 
     @GetMapping("/{id}")
@@ -119,9 +119,9 @@ class UserController(private val userService: UserService, private val messageSe
     @PreAuthorize("hasAuthority('user:list-deleted')")
     fun listDeletedUsers(
         @PageableDefault(size = 20) pageable: Pageable,
-    ): ResponseEntity<ApiResponse<Page<UserResponse>>> {
+    ): ResponseEntity<ApiResponse<PageResponse<UserResponse>>> {
         val users = userService.findAllDeleted(pageable)
-        return ResponseEntity.ok(ApiResponse.success(users))
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(users)))
     }
 
     @PostMapping("/{id}/restore")

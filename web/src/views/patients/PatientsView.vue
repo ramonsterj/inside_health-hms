@@ -12,6 +12,8 @@ import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import Dialog from 'primevue/dialog'
 import FileUpload from 'primevue/fileupload'
+import { useToast } from 'primevue/usetoast'
+import { useConfirm } from 'primevue/useconfirm'
 import { usePatientStore } from '@/stores/patient'
 import { useAuthStore } from '@/stores/auth'
 import type { PatientSummary } from '@/types'
@@ -19,6 +21,8 @@ import { MAX_ID_DOCUMENT_SIZE, ACCEPTED_ID_DOCUMENT_TYPES } from '@/validation/p
 
 const { t } = useI18n()
 const router = useRouter()
+const toast = useToast()
+const confirm = useConfirm()
 const { showError, showSuccess } = useErrorHandler()
 const patientStore = usePatientStore()
 const authStore = useAuthStore()
@@ -34,6 +38,7 @@ const uploadLoading = ref(false)
 const canCreate = computed(() => authStore.hasPermission('patient:create'))
 const canUploadId = computed(() => authStore.hasPermission('patient:upload-id'))
 const canAdmit = computed(() => authStore.hasPermission('admission:create'))
+const canDelete = computed(() => authStore.hasPermission('patient:delete'))
 
 onMounted(() => {
   loadPatients()
@@ -90,6 +95,32 @@ function openUploadDialog(patient: PatientSummary) {
 function closeUploadDialog() {
   showUploadDialog.value = false
   selectedPatientForUpload.value = null
+}
+
+function confirmDeletePatient(patient: PatientSummary) {
+  confirm.require({
+    message: t('patient.deleteConfirm', { name: getFullName(patient.firstName, patient.lastName) }),
+    header: t('patient.deleteConfirmHeader'),
+    icon: 'pi pi-exclamation-triangle',
+    rejectClass: 'p-button-secondary p-button-outlined',
+    acceptClass: 'p-button-danger',
+    accept: () => deletePatient(patient)
+  })
+}
+
+async function deletePatient(patient: PatientSummary) {
+  try {
+    await patientStore.deletePatient(patient.id)
+    toast.add({
+      severity: 'success',
+      summary: t('patient.deleteSuccess'),
+      detail: t('patient.deleteSuccessDetail', { name: getFullName(patient.firstName, patient.lastName) }),
+      life: 3000
+    })
+    loadPatients()
+  } catch (error) {
+    showError(error)
+  }
 }
 
 async function onFileUpload(event: { files: File | File[] }) {
@@ -179,13 +210,21 @@ async function onFileUpload(event: { files: File | File[] }) {
 
           <Column field="age" :header="t('patient.age')" style="width: 80px" />
 
+          <Column :header="t('patient.sex')" style="width: 100px">
+            <template #body="{ data }">
+              {{ t(`patient.sexOptions.${data.sex}`) }}
+            </template>
+          </Column>
+
+          <Column field="email" :header="t('patient.email')" />
+
           <Column field="idDocumentNumber" :header="t('patient.idDocumentNumber')">
             <template #body="{ data }">
               {{ data.idDocumentNumber || '-' }}
             </template>
           </Column>
 
-          <Column :header="t('common.actions')" style="width: 150px">
+          <Column :header="t('common.actions')" style="width: 180px">
             <template #body="{ data }">
               <div class="action-buttons">
                 <Button
@@ -222,6 +261,15 @@ async function onFileUpload(event: { files: File | File[] }) {
                   rounded
                   @click="openUploadDialog(data)"
                   v-tooltip.top="t('patient.noIdDocument')"
+                />
+                <Button
+                  v-if="canDelete"
+                  icon="pi pi-trash"
+                  severity="danger"
+                  text
+                  rounded
+                  @click="confirmDeletePatient(data)"
+                  v-tooltip.top="t('common.delete')"
                 />
               </div>
             </template>

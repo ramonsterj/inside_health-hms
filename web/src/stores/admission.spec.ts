@@ -30,6 +30,7 @@ const mockPatient = {
   lastName: 'Pérez García',
   age: 45,
   sex: Sex.MALE,
+  email: 'juan.perez@example.com',
   idDocumentNumber: '1234567890101',
   hasIdDocument: false,
   hasActiveAdmission: false
@@ -370,6 +371,7 @@ describe('useAdmissionStore', () => {
           lastName: 'Pérez',
           age: 45,
           sex: Sex.MALE,
+          email: 'juan.perez@example.com',
           idDocumentNumber: '123',
           hasIdDocument: false,
           hasActiveAdmission: false

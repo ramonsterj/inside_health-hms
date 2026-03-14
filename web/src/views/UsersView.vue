@@ -19,6 +19,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useRoleStore } from '@/stores/role'
 import { useUsernameAvailability } from '@/composables/useUsernameAvailability'
 import { usePhoneNumberList } from '@/composables/usePhoneNumberList'
+import { extractApiErrorMessage } from '@/utils/errorUtils'
 import PhoneNumberInput from '@/components/users/PhoneNumberInput.vue'
 import type { User, CreateUserRequest, AdminUpdateUserRequest, PhoneNumberRequest } from '@/types'
 import { UserStatus, Salutation, PhoneType } from '@/types'
@@ -379,8 +380,8 @@ async function createUser() {
       detail: t('users.createSuccessDetail', { email: newUser.email }),
       life: 3000
     })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : t('errors.generic')
+  } catch (error: unknown) {
+    const message = extractApiErrorMessage(error, t('errors.generic'))
     toast.add({
       severity: 'error',
       summary: t('users.createFailed'),
@@ -417,14 +418,42 @@ async function resetPassword(user: User) {
   }
 }
 
-function copyPassword() {
-  navigator.clipboard.writeText(temporaryPassword.value)
-  toast.add({
-    severity: 'success',
-    summary: t('users.copied'),
-    detail: t('users.copiedToClipboard'),
-    life: 2000
-  })
+async function copyPassword() {
+  try {
+    await navigator.clipboard.writeText(temporaryPassword.value)
+    toast.add({
+      severity: 'success',
+      summary: t('users.copied'),
+      detail: t('users.copiedToClipboard'),
+      life: 2000
+    })
+  } catch {
+    // Fallback for non-HTTPS contexts
+    const textarea = document.createElement('textarea')
+    textarea.value = temporaryPassword.value
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.select()
+    try {
+      document.execCommand('copy')
+      toast.add({
+        severity: 'success',
+        summary: t('users.copied'),
+        detail: t('users.copiedToClipboard'),
+        life: 2000
+      })
+    } catch {
+      toast.add({
+        severity: 'error',
+        summary: t('common.error'),
+        detail: t('users.copyFailed'),
+        life: 3000
+      })
+    } finally {
+      document.body.removeChild(textarea)
+    }
+  }
 }
 
 async function openEditUserDialog(user: User) {

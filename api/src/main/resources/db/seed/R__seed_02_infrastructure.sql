@@ -1,23 +1,29 @@
 -- ============================================================================
 -- SEED FILE 02: Triage Codes, Rooms, Inventory
 -- ============================================================================
+-- Last updated: 2026-03-04 (make triage_codes/rooms inserts idempotent; they are
+-- no longer truncated by seed_01 since they are reference data from versioned migrations)
 
 SET session_replication_role = replica;
 
 -- ============================================================================
--- STEP 8: CREATE TRIAGE CODES
+-- STEP 8: ENSURE TRIAGE CODES EXIST
 -- ============================================================================
--- Columns: code, color (#RRGGBB), description, display_order
+-- Triage codes are reference data seeded by V021. Use ON CONFLICT DO NOTHING
+-- so this is idempotent whether the versioned migration already ran or not.
 INSERT INTO triage_codes (code, color, description, display_order, created_at, updated_at) VALUES
 ('A', '#FF0000', 'Critical - Immediate attention required', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('B', '#FFA500', 'Urgent - Requires prompt attention', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('C', '#FFFF00', 'Less Urgent - Can wait for care', 3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('D', '#00FF00', 'Non-Urgent - Minor issues', 4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('E', '#0000FF', 'Referral - Scheduled admission', 5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+('E', '#0000FF', 'Referral - Scheduled admission', 5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (code) DO NOTHING;
 
 -- ============================================================================
--- STEP 9: CREATE ROOMS
+-- STEP 9: ENSURE ROOMS EXIST
 -- ============================================================================
+-- Rooms are reference data seeded by V056. Use ON CONFLICT DO NOTHING
+-- so this is idempotent whether the versioned migration already ran or not.
 -- Room types: PRIVATE (1 bed), SHARED (multiple beds)
 -- Room gender: MALE, FEMALE
 INSERT INTO rooms (number, type, gender, capacity, price, created_at, updated_at) VALUES
@@ -41,7 +47,8 @@ INSERT INTO rooms (number, type, gender, capacity, price, created_at, updated_at
 ('301', 'PRIVATE', 'MALE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('302', 'PRIVATE', 'MALE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('303', 'SHARED', 'MALE', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('304', 'SHARED', 'MALE', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+('304', 'SHARED', 'MALE', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (number) DO NOTHING;
 
 -- ============================================================================
 -- STEP 10: RESEED INVENTORY CATEGORIES AND ITEMS
@@ -420,4 +427,6 @@ FROM inventory_categories c,
 ('BEBIDA CALIENTE EXTRA', 'CAFÉ, TÉ O CHOCOLATE CALIENTE ADICIONAL', 10.00, 5.00, 0, 0, 'FLAT', NULL, NULL, true),
 ('JUGO NATURAL EXTRA', 'VASO DE JUGO NATURAL DE NARANJA O FRUTA DE TEMPORADA', 15.00, 8.00, 0, 0, 'FLAT', NULL, NULL, true)
 ) AS v(name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active)
-WHERE c.name = 'Alimentación'
+WHERE c.name = 'Alimentación';
+
+SET session_replication_role = DEFAULT;

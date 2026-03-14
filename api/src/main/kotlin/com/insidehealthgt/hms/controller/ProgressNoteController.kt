@@ -3,10 +3,10 @@ package com.insidehealthgt.hms.controller
 import com.insidehealthgt.hms.dto.request.CreateProgressNoteRequest
 import com.insidehealthgt.hms.dto.request.UpdateProgressNoteRequest
 import com.insidehealthgt.hms.dto.response.ApiResponse
+import com.insidehealthgt.hms.dto.response.PageResponse
 import com.insidehealthgt.hms.dto.response.ProgressNoteResponse
 import com.insidehealthgt.hms.service.ProgressNoteService
 import jakarta.validation.Valid
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
@@ -29,9 +29,9 @@ class ProgressNoteController(private val progressNoteService: ProgressNoteServic
     fun listProgressNotes(
         @PathVariable admissionId: Long,
         @PageableDefault(size = 20) pageable: Pageable,
-    ): ResponseEntity<ApiResponse<Page<ProgressNoteResponse>>> {
+    ): ResponseEntity<ApiResponse<PageResponse<ProgressNoteResponse>>> {
         val notes = progressNoteService.listProgressNotes(admissionId, pageable)
-        return ResponseEntity.ok(ApiResponse.success(notes))
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(notes)))
     }
 
     @GetMapping("/{noteId}")

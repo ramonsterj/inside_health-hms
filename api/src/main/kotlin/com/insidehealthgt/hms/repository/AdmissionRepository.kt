@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 
 @Repository
+@Suppress("TooManyFunctions")
 interface AdmissionRepository : JpaRepository<Admission, Long> {
 
     @Query(
@@ -36,6 +37,7 @@ interface AdmissionRepository : JpaRepository<Admission, Long> {
         LEFT JOIN FETCH a.triageCode
         LEFT JOIN FETCH a.room
         LEFT JOIN FETCH a.treatingPhysician
+        LEFT JOIN FETCH a.consentDocument
         """,
         countQuery = "SELECT COUNT(a) FROM Admission a",
     )
@@ -48,6 +50,7 @@ interface AdmissionRepository : JpaRepository<Admission, Long> {
         LEFT JOIN FETCH a.triageCode
         LEFT JOIN FETCH a.room
         LEFT JOIN FETCH a.treatingPhysician
+        LEFT JOIN FETCH a.consentDocument
         WHERE a.status = :status
         """,
         countQuery = "SELECT COUNT(a) FROM Admission a WHERE a.status = :status",
@@ -61,6 +64,7 @@ interface AdmissionRepository : JpaRepository<Admission, Long> {
         LEFT JOIN FETCH a.triageCode
         LEFT JOIN FETCH a.room
         LEFT JOIN FETCH a.treatingPhysician
+        LEFT JOIN FETCH a.consentDocument
         WHERE a.type = :type
         """,
         countQuery = "SELECT COUNT(a) FROM Admission a WHERE a.type = :type",
@@ -74,6 +78,7 @@ interface AdmissionRepository : JpaRepository<Admission, Long> {
         LEFT JOIN FETCH a.triageCode
         LEFT JOIN FETCH a.room
         LEFT JOIN FETCH a.treatingPhysician
+        LEFT JOIN FETCH a.consentDocument
         WHERE a.status = :status AND a.type = :type
         """,
         countQuery = "SELECT COUNT(a) FROM Admission a WHERE a.status = :status AND a.type = :type",
@@ -81,6 +86,34 @@ interface AdmissionRepository : JpaRepository<Admission, Long> {
     fun findAllByStatusAndTypeWithRelations(
         @Param("status") status: AdmissionStatus,
         @Param("type") type: AdmissionType,
+        pageable: Pageable,
+    ): Page<Admission>
+
+    @Query(
+        """
+        SELECT DISTINCT a FROM Admission a
+        LEFT JOIN FETCH a.patient
+        LEFT JOIN FETCH a.triageCode
+        LEFT JOIN FETCH a.room
+        LEFT JOIN FETCH a.treatingPhysician
+        LEFT JOIN FETCH a.consentDocument
+        LEFT JOIN a.consultingPhysicians cp
+        WHERE (a.treatingPhysician.id = :doctorId OR cp.physician.id = :doctorId)
+        AND (:status IS NULL OR a.status = :status)
+        AND (:type IS NULL OR a.type = :type)
+        """,
+        countQuery = """
+        SELECT COUNT(DISTINCT a) FROM Admission a
+        LEFT JOIN a.consultingPhysicians cp
+        WHERE (a.treatingPhysician.id = :doctorId OR cp.physician.id = :doctorId)
+        AND (:status IS NULL OR a.status = :status)
+        AND (:type IS NULL OR a.type = :type)
+        """,
+    )
+    fun findAllByPhysicianWithRelations(
+        @Param("doctorId") doctorId: Long,
+        @Param("status") status: AdmissionStatus?,
+        @Param("type") type: AdmissionType?,
         pageable: Pageable,
     ): Page<Admission>
 

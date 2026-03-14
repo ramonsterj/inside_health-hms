@@ -3,11 +3,11 @@ package com.insidehealthgt.hms.controller
 import com.insidehealthgt.hms.dto.request.CreatePatientRequest
 import com.insidehealthgt.hms.dto.request.UpdatePatientRequest
 import com.insidehealthgt.hms.dto.response.ApiResponse
+import com.insidehealthgt.hms.dto.response.PageResponse
 import com.insidehealthgt.hms.dto.response.PatientResponse
 import com.insidehealthgt.hms.dto.response.PatientSummaryResponse
 import com.insidehealthgt.hms.service.PatientService
 import jakarta.validation.Valid
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpHeaders
@@ -44,9 +44,9 @@ class PatientController(private val patientService: PatientService) {
     fun listPatients(
         @PageableDefault(size = 20) pageable: Pageable,
         @RequestParam(required = false) search: String?,
-    ): ResponseEntity<ApiResponse<Page<PatientSummaryResponse>>> {
+    ): ResponseEntity<ApiResponse<PageResponse<PatientSummaryResponse>>> {
         val patients = patientService.findAll(pageable, search)
-        return ResponseEntity.ok(ApiResponse.success(patients))
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(patients)))
     }
 
     @GetMapping("/{id}")
@@ -92,5 +92,12 @@ class PatientController(private val patientService: PatientService) {
     fun deleteIdDocument(@PathVariable id: Long): ResponseEntity<ApiResponse<PatientResponse>> {
         val patient = patientService.deleteIdDocument(id)
         return ResponseEntity.ok(ApiResponse.success(patient))
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('patient:delete')")
+    fun deletePatient(@PathVariable id: Long): ResponseEntity<ApiResponse<Unit>> {
+        patientService.deletePatient(id)
+        return ResponseEntity.ok(ApiResponse.success(Unit))
     }
 }
