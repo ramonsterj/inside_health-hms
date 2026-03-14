@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.." || exit 1
 
 # Start PostgreSQL (idempotent - safe if already running)
 echo "Starting PostgreSQL..."
-docker compose up -d postgres
+docker compose --env-file .env.dev up -d postgres
 
 # Wait for PostgreSQL to be ready (checks port 5433 on localhost)
 echo "Waiting for PostgreSQL to be ready..."

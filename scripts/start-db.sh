@@ -4,4 +4,4 @@
 cd "$(dirname "$0")/.." || exit 1
 
 echo "Starting PostgreSQL container..."
-docker compose up postgres
+docker compose --env-file .env.dev up postgres
