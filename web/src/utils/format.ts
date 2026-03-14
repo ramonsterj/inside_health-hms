@@ -8,6 +8,24 @@ export function formatDate(dateString: string | null): string {
   return new Date(dateString).toLocaleDateString()
 }
 
+export function formatTime(dateString: string | null): string {
+  if (!dateString) return '-'
+  return new Date(dateString).toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+export function formatStaffName(
+  staff: { salutation?: string | null; firstName?: string | null; lastName?: string | null } | null,
+  t: (key: string) => string
+): string {
+  if (!staff) return '-'
+  const salutationLabel = staff.salutation ? t(`user.salutations.${staff.salutation}`) : ''
+  const fullName = `${staff.firstName || ''} ${staff.lastName || ''}`.trim()
+  return `${salutationLabel} ${fullName}`.trim() || '-'
+}
+
 export function getContrastColor(hexColor: string): string {
   const r = parseInt(hexColor.slice(1, 3), 16)
   const g = parseInt(hexColor.slice(3, 5), 16)

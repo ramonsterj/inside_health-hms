@@ -32,6 +32,8 @@
     "updatedAt": "Updated At",
     "updatedBy": "Updated By",
     "auditInfo": "Audit Information",
+    "auditCreated": "Created on {date} at {time} by {user}",
+    "auditUpdated": "Updated on {date} at {time} by {user}",
     "expand": "Expand",
     "collapse": "Collapse",
     "unknown": "Unknown",

@@ -11,6 +11,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import type { ClinicalHistoryFieldName } from '@/types/medicalRecord'
 import { sanitizeHtml } from '@/utils/sanitize'
+import { formatStaffName } from '@/utils/format'
 import AuditInfo from '@/components/common/AuditInfo.vue'
 import ClinicalHistoryForm from './ClinicalHistoryForm.vue'
 
@@ -194,15 +195,12 @@ function handleFormCancelled() {
         </AccordionPanel>
       </Accordion>
 
-      <div class="audit-section">
-        <h4>{{ t('common.auditInfo') }}</h4>
-        <AuditInfo
-          :createdAt="clinicalHistory.createdAt"
-          :createdBy="clinicalHistory.createdBy"
-          :updatedAt="clinicalHistory.updatedAt"
-          :updatedBy="clinicalHistory.updatedBy"
-        />
-      </div>
+      <AuditInfo
+        :createdAt="clinicalHistory.createdAt"
+        :createdByName="formatStaffName(clinicalHistory.createdBy, t)"
+        :updatedAt="clinicalHistory.updatedAt"
+        :updatedByName="formatStaffName(clinicalHistory.updatedBy, t)"
+      />
     </div>
   </div>
 </template>
@@ -289,17 +287,4 @@ function handleFormCancelled() {
   word-wrap: break-word;
 }
 
-.audit-section {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--p-surface-border);
-}
-
-.audit-section h4 {
-  margin: 0 0 1rem 0;
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--p-text-muted-color);
-}
 </style>
