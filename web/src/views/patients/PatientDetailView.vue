@@ -283,7 +283,7 @@ function formatUserName(
         <img
           v-else-if="idDocumentUrl"
           :src="idDocumentUrl"
-          alt="ID Document"
+          :alt="t('patient.idDocument')"
           class="document-image"
         />
       </div>

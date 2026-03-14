@@ -30,6 +30,7 @@ class VitalSignService(
     private val vitalSignRepository: VitalSignRepository,
     private val admissionRepository: AdmissionRepository,
     private val userRepository: UserRepository,
+    private val messageService: MessageService,
 ) {
     companion object {
         private const val EDIT_WINDOW_HOURS = 24L
@@ -104,7 +105,7 @@ class VitalSignService(
 
         val vitalSign = vitalSignRepository.findByIdAndAdmissionId(vitalSignId, admissionId)
             ?: throw ResourceNotFoundException(
-                "Vital sign not found with id: $vitalSignId for admission: $admissionId",
+                messageService.errorVitalSignNotFound(vitalSignId, admissionId),
             )
 
         return buildResponse(vitalSign, currentUser, admission.isActive())
@@ -113,7 +114,7 @@ class VitalSignService(
     @Transactional
     fun createVitalSign(admissionId: Long, request: CreateVitalSignRequest): VitalSignResponse {
         val admission = admissionRepository.findByIdWithRelations(admissionId)
-            ?: throw ResourceNotFoundException("Admission not found with id: $admissionId")
+            ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
 
         validateAdmissionActive(admission)
         validateBloodPressure(request.systolicBp!!, request.diastolicBp!!)
@@ -147,7 +148,7 @@ class VitalSignService(
 
         val vitalSign = vitalSignRepository.findByIdAndAdmissionId(vitalSignId, admissionId)
             ?: throw ResourceNotFoundException(
-                "Vital sign not found with id: $vitalSignId for admission: $admissionId",
+                messageService.errorVitalSignNotFound(vitalSignId, admissionId),
             )
 
         val currentUser = getCurrentUserDetails()
@@ -171,26 +172,26 @@ class VitalSignService(
 
     private fun getAdmissionOrThrow(admissionId: Long): Admission =
         admissionRepository.findByIdWithRelations(admissionId)
-            ?: throw ResourceNotFoundException("Admission not found with id: $admissionId")
+            ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
 
     private fun validateAdmissionActive(admission: Admission) {
         if (admission.isDischarged()) {
-            throw BadRequestException("Cannot modify records for discharged admissions")
+            throw BadRequestException(messageService.errorAdmissionDischargedRecords())
         }
     }
 
     private fun validateBloodPressure(systolicBp: Int, diastolicBp: Int) {
         if (systolicBp <= diastolicBp) {
-            throw BadRequestException("Systolic blood pressure must be greater than diastolic")
+            throw BadRequestException(messageService.errorVitalSignSystolicGreaterThanDiastolic())
         }
     }
 
     private fun validateRecordedAt(recordedAt: LocalDateTime, admission: Admission) {
         if (recordedAt.isBefore(admission.admissionDate)) {
-            throw BadRequestException("Recorded time cannot be before admission date")
+            throw BadRequestException(messageService.errorVitalSignRecordedAtBeforeAdmission())
         }
         if (recordedAt.isAfter(LocalDateTime.now())) {
-            throw BadRequestException("Recorded time cannot be in the future")
+            throw BadRequestException(messageService.errorVitalSignRecordedAtFuture())
         }
     }
 
@@ -199,14 +200,14 @@ class VitalSignService(
         if (currentUser.hasRole("ADMIN")) return
 
         if (entity.createdBy != currentUser.id) {
-            throw ForbiddenException("You can only edit records you created")
+            throw ForbiddenException(messageService.errorEditOnlyOwnRecords())
         }
 
         val createdAt = entity.createdAt
-            ?: throw ForbiddenException("This record can no longer be edited (24-hour limit exceeded)")
+            ?: throw ForbiddenException(messageService.errorEditWindowClosed())
 
         if (!createdAt.plusHours(EDIT_WINDOW_HOURS).isAfter(LocalDateTime.now())) {
-            throw ForbiddenException("This record can no longer be edited (24-hour limit exceeded)")
+            throw ForbiddenException(messageService.errorEditWindowClosed())
         }
     }
 
@@ -221,7 +222,7 @@ class VitalSignService(
 
     private fun getCurrentUserDetails(): CustomUserDetails {
         val auth = SecurityContextHolder.getContext().authentication
-            ?: throw UnauthorizedException("Not authenticated")
+            ?: throw UnauthorizedException(messageService.errorNotAuthenticated())
         return auth.principal as CustomUserDetails
     }
 

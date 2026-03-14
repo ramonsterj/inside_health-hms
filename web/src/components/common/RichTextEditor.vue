@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Editor from 'primevue/editor'
 import { sanitizeHtml } from '@/utils/sanitize'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -57,16 +60,16 @@ const sanitizedContent = computed(() => sanitizeHtml(internalValue.value))
     >
       <template #toolbar>
         <span class="ql-formats">
-          <button class="ql-bold" v-tooltip.bottom="'Bold'"></button>
-          <button class="ql-italic" v-tooltip.bottom="'Italic'"></button>
-          <button class="ql-underline" v-tooltip.bottom="'Underline'"></button>
+          <button class="ql-bold" v-tooltip.bottom="t('editor.bold')"></button>
+          <button class="ql-italic" v-tooltip.bottom="t('editor.italic')"></button>
+          <button class="ql-underline" v-tooltip.bottom="t('editor.underline')"></button>
         </span>
         <span class="ql-formats">
-          <button class="ql-list" value="ordered" v-tooltip.bottom="'Numbered List'"></button>
-          <button class="ql-list" value="bullet" v-tooltip.bottom="'Bullet List'"></button>
+          <button class="ql-list" value="ordered" v-tooltip.bottom="t('editor.numberedList')"></button>
+          <button class="ql-list" value="bullet" v-tooltip.bottom="t('editor.bulletList')"></button>
         </span>
         <span class="ql-formats">
-          <button class="ql-clean" v-tooltip.bottom="'Clear Formatting'"></button>
+          <button class="ql-clean" v-tooltip.bottom="t('editor.clearFormatting')"></button>
         </span>
       </template>
     </Editor>

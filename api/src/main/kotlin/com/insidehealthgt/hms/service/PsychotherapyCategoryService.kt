@@ -18,11 +18,12 @@ class PsychotherapyCategoryService(
     private val categoryRepository: PsychotherapyCategoryRepository,
     private val activityRepository: PsychotherapyActivityRepository,
     private val userRepository: UserRepository,
+    private val messageService: MessageService,
 ) {
 
     @Transactional(readOnly = true)
     fun findById(id: Long): PsychotherapyCategory = categoryRepository.findById(id)
-        .orElseThrow { ResourceNotFoundException("Psychotherapy category not found with id: $id") }
+        .orElseThrow { ResourceNotFoundException(messageService.errorPsychotherapyCategoryNotFound(id)) }
 
     @Transactional(readOnly = true)
     fun findAll(): List<PsychotherapyCategoryResponse> = categoryRepository.findAllByOrderByDisplayOrderAsc()
@@ -42,7 +43,7 @@ class PsychotherapyCategoryService(
     @Transactional
     fun createCategory(request: CreatePsychotherapyCategoryRequest): PsychotherapyCategoryResponse {
         if (categoryRepository.existsByName(request.name)) {
-            throw BadRequestException("Psychotherapy category with name '${request.name}' already exists")
+            throw BadRequestException(messageService.errorPsychotherapyCategoryDuplicateName(request.name))
         }
 
         val category = PsychotherapyCategory(
@@ -63,7 +64,7 @@ class PsychotherapyCategoryService(
         val category = findById(id)
 
         if (categoryRepository.existsByNameExcludingId(request.name, id)) {
-            throw BadRequestException("Psychotherapy category with name '${request.name}' already exists")
+            throw BadRequestException(messageService.errorPsychotherapyCategoryDuplicateName(request.name))
         }
 
         category.name = request.name
@@ -82,7 +83,7 @@ class PsychotherapyCategoryService(
         val category = findById(id)
 
         if (activityRepository.existsByCategoryIdIncludingDeleted(id)) {
-            throw BadRequestException("Cannot delete category that is in use by existing activities")
+            throw BadRequestException(messageService.errorPsychotherapyCategoryInUse())
         }
 
         category.deletedAt = LocalDateTime.now()

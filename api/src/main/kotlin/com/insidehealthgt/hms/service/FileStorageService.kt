@@ -39,6 +39,7 @@ enum class StorageDocumentType(val directoryName: String) {
 class FileStorageService(
     @Value("\${app.file-storage.base-path}")
     private val basePath: String,
+    private val messageService: MessageService,
 ) : ApplicationRunner {
 
     private val logger = LoggerFactory.getLogger(FileStorageService::class.java)
@@ -52,12 +53,12 @@ class FileStorageService(
             logger.info("File storage initialized at: {}", baseDirectory)
         } catch (ex: IOException) {
             logger.error("Could not create file storage directory: {}", baseDirectory, ex)
-            throw FileStorageException("Could not initialize file storage at: $baseDirectory")
+            throw FileStorageException(messageService.errorFileStorageInit(baseDirectory.toString()))
         }
 
         // Validate directory is writable
         if (!Files.isWritable(baseDirectory)) {
-            throw FileStorageException("File storage directory is not writable: $baseDirectory")
+            throw FileStorageException(messageService.errorFileStorageNotWritable(baseDirectory.toString()))
         }
     }
 
@@ -92,7 +93,7 @@ class FileStorageService(
             Files.readAllBytes(filePath)
         } catch (ex: IOException) {
             logger.error("Failed to read file at {}: {}", filePath, ex.message, ex)
-            throw FileStorageException("Unable to read the file. Please contact support.")
+            throw FileStorageException(messageService.errorFileStorageRead())
         }
     }
 
@@ -104,12 +105,12 @@ class FileStorageService(
 
         // Security check: ensure path is within base directory
         if (!filePath.startsWith(baseDirectory)) {
-            throw BadRequestException("Invalid storage path")
+            throw BadRequestException(messageService.errorFileStorageInvalidPath())
         }
 
         if (!Files.exists(filePath)) {
             logger.error("File not found on disk: {}", filePath)
-            throw ResourceNotFoundException("The requested file could not be found. Please contact support.")
+            throw ResourceNotFoundException(messageService.errorFileStorageNotFound())
         }
 
         return filePath
@@ -147,7 +148,7 @@ class FileStorageService(
 
         // Security check: ensure target is still within base directory
         if (!targetPath.startsWith(baseDirectory)) {
-            throw BadRequestException("Invalid filename. Please rename the file and try again.")
+            throw BadRequestException(messageService.errorFileStorageInvalidFilename())
         }
 
         try {
@@ -161,7 +162,7 @@ class FileStorageService(
             return relativePath.toString()
         } catch (ex: IOException) {
             logger.error("Failed to store file at {}: {}", targetPath, ex.message, ex)
-            throw FileStorageException("Unable to save the file. Please contact support.")
+            throw FileStorageException(messageService.errorFileStorageWrite())
         }
     }
 
@@ -177,7 +178,7 @@ class FileStorageService(
 
         // Security check: ensure target is still within base directory
         if (!targetPath.startsWith(baseDirectory)) {
-            throw BadRequestException("Invalid path")
+            throw BadRequestException(messageService.errorFileStorageInvalidPath())
         }
 
         try {
@@ -190,7 +191,7 @@ class FileStorageService(
             return relativePath.toString()
         } catch (ex: IOException) {
             logger.error("Failed to store file at {}: {}", targetPath, ex.message, ex)
-            throw FileStorageException("Unable to save the file. Please contact support.")
+            throw FileStorageException(messageService.errorFileStorageWrite())
         }
     }
 

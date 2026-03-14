@@ -24,6 +24,7 @@ class AuthService(
     private val passwordEncoder: PasswordEncoder,
     private val jwtTokenProvider: JwtTokenProvider,
     private val refreshTokenService: RefreshTokenService,
+    private val messageService: MessageService,
 ) {
 
     @Transactional
@@ -46,15 +47,15 @@ class AuthService(
 
     private fun validateUserStatus(user: User) {
         if (user.status != UserStatus.ACTIVE) {
-            throw AccountDisabledException("Your account is ${getStatusMessage(user.status)}. Please contact support.")
+            throw AccountDisabledException(messageService.errorAuthAccountStatus(getStatusMessage(user.status)))
         }
     }
 
     private fun getStatusMessage(status: UserStatus): String = when (status) {
-        UserStatus.INACTIVE -> "inactive"
-        UserStatus.SUSPENDED -> "suspended"
-        UserStatus.DELETED -> "deleted"
-        UserStatus.ACTIVE -> "active"
+        UserStatus.INACTIVE -> messageService.errorAuthAccountStatusInactive()
+        UserStatus.SUSPENDED -> messageService.errorAuthAccountStatusSuspended()
+        UserStatus.DELETED -> messageService.errorAuthAccountStatusDeleted()
+        UserStatus.ACTIVE -> messageService.errorAuthAccountStatusActive()
     }
 
     @Transactional
@@ -66,7 +67,7 @@ class AuthService(
         if (user.status != UserStatus.ACTIVE) {
             // Revoke the refresh token since account is no longer active
             refreshTokenService.revokeToken(request.refreshToken)
-            throw AccountDisabledException("Your account is ${getStatusMessage(user.status)}. Please contact support.")
+            throw AccountDisabledException(messageService.errorAuthAccountStatus(getStatusMessage(user.status)))
         }
 
         // Revoke the old refresh token

@@ -111,7 +111,11 @@ async function deleteTriageCode(id: number) {
             </template>
           </Column>
 
-          <Column field="description" :header="t('triageCode.description')" />
+          <Column :header="t('triageCode.description')">
+            <template #body="{ data }">
+              {{ t(`triageCode.codes.${data.code}`, data.description || '') }}
+            </template>
+          </Column>
 
           <Column
             field="displayOrder"

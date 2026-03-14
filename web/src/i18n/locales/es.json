@@ -983,7 +983,14 @@
     "created": "Código de triage creado éxitosamente.",
     "updated": "Código de triage actualizado éxitosamente.",
     "deleted": "Código de triage eliminado éxitosamente.",
-    "confirmDelete": "¿Está seguro de que desea eliminar este código de triage?"
+    "confirmDelete": "¿Está seguro de que desea eliminar este código de triage?",
+    "codes": {
+      "A": "Crítico - Atención inmediata requerida",
+      "B": "Urgente - Requiere atención pronta",
+      "C": "Menos Urgente - Puede esperar para atención",
+      "D": "No Urgente - Problemas menores",
+      "E": "Referencia - Admisión programada"
+    }
   },
   "room": {
     "title": "Habitaciones",
@@ -1544,5 +1551,25 @@
       "DIET": "Dieta",
       "ADJUSTMENT": "Ajuste"
     }
+  },
+  "app": {
+    "name": "InsideHealth HMS",
+    "logoAlt": "Inside Health"
+  },
+  "configurator": {
+    "primary": "Primario",
+    "surface": "Superficie",
+    "presets": "Estilos",
+    "menuMode": "Modo de Menú",
+    "static": "Estático",
+    "overlay": "Superpuesto"
+  },
+  "editor": {
+    "bold": "Negrita",
+    "italic": "Cursiva",
+    "underline": "Subrayado",
+    "numberedList": "Lista Numerada",
+    "bulletList": "Lista de Viñetas",
+    "clearFormatting": "Limpiar Formato"
   }
 }

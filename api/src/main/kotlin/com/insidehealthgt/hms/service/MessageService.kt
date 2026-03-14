@@ -102,4 +102,133 @@ class MessageService(private val messageSource: MessageSource) {
     fun commonCreated() = getMessage("common.created")
     fun commonUpdated() = getMessage("common.updated")
     fun commonDeleted() = getMessage("common.deleted")
+
+    // === Admission Messages ===
+
+    fun admissionDeleted() = getMessage("admission.deleted")
+    fun admissionDocumentDeleted() = getMessage("admission.document.deleted")
+
+    // === Admission Error Messages ===
+
+    fun errorAdmissionNotFound(id: Long) = getMessage("error.admission.not.found", id)
+    fun errorAdmissionPatientNotFound(id: Long) = getMessage("error.admission.patient.not.found", id)
+    fun errorAdmissionTriageNotFound(id: Long) = getMessage("error.admission.triage.not.found", id)
+    fun errorAdmissionRoomNotFound(id: Long) = getMessage("error.admission.room.not.found", id)
+    fun errorAdmissionUserNotFound(id: Long) = getMessage("error.admission.user.not.found", id)
+    fun errorAdmissionPatientActive() = getMessage("error.admission.patient.active")
+    fun errorAdmissionTriageRequired(type: String) = getMessage("error.admission.triage.required", type)
+    fun errorAdmissionRoomRequired(type: String) = getMessage("error.admission.room.required", type)
+    fun errorAdmissionPhysicianRole() = getMessage("error.admission.physician.role")
+    fun errorAdmissionRoomFull(roomNumber: String) = getMessage("error.admission.room.full", roomNumber)
+    fun errorAdmissionUpdateDischarged() = getMessage("error.admission.update.discharged")
+    fun errorAdmissionAlreadyDischarged() = getMessage("error.admission.already.discharged")
+    fun errorAdmissionConsultingPhysicianRole() = getMessage("error.admission.consulting.physician.role")
+    fun errorAdmissionConsultingPhysicianIsTreating() = getMessage("error.admission.consulting.physician.is.treating")
+    fun errorAdmissionConsultingPhysicianAlreadyAssigned() =
+        getMessage("error.admission.consulting.physician.already.assigned")
+    fun errorAdmissionConsultingPhysicianNotFound(id: Long, admissionId: Long) =
+        getMessage("error.admission.consulting.physician.not.found", id, admissionId)
+    fun errorAdmissionConsentFileEmpty() = getMessage("error.admission.consent.file.empty")
+    fun errorAdmissionConsentFileSize() = getMessage("error.admission.consent.file.size")
+    fun errorAdmissionConsentFileType() = getMessage("error.admission.consent.file.type")
+    fun errorAdmissionConsentNotFound(admissionId: Long) = getMessage("error.admission.consent.not.found", admissionId)
+
+    // === Patient Error Messages ===
+
+    fun errorPatientNotFound(id: Long) = getMessage("error.patient.not.found", id)
+    fun errorPatientDuplicate() = getMessage("error.patient.duplicate")
+    fun errorPatientIdDocumentNotFound(patientId: Long) = getMessage("error.patient.id.document.not.found", patientId)
+    fun errorPatientFileEmpty() = getMessage("error.patient.file.empty")
+    fun errorPatientFileSize() = getMessage("error.patient.file.size")
+    fun errorPatientFileType() = getMessage("error.patient.file.type")
+    fun errorPatientAccessDenied() = getMessage("error.patient.access.denied")
+
+    // === Vital Sign Error Messages ===
+
+    fun errorVitalSignNotFound(id: Long, admissionId: Long) = getMessage("error.vitalSign.not.found", id, admissionId)
+    fun errorVitalSignRecordedAtBeforeAdmission() = getMessage("error.vitalSign.recordedAt.before.admission")
+    fun errorVitalSignRecordedAtFuture() = getMessage("error.vitalSign.recordedAt.future")
+    fun errorVitalSignSystolicGreaterThanDiastolic() = getMessage("error.vitalSign.systolicGreaterThanDiastolic")
+
+    // === Nursing Note Error Messages ===
+
+    fun errorNursingNoteNotFound(id: Long, admissionId: Long) =
+        getMessage("error.nursingNote.not.found", id, admissionId)
+
+    // === Psychotherapy Error Messages ===
+
+    fun errorPsychotherapyActivityNotFound(id: Long, admissionId: Long) =
+        getMessage("error.psychotherapy.activity.not.found", id, admissionId)
+    fun errorPsychotherapyActivityOnlyPsychologist() = getMessage("error.psychotherapy.activity.only.psychologist")
+    fun errorPsychotherapyActivityOnlyHospitalized() = getMessage("error.psychotherapy.activity.only.hospitalized")
+    fun errorPsychotherapyCategoryNotFound(id: Long) = getMessage("error.psychotherapy.category.not.found", id)
+    fun errorPsychotherapyCategoryDuplicateName(name: String) =
+        getMessage("error.psychotherapy.category.duplicate.name", name)
+    fun errorPsychotherapyCategoryInUse() = getMessage("error.psychotherapy.category.in.use")
+
+    // === Clinical History Error Messages ===
+
+    fun errorClinicalHistoryNotFound(admissionId: Long) = getMessage("error.clinicalHistory.not.found", admissionId)
+    fun errorClinicalHistoryAlreadyExists() = getMessage("error.clinicalHistory.already.exists")
+
+    // === Document Type Error Messages ===
+
+    fun errorDocumentTypeNotFound(id: Long) = getMessage("error.documentType.not.found", id)
+    fun errorDocumentTypeCodeNotFound(code: String) = getMessage("error.documentType.code.not.found", code)
+    fun errorDocumentTypeCodeExists(code: String) = getMessage("error.documentType.code.exists", code)
+    fun errorDocumentTypeHasDocuments() = getMessage("error.documentType.has.documents")
+
+    // === Inventory Error Messages ===
+
+    fun errorInventoryItemNotFound(id: Long) = getMessage("error.inventory.item.not.found", id)
+    fun errorInventoryCategoryNotFound(id: Long) = getMessage("error.inventory.category.not.found", id)
+    fun errorInventoryInsufficientStock(currentQuantity: Int, requested: Int) =
+        getMessage("error.inventory.insufficient.stock", currentQuantity, requested)
+    fun errorInventoryTimeUnitRequired() = getMessage("error.inventory.time.unit.required")
+    fun errorInventoryTimeIntervalRequired() = getMessage("error.inventory.time.interval.required")
+    fun errorInventoryAdmissionNotFound(id: Long) = getMessage("error.inventory.admission.not.found", id)
+
+    // === Billing Error Messages ===
+
+    fun errorBillingChargeTypeNotAllowed(chargeType: String) =
+        getMessage("error.billing.charge.type.not.allowed", chargeType)
+    fun errorBillingAdmissionNotActive() = getMessage("error.billing.admission.not.active")
+
+    // === Medication Administration Error Messages ===
+
+    fun errorMedicationOrderNotFound(orderId: Long, admissionId: Long) =
+        getMessage("error.medication.order.not.found", orderId, admissionId)
+    fun errorMedicationOnlyMedicamentos() = getMessage("error.medication.only.medicamentos")
+    fun errorMedicationAdmissionDischarged() = getMessage("error.medication.admission.discharged")
+    fun errorMedicationOrderDiscontinued() = getMessage("error.medication.order.discontinued")
+    fun errorMedicationOrderNoInventory() = getMessage("error.medication.order.no.inventory")
+
+    // === Common Error Messages ===
+
+    fun errorNotAuthenticated() = getMessage("error.not.authenticated")
+    fun errorAdmissionDischargedRecords() = getMessage("error.admission.discharged.records")
+    fun errorEditOnlyOwnRecords() = getMessage("error.edit.only.own.records")
+    fun errorEditWindowClosed() = getMessage("error.edit.window.closed")
+
+    // === Auth Error Messages ===
+
+    fun errorAuthAccountStatus(status: String) = getMessage("error.auth.account.status", status)
+    fun errorAuthAccountStatusInactive() = getMessage("error.auth.account.status.inactive")
+    fun errorAuthAccountStatusSuspended() = getMessage("error.auth.account.status.suspended")
+    fun errorAuthAccountStatusDeleted() = getMessage("error.auth.account.status.deleted")
+    fun errorAuthAccountStatusActive() = getMessage("error.auth.account.status.active")
+
+    // === File Storage Error Messages ===
+
+    fun errorFileStorageInit(path: String) = getMessage("error.file.storage.init", path)
+    fun errorFileStorageNotWritable(path: String) = getMessage("error.file.storage.not.writable", path)
+    fun errorFileStorageRead() = getMessage("error.file.storage.read")
+    fun errorFileStorageWrite() = getMessage("error.file.storage.write")
+    fun errorFileStorageInvalidPath() = getMessage("error.file.storage.invalid.path")
+    fun errorFileStorageInvalidFilename() = getMessage("error.file.storage.invalid.filename")
+    fun errorFileStorageNotFound() = getMessage("error.file.storage.not.found")
+
+    // === Duplicate Patient Error Messages ===
+
+    fun errorPatientDuplicateFound() = getMessage("error.patient.duplicate.found")
 }

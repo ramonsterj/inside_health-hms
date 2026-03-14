@@ -140,7 +140,8 @@ function getDoctorLabel(doctor: Doctor): string {
 }
 
 function getTriageCodeLabel(triageCode: { code: string; description: string | null }): string {
-  return `${triageCode.code}${triageCode.description ? ` - ${triageCode.description}` : ''}`
+  const description = t(`triageCode.codes.${triageCode.code}`, triageCode.description || '')
+  return `${triageCode.code}${description ? ` - ${description}` : ''}`
 }
 
 function getRoomLabel(room: { number: string; availableBeds: number }): string {

@@ -24,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
@@ -39,6 +40,7 @@ class BillingServiceTest {
     private lateinit var admissionRepository: AdmissionRepository
     private lateinit var inventoryItemRepository: InventoryItemRepository
     private lateinit var userRepository: UserRepository
+    private lateinit var messageService: MessageService
     private lateinit var billingService: BillingService
 
     private lateinit var testPatient: Patient
@@ -51,6 +53,12 @@ class BillingServiceTest {
         admissionRepository = mock()
         inventoryItemRepository = mock()
         userRepository = mock()
+        messageService = mock {
+            on { errorAdmissionNotFound(any()) } doReturn "Admission not found"
+            on { errorBillingChargeTypeNotAllowed(any()) } doReturn "Charge type not allowed"
+            on { errorBillingAdmissionNotActive() } doReturn "Admission not active"
+            on { errorInventoryItemNotFound(any()) } doReturn "Inventory item not found"
+        }
 
         billingService = BillingService(
             chargeRepository,
@@ -60,6 +68,7 @@ class BillingServiceTest {
             dailyMealRate = BigDecimal("150.00"),
             electroshockBasePrice = BigDecimal("2500.00"),
             ketamineBasePrice = BigDecimal("3000.00"),
+            messageService = messageService,
         )
 
         testPatient = mock<Patient>().apply {

@@ -25,6 +25,7 @@ class MedicationAdministrationService(
     private val medicalOrderRepository: MedicalOrderRepository,
     private val inventoryItemService: InventoryItemService,
     private val userRepository: UserRepository,
+    private val messageService: MessageService,
 ) {
 
     @Transactional(readOnly = true)
@@ -35,11 +36,11 @@ class MedicationAdministrationService(
     ): Page<MedicationAdministrationResponse> {
         val order = medicalOrderRepository.findByIdAndAdmissionId(orderId, admissionId)
             ?: throw ResourceNotFoundException(
-                "Medical order not found with id: $orderId for admission: $admissionId",
+                messageService.errorMedicationOrderNotFound(orderId, admissionId),
             )
 
         if (order.category != MedicalOrderCategory.MEDICAMENTOS) {
-            throw BadRequestException("Medication administration is only available for MEDICAMENTOS orders")
+            throw BadRequestException(messageService.errorMedicationOnlyMedicamentos())
         }
 
         val page = administrationRepository.findByOrderIdAndAdmissionId(orderId, admissionId, pageable)
@@ -69,29 +70,29 @@ class MedicationAdministrationService(
     ): MedicationAdministrationResponse {
         val order = medicalOrderRepository.findByIdAndAdmissionId(orderId, admissionId)
             ?: throw ResourceNotFoundException(
-                "Medical order not found with id: $orderId for admission: $admissionId",
+                messageService.errorMedicationOrderNotFound(orderId, admissionId),
             )
 
         // Verify order is for medications
         if (order.category != MedicalOrderCategory.MEDICAMENTOS) {
-            throw BadRequestException("Medication administration is only available for MEDICAMENTOS orders")
+            throw BadRequestException(messageService.errorMedicationOnlyMedicamentos())
         }
 
         // Verify admission is active
         if (!order.admission.isActive()) {
-            throw BadRequestException("Cannot administer medication for a discharged admission")
+            throw BadRequestException(messageService.errorMedicationAdmissionDischarged())
         }
 
         // Verify order is active
         if (order.status == MedicalOrderStatus.DISCONTINUED) {
-            throw BadRequestException("Cannot administer medication for a discontinued order")
+            throw BadRequestException(messageService.errorMedicationOrderDiscontinued())
         }
 
         // For GIVEN status, inventory item is required and we need to create EXIT movement
         val billable = if (request.status == AdministrationStatus.GIVEN) {
             val inventoryItem = order.inventoryItem
                 ?: throw BadRequestException(
-                    "Medical order must be linked to an inventory item before medication can be administered",
+                    messageService.errorMedicationOrderNoInventory(),
                 )
 
             // Create EXIT movement — this publishes InventoryDispensedEvent which creates billing charge
