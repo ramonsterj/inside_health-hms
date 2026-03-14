@@ -51,6 +51,7 @@ const mockPatient = {
   idDocumentNumber: '1234567890101',
   notes: 'Paciente referido',
   hasIdDocument: false,
+  hasActiveAdmission: false,
   emergencyContacts: [
     { id: 1, name: 'María de Pérez', relationship: 'Esposa', phone: '+502 5555-1234' }
   ],
@@ -68,7 +69,8 @@ const mockPatientsPage = {
       lastName: 'Pérez García',
       age: 45,
       idDocumentNumber: '1234567890101',
-      hasIdDocument: false
+      hasIdDocument: false,
+      hasActiveAdmission: false
     }
   ],
   page: {
@@ -633,6 +635,179 @@ test.describe('Patients - Doctor (Clinical Staff)', () => {
     await expect(
       page.getByRole('heading', { name: /ID Document|Documento de Identidad/i })
     ).not.toBeVisible()
+  })
+
+  test('only sees assigned patients (backend filters by physician)', async ({ page }) => {
+    await setupAuth(page, mockDoctorUser)
+    await setupDoctorMocks(page)
+
+    // Backend returns only assigned patients for doctors
+    const doctorPatientsPage = {
+      content: [
+        {
+          id: 1,
+          firstName: 'Juan',
+          lastName: 'Pérez García',
+          age: 45,
+          idDocumentNumber: '1234567890101',
+          hasIdDocument: false,
+          hasActiveAdmission: true
+        }
+      ],
+      page: { totalElements: 1, totalPages: 1, size: 20, number: 0 }
+    }
+
+    await page.route('**/api/v1/patients*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: doctorPatientsPage })
+      })
+    })
+
+    await page.goto('/patients')
+
+    // Should see only their assigned patient
+    await expect(page.getByText('Juan')).toBeVisible()
+    await expect(page.getByText('Pérez García')).toBeVisible()
+  })
+})
+
+test.describe('Patients - Admit Button Disabled for Admitted Patients', () => {
+  // User with admission:create permission
+  const mockStaffWithAdmit = {
+    ...mockAdminStaffUser,
+    permissions: [...mockAdminStaffUser.permissions, 'admission:create']
+  }
+
+  async function setupStaffWithAdmitMocks(page: import('@playwright/test').Page) {
+    await page.route('**/api/users/me', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: mockStaffWithAdmit })
+      })
+    })
+    await page.route('**/api/auth/refresh', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: { accessToken: 'new-mock-token', refreshToken: 'new-mock-refresh' }
+        })
+      })
+    })
+  }
+
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.clear()
+    })
+  })
+
+  test('admit button is disabled in patient list for already admitted patient', async ({ page }) => {
+    await setupAuth(page, mockStaffWithAdmit)
+    await setupStaffWithAdmitMocks(page)
+
+    const patientsWithMixed = {
+      content: [
+        {
+          id: 1,
+          firstName: 'Juan',
+          lastName: 'Pérez García',
+          age: 45,
+          sex: 'MALE',
+          idDocumentNumber: '1234567890101',
+          hasIdDocument: false,
+          hasActiveAdmission: true
+        },
+        {
+          id: 2,
+          firstName: 'María',
+          lastName: 'López',
+          age: 32,
+          sex: 'FEMALE',
+          idDocumentNumber: null,
+          hasIdDocument: false,
+          hasActiveAdmission: false
+        }
+      ],
+      page: { totalElements: 2, totalPages: 1, size: 20, number: 0 }
+    }
+
+    await page.route('**/api/v1/patients*', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: patientsWithMixed })
+        })
+      }
+    })
+
+    await page.goto('/patients')
+
+    // Wait for table to load
+    await expect(page.getByText('Juan')).toBeVisible()
+
+    // Find all admit buttons (pi-user-plus icons)
+    const admitButtons = page.locator('button').filter({ has: page.locator('.pi-user-plus') })
+    await expect(admitButtons).toHaveCount(2)
+
+    // First patient (admitted) - button should be disabled
+    await expect(admitButtons.nth(0)).toBeDisabled()
+
+    // Second patient (not admitted) - button should be enabled
+    await expect(admitButtons.nth(1)).toBeEnabled()
+  })
+
+  test('admit button is disabled in patient detail for admitted patient', async ({ page }) => {
+    await setupAuth(page, mockStaffWithAdmit)
+    await setupStaffWithAdmitMocks(page)
+
+    const admittedPatient = { ...mockPatient, hasActiveAdmission: true }
+
+    await page.route('**/api/v1/patients/1', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: admittedPatient })
+        })
+      }
+    })
+
+    await page.goto('/patients/1')
+
+    // Admit button should be visible but disabled
+    const admitButton = page.getByRole('button', { name: /Admit Patient|Hospitalizar Paciente/i })
+    await expect(admitButton).toBeVisible()
+    await expect(admitButton).toBeDisabled()
+  })
+
+  test('admit button is enabled in patient detail for non-admitted patient', async ({ page }) => {
+    await setupAuth(page, mockStaffWithAdmit)
+    await setupStaffWithAdmitMocks(page)
+
+    const nonAdmittedPatient = { ...mockPatient, hasActiveAdmission: false }
+
+    await page.route('**/api/v1/patients/1', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: nonAdmittedPatient })
+        })
+      }
+    })
+
+    await page.goto('/patients/1')
+
+    // Admit button should be visible and enabled
+    const admitButton = page.getByRole('button', { name: /Admit Patient|Hospitalizar Paciente/i })
+    await expect(admitButton).toBeVisible()
+    await expect(admitButton).toBeEnabled()
   })
 })
 

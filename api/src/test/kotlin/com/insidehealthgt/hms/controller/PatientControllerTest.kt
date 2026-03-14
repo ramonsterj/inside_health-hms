@@ -297,7 +297,7 @@ class PatientControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `get patient should be accessible by doctor`() {
+    fun `get patient should deny doctor access to unassigned patient`() {
         val request = createValidPatientRequest()
         val createResult = mockMvc.perform(
             post("/api/v1/patients")
@@ -313,7 +313,7 @@ class PatientControllerTest : AbstractIntegrationTest() {
             get("/api/v1/patients/$patientId")
                 .header("Authorization", "Bearer $doctorToken"),
         )
-            .andExpect(status().isOk)
+            .andExpect(status().isForbidden)
     }
 
     // ============ UPDATE PATIENT TESTS ============

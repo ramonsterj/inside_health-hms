@@ -454,6 +454,7 @@
       "admit": "Admit"
     },
     "admitPatient": "Admit Patient",
+    "alreadyAdmitted": "Patient already has an active admission",
     "newPatient": "New Patient",
     "editPatient": "Edit Patient",
     "patientDetails": "Patient Details",

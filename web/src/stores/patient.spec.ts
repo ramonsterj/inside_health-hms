@@ -37,6 +37,7 @@ const mockPatient: Patient = {
   idDocumentNumber: '1234567890101',
   notes: 'Paciente referido',
   hasIdDocument: false,
+  hasActiveAdmission: false,
   emergencyContacts: [
     { id: 1, name: 'María de Pérez', relationship: 'Esposa', phone: '+502 5555-1234' }
   ],

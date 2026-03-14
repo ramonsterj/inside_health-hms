@@ -125,7 +125,9 @@ function formatUserName(
             v-if="canAdmit"
             icon="pi pi-user-plus"
             :label="t('patient.admitPatient')"
+            :disabled="patient.hasActiveAdmission"
             @click="admitPatient"
+            v-tooltip.top="patient.hasActiveAdmission ? t('patient.alreadyAdmitted') : undefined"
           />
           <Button
             v-if="canEdit"

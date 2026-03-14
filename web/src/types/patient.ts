@@ -51,6 +51,7 @@ export interface Patient {
   idDocumentNumber: string | null
   notes: string | null
   hasIdDocument: boolean
+  hasActiveAdmission: boolean
   emergencyContacts: EmergencyContact[]
   createdAt: string | null
   createdBy: UserSummary | null
