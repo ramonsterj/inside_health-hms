@@ -4,6 +4,7 @@
 -- This file truncates all tables and reseeds base data.
 -- WARNING: DESTRUCTIVE - DO NOT use in production!
 -- Default password for all users: admin123
+-- Last updated: 2026-03-03 (fix KETAMINE_INFUSION enum typo in seed 03)
 -- ============================================================================
 
 SET session_replication_role = replica;
@@ -11,6 +12,9 @@ SET session_replication_role = replica;
 -- ============================================================================
 -- STEP 1: TRUNCATE TABLES (in dependency order - children first)
 -- ============================================================================
+-- NOTE: rooms and triage_codes are reference data managed by versioned migrations
+-- (V021, V056). They must NOT be truncated here - if seed files fail after this
+-- truncation but before R__seed_02 re-inserts them, the app becomes non-functional.
 TRUNCATE TABLE medication_administrations CASCADE;
 TRUNCATE TABLE patient_charges CASCADE;
 TRUNCATE TABLE invoices CASCADE;
@@ -24,8 +28,6 @@ TRUNCATE TABLE clinical_histories CASCADE;
 TRUNCATE TABLE admission_consulting_physicians CASCADE;
 TRUNCATE TABLE admission_consent_documents CASCADE;
 TRUNCATE TABLE admissions CASCADE;
-TRUNCATE TABLE rooms CASCADE;
-TRUNCATE TABLE triage_codes CASCADE;
 TRUNCATE TABLE patient_id_documents CASCADE;
 TRUNCATE TABLE emergency_contacts CASCADE;
 TRUNCATE TABLE patients CASCADE;
@@ -87,7 +89,8 @@ WHERE r.code = 'ADMINISTRATIVE_STAFF'
     'admission:create', 'admission:read', 'admission:update',
     'admission:upload-consent', 'admission:view-consent',
     'admission:view-documents', 'admission:upload-documents', 'admission:download-documents',
-    'document-type:read'
+    'document-type:read',
+    'billing:read', 'invoice:read'
   )
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
@@ -128,7 +131,8 @@ WHERE r.code = 'PSYCHOLOGIST'
     'admission:read',
     'admission:view-consent', 'admission:view-documents', 'admission:download-documents',
     'psychotherapy-activity:create', 'psychotherapy-activity:read',
-    'psychotherapy-category:read'
+    'psychotherapy-category:read',
+    'billing:read'
   )
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
@@ -184,7 +188,7 @@ WHERE r.code = 'CHIEF_NURSE'
 -- STEP 4: CREATE USERS
 -- ============================================================================
 -- Password for all test users: admin123 (BCrypt hash)
--- $2b$10$PYXULrV.BlNnIPSz8HRFJeId5axQ/qoAQNhEldlY/H7xlqIpH35YC
+-- $2a$10$QpZ5b.hF/vk524E/zB/nFekW7t1E1t5fvXjdaazIHKGa8czDC1PrK
 
 -- Admin User (required)
 INSERT INTO users (username, email, password_hash, first_name, last_name, salutation, status, email_verified, must_change_password, created_at, updated_at)

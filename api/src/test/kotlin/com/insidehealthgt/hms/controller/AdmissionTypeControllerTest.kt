@@ -343,7 +343,7 @@ class AdmissionTypeControllerTest : AbstractIntegrationTest() {
         mockMvc.perform(
             post("/api/v1/admissions/$ambulatoryId/discharge")
                 .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
+        ).andExpect(status().isOk)
 
         // Create another AMBULATORY admission (active)
         val patient2Id = createSecondPatient(administrativeStaffToken)

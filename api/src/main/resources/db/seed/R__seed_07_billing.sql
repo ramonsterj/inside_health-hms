@@ -200,7 +200,7 @@ INSERT INTO patient_charges (admission_id, charge_type, description, quantity, u
 SELECT a.id, 'PROCEDURE', 'Infusión de ketamina', 1, 3000.00, 3000.00,
   a.admission_date::DATE, a.admission_date, a.admission_date, (SELECT id FROM users WHERE username = 'admin')
 FROM admissions a JOIN patients p ON a.patient_id = p.id
-WHERE p.first_name = 'Gabriela' AND p.last_name = 'Reyes Soto' AND a.type = 'KETAMINE_INFUSIÓN';
+WHERE p.first_name = 'Gabriela' AND p.last_name = 'Reyes Soto' AND a.type = 'KETAMINE_INFUSION';
 
 -- Emergency consult - Oscar Vasquez
 INSERT INTO patient_charges (admission_id, charge_type, description, quantity, unit_price, total_amount, charge_date, created_at, updated_at, created_by)

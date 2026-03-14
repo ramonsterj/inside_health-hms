@@ -55,19 +55,24 @@ class AdmissionService(
         pageable: Pageable,
         status: AdmissionStatus? = null,
         type: AdmissionType? = null,
+        doctorId: Long? = null,
     ): Page<AdmissionListResponse> {
-        val admissions = when {
-            status != null && type != null ->
-                admissionRepository.findAllByStatusAndTypeWithRelations(status, type, pageable)
+        val admissions = if (doctorId != null) {
+            admissionRepository.findAllByPhysicianWithRelations(doctorId, status, type, pageable)
+        } else {
+            when {
+                status != null && type != null ->
+                    admissionRepository.findAllByStatusAndTypeWithRelations(status, type, pageable)
 
-            status != null ->
-                admissionRepository.findAllByStatusWithRelations(status, pageable)
+                status != null ->
+                    admissionRepository.findAllByStatusWithRelations(status, pageable)
 
-            type != null ->
-                admissionRepository.findAllByTypeWithRelations(type, pageable)
+                type != null ->
+                    admissionRepository.findAllByTypeWithRelations(type, pageable)
 
-            else ->
-                admissionRepository.findAllWithRelations(pageable)
+                else ->
+                    admissionRepository.findAllWithRelations(pageable)
+            }
         }
         return admissions.map { AdmissionListResponse.from(it) }
     }

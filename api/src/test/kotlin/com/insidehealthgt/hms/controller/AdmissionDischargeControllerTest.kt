@@ -94,7 +94,7 @@ class AdmissionDischargeControllerTest : AbstractIntegrationTest() {
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/discharge")
                 .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
+        ).andExpect(status().isOk)
 
         // Second discharge should fail
         mockMvc.perform(
@@ -142,7 +142,7 @@ class AdmissionDischargeControllerTest : AbstractIntegrationTest() {
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/discharge")
                 .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
+        ).andExpect(status().isOk)
 
         // Now third admission should succeed
         mockMvc.perform(

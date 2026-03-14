@@ -2,6 +2,17 @@
 # Overrides application.yml for production deployment
 # Activate with: spring.profiles.active=prod
 
+app:
+  cors:
+    additional-origins:
+      - "https://hms.dropsmethod.com"
+  csp:
+    connect-src-extra:
+      - "https://hms.dropsmethod.com"
+
+server:
+  forward-headers-strategy: native
+
 spring:
   jpa:
     properties:

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/services/api'
-import type { AuditLog, AuditLogFilters } from '@/types/audit'
+import type { AuditLog, AuditLogFilters, AuditUser } from '@/types/audit'
 import type { ApiResponse, PageResponse } from '@/types'
 
 export const useAuditStore = defineStore('audit', () => {
@@ -10,6 +10,7 @@ export const useAuditStore = defineStore('audit', () => {
   const loading = ref(false)
   const filters = ref<AuditLogFilters>({})
   const entityTypes = ref<string[]>([])
+  const users = ref<AuditUser[]>([])
 
   async function fetchLogs(page = 0, size = 50): Promise<void> {
     loading.value = true
@@ -24,6 +25,12 @@ export const useAuditStore = defineStore('audit', () => {
       }
       if (filters.value.action) {
         params.action = filters.value.action
+      }
+      if (filters.value.startDate) {
+        params.startDate = filters.value.startDate
+      }
+      if (filters.value.endDate) {
+        params.endDate = filters.value.endDate
       }
 
       const response = await api.get<ApiResponse<PageResponse<AuditLog>>>('/audit-logs', { params })
@@ -57,9 +64,24 @@ export const useAuditStore = defineStore('audit', () => {
   }
 
   async function fetchEntityTypes(): Promise<void> {
-    const response = await api.get<ApiResponse<string[]>>('/audit-logs/entity-types')
-    if (response.data.success && response.data.data) {
-      entityTypes.value = response.data.data
+    try {
+      const response = await api.get<ApiResponse<string[]>>('/audit-logs/entity-types')
+      if (response.data.success && response.data.data) {
+        entityTypes.value = response.data.data
+      }
+    } catch {
+      // Filter data is non-critical; silently fall back to empty list
+    }
+  }
+
+  async function fetchUsers(): Promise<void> {
+    try {
+      const response = await api.get<ApiResponse<AuditUser[]>>('/audit-logs/users')
+      if (response.data.success && response.data.data) {
+        users.value = response.data.data
+      }
+    } catch {
+      // Filter data is non-critical; silently fall back to empty list
     }
   }
 
@@ -86,9 +108,11 @@ export const useAuditStore = defineStore('audit', () => {
     loading,
     filters,
     entityTypes,
+    users,
     fetchLogs,
     fetchLogsForEntity,
     fetchEntityTypes,
+    fetchUsers,
     setFilters,
     clearFilters,
     parseJsonValues

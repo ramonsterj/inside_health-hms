@@ -1,6 +1,7 @@
 -- ============================================================================
 -- SEED FILE 05: Nursing Notes, Vital Signs
 -- ============================================================================
+-- Last updated: 2026-03-03 (force re-run after seed_01 checksum change)
 
 SET session_replication_role = replica;
 

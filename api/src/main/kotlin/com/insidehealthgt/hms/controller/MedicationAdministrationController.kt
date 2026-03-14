@@ -3,9 +3,9 @@ package com.insidehealthgt.hms.controller
 import com.insidehealthgt.hms.dto.request.CreateMedicationAdministrationRequest
 import com.insidehealthgt.hms.dto.response.ApiResponse
 import com.insidehealthgt.hms.dto.response.MedicationAdministrationResponse
+import com.insidehealthgt.hms.dto.response.PageResponse
 import com.insidehealthgt.hms.service.MedicationAdministrationService
 import jakarta.validation.Valid
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
@@ -30,10 +30,10 @@ class MedicationAdministrationController(private val administrationService: Medi
         @PathVariable orderId: Long,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
-    ): ResponseEntity<ApiResponse<Page<MedicationAdministrationResponse>>> {
+    ): ResponseEntity<ApiResponse<PageResponse<MedicationAdministrationResponse>>> {
         val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "administeredAt"))
         val administrations = administrationService.listAdministrations(admissionId, orderId, pageable)
-        return ResponseEntity.ok(ApiResponse.success(administrations))
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(administrations)))
     }
 
     @PostMapping

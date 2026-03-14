@@ -19,11 +19,21 @@ interface PatientRepository : JpaRepository<Patient, Long> {
     @Query("SELECT p.id FROM Patient p JOIN p.idDocument d WHERE p.id IN :patientIds")
     fun findPatientIdsWithIdDocument(@Param("patientIds") patientIds: List<Long>): List<Long>
 
+    @Suppress("MaxLineLength", "MaximumLineLength")
     @Query(
-        "SELECT p FROM Patient p WHERE " +
-            "LOWER(p.firstName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "LOWER(p.lastName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "LOWER(p.idDocumentNumber) LIKE LOWER(CONCAT('%', :search, '%'))",
+        value = "SELECT * FROM patients p WHERE p.deleted_at IS NULL AND (" +
+            "LOWER(unaccent(p.first_name)) LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(unaccent(p.last_name)) LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(unaccent(CONCAT(p.first_name, ' ', p.last_name))) " +
+            "LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(p.id_document_number) LIKE LOWER(CONCAT('%', :search, '%')) ESCAPE '\\')",
+        countQuery = "SELECT COUNT(*) FROM patients p WHERE p.deleted_at IS NULL AND (" +
+            "LOWER(unaccent(p.first_name)) LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(unaccent(p.last_name)) LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(unaccent(CONCAT(p.first_name, ' ', p.last_name))) " +
+            "LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(p.id_document_number) LIKE LOWER(CONCAT('%', :search, '%')) ESCAPE '\\')",
+        nativeQuery = true,
     )
     fun searchByNameOrDocument(@Param("search") search: String, pageable: Pageable): Page<Patient>
 

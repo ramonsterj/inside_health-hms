@@ -11,6 +11,7 @@ import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.DuplicatePatientException
 import com.insidehealthgt.hms.exception.DuplicatePatientInfo
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
+import com.insidehealthgt.hms.repository.AdmissionRepository
 import com.insidehealthgt.hms.repository.PatientIdDocumentRepository
 import com.insidehealthgt.hms.repository.PatientRepository
 import com.insidehealthgt.hms.repository.UserRepository
@@ -27,7 +28,9 @@ class PatientService(
     private val patientRepository: PatientRepository,
     private val patientIdDocumentRepository: PatientIdDocumentRepository,
     private val userRepository: UserRepository,
+    private val admissionRepository: AdmissionRepository,
     private val fileStorageService: FileStorageService,
+    private val messageService: MessageService,
 ) {
 
     @Transactional(readOnly = true)
@@ -41,7 +44,8 @@ class PatientService(
     @Transactional(readOnly = true)
     fun findAll(pageable: Pageable, search: String? = null): Page<PatientSummaryResponse> {
         val patients: Page<Patient> = if (!search.isNullOrBlank()) {
-            patientRepository.searchByNameOrDocument(search.trim(), pageable)
+            val sanitized = search.trim().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            patientRepository.searchByNameOrDocument(sanitized, pageable)
         } else {
             patientRepository.findAll(pageable)
         }
@@ -279,6 +283,16 @@ class PatientService(
                 patient.addEmergencyContact(newContact)
             }
         }
+    }
+
+    @Transactional
+    fun deletePatient(id: Long) {
+        val patient = findById(id)
+        if (admissionRepository.existsActiveByPatientId(id)) {
+            throw BadRequestException(messageService.getMessage("error.patient.activeAdmission"))
+        }
+        patient.deletedAt = LocalDateTime.now()
+        patientRepository.save(patient)
     }
 
     private fun buildPatientResponse(patient: Patient): PatientResponse {

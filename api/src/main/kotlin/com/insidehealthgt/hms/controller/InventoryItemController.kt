@@ -6,9 +6,9 @@ import com.insidehealthgt.hms.dto.request.UpdateInventoryItemRequest
 import com.insidehealthgt.hms.dto.response.ApiResponse
 import com.insidehealthgt.hms.dto.response.InventoryItemResponse
 import com.insidehealthgt.hms.dto.response.InventoryMovementResponse
+import com.insidehealthgt.hms.dto.response.PageResponse
 import com.insidehealthgt.hms.service.InventoryItemService
 import jakarta.validation.Valid
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
@@ -37,9 +37,9 @@ class InventoryItemController(private val itemService: InventoryItemService) {
         @PageableDefault(size = 20) pageable: Pageable,
         @RequestParam(required = false) categoryId: Long?,
         @RequestParam(required = false) search: String?,
-    ): ResponseEntity<ApiResponse<Page<InventoryItemResponse>>> {
+    ): ResponseEntity<ApiResponse<PageResponse<InventoryItemResponse>>> {
         val items = itemService.findAll(categoryId, search, pageable)
-        return ResponseEntity.ok(ApiResponse.success(items))
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(items)))
     }
 
     /**

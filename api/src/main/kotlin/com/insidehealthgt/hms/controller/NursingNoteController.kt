@@ -4,9 +4,9 @@ import com.insidehealthgt.hms.dto.request.CreateNursingNoteRequest
 import com.insidehealthgt.hms.dto.request.UpdateNursingNoteRequest
 import com.insidehealthgt.hms.dto.response.ApiResponse
 import com.insidehealthgt.hms.dto.response.NursingNoteResponse
+import com.insidehealthgt.hms.dto.response.PageResponse
 import com.insidehealthgt.hms.service.NursingNoteService
 import jakarta.validation.Valid
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
@@ -29,9 +29,9 @@ class NursingNoteController(private val nursingNoteService: NursingNoteService) 
     fun listNursingNotes(
         @PathVariable admissionId: Long,
         @PageableDefault(size = 20) pageable: Pageable,
-    ): ResponseEntity<ApiResponse<Page<NursingNoteResponse>>> {
+    ): ResponseEntity<ApiResponse<PageResponse<NursingNoteResponse>>> {
         val notes = nursingNoteService.listNursingNotes(admissionId, pageable)
-        return ResponseEntity.ok(ApiResponse.success(notes))
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(notes)))
     }
 
     @GetMapping("/{noteId}")

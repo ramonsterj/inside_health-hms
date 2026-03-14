@@ -1,6 +1,7 @@
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast'
 import { isAxiosError } from 'axios'
+import { extractApiErrorMessage } from '@/utils/errorUtils'
 
 /**
  * Map of backend error codes to i18n keys.
@@ -55,26 +56,7 @@ export function useErrorHandler() {
    * Handles API ErrorResponse: { error: { code, message, details } }
    */
   function extractErrorMessage(error: unknown): string {
-    if (isAxiosError(error) && error.response?.data) {
-      const data = error.response.data
-
-      // Primary path: ErrorResponse structure { error: { message } }
-      if (typeof data === 'object' && data.error?.message) {
-        return data.error.message
-      }
-
-      // Legacy fallback: ApiResponse structure { message }
-      if (typeof data === 'object' && 'message' in data && typeof data.message === 'string') {
-        return data.message
-      }
-    }
-
-    // Handle standard Error objects
-    if (error instanceof Error) {
-      return error.message
-    }
-
-    return t('errors.generic')
+    return extractApiErrorMessage(error, t('errors.generic'))
   }
 
   /**

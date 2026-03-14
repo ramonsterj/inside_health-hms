@@ -9,4 +9,12 @@ spring:
 
 app:
   file-storage:
-    base-path: ./data/files
+    base-path: ${FILE_STORAGE_PATH:./data/files}
+  cors:
+    additional-origins:
+      - "http://localhost:*"
+      - "http://127.0.0.1:*"
+  csp:
+    connect-src-extra:
+      - "http://localhost:*"
+      - "http://127.0.0.1:*"

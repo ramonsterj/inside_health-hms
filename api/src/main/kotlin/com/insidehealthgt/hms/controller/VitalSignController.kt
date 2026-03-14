@@ -3,10 +3,10 @@ package com.insidehealthgt.hms.controller
 import com.insidehealthgt.hms.dto.request.CreateVitalSignRequest
 import com.insidehealthgt.hms.dto.request.UpdateVitalSignRequest
 import com.insidehealthgt.hms.dto.response.ApiResponse
+import com.insidehealthgt.hms.dto.response.PageResponse
 import com.insidehealthgt.hms.dto.response.VitalSignResponse
 import com.insidehealthgt.hms.service.VitalSignService
 import jakarta.validation.Valid
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.format.annotation.DateTimeFormat
@@ -34,9 +34,9 @@ class VitalSignController(private val vitalSignService: VitalSignService) {
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) fromDate: LocalDate?,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) toDate: LocalDate?,
         @PageableDefault(size = 20, sort = ["recordedAt"]) pageable: Pageable,
-    ): ResponseEntity<ApiResponse<Page<VitalSignResponse>>> {
+    ): ResponseEntity<ApiResponse<PageResponse<VitalSignResponse>>> {
         val vitalSigns = vitalSignService.listVitalSigns(admissionId, fromDate, toDate, pageable)
-        return ResponseEntity.ok(ApiResponse.success(vitalSigns))
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(vitalSigns)))
     }
 
     @GetMapping("/chart")

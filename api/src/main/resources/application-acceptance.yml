@@ -1,0 +1,46 @@
+# Acceptance / UAT Profile
+# Production-like settings with seed data for customer validation
+# Activate with: SPRING_PROFILES_ACTIVE=acceptance
+
+app:
+  cors:
+    additional-origins:
+      - "https://hms.dropsmethod.com"
+  csp:
+    connect-src-extra:
+      - "https://hms.dropsmethod.com"
+
+server:
+  forward-headers-strategy: native
+
+spring:
+  flyway:
+    locations: classpath:db/migration,classpath:db/seed
+    ignore-migration-patterns: "*:missing"
+
+  jpa:
+    properties:
+      hibernate:
+        format_sql: false
+
+logging:
+  level:
+    root: WARN
+    com.insidehealthgt.hms: INFO
+    org.springframework.security: WARN
+    org.hibernate: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false

@@ -165,6 +165,10 @@ export const usePatientStore = defineStore('patient', () => {
     }
   }
 
+  async function deletePatient(patientId: number): Promise<void> {
+    await api.delete(`/v1/patients/${patientId}`)
+  }
+
   function clearCurrentPatient(): void {
     currentPatient.value = null
   }
@@ -181,6 +185,7 @@ export const usePatientStore = defineStore('patient', () => {
     uploadIdDocument,
     downloadIdDocument,
     deleteIdDocument,
+    deletePatient,
     clearCurrentPatient
   }
 })

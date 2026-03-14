@@ -10,6 +10,7 @@ import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 import { useAdmissionStore } from '@/stores/admission'
+import { useAuthStore } from '@/stores/auth'
 import { AdmissionStatus, AdmissionType } from '@/types/admission'
 import AdmissionTypeBadge from '@/components/admissions/AdmissionTypeBadge.vue'
 
@@ -17,6 +18,7 @@ const { t, locale } = useI18n()
 const router = useRouter()
 const { showError } = useErrorHandler()
 const admissionStore = useAdmissionStore()
+const authStore = useAuthStore()
 
 const first = ref(0)
 const rows = ref(20)
@@ -116,14 +118,22 @@ function getContrastColor(hexColor: string): string {
   <div class="admissions-page">
     <div class="page-header">
       <h1 class="page-title">{{ t('admission.title') }}</h1>
-      <Button
-        icon="pi pi-refresh"
-        :label="t('common.refresh')"
-        severity="secondary"
-        outlined
-        @click="loadAdmissions"
-        :loading="admissionStore.loading"
-      />
+      <div class="header-actions">
+        <Button
+          v-if="authStore.hasPermission('admission:create')"
+          icon="pi pi-plus"
+          :label="t('admission.new')"
+          @click="router.push({ name: 'admission-create' })"
+        />
+        <Button
+          icon="pi pi-refresh"
+          :label="t('common.refresh')"
+          severity="secondary"
+          outlined
+          @click="loadAdmissions"
+          :loading="admissionStore.loading"
+        />
+      </div>
     </div>
 
     <Card class="filter-card">

@@ -4,6 +4,8 @@ import com.insidehealthgt.hms.entity.AuditAction
 import com.insidehealthgt.hms.entity.AuditLog
 import java.time.LocalDateTime
 
+data class AuditUserSummary(val id: Long, val username: String)
+
 data class AuditLogResponse(
     val id: Long,
     val userId: Long?,

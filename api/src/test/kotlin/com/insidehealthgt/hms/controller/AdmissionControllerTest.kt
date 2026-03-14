@@ -264,7 +264,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/discharge")
                 .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
+        ).andExpect(status().isOk)
 
         mockMvc.perform(
             get("/api/v1/admissions")
@@ -367,7 +367,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/discharge")
                 .header("Authorization", "Bearer $administrativeStaffToken"),
-        )
+        ).andExpect(status().isOk)
 
         val updateRequest = UpdateAdmissionRequest(
             triageCodeId = triageCodeId,

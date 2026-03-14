@@ -64,6 +64,7 @@ export interface PatientSummary {
   lastName: string
   age: number
   sex: Sex
+  email: string
   idDocumentNumber: string | null
   hasIdDocument: boolean
   hasActiveAdmission: boolean

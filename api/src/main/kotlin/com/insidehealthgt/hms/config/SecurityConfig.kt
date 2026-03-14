@@ -3,6 +3,7 @@ package com.insidehealthgt.hms.config
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.insidehealthgt.hms.security.JwtAuthenticationFilter
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
@@ -27,6 +28,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 class SecurityConfig(
     private val jwtAuthenticationFilter: JwtAuthenticationFilter,
     private val objectMapper: ObjectMapper,
+    @Value("\${app.cors.additional-origins:}") private val additionalOrigins: List<String>,
+    @Value("\${app.csp.connect-src-extra:}") private val cspConnectSrcExtra: List<String>,
 ) {
 
     companion object {
@@ -102,7 +105,9 @@ class SecurityConfig(
                             "style-src 'self' 'unsafe-inline'; " +
                             "img-src 'self' data: blob:; " +
                             "font-src 'self' data:; " +
-                            "connect-src 'self'; " +
+                            "connect-src 'self'" +
+                            cspConnectSrcExtra.filter { it.isNotBlank() }.joinToString("") { " $it" } +
+                            "; " +
                             "frame-ancestors 'none'; " +
                             "form-action 'self'",
                     )
@@ -116,10 +121,7 @@ class SecurityConfig(
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf(
-            "http://localhost:5173", // Vite dev server
-            "http://localhost:3000", // Alternative dev port
-        )
+        configuration.allowedOriginPatterns = additionalOrigins.filter { it.isNotBlank() }
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
         configuration.allowedHeaders = listOf("*")
         configuration.allowCredentials = true

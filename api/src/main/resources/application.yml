@@ -45,6 +45,10 @@ jwt:
 app:
   file-storage:
     base-path: ${FILE_STORAGE_PATH:./data/files}
+  cors:
+    additional-origins: []
+  csp:
+    connect-src-extra: []
   billing:
     daily-meal-rate: 150.00
     electroshock-base-price: 2500.00
