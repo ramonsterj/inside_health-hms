@@ -49,11 +49,14 @@ This feature allows administrative staff to register new patients by capturing t
 | Action | Administrative Staff | Doctor | Nurse | Chief Nurse | Permission Code |
 |--------|---------------------|--------|-------|-------------|-----------------|
 | Create patient | ✅ | ❌ | ❌ | ❌ | `patient:create` |
-| View patient (general info) | ✅ | ✅ | ✅ | ✅ | `patient:read` |
+| View all patients | ✅ | ❌ | ✅ | ✅ | `patient:read` |
+| View assigned patients | N/A | ✅ | N/A | N/A | `patient:read` |
 | Edit patient | ✅ | ❌ | ❌ | ❌ | `patient:update` |
-| Search patients | ✅ | ✅ | ✅ | ✅ | `patient:read` |
+| Search patients | ✅ | ✅ (assigned only) | ✅ | ✅ | `patient:read` |
 | Upload ID document | ✅ | ❌ | ❌ | ❌ | `patient:upload-id` |
 | View ID document | ✅ | ❌ | ❌ | ❌ | `patient:view-id` |
+
+> **Note:** Doctors can only see patients with active admissions where they are the treating physician or a consulting physician. Admin and other staff roles see all patients.
 
 ---
 
@@ -441,9 +444,9 @@ WHERE r.code IN ('DOCTOR', 'NURSE', 'CHIEF_NURSE') AND p.code = 'patient:read';
 
 | Path | Component | Auth Required | Roles |
 |------|-----------|---------------|-------|
-| `/patients` | `PatientList` | Yes | All clinical roles |
+| `/patients` | `PatientList` | Yes | All clinical roles (Doctors see only assigned patients) |
 | `/patients/new` | `PatientForm` | Yes | ADMINISTRATIVE_STAFF, ADMIN |
-| `/patients/:id` | `PatientDetail` | Yes | All clinical roles |
+| `/patients/:id` | `PatientDetail` | Yes | All clinical roles (Doctors restricted to assigned patients) |
 | `/patients/:id/edit` | `PatientForm` | Yes | ADMINISTRATIVE_STAFF, ADMIN |
 
 ### Validation (Zod Schemas)

@@ -6,6 +6,7 @@ import com.insidehealthgt.hms.dto.response.ApiResponse
 import com.insidehealthgt.hms.dto.response.PageResponse
 import com.insidehealthgt.hms.dto.response.PatientResponse
 import com.insidehealthgt.hms.dto.response.PatientSummaryResponse
+import com.insidehealthgt.hms.security.CustomUserDetails
 import com.insidehealthgt.hms.service.PatientService
 import jakarta.validation.Valid
 import org.springframework.data.domain.Pageable
@@ -15,6 +16,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -44,17 +46,24 @@ class PatientController(private val patientService: PatientService) {
     fun listPatients(
         @PageableDefault(size = 20) pageable: Pageable,
         @RequestParam(required = false) search: String?,
+        @AuthenticationPrincipal currentUser: CustomUserDetails,
     ): ResponseEntity<ApiResponse<PageResponse<PatientSummaryResponse>>> {
-        val patients = patientService.findAll(pageable, search)
+        val patients = patientService.findAll(pageable, search, resolveDoctorId(currentUser))
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(patients)))
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('patient:read')")
-    fun getPatient(@PathVariable id: Long): ResponseEntity<ApiResponse<PatientResponse>> {
-        val patient = patientService.getPatient(id)
+    fun getPatient(
+        @PathVariable id: Long,
+        @AuthenticationPrincipal currentUser: CustomUserDetails,
+    ): ResponseEntity<ApiResponse<PatientResponse>> {
+        val patient = patientService.getPatient(id, resolveDoctorId(currentUser))
         return ResponseEntity.ok(ApiResponse.success(patient))
     }
+
+    private fun resolveDoctorId(currentUser: CustomUserDetails): Long? =
+        if (currentUser.hasRole("DOCTOR") && !currentUser.hasRole("ADMIN")) currentUser.id else null
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('patient:update')")

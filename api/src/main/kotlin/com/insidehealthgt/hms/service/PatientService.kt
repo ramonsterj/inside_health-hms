@@ -17,6 +17,7 @@ import com.insidehealthgt.hms.repository.PatientRepository
 import com.insidehealthgt.hms.repository.UserRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -42,32 +43,50 @@ class PatientService(
         ?: throw ResourceNotFoundException("Patient not found with id: $id")
 
     @Transactional(readOnly = true)
-    fun findAll(pageable: Pageable, search: String? = null): Page<PatientSummaryResponse> {
-        val patients: Page<Patient> = if (!search.isNullOrBlank()) {
-            val sanitized = search.trim().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-            patientRepository.searchByNameOrDocument(sanitized, pageable)
+    fun findAll(pageable: Pageable, search: String? = null, doctorId: Long? = null): Page<PatientSummaryResponse> {
+        val sanitizedSearch = search?.takeIf { it.isNotBlank() }
+            ?.trim()?.replace("\\", "\\\\")?.replace("%", "\\%")?.replace("_", "\\_")
+
+        val patients: Page<Patient> = if (doctorId != null) {
+            if (sanitizedSearch != null) {
+                patientRepository.searchByNameOrDocumentForPhysician(sanitizedSearch, doctorId, pageable)
+            } else {
+                patientRepository.findAllByPhysician(doctorId, pageable)
+            }
+        } else if (sanitizedSearch != null) {
+            patientRepository.searchByNameOrDocument(sanitizedSearch, pageable)
         } else {
             patientRepository.findAll(pageable)
         }
 
-        // Batch-fetch which patients have ID documents
+        // Batch-fetch which patients have ID documents and active admissions
         val patientIds: List<Long> = patients.content.mapNotNull { it.id }
         val patientsWithIdDocument: Set<Long> = if (patientIds.isNotEmpty()) {
             patientRepository.findPatientIdsWithIdDocument(patientIds).toSet()
         } else {
             emptySet()
         }
+        val patientsWithActiveAdmission: Set<Long> = if (patientIds.isNotEmpty()) {
+            patientRepository.findPatientIdsWithActiveAdmission(patientIds).toSet()
+        } else {
+            emptySet()
+        }
 
         return patients.map { patient ->
             val hasIdDoc = patient.id?.let { it in patientsWithIdDocument } ?: false
-            PatientSummaryResponse.from(patient, hasIdDoc)
+            val hasActiveAdmission = patient.id?.let { it in patientsWithActiveAdmission } ?: false
+            PatientSummaryResponse.from(patient, hasIdDoc, hasActiveAdmission)
         }
     }
 
     @Transactional(readOnly = true)
-    fun getPatient(id: Long): PatientResponse {
+    fun getPatient(id: Long, doctorId: Long? = null): PatientResponse {
         val patient = findByIdWithContacts(id)
-        return buildPatientResponse(patient)
+        if (doctorId != null && !patientRepository.isPatientAssignedToDoctor(id, doctorId)) {
+            throw AccessDeniedException("Access denied")
+        }
+        val hasActiveAdmission = admissionRepository.existsActiveByPatientId(id)
+        return buildPatientResponse(patient, hasActiveAdmission)
     }
 
     @Transactional
@@ -295,9 +314,9 @@ class PatientService(
         patientRepository.save(patient)
     }
 
-    private fun buildPatientResponse(patient: Patient): PatientResponse {
+    private fun buildPatientResponse(patient: Patient, hasActiveAdmission: Boolean = false): PatientResponse {
         val createdByUser = patient.createdBy?.let { userRepository.findById(it).orElse(null) }
         val updatedByUser = patient.updatedBy?.let { userRepository.findById(it).orElse(null) }
-        return PatientResponse.from(patient, createdByUser, updatedByUser)
+        return PatientResponse.from(patient, createdByUser, updatedByUser, hasActiveAdmission)
     }
 }

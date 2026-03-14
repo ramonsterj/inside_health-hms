@@ -247,11 +247,12 @@ async function onFileUpload(event: { files: File | File[] }) {
                 <Button
                   v-if="canAdmit"
                   icon="pi pi-user-plus"
-                  severity="success"
+                  :severity="data.hasActiveAdmission ? 'secondary' : 'success'"
                   text
                   rounded
+                  :disabled="data.hasActiveAdmission"
                   @click="admitPatient(data.id)"
-                  v-tooltip.top="t('patient.actions.admit')"
+                  v-tooltip.top="data.hasActiveAdmission ? t('patient.alreadyAdmitted') : t('patient.actions.admit')"
                 />
                 <Button
                   v-if="canUploadId && !data.hasIdDocument"

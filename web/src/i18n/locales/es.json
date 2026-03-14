@@ -454,6 +454,7 @@
       "admit": "Hospitalizar"
     },
     "admitPatient": "Hospitalizar Paciente",
+    "alreadyAdmitted": "El paciente ya tiene una admisión activa",
     "newPatient": "Registro de Nuevo Paciente",
     "editPatient": "Editar Paciente",
     "patientDetails": "Datos del Paciente",

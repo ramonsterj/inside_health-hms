@@ -49,6 +49,68 @@ interface PatientRepository : JpaRepository<Patient, Long> {
         @Param("idDocumentNumber") idDocumentNumber: String?,
     ): List<Patient>
 
+    @Query(
+        "SELECT DISTINCT a.patient.id FROM Admission a " +
+            "WHERE a.patient.id IN :patientIds AND a.status = 'ACTIVE' AND a.deletedAt IS NULL",
+    )
+    fun findPatientIdsWithActiveAdmission(@Param("patientIds") patientIds: List<Long>): List<Long>
+
+    @Suppress("MaxLineLength", "MaximumLineLength")
+    @Query(
+        value = "SELECT DISTINCT p.* FROM patients p " +
+            "JOIN admissions a ON a.patient_id = p.id AND a.status = 'ACTIVE' AND a.deleted_at IS NULL " +
+            "LEFT JOIN admission_consulting_physicians acp ON acp.admission_id = a.id AND acp.deleted_at IS NULL " +
+            "WHERE p.deleted_at IS NULL " +
+            "AND (a.treating_physician_id = :doctorId OR acp.physician_id = :doctorId)",
+        countQuery = "SELECT COUNT(DISTINCT p.id) FROM patients p " +
+            "JOIN admissions a ON a.patient_id = p.id AND a.status = 'ACTIVE' AND a.deleted_at IS NULL " +
+            "LEFT JOIN admission_consulting_physicians acp ON acp.admission_id = a.id AND acp.deleted_at IS NULL " +
+            "WHERE p.deleted_at IS NULL " +
+            "AND (a.treating_physician_id = :doctorId OR acp.physician_id = :doctorId)",
+        nativeQuery = true,
+    )
+    fun findAllByPhysician(@Param("doctorId") doctorId: Long, pageable: Pageable): Page<Patient>
+
+    @Suppress("MaxLineLength", "MaximumLineLength")
+    @Query(
+        value = "SELECT DISTINCT p.* FROM patients p " +
+            "JOIN admissions a ON a.patient_id = p.id AND a.status = 'ACTIVE' AND a.deleted_at IS NULL " +
+            "LEFT JOIN admission_consulting_physicians acp ON acp.admission_id = a.id AND acp.deleted_at IS NULL " +
+            "WHERE p.deleted_at IS NULL " +
+            "AND (a.treating_physician_id = :doctorId OR acp.physician_id = :doctorId) " +
+            "AND (" +
+            "LOWER(unaccent(p.first_name)) LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(unaccent(p.last_name)) LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(unaccent(CONCAT(p.first_name, ' ', p.last_name))) " +
+            "LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(p.id_document_number) LIKE LOWER(CONCAT('%', :search, '%')) ESCAPE '\\')",
+        countQuery = "SELECT COUNT(DISTINCT p.id) FROM patients p " +
+            "JOIN admissions a ON a.patient_id = p.id AND a.status = 'ACTIVE' AND a.deleted_at IS NULL " +
+            "LEFT JOIN admission_consulting_physicians acp ON acp.admission_id = a.id AND acp.deleted_at IS NULL " +
+            "WHERE p.deleted_at IS NULL " +
+            "AND (a.treating_physician_id = :doctorId OR acp.physician_id = :doctorId) " +
+            "AND (" +
+            "LOWER(unaccent(p.first_name)) LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(unaccent(p.last_name)) LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(unaccent(CONCAT(p.first_name, ' ', p.last_name))) " +
+            "LIKE LOWER(unaccent(CONCAT('%', :search, '%'))) ESCAPE '\\' OR " +
+            "LOWER(p.id_document_number) LIKE LOWER(CONCAT('%', :search, '%')) ESCAPE '\\')",
+        nativeQuery = true,
+    )
+    fun searchByNameOrDocumentForPhysician(
+        @Param("search") search: String,
+        @Param("doctorId") doctorId: Long,
+        pageable: Pageable,
+    ): Page<Patient>
+
+    @Query(
+        "SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Admission a " +
+            "LEFT JOIN a.consultingPhysicians cp " +
+            "WHERE a.patient.id = :patientId AND a.status = 'ACTIVE' AND a.deletedAt IS NULL " +
+            "AND (a.treatingPhysician.id = :doctorId OR cp.physician.id = :doctorId)",
+    )
+    fun isPatientAssignedToDoctor(@Param("patientId") patientId: Long, @Param("doctorId") doctorId: Long): Boolean
+
     /**
      * Delete all patients including soft-deleted ones (for test cleanup).
      */
