@@ -32,6 +32,8 @@
     "updatedAt": "Fecha de Actualización",
     "updatedBy": "Actualizado Por",
     "auditInfo": "Información de Auditoria",
+    "auditCreated": "Creado el {date} a las {time} por {user}",
+    "auditUpdated": "Actualizado el {date} a las {time} por {user}",
     "expand": "Expandir",
     "collapse": "Contraer",
     "unknown": "Desconocido",

@@ -8,6 +8,7 @@ import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import { formatDateTime, getContrastColor, getFullName } from '@/utils/format'
+import AuditInfo from '@/components/common/AuditInfo.vue'
 import { useAdmissionStore } from '@/stores/admission'
 import { useAuthStore } from '@/stores/auth'
 import { AdmissionStatus } from '@/types/admission'
@@ -315,29 +316,13 @@ function handleDocumentUploaded() {
         </template>
       </Card>
 
-      <Card class="full-width">
-        <template #title>{{ t('common.auditInfo') }}</template>
-        <template #content>
-          <div class="audit-grid">
-            <div class="info-row">
-              <span class="info-label">{{ t('common.createdAt') }}</span>
-              <span class="info-value">{{ formatDateTime(admission.createdAt) }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">{{ t('common.createdBy') }}</span>
-              <span class="info-value">{{ admission.createdBy?.username || '-' }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">{{ t('common.updatedAt') }}</span>
-              <span class="info-value">{{ formatDateTime(admission.updatedAt) }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">{{ t('common.updatedBy') }}</span>
-              <span class="info-value">{{ admission.updatedBy?.username || '-' }}</span>
-            </div>
-          </div>
-        </template>
-      </Card>
+      <AuditInfo
+        class="full-width"
+        :createdAt="admission.createdAt"
+        :createdByName="admission.createdBy?.username || '-'"
+        :updatedAt="admission.updatedAt"
+        :updatedByName="admission.updatedBy?.username || '-'"
+      />
     </div>
 
     <!-- Add Consulting Physician Dialog -->
@@ -439,9 +424,4 @@ function handleDocumentUploaded() {
   font-weight: 600;
 }
 
-.audit-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-}
 </style>

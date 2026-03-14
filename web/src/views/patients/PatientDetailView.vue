@@ -9,6 +9,7 @@ import Dialog from 'primevue/dialog'
 import ProgressSpinner from 'primevue/progressspinner'
 import { usePatientStore } from '@/stores/patient'
 import { useAuthStore } from '@/stores/auth'
+import AuditInfo from '@/components/common/AuditInfo.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -90,11 +91,6 @@ function closeIdDocumentDialog() {
     idDocumentUrl.value = null
     idDocumentType.value = null
   }
-}
-
-function formatDate(dateString: string | null): string {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleString()
 }
 
 function formatUserName(
@@ -239,29 +235,13 @@ function formatUserName(
           </template>
         </Card>
 
-        <Card class="detail-card">
-          <template #title>{{ t('patient.auditInfo') }}</template>
-          <template #content>
-            <div class="info-grid">
-              <div class="info-item">
-                <label>{{ t('patient.registeredBy') }}</label>
-                <span>{{ formatUserName(patient.createdBy) }}</span>
-              </div>
-              <div class="info-item">
-                <label>{{ t('common.createdAt') }}</label>
-                <span>{{ formatDate(patient.createdAt) }}</span>
-              </div>
-              <div class="info-item">
-                <label>{{ t('patient.lastModifiedBy') }}</label>
-                <span>{{ formatUserName(patient.updatedBy) }}</span>
-              </div>
-              <div class="info-item">
-                <label>{{ t('common.updatedAt') }}</label>
-                <span>{{ formatDate(patient.updatedAt) }}</span>
-              </div>
-            </div>
-          </template>
-        </Card>
+        <AuditInfo
+          class="full-width"
+          :createdAt="patient.createdAt"
+          :createdByName="formatUserName(patient.createdBy)"
+          :updatedAt="patient.updatedAt"
+          :updatedByName="formatUserName(patient.updatedBy)"
+        />
       </div>
     </template>
 
@@ -355,7 +335,8 @@ function formatUserName(
   gap: 0.25rem;
 }
 
-.info-item.full-width {
+.info-item.full-width,
+.full-width {
   grid-column: span 2;
 }
 
@@ -437,8 +418,10 @@ function formatUserName(
     grid-template-columns: 1fr;
   }
 
-  .info-item.full-width {
+  .info-item.full-width,
+  .full-width {
     grid-column: span 1;
   }
 }
+
 </style>
