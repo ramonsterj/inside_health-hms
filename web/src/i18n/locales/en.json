@@ -1310,7 +1310,7 @@
       "description": "Description",
       "displayOrder": "Display Order",
       "active": "Active",
-      "price": "Price",
+      "price": "Sale Price",
       "cost": "Cost",
       "empty": "No activity categories found.",
       "created": "Activity category created successfully.",
