@@ -169,6 +169,7 @@ export interface MedicalOrderResponse {
   discontinuedBy: MedicalStaffResponse | null
   inventoryItemId: number | null
   inventoryItemName: string | null
+  documentCount: number
   createdAt: string | null
   updatedAt: string | null
   createdBy: MedicalStaffResponse | null

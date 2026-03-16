@@ -1272,6 +1272,16 @@
         "schedule": "ej. 8am, 4pm, 12am",
         "observations": "Indicaciones especiales, precauciones...",
         "inventoryItem": "Seleccionar artículo para facturación/seguimiento de inventario"
+      },
+      "documents": {
+        "title": "Adjuntos",
+        "attach": "Adjuntar",
+        "uploadTitle": "Adjuntar Documento",
+        "empty": "No hay documentos adjuntos.",
+        "uploaded": "Documento adjuntado exitosamente.",
+        "deleted": "Documento eliminado exitosamente.",
+        "confirmDelete": "¿Está seguro que desea eliminar este documento?",
+        "count": "{count} adjunto(s)"
       }
     }
   },

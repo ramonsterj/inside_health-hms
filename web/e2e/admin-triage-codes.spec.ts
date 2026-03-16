@@ -320,11 +320,12 @@ test.describe('Triage Codes - Admin Management', () => {
     await page.goto('/admin/triage-codes')
 
     // Wait for table to load and overlays to clear
-    await expect(page.getByText('Non-urgent')).toBeVisible()
+    // Code E is rendered as i18n translation "Referral - Scheduled admission"
+    await expect(page.getByText('Referral')).toBeVisible()
     await waitForOverlaysToClear(page)
 
     // Find and click delete button for code E (id: 5, not in use)
-    const row = page.locator('tr').filter({ hasText: 'Non-urgent' })
+    const row = page.locator('tr').filter({ hasText: 'Referral' })
     const deleteBtn = row.locator('button[aria-label="Delete"], button:has(.pi-trash)')
     await deleteBtn.click()
 

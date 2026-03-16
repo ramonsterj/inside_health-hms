@@ -903,18 +903,11 @@ test.describe('Patients - Audit Trail Display', () => {
 
     await page.goto('/patients/1')
 
-    // Should see audit information section
-    await expect(
-      page.getByText(/Audit Information|Información de Auditoría/i)
-    ).toBeVisible()
-
-    // Should see registered by info
-    await expect(page.getByText(/Registered by|Registrado por/i)).toBeVisible()
-    // Reception Staff appears twice (created by and updated by), use first()
+    // Should see inline audit information (refactored compact format)
+    // AuditInfo renders: "Created on {date} at {time} by {user} — Updated on {date} at {time} by {user}"
+    await expect(page.getByText(/Created on.*by/i)).toBeVisible()
     await expect(page.getByText('Reception Staff').first()).toBeVisible()
-
-    // Should see last modified by info
-    await expect(page.getByText(/Last modified by|Última modificación por/i)).toBeVisible()
+    await expect(page.getByText(/Updated on.*by/i)).toBeVisible()
   })
 })
 

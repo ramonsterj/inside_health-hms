@@ -133,6 +133,24 @@ class FileStorageService(
     }
 
     /**
+     * Store a file for a medical order document.
+     *
+     * @param admissionId The admission ID for directory organization
+     * @param orderId The medical order ID for directory organization
+     * @param file The uploaded file
+     * @return The relative storage path from base directory
+     */
+    fun storeFileForMedicalOrder(admissionId: Long, orderId: Long, file: MultipartFile): String {
+        val relativePath = Paths.get(
+            "admissions",
+            admissionId.toString(),
+            "medical-orders",
+            orderId.toString(),
+        )
+        return storeMultipartFile(relativePath, file)
+    }
+
+    /**
      * Common file storage logic for MultipartFile uploads.
      *
      * @param directoryPath The relative directory path to store the file in

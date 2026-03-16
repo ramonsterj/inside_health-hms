@@ -68,6 +68,12 @@ function confirmDelete(document: AdmissionDocument) {
   })
 }
 
+function getDocumentTypeName(document: AdmissionDocument): string {
+  if (!document.documentType) return ''
+  const code = document.documentType.code
+  return t(`document.types.${code}`, document.documentType.name)
+}
+
 async function deleteDocument(document: AdmissionDocument) {
   try {
     await documentStore.deleteDocument(props.admissionId, document.id)
@@ -121,6 +127,7 @@ async function deleteDocument(document: AdmissionDocument) {
         :document="doc"
         :admission-id="admissionId"
         :can-delete="canDelete"
+        :document-type-name="getDocumentTypeName(doc)"
         @view="viewDocument(doc)"
         @download="downloadDocument(doc)"
         @delete="confirmDelete(doc)"
