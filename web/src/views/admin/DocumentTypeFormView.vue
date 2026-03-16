@@ -189,7 +189,7 @@ function cancel() {
   gap: 0.5rem;
 }
 
-.form-field.full-width {
+.full-width {
   grid-column: span 2;
 }
 
