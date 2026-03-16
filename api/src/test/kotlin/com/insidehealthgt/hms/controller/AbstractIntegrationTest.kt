@@ -179,6 +179,7 @@ abstract class AbstractIntegrationTest {
         jdbcTemplate.execute("DELETE FROM nursing_notes")
         jdbcTemplate.execute("DELETE FROM vital_signs")
         jdbcTemplate.execute("DELETE FROM psychotherapy_activities")
+        jdbcTemplate.execute("DELETE FROM medical_order_documents")
         jdbcTemplate.execute("DELETE FROM medical_orders")
         jdbcTemplate.execute("DELETE FROM progress_notes")
         jdbcTemplate.execute("DELETE FROM clinical_histories")

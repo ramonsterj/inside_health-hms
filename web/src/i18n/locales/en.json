@@ -1272,6 +1272,16 @@
         "schedule": "e.g., 8am, 4pm, 12am",
         "observations": "Special instructions, precautions...",
         "inventoryItem": "Select item for billing/inventory tracking"
+      },
+      "documents": {
+        "title": "Attachments",
+        "attach": "Attach",
+        "uploadTitle": "Attach Document",
+        "empty": "No documents attached.",
+        "uploaded": "Document attached successfully.",
+        "deleted": "Document deleted successfully.",
+        "confirmDelete": "Are you sure you want to delete this document?",
+        "count": "{count} attachment(s)"
       }
     }
   },

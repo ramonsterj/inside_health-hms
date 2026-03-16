@@ -29,6 +29,7 @@ data class MedicalOrderResponse(
     val updatedBy: MedicalStaffResponse?,
     val inventoryItemId: Long?,
     val inventoryItemName: String?,
+    val documentCount: Int = 0,
 ) {
     companion object {
         fun from(
@@ -36,6 +37,7 @@ data class MedicalOrderResponse(
             createdByUser: User? = null,
             updatedByUser: User? = null,
             discontinuedByUser: User? = null,
+            documentCount: Int = 0,
         ): MedicalOrderResponse = MedicalOrderResponse(
             id = medicalOrder.id!!,
             admissionId = medicalOrder.admission.id!!,
@@ -57,6 +59,7 @@ data class MedicalOrderResponse(
             updatedBy = updatedByUser?.let { MedicalStaffResponse.from(it) },
             inventoryItemId = medicalOrder.inventoryItem?.id,
             inventoryItemName = medicalOrder.inventoryItem?.name,
+            documentCount = documentCount,
         )
     }
 }

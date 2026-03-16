@@ -12,6 +12,7 @@ import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
 import com.insidehealthgt.hms.repository.AdmissionRepository
 import com.insidehealthgt.hms.repository.InventoryItemRepository
+import com.insidehealthgt.hms.repository.MedicalOrderDocumentRepository
 import com.insidehealthgt.hms.repository.MedicalOrderRepository
 import com.insidehealthgt.hms.repository.UserRepository
 import com.insidehealthgt.hms.security.CustomUserDetails
@@ -25,6 +26,7 @@ import java.time.LocalDateTime
 @Service
 class MedicalOrderService(
     private val medicalOrderRepository: MedicalOrderRepository,
+    private val medicalOrderDocumentRepository: MedicalOrderDocumentRepository,
     private val admissionRepository: AdmissionRepository,
     private val inventoryItemRepository: InventoryItemRepository,
     private val userRepository: UserRepository,
@@ -49,6 +51,15 @@ class MedicalOrderService(
             emptyMap()
         }
 
+        // Batch fetch document counts
+        val orderIds = orders.mapNotNull { it.id }
+        val documentCounts = if (orderIds.isNotEmpty()) {
+            medicalOrderDocumentRepository.countByMedicalOrderIds(orderIds)
+                .associate { (it[0] as Long) to (it[1] as Long).toInt() }
+        } else {
+            emptyMap()
+        }
+
         val groupedOrders = orders
             .map { order ->
                 MedicalOrderResponse.from(
@@ -56,6 +67,7 @@ class MedicalOrderService(
                     createdByUser = order.createdBy?.let { users[it] },
                     updatedByUser = order.updatedBy?.let { users[it] },
                     discontinuedByUser = order.discontinuedBy?.let { users[it] },
+                    documentCount = documentCounts[order.id] ?: 0,
                 )
             }
             .groupBy { it.category }

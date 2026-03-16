@@ -107,6 +107,7 @@ class MessageService(private val messageSource: MessageSource) {
 
     fun admissionDeleted() = getMessage("admission.deleted")
     fun admissionDocumentDeleted() = getMessage("admission.document.deleted")
+    fun medicalOrderDocumentDeleted() = getMessage("medical.order.document.deleted")
 
     // === Admission Error Messages ===
 
@@ -227,6 +228,12 @@ class MessageService(private val messageSource: MessageSource) {
     fun errorFileStorageInvalidPath() = getMessage("error.file.storage.invalid.path")
     fun errorFileStorageInvalidFilename() = getMessage("error.file.storage.invalid.filename")
     fun errorFileStorageNotFound() = getMessage("error.file.storage.not.found")
+
+    // === Medical Order Document Error Messages ===
+
+    fun errorMedicalOrderDocumentFileEmpty() = getMessage("error.medical.order.document.file.empty")
+    fun errorMedicalOrderDocumentFileSize() = getMessage("error.medical.order.document.file.size")
+    fun errorMedicalOrderDocumentFileType() = getMessage("error.medical.order.document.file.type")
 
     // === Duplicate Patient Error Messages ===
 

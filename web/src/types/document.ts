@@ -1,4 +1,5 @@
 import type { UserSummary } from './patient'
+import type { MedicalStaffResponse } from './medicalRecord'
 
 export interface DocumentType {
   id: number
@@ -18,9 +19,8 @@ export interface DocumentTypeSummary {
   name: string
 }
 
-export interface AdmissionDocument {
+export interface ThumbnailDocument {
   id: number
-  documentType: DocumentTypeSummary
   displayName: string
   fileName: string
   contentType: string
@@ -28,6 +28,10 @@ export interface AdmissionDocument {
   hasThumbnail: boolean
   thumbnailUrl: string | null
   downloadUrl: string | null
+}
+
+export interface AdmissionDocument extends ThumbnailDocument {
+  documentType: DocumentTypeSummary
   createdAt: string | null
   createdBy: UserSummary | null
 }
@@ -50,4 +54,9 @@ export interface UploadDocumentRequest {
   file: File
   documentTypeId: number
   displayName?: string
+}
+
+export interface MedicalOrderDocument extends ThumbnailDocument {
+  createdAt: string | null
+  createdBy: MedicalStaffResponse | null
 }

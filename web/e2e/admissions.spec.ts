@@ -420,8 +420,9 @@ test.describe('Admissions - Administrative Staff', () => {
 
     await page.goto('/admissions/1')
 
-    // Should see audit information
-    await expect(page.getByText(/Created by|Creado por/i)).toBeVisible()
+    // Should see inline audit information (refactored compact format)
+    // AuditInfo renders: "Created on {date} at {time} by {user} — Updated on {date} at {time} by {user}"
+    await expect(page.getByText(/Created on.*by/i)).toBeVisible()
     await expect(page.getByText('receptionist').first()).toBeVisible()
   })
 })

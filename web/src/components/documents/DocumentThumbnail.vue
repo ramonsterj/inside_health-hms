@@ -2,16 +2,18 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
-import type { AdmissionDocument } from '@/types/document'
+import type { ThumbnailDocument } from '@/types/document'
 import { useDocumentStore } from '@/stores/document'
 
 const { t } = useI18n()
 const documentStore = useDocumentStore()
 
 const props = defineProps<{
-  document: AdmissionDocument
+  document: ThumbnailDocument
   admissionId: number
   canDelete?: boolean
+  documentTypeName?: string
+  thumbnailFetcher?: (documentId: number) => Promise<Blob>
 }>()
 
 const emit = defineEmits<{
@@ -29,7 +31,9 @@ onMounted(async () => {
   if (hasThumbnail.value) {
     thumbnailLoading.value = true
     try {
-      const blob = await documentStore.getThumbnail(props.admissionId, props.document.id)
+      const blob = props.thumbnailFetcher
+        ? await props.thumbnailFetcher(props.document.id)
+        : await documentStore.getThumbnail(props.admissionId, props.document.id)
       thumbnailBlobUrl.value = URL.createObjectURL(blob)
     } catch {
       // Silently fail - will show placeholder
@@ -53,8 +57,7 @@ const placeholderIcon = computed(() => {
 })
 
 const localizedTypeName = computed(() => {
-  const code = props.document.documentType.code
-  return t(`document.types.${code}`, props.document.documentType.name)
+  return props.documentTypeName ?? ''
 })
 
 function formatFileSize(bytes: number): string {
