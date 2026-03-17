@@ -5,6 +5,7 @@ import com.insidehealthgt.hms.entity.UserStatus
 import com.insidehealthgt.hms.repository.RoleRepository
 import com.insidehealthgt.hms.repository.UserRepository
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -16,6 +17,7 @@ class AdminInitializer(
     private val userRepository: UserRepository,
     private val roleRepository: RoleRepository,
     private val passwordEncoder: PasswordEncoder,
+    @Value("\${app.admin.password}") private val adminPassword: String,
 ) : ApplicationRunner {
 
     private val logger = LoggerFactory.getLogger(AdminInitializer::class.java)
@@ -24,12 +26,11 @@ class AdminInitializer(
     override fun run(args: ApplicationArguments) {
         val adminEmail = "admin@example.com"
         val adminUsername = "admin"
-        val adminPassword = "admin123"
 
         val existingAdmin = userRepository.findByEmail(adminEmail)
+        val adminRole = roleRepository.findByCode("ADMIN")
 
         if (existingAdmin == null) {
-            // Create admin user if not exists
             val admin = User(
                 username = adminUsername,
                 email = adminEmail,
@@ -40,8 +41,6 @@ class AdminInitializer(
                 emailVerified = true,
             )
 
-            // Assign ADMIN role
-            val adminRole = roleRepository.findByCode("ADMIN")
             if (adminRole != null) {
                 admin.roles.add(adminRole)
             }
@@ -51,15 +50,13 @@ class AdminInitializer(
         } else {
             var needsSave = false
 
-            // Update password hash if admin exists (fixes incorrect hash from migration)
+            // Correct hash if it diverged from config (e.g., stale migration seed)
             if (!passwordEncoder.matches(adminPassword, existingAdmin.passwordHash)) {
                 existingAdmin.passwordHash = passwordEncoder.encode(adminPassword)!!
                 needsSave = true
                 logger.info("Admin password hash updated")
             }
 
-            // Ensure admin has ADMIN role (handles edge cases where role assignment failed)
-            val adminRole = roleRepository.findByCode("ADMIN")
             if (adminRole != null && !existingAdmin.hasRole("ADMIN")) {
                 existingAdmin.roles.add(adminRole)
                 needsSave = true
