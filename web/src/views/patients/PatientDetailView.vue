@@ -423,5 +423,4 @@ function formatUserName(
     grid-column: span 1;
   }
 }
-
 </style>

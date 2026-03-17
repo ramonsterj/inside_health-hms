@@ -13,10 +13,7 @@ import Textarea from 'primevue/textarea'
 import ToggleSwitch from 'primevue/toggleswitch'
 import Message from 'primevue/message'
 import { useInventoryCategoryStore } from '@/stores/inventoryCategory'
-import {
-  inventoryCategorySchema,
-  type InventoryCategoryFormData
-} from '@/validation/inventory'
+import { inventoryCategorySchema, type InventoryCategoryFormData } from '@/validation/inventory'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -67,7 +64,7 @@ async function loadCategory() {
   }
 }
 
-const onSubmit = handleSubmit(async (values) => {
+const onSubmit = handleSubmit(async values => {
   loading.value = true
   try {
     const data = {

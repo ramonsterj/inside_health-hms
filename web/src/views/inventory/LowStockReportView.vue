@@ -19,7 +19,7 @@ const selectedCategoryId = ref<number | null>(null)
 
 const categoryOptions = computed(() => [
   { label: t('inventory.item.allCategories'), value: null },
-  ...categoryStore.activeCategories.map((c) => ({ label: c.name, value: c.id }))
+  ...categoryStore.activeCategories.map(c => ({ label: c.name, value: c.id }))
 ])
 
 onMounted(async () => {

@@ -85,9 +85,7 @@ export const useBillingStore = defineStore('billing', () => {
   async function fetchInvoice(admissionId: number): Promise<void> {
     loading.value = true
     try {
-      const response = await api.get<ApiResponse<Invoice>>(
-        `/v1/admissions/${admissionId}/invoice`
-      )
+      const response = await api.get<ApiResponse<Invoice>>(`/v1/admissions/${admissionId}/invoice`)
       if (response.data.success && response.data.data) {
         invoice.value = response.data.data
       }
@@ -99,9 +97,7 @@ export const useBillingStore = defineStore('billing', () => {
   async function generateInvoice(admissionId: number): Promise<Invoice> {
     loading.value = true
     try {
-      const response = await api.post<ApiResponse<Invoice>>(
-        `/v1/admissions/${admissionId}/invoice`
-      )
+      const response = await api.post<ApiResponse<Invoice>>(`/v1/admissions/${admissionId}/invoice`)
       if (response.data.success && response.data.data) {
         invoice.value = response.data.data
         return response.data.data

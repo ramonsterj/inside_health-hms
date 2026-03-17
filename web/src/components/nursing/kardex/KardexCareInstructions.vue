@@ -10,13 +10,18 @@ const props = defineProps<{
 
 const { t, d } = useI18n()
 
-const CATEGORY_ORDER = ['DIETA', 'CUIDADOS_ESPECIALES', 'RESTRICCIONES_MOVILIDAD', 'PERMISOS_VISITA']
+const CATEGORY_ORDER = [
+  'DIETA',
+  'CUIDADOS_ESPECIALES',
+  'RESTRICCIONES_MOVILIDAD',
+  'PERMISOS_VISITA'
+]
 
 const CATEGORY_LABELS = new Map<string, string>([
   ['DIETA', 'medicalRecord.medicalOrder.categories.DIETA'],
   ['CUIDADOS_ESPECIALES', 'medicalRecord.medicalOrder.categories.CUIDADOS_ESPECIALES'],
   ['RESTRICCIONES_MOVILIDAD', 'medicalRecord.medicalOrder.categories.RESTRICCIONES_MOVILIDAD'],
-  ['PERMISOS_VISITA', 'medicalRecord.medicalOrder.categories.PERMISOS_VISITA'],
+  ['PERMISOS_VISITA', 'medicalRecord.medicalOrder.categories.PERMISOS_VISITA']
 ])
 
 const groupedInstructions = computed(() => {
@@ -28,7 +33,7 @@ const groupedInstructions = computed(() => {
       groups.push({
         category: cat,
         label: labelKey ? t(labelKey) : cat,
-        items: items.sort((a, b) => a.startDate.localeCompare(b.startDate)),
+        items: items.sort((a, b) => a.startDate.localeCompare(b.startDate))
       })
     }
   }
@@ -47,14 +52,11 @@ const groupedInstructions = computed(() => {
     <div v-else class="care-groups">
       <div v-for="group in groupedInstructions" :key="group.category" class="care-group">
         <Tag :value="group.label" severity="warn" class="group-tag" />
-        <div
-          v-for="item in group.items"
-          :key="item.orderId"
-          class="care-item"
-        >
+        <div v-for="item in group.items" :key="item.orderId" class="care-item">
           <span class="care-observations">{{ item.observations || '-' }}</span>
           <span class="care-since">
-            {{ t('kardex.careInstructions.since') }} {{ d(new Date(item.startDate + 'T00:00:00'), 'short') }}
+            {{ t('kardex.careInstructions.since') }}
+            {{ d(new Date(item.startDate + 'T00:00:00'), 'short') }}
           </span>
         </div>
       </div>

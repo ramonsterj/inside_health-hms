@@ -46,8 +46,9 @@ export const inventoryItemSchema = z
     active: z.boolean().default(true)
   })
   .refine(
-    (data) =>
-      data.pricingType !== PricingType.TIME_BASED || (data.timeUnit != null && data.timeInterval != null),
+    data =>
+      data.pricingType !== PricingType.TIME_BASED ||
+      (data.timeUnit != null && data.timeInterval != null),
     { message: 'validation.inventory.item.timeBased.required', path: ['timeUnit'] }
   )
 
@@ -59,11 +60,7 @@ export const inventoryMovementSchema = z.object({
     .number({ required_error: 'validation.inventory.movement.quantity.required' })
     .int()
     .positive('validation.inventory.movement.quantity.positive'),
-  notes: z
-    .string()
-    .max(500, 'validation.inventory.movement.notes.max')
-    .optional()
-    .or(z.literal(''))
+  notes: z.string().max(500, 'validation.inventory.movement.notes.max').optional().or(z.literal(''))
 })
 
 export type InventoryCategoryFormData = z.infer<typeof inventoryCategorySchema>

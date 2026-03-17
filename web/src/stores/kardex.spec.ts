@@ -8,8 +8,8 @@ vi.mock('@/services/api', () => ({
     get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
-    delete: vi.fn(),
-  },
+    delete: vi.fn()
+  }
 }))
 
 const mockedApi = api as unknown as {
@@ -42,8 +42,8 @@ const mockSummary = {
       inventoryItemId: null,
       inventoryItemName: null,
       observations: null,
-      lastAdministration: null,
-    },
+      lastAdministration: null
+    }
   ],
   activeCareInstructionCount: 0,
   careInstructions: [],
@@ -55,11 +55,11 @@ const mockSummary = {
     respiratoryRate: 16,
     temperature: 36.5,
     oxygenSaturation: 98,
-    recordedByName: 'Nurse Johnson',
+    recordedByName: 'Nurse Johnson'
   },
   hoursSinceLastVitals: 2.5,
   lastNursingNotePreview: 'Patient is stable',
-  lastNursingNoteAt: '2026-03-17T07:00:00',
+  lastNursingNoteAt: '2026-03-17T07:00:00'
 }
 
 const mockSummary2 = {
@@ -67,7 +67,7 @@ const mockSummary2 = {
   admissionId: 2,
   patientId: 20,
   patientName: 'Maria Lopez',
-  roomNumber: '102',
+  roomNumber: '102'
 }
 
 function mockPageResponse(content: unknown[], totalElements: number) {
@@ -80,10 +80,10 @@ function mockPageResponse(content: unknown[], totalElements: number) {
           totalElements,
           totalPages: Math.ceil(totalElements / 20),
           size: 20,
-          number: 0,
-        },
-      },
-    },
+          number: 0
+        }
+      }
+    }
   }
 }
 
@@ -117,7 +117,7 @@ describe('useKardexStore', () => {
       await store.fetchSummaries(0, 20)
 
       expect(mockedApi.get).toHaveBeenCalledWith('/v1/nursing-kardex', {
-        params: { page: 0, size: 20, sort: 'room_id,asc' },
+        params: { page: 0, size: 20, sort: 'room_id,asc' }
       })
       expect(store.summaries).toHaveLength(2)
       expect(store.totalElements).toBe(2)
@@ -131,7 +131,7 @@ describe('useKardexStore', () => {
       await store.fetchSummaries(0, 20, 'HOSPITALIZATION', 'Juan')
 
       expect(mockedApi.get).toHaveBeenCalledWith('/v1/nursing-kardex', {
-        params: { page: 0, size: 20, sort: 'room_id,asc', type: 'HOSPITALIZATION', search: 'Juan' },
+        params: { page: 0, size: 20, sort: 'room_id,asc', type: 'HOSPITALIZATION', search: 'Juan' }
       })
       expect(store.summaries).toHaveLength(1)
     })
@@ -143,7 +143,7 @@ describe('useKardexStore', () => {
       await store.fetchSummaries(0, 20, null, null)
 
       expect(mockedApi.get).toHaveBeenCalledWith('/v1/nursing-kardex', {
-        params: { page: 0, size: 20, sort: 'room_id,asc' },
+        params: { page: 0, size: 20, sort: 'room_id,asc' }
       })
     })
 
@@ -183,7 +183,7 @@ describe('useKardexStore', () => {
 
       const updatedSummary = { ...mockSummary, activeMedicationCount: 3 }
       mockedApi.get.mockResolvedValueOnce({
-        data: { success: true, data: updatedSummary },
+        data: { success: true, data: updatedSummary }
       })
 
       await store.refreshSingleAdmission(1)

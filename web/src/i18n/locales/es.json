@@ -43,7 +43,10 @@
       "hoursAgo": "hace {count}h",
       "yesterday": "ayer",
       "daysAgo": "hace {count}d"
-    }
+    },
+    "from": "Desde",
+    "to": "Hasta",
+    "clear": "Limpiar"
   },
   "nav": {
     "home": "Inicio",
@@ -65,7 +68,10 @@
     "lowStockReport": "Reporte de Stock Bajo",
     "auditLogs": "Registros de Auditoria",
     "profile": "Perfil",
-    "logout": "Cerrar Sesión"
+    "logout": "Cerrar Sesión",
+    "treasury": "Tesorería",
+    "bankAccounts": "Cuentas Bancarias",
+    "expenses": "Gastos"
   },
   "auth": {
     "login": {
@@ -921,6 +927,59 @@
       "amountMustBeNegative": "El monto del ajuste debe ser negativo",
       "reasonRequired": "La razón es requerida para ajustes",
       "reasonMaxLength": "La razón no debe exceder 500 caracteres"
+    },
+    "treasury": {
+      "bankAccount": {
+        "name": {
+          "required": "El nombre de la cuenta es requerido",
+          "max": "El nombre no puede exceder 100 caracteres"
+        },
+        "accountType": {
+          "required": "El tipo de cuenta es requerido"
+        },
+        "openingBalance": {
+          "min": "El saldo inicial debe ser cero o positivo"
+        }
+      },
+      "expense": {
+        "supplierName": {
+          "required": "El nombre del proveedor es requerido"
+        },
+        "category": {
+          "required": "La categoría es requerida"
+        },
+        "amount": {
+          "required": "El monto es requerido",
+          "positive": "El monto debe ser positivo"
+        },
+        "expenseDate": {
+          "required": "La fecha del gasto es requerida"
+        },
+        "invoiceNumber": {
+          "required": "El número de factura es requerido"
+        },
+        "dueDate": {
+          "required": "La fecha de vencimiento es requerida cuando el gasto no está pagado"
+        },
+        "paymentDate": {
+          "required": "La fecha de pago es requerida cuando el gasto está pagado"
+        },
+        "bankAccountId": {
+          "required": "La cuenta bancaria es requerida cuando el gasto está pagado"
+        }
+      },
+      "payment": {
+        "amount": {
+          "required": "El monto es requerido",
+          "positive": "El monto debe ser positivo"
+        },
+        "paymentDate": {
+          "required": "La fecha de pago es requerida"
+        },
+        "bankAccountId": {
+          "required": "La cuenta bancaria es requerida"
+        }
+      }
     }
   },
   "errors": {
@@ -1634,6 +1693,94 @@
       "viewDetail": "Ver Detalle",
       "expand": "Expandir",
       "collapse": "Contraer"
+    }
+  },
+  "treasury": {
+    "bankAccount": {
+      "title": "Cuentas Bancarias",
+      "name": "Nombre de la Cuenta",
+      "bankName": "Banco",
+      "accountNumber": "Número de Cuenta",
+      "maskedAccountNumber": "Número de Cuenta",
+      "accountType": "Tipo de Cuenta",
+      "currency": "Moneda",
+      "openingBalance": "Saldo Inicial",
+      "bookBalance": "Saldo Contable",
+      "isPettyCash": "Caja Chica",
+      "active": "Activo",
+      "notes": "Notas",
+      "new": "Nueva Cuenta",
+      "edit": "Editar Cuenta",
+      "created": "Cuenta bancaria creada exitosamente",
+      "updated": "Cuenta bancaria actualizada exitosamente",
+      "deleted": "Cuenta bancaria eliminada exitosamente",
+      "confirmDelete": "¿Está seguro de eliminar esta cuenta bancaria?",
+      "empty": "No se encontraron cuentas bancarias",
+      "pettyCashBadge": "Caja Chica",
+      "cannotDeletePettyCash": "La cuenta de Caja Chica no puede eliminarse",
+      "openingBalanceReadonly": "El saldo inicial no puede modificarse después de la creación",
+      "accountTypes": {
+        "CHECKING": "Monetaria",
+        "SAVINGS": "Ahorro",
+        "PETTY_CASH": "Caja Chica"
+      }
+    },
+    "expense": {
+      "title": "Gastos",
+      "supplierName": "Proveedor",
+      "category": "Categoría",
+      "description": "Descripción",
+      "amount": "Monto",
+      "expenseDate": "Fecha del Gasto",
+      "invoiceNumber": "No. Factura",
+      "invoiceDocument": "Escaneo de Factura",
+      "invoiceDocumentHint": "Adjuntar escaneo de factura (opcional, PDF o imagen)",
+      "status": "Estado",
+      "dueDate": "Fecha de Vencimiento",
+      "paymentDate": "Fecha de Pago",
+      "paidAmount": "Pagado",
+      "remainingAmount": "Pendiente",
+      "isPaid": "Ya Pagado",
+      "notes": "Notas",
+      "new": "Nuevo Gasto",
+      "created": "Gasto registrado exitosamente",
+      "updated": "Gasto actualizado exitosamente",
+      "deleted": "Gasto eliminado exitosamente",
+      "confirmDelete": "¿Está seguro de eliminar este gasto?",
+      "empty": "No se encontraron gastos",
+      "statuses": {
+        "PENDING": "Pendiente",
+        "PARTIALLY_PAID": "Parcialmente Pagado",
+        "PAID": "Pagado",
+        "CANCELLED": "Cancelado",
+        "OVERDUE": "Vencido"
+      },
+      "categories": {
+        "SUPPLIES": "Suministros",
+        "UTILITIES": "Servicios Públicos",
+        "MAINTENANCE": "Mantenimiento",
+        "EQUIPMENT": "Equipo",
+        "SERVICES": "Servicios",
+        "PAYROLL": "Planilla",
+        "OTHER": "Otro"
+      },
+      "filters": {
+        "allStatuses": "Todos los Estados",
+        "allCategories": "Todas las Categorías"
+      },
+      "uploadInvoice": "Subir Factura",
+      "invoiceUploaded": "Factura subida exitosamente"
+    },
+    "payment": {
+      "title": "Pagos",
+      "amount": "Monto del Pago",
+      "paymentDate": "Fecha de Pago",
+      "bankAccount": "Cuenta Bancaria",
+      "reference": "Referencia",
+      "notes": "Notas",
+      "record": "Registrar Pago",
+      "created": "Pago registrado exitosamente",
+      "empty": "No hay pagos registrados"
     }
   }
 }

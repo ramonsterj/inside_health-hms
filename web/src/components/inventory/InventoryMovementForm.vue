@@ -48,7 +48,7 @@ const [type] = defineField('type')
 const [quantity] = defineField('quantity')
 const [notes] = defineField('notes')
 
-const onSubmit = handleSubmit(async (values) => {
+const onSubmit = handleSubmit(async values => {
   loading.value = true
   try {
     await itemStore.createMovement(props.itemId, {

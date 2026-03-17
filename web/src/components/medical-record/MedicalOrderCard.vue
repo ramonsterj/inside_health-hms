@@ -56,18 +56,14 @@ const canAdminister = computed(
     isActive.value &&
     props.order.inventoryItemId !== null
 )
-const canUploadDocument = computed(
-  () => authStore.hasPermission('medical-order:upload-document')
-)
-const canDeleteDocument = computed(
-  () => authStore.hasPermission('medical-order:delete-document')
-)
+const canUploadDocument = computed(() => authStore.hasPermission('medical-order:upload-document'))
+const canDeleteDocument = computed(() => authStore.hasPermission('medical-order:delete-document'))
 
 const statusSeverity = computed(() => (isActive.value ? 'success' : 'secondary'))
 
 const documents = computed(() => documentStore.getDocuments(props.order.id))
-const localDocumentCount = computed(
-  () => attachmentsLoaded.value ? documents.value.length : props.order.documentCount
+const localDocumentCount = computed(() =>
+  attachmentsLoaded.value ? documents.value.length : props.order.documentCount
 )
 
 const authorName = computed(() => {
@@ -290,9 +286,11 @@ async function deleteDocument(doc: MedicalOrderDocument) {
           <Button
             v-if="localDocumentCount > 0"
             icon="pi pi-images"
-            :label="showAttachments
-              ? t('common.collapse')
-              : t('medicalRecord.medicalOrder.documents.count', { count: localDocumentCount })"
+            :label="
+              showAttachments
+                ? t('common.collapse')
+                : t('medicalRecord.medicalOrder.documents.count', { count: localDocumentCount })
+            "
             text
             size="small"
             severity="info"

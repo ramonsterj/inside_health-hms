@@ -423,5 +423,4 @@ function handleDocumentUploaded() {
   border-radius: 4px;
   font-weight: 600;
 }
-
 </style>

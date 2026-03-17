@@ -79,10 +79,9 @@ export const useMedicalOrderDocumentStore = defineStore('medicalOrderDocument', 
     orderId: number,
     documentId: number
   ): Promise<Blob> {
-    const response = await api.get(
-      `${basePath(admissionId, orderId)}/${documentId}/file`,
-      { responseType: 'blob' }
-    )
+    const response = await api.get(`${basePath(admissionId, orderId)}/${documentId}/file`, {
+      responseType: 'blob'
+    })
     return response.data
   }
 
@@ -91,10 +90,9 @@ export const useMedicalOrderDocumentStore = defineStore('medicalOrderDocument', 
     orderId: number,
     documentId: number
   ): Promise<Blob> {
-    const response = await api.get(
-      `${basePath(admissionId, orderId)}/${documentId}/thumbnail`,
-      { responseType: 'blob' }
-    )
+    const response = await api.get(`${basePath(admissionId, orderId)}/${documentId}/thumbnail`, {
+      responseType: 'blob'
+    })
     return response.data
   }
 

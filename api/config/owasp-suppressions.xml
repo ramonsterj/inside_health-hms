@@ -26,6 +26,70 @@
 
     <!-- Add your suppressions below -->
 
+    <!--
+    CVE-2026-29062: Jackson Core DoS via excessive JSON nesting.
+    Fix requires jackson-core 3.1.0 which is not yet released (latest is 3.0.x managed by Spring Boot 4).
+    Attack surface is reduced because all API endpoints require authentication.
+    Suppressed until jackson-core 3.1.0 is available and adopted by Spring Boot.
+    -->
+    <suppress>
+        <notes><![CDATA[
+        CVE-2026-29062: Jackson Core 3.0.x DoS via excessive JSON nesting bypass of maxNestingDepth.
+        Fix requires jackson-core 3.1.0 which is not yet released on Maven Central.
+        All API endpoints require authentication, significantly reducing attack surface.
+        Suppress until Spring Boot manages a fixed Jackson version.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/tools\.jackson\.core/jackson-(core|databind)@.*$</packageUrl>
+        <cve>CVE-2026-29062</cve>
+    </suppress>
+
+    <!--
+    CVE-2025-15599, CVE-2026-0540: DOMPurify XSS vulnerabilities bundled inside swagger-ui JAR.
+    These are in the JavaScript bundle packaged inside springdoc-openapi's swagger-ui artifact.
+    springdoc-openapi 2.8.6 is the latest available and does not yet ship a fixed DOMPurify.
+    Swagger UI is only exposed in non-production profiles and behind authentication.
+    -->
+    <suppress>
+        <notes><![CDATA[
+        DOMPurify XSS vulnerabilities bundled in swagger-ui JavaScript bundles inside swagger-ui.jar.
+        Cannot be fixed without an upstream springdoc-openapi/swagger-ui release that ships DOMPurify >= 3.2.7.
+        springdoc-openapi 2.8.6 is the latest available version.
+        Swagger UI access is restricted in production.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:javascript/DOMPurify@.*$</packageUrl>
+        <cve>CVE-2025-15599</cve>
+        <cve>CVE-2026-0540</cve>
+    </suppress>
+
+    <!--
+    CVE-2026-23907: PDFBox path traversal in ExtractEmbeddedFiles example class.
+    Affected versions: 3.0.0–3.0.6. Fixed in 3.0.7 (we are on 3.0.7).
+    NVD may lag in updating version bounds. Also, we only use PDFBox for thumbnail
+    rendering, never for the ExtractEmbeddedFiles example functionality.
+    -->
+    <suppress>
+        <notes><![CDATA[
+        CVE-2026-23907: Path traversal in PDFBox's ExtractEmbeddedFiles example.
+        Fixed in PDFBox 3.0.7 (our version). NVD version bounds may not yet reflect the fix.
+        We only use PDFBox for thumbnail image rendering, not file extraction.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.pdfbox/pdfbox(-io)?@.*$</packageUrl>
+        <cve>CVE-2026-23907</cve>
+    </suppress>
+
+    <!-- False positives: detekt's checkstyle report plugin misidentified as the Checkstyle tool -->
+    <suppress>
+        <notes><![CDATA[
+        False positive. detekt-report-checkstyle is a report formatter plugin for detekt
+        that outputs in Checkstyle XML format. It is NOT the Checkstyle static analysis tool.
+        CVE-2019-10782 and CVE-2019-9658 are vulnerabilities in the Checkstyle tool itself,
+        not in any code that reads/writes Checkstyle-format XML.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/dev\.detekt/detekt-report-checkstyle@.*$</packageUrl>
+        <cve>CVE-2019-10782</cve>
+        <cve>CVE-2019-9658</cve>
+    </suppress>
+
     <!-- False positive: detekt-rules is misidentified as Apache Beam/Flink/Spark -->
     <suppress>
         <notes><![CDATA[

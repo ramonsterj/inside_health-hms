@@ -526,7 +526,9 @@ function onPresetChange() {
   >
     <div class="flex flex-col gap-4">
       <div>
-        <span class="text-sm text-muted-color font-semibold">{{ i18nT('configurator.primary') }}</span>
+        <span class="text-sm text-muted-color font-semibold">{{
+          i18nT('configurator.primary')
+        }}</span>
         <div class="pt-2 flex gap-2 flex-wrap justify-between">
           <button
             v-for="primaryColor of primaryColors"
@@ -545,7 +547,9 @@ function onPresetChange() {
         </div>
       </div>
       <div>
-        <span class="text-sm text-muted-color font-semibold">{{ i18nT('configurator.surface') }}</span>
+        <span class="text-sm text-muted-color font-semibold">{{
+          i18nT('configurator.surface')
+        }}</span>
         <div class="pt-2 flex gap-2 flex-wrap justify-between">
           <button
             v-for="surface of surfaces"
@@ -568,7 +572,9 @@ function onPresetChange() {
         </div>
       </div>
       <div class="flex flex-col gap-2">
-        <span class="text-sm text-muted-color font-semibold">{{ i18nT('configurator.presets') }}</span>
+        <span class="text-sm text-muted-color font-semibold">{{
+          i18nT('configurator.presets')
+        }}</span>
         <SelectButton
           v-model="preset"
           @change="onPresetChange"
@@ -577,7 +583,9 @@ function onPresetChange() {
         />
       </div>
       <div class="flex flex-col gap-2">
-        <span class="text-sm text-muted-color font-semibold">{{ i18nT('configurator.menuMode') }}</span>
+        <span class="text-sm text-muted-color font-semibold">{{
+          i18nT('configurator.menuMode')
+        }}</span>
         <SelectButton
           v-model="menuMode"
           @change="changeMenuMode"

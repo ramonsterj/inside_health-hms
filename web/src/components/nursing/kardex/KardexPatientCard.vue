@@ -61,7 +61,7 @@ function viewDetail() {
             class="triage-badge"
             :style="{
               backgroundColor: summary.triageColorCode || '#ccc',
-              color: getContrastColor(summary.triageColorCode || '#ccc'),
+              color: getContrastColor(summary.triageColorCode || '#ccc')
             }"
           >
             {{ summary.triageCode }}
@@ -108,9 +108,7 @@ function viewDetail() {
 
         <KardexCareInstructions :careInstructions="summary.careInstructions" />
 
-        <KardexVitalsSummary
-          :vitalSigns="summary.latestVitalSigns"
-        />
+        <KardexVitalsSummary :vitalSigns="summary.latestVitalSigns" />
       </div>
 
       <div class="quick-actions">
@@ -205,7 +203,6 @@ function viewDetail() {
 .metric-numeric {
   align-items: flex-end;
 }
-
 
 .metric-label {
   font-size: 0.7rem;

@@ -32,7 +32,7 @@ const canAdjust = computed(() => authStore.hasPermission('billing:adjust'))
 
 const chargeTypeOptions = computed(() => [
   { label: t('common.all'), value: null },
-  ...Object.values(ChargeType).map((type) => ({
+  ...Object.values(ChargeType).map(type => ({
     label: t(`billing.chargeTypes.${type}`),
     value: type
   }))
@@ -40,7 +40,7 @@ const chargeTypeOptions = computed(() => [
 
 const filteredCharges = computed(() => {
   if (!selectedChargeType.value) return billingStore.charges
-  return billingStore.charges.filter((c) => c.chargeType === selectedChargeType.value)
+  return billingStore.charges.filter(c => c.chargeType === selectedChargeType.value)
 })
 
 onMounted(async () => {

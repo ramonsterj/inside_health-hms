@@ -52,17 +52,8 @@ function onHide() {
     <p>{{ t('billing.generateInvoiceConfirmation') }}</p>
 
     <template #footer>
-      <Button
-        :label="t('common.cancel')"
-        severity="secondary"
-        outlined
-        @click="onHide"
-      />
-      <Button
-        :label="t('billing.generate')"
-        :loading="loading"
-        @click="onConfirm"
-      />
+      <Button :label="t('common.cancel')" severity="secondary" outlined @click="onHide" />
+      <Button :label="t('billing.generate')" :loading="loading" @click="onConfirm" />
     </template>
   </Dialog>
 </template>

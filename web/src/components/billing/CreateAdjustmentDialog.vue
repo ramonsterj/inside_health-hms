@@ -42,7 +42,7 @@ const [description] = defineField('description')
 const [amount] = defineField('amount')
 const [reason] = defineField('reason')
 
-const onSubmit = handleSubmit(async (values) => {
+const onSubmit = handleSubmit(async values => {
   loading.value = true
   try {
     await billingStore.createAdjustment(props.admissionId, values)
@@ -103,12 +103,7 @@ function onHide() {
 
       <div class="form-field">
         <label for="reason">{{ t('billing.reason') }} *</label>
-        <Textarea
-          id="reason"
-          v-model="reason"
-          rows="3"
-          :class="{ 'p-invalid': errors.reason }"
-        />
+        <Textarea id="reason" v-model="reason" rows="3" :class="{ 'p-invalid': errors.reason }" />
         <Message v-if="errors.reason" severity="error" :closable="false">
           {{ errors.reason }}
         </Message>

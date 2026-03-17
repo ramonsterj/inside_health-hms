@@ -10,8 +10,9 @@ const props = defineProps<{
 
 const { t, locale } = useI18n()
 
-const { freshnessClass, freshnessLabel } =
-  useVitalsFreshness(() => props.vitalSigns?.recordedAt ?? null)
+const { freshnessClass, freshnessLabel } = useVitalsFreshness(
+  () => props.vitalSigns?.recordedAt ?? null
+)
 </script>
 
 <template>
@@ -25,7 +26,9 @@ const { freshnessClass, freshnessLabel } =
     <div v-else class="vitals-row">
       <div class="vital-item">
         <span class="vital-label">{{ t('kardex.vitals.bp') }}</span>
-        <span class="vital-value">{{ props.vitalSigns.systolicBp }}/{{ props.vitalSigns.diastolicBp }}</span>
+        <span class="vital-value"
+          >{{ props.vitalSigns.systolicBp }}/{{ props.vitalSigns.diastolicBp }}</span
+        >
         <span class="vital-unit">{{ t('kardex.vitals.mmhg') }}</span>
       </div>
       <div class="vital-item">

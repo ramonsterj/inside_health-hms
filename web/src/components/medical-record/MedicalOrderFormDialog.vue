@@ -317,7 +317,9 @@ function closeDialog() {
 
       <!-- Inventory Item (for billable categories) -->
       <div v-if="showInventoryItemSelector" class="form-field">
-        <label for="inventoryItemId">{{ t('medicalRecord.medicalOrder.fields.inventoryItem') }}</label>
+        <label for="inventoryItemId">{{
+          t('medicalRecord.medicalOrder.fields.inventoryItem')
+        }}</label>
         <Select
           id="inventoryItemId"
           v-model="inventoryItemId"

@@ -35,7 +35,7 @@ const searchTerm = ref('')
 
 const categoryOptions = computed(() => [
   { label: t('inventory.item.allCategories'), value: null },
-  ...categoryStore.activeCategories.map((c) => ({ label: c.name, value: c.id }))
+  ...categoryStore.activeCategories.map(c => ({ label: c.name, value: c.id }))
 ])
 
 onMounted(async () => {
@@ -97,7 +97,6 @@ async function deleteItem(id: number) {
     showError(error)
   }
 }
-
 </script>
 
 <template>
@@ -140,12 +139,7 @@ async function deleteItem(id: number) {
             @keyup.enter="onFilterChange"
             style="width: 250px"
           />
-          <Button
-            icon="pi pi-search"
-            severity="secondary"
-            outlined
-            @click="onFilterChange"
-          />
+          <Button icon="pi pi-search" severity="secondary" outlined @click="onFilterChange" />
         </div>
 
         <DataTable

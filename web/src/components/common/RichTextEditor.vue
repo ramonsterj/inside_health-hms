@@ -65,7 +65,11 @@ const sanitizedContent = computed(() => sanitizeHtml(internalValue.value))
           <button class="ql-underline" v-tooltip.bottom="t('editor.underline')"></button>
         </span>
         <span class="ql-formats">
-          <button class="ql-list" value="ordered" v-tooltip.bottom="t('editor.numberedList')"></button>
+          <button
+            class="ql-list"
+            value="ordered"
+            v-tooltip.bottom="t('editor.numberedList')"
+          ></button>
           <button class="ql-list" value="bullet" v-tooltip.bottom="t('editor.bulletList')"></button>
         </span>
         <span class="ql-formats">

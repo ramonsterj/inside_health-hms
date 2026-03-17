@@ -65,18 +65,11 @@ onMounted(async () => {
         </template>
       </Card>
 
-      <div
-        v-if="billingStore.balance.dailyBreakdown.length === 0"
-        class="empty-message"
-      >
+      <div v-if="billingStore.balance.dailyBreakdown.length === 0" class="empty-message">
         {{ t('billing.noCharges') }}
       </div>
 
-      <div
-        v-for="day in billingStore.balance.dailyBreakdown"
-        :key="day.date"
-        class="day-card"
-      >
+      <div v-for="day in billingStore.balance.dailyBreakdown" :key="day.date" class="day-card">
         <Card>
           <template #title>
             <div class="day-header">
@@ -92,11 +85,7 @@ onMounted(async () => {
             </div>
           </template>
           <template #content>
-            <div
-              v-for="charge in day.charges"
-              :key="charge.id"
-              class="charge-row"
-            >
+            <div v-for="charge in day.charges" :key="charge.id" class="charge-row">
               <div class="charge-info">
                 <Tag
                   :value="t(`billing.chargeTypes.${charge.chargeType}`)"

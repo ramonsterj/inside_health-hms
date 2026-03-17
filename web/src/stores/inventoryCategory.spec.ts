@@ -89,7 +89,7 @@ describe('useInventoryCategoryStore', () => {
 
   describe('fetchActiveCategories', () => {
     it('should fetch only active categories', async () => {
-      const activeCategories = mockCategories.filter((c) => c.active)
+      const activeCategories = mockCategories.filter(c => c.active)
       mockedApi.get.mockResolvedValueOnce({
         data: { success: true, data: activeCategories }
       })

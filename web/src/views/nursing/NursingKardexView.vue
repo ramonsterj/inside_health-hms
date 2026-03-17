@@ -26,18 +26,13 @@ const typeOptions = computed(() => [
   { label: t('admission.types.AMBULATORY'), value: AdmissionType.AMBULATORY },
   { label: t('admission.types.ELECTROSHOCK_THERAPY'), value: AdmissionType.ELECTROSHOCK_THERAPY },
   { label: t('admission.types.KETAMINE_INFUSION'), value: AdmissionType.KETAMINE_INFUSION },
-  { label: t('admission.types.EMERGENCY'), value: AdmissionType.EMERGENCY },
+  { label: t('admission.types.EMERGENCY'), value: AdmissionType.EMERGENCY }
 ])
 
 async function loadKardex() {
   try {
     const page = Math.floor(first.value / rows.value)
-    await kardexStore.fetchSummaries(
-      page,
-      rows.value,
-      typeFilter.value,
-      searchQuery.value || null,
-    )
+    await kardexStore.fetchSummaries(page, rows.value, typeFilter.value, searchQuery.value || null)
   } catch (error) {
     showError(error)
   }

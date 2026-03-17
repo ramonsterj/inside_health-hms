@@ -14,9 +14,21 @@ const { t } = useI18n()
 
 <template>
   <div class="audit-line">
-    <span>{{ t('common.auditCreated', { date: formatDate(createdAt), time: formatTime(createdAt), user: createdByName }) }}</span>
+    <span>{{
+      t('common.auditCreated', {
+        date: formatDate(createdAt),
+        time: formatTime(createdAt),
+        user: createdByName
+      })
+    }}</span>
     <span class="audit-separator">&mdash;</span>
-    <span>{{ t('common.auditUpdated', { date: formatDate(updatedAt), time: formatTime(updatedAt), user: updatedByName }) }}</span>
+    <span>{{
+      t('common.auditUpdated', {
+        date: formatDate(updatedAt),
+        time: formatTime(updatedAt),
+        user: updatedByName
+      })
+    }}</span>
   </div>
 </template>
 
