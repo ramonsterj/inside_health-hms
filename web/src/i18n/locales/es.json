@@ -53,6 +53,7 @@
     "dashboard": "Panel",
     "patients": "Pacientes",
     "admissions": "Hospitalizaciones",
+    "nursingKardex": "Kardex de Enfermería",
     "users": "Usuarios",
     "roles": "Roles",
     "triageCodes": "Códigos de Triage",
@@ -1566,5 +1567,73 @@
     "numberedList": "Lista Numerada",
     "bulletList": "Lista de Viñetas",
     "clearFormatting": "Limpiar Formato"
+  },
+  "kardex": {
+    "title": "Kardex de Enfermería",
+    "subtitle": "Vista general de pacientes activos",
+    "searchPlaceholder": "Buscar por nombre de paciente...",
+    "filterByType": "Filtrar por tipo",
+    "allTypes": "Todos los Tipos",
+    "refresh": "Actualizar",
+    "autoRefresh": "Actualización automática cada 5 min",
+    "noAdmissions": "No hay admisiones activas",
+    "daysAdmitted": "{count} día | {count} días",
+    "treatingPhysician": "Médico",
+    "noRoom": "Sin habitación",
+    "labels": {
+      "stay": "Estancia",
+      "medications": "Medicamentos",
+      "vitals": "Signos Vitales",
+      "instructions": "Indicaciones"
+    },
+    "medications": {
+      "title": "Medicamentos Activos",
+      "count": "{count} medicamento activo | {count} medicamentos activos",
+      "empty": "No hay órdenes de medicamentos activas",
+      "dose": "Dosis",
+      "route": "Vía",
+      "frequency": "Frecuencia",
+      "schedule": "Horario",
+      "administer": "Administrar",
+      "lastAdmin": "Última administración",
+      "neverAdministered": "Aún no administrado",
+      "noInventoryLink": "Sin artículo de inventario vinculado"
+    },
+    "careInstructions": {
+      "title": "Indicaciones de Cuidado",
+      "count": "{count} indicación activa | {count} indicaciones activas",
+      "empty": "No hay indicaciones de cuidado activas",
+      "since": "Desde"
+    },
+    "vitals": {
+      "title": "Últimos Signos Vitales",
+      "empty": "No hay signos vitales registrados",
+      "recordedAt": "Registrado",
+      "recordedBy": "Por",
+      "bp": "PA",
+      "hr": "FC",
+      "rr": "FR",
+      "temp": "Temp",
+      "spo2": "SpO2",
+      "mmhg": "mmHg",
+      "bpm": "lpm",
+      "perMin": "/min",
+      "celsius": "°C",
+      "percent": "%",
+      "hoursAgo": "hace {hours}h",
+      "never": "Nunca",
+      "overdue": "Atrasado",
+      "recordVitals": "Registrar Signos Vitales"
+    },
+    "notes": {
+      "lastNote": "Última Nota",
+      "noNotes": "Sin notas de enfermería",
+      "addNote": "Agregar Nota"
+    },
+    "actions": {
+      "viewDetail": "Ver Detalle",
+      "expand": "Expandir",
+      "collapse": "Contraer"
+    }
   }
 }

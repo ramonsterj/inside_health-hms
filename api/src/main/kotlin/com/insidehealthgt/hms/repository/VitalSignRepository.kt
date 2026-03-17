@@ -50,6 +50,21 @@ interface VitalSignRepository : JpaRepository<VitalSign, Long> {
         @Param("admissionId") admissionId: Long,
     ): VitalSign?
 
+    @Query(
+        value = """
+            SELECT * FROM (
+                SELECT vs.*, ROW_NUMBER() OVER (
+                    PARTITION BY vs.admission_id
+                    ORDER BY vs.recorded_at DESC, vs.id DESC
+                ) AS rn
+                FROM vital_signs vs
+                WHERE vs.admission_id IN (:admissionIds) AND vs.deleted_at IS NULL
+            ) ranked WHERE rn = 1
+        """,
+        nativeQuery = true,
+    )
+    fun findLatestByAdmissionIds(@Param("admissionIds") admissionIds: List<Long>): List<VitalSign>
+
     /**
      * Delete all vital signs including soft-deleted ones (for test cleanup).
      */

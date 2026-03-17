@@ -117,6 +117,54 @@ interface AdmissionRepository : JpaRepository<Admission, Long> {
         pageable: Pageable,
     ): Page<Admission>
 
+    @Query(
+        value = """
+            SELECT a.* FROM admissions a
+            LEFT JOIN patients p ON a.patient_id = p.id
+            LEFT JOIN triage_codes tc ON a.triage_code_id = tc.id
+            LEFT JOIN rooms r ON a.room_id = r.id
+            LEFT JOIN users u ON a.treating_physician_id = u.id
+            WHERE a.status = 'ACTIVE'
+            AND a.deleted_at IS NULL
+            AND (:type IS NULL OR a.type = CAST(:type AS VARCHAR))
+            AND (
+                :search IS NULL
+                OR unaccent(lower(p.first_name || ' ' || p.last_name))
+                    LIKE unaccent(lower('%' || CAST(:search AS VARCHAR) || '%'))
+            )
+        """,
+        countQuery = """
+            SELECT COUNT(*) FROM admissions a
+            LEFT JOIN patients p ON a.patient_id = p.id
+            WHERE a.status = 'ACTIVE'
+            AND a.deleted_at IS NULL
+            AND (:type IS NULL OR a.type = CAST(:type AS VARCHAR))
+            AND (
+                :search IS NULL
+                OR unaccent(lower(p.first_name || ' ' || p.last_name))
+                    LIKE unaccent(lower('%' || CAST(:search AS VARCHAR) || '%'))
+            )
+        """,
+        nativeQuery = true,
+    )
+    fun findActiveKardexAdmissions(
+        @Param("type") type: String?,
+        @Param("search") search: String?,
+        pageable: Pageable,
+    ): Page<Admission>
+
+    @Query(
+        """
+        SELECT DISTINCT a FROM Admission a
+        LEFT JOIN FETCH a.patient
+        LEFT JOIN FETCH a.triageCode
+        LEFT JOIN FETCH a.room
+        LEFT JOIN FETCH a.treatingPhysician
+        WHERE a.id IN :ids
+        """,
+    )
+    fun findByIdsWithRelations(@Param("ids") ids: List<Long>): List<Admission>
+
     fun countByRoomIdAndStatus(roomId: Long, status: AdmissionStatus): Long
 
     @Query(

@@ -33,7 +33,22 @@ const router = createRouter({
         {
           path: 'dashboard',
           name: 'dashboard',
+          beforeEnter: (_to, _from, next) => {
+            const authStore = useAuthStore()
+            const roles = authStore.user?.roles ?? []
+            if (roles.some((r: string) => ['NURSE', 'CHIEF_NURSE'].includes(r))) {
+              next({ name: 'nursing-kardex' })
+            } else {
+              next()
+            }
+          },
           component: () => import('@/views/DashboardView.vue')
+        },
+        {
+          path: 'nursing-kardex',
+          name: 'nursing-kardex',
+          component: () => import('@/views/nursing/NursingKardexView.vue'),
+          meta: { requiresPermission: 'admission:read' }
         },
         {
           path: 'profile',
