@@ -38,11 +38,16 @@ function onAdministered() {
 
 function getStatusSeverity(status: string): 'success' | 'danger' | 'warn' | 'info' {
   switch (status) {
-    case 'GIVEN': return 'success'
-    case 'MISSED': return 'danger'
-    case 'REFUSED': return 'warn'
-    case 'HELD': return 'info'
-    default: return 'info'
+    case 'GIVEN':
+      return 'success'
+    case 'MISSED':
+      return 'danger'
+    case 'REFUSED':
+      return 'warn'
+    case 'HELD':
+      return 'info'
+    default:
+      return 'info'
   }
 }
 </script>
@@ -56,11 +61,7 @@ function getStatusSeverity(status: string): 'success' | 'danger' | 'warn' | 'inf
     </div>
 
     <div v-else class="medication-list">
-      <div
-        v-for="med in props.medications"
-        :key="med.orderId"
-        class="medication-item"
-      >
+      <div v-for="med in props.medications" :key="med.orderId" class="medication-item">
         <div class="med-info">
           <div class="med-name">
             <strong>{{ med.medication || '-' }}</strong>
@@ -68,8 +69,12 @@ function getStatusSeverity(status: string): 'success' | 'danger' | 'warn' | 'inf
             <Tag v-if="med.route" :value="med.route" severity="info" class="med-route" />
           </div>
           <div class="med-details">
-            <span v-if="med.frequency">{{ t('kardex.medications.frequency') }}: {{ med.frequency }}</span>
-            <span v-if="med.schedule"> &middot; {{ t('kardex.medications.schedule') }}: {{ med.schedule }}</span>
+            <span v-if="med.frequency"
+              >{{ t('kardex.medications.frequency') }}: {{ med.frequency }}</span
+            >
+            <span v-if="med.schedule">
+              &middot; {{ t('kardex.medications.schedule') }}: {{ med.schedule }}</span
+            >
           </div>
           <div v-if="med.inventoryItemName" class="med-inventory">
             {{ med.inventoryItemName }}

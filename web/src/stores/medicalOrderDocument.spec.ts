@@ -91,9 +91,7 @@ describe('useMedicalOrderDocumentStore', () => {
       const store = useMedicalOrderDocumentStore()
       const result = await store.fetchDocuments(100, 10)
 
-      expect(mockedApi.get).toHaveBeenCalledWith(
-        '/v1/admissions/100/medical-orders/10/documents'
-      )
+      expect(mockedApi.get).toHaveBeenCalledWith('/v1/admissions/100/medical-orders/10/documents')
       expect(result).toHaveLength(2)
       expect(store.getDocuments(10)).toHaveLength(2)
     })

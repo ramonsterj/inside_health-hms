@@ -111,7 +111,9 @@ async function deletePatient(patient: PatientSummary) {
     toast.add({
       severity: 'success',
       summary: t('patient.deleteSuccess'),
-      detail: t('patient.deleteSuccessDetail', { name: getFullName(patient.firstName, patient.lastName) }),
+      detail: t('patient.deleteSuccessDetail', {
+        name: getFullName(patient.firstName, patient.lastName)
+      }),
       life: 3000
     })
     loadPatients()
@@ -249,7 +251,11 @@ async function onFileUpload(event: { files: File | File[] }) {
                   rounded
                   :disabled="data.hasActiveAdmission"
                   @click="admitPatient(data.id)"
-                  v-tooltip.top="data.hasActiveAdmission ? t('patient.alreadyAdmitted') : t('patient.actions.admit')"
+                  v-tooltip.top="
+                    data.hasActiveAdmission
+                      ? t('patient.alreadyAdmitted')
+                      : t('patient.actions.admit')
+                  "
                 />
                 <Button
                   v-if="canUploadId && !data.hasIdDocument"

@@ -658,7 +658,12 @@ function closeIdDocumentDialog() {
       @hide="closeIdDocumentDialog"
     >
       <div class="document-preview">
-        <img v-if="idDocumentUrl" :src="idDocumentUrl" :alt="t('patient.idDocument')" class="document-image" />
+        <img
+          v-if="idDocumentUrl"
+          :src="idDocumentUrl"
+          :alt="t('patient.idDocument')"
+          class="document-image"
+        />
       </div>
       <template #footer>
         <Button :label="t('common.close')" @click="closeIdDocumentDialog" />

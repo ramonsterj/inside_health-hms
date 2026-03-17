@@ -71,13 +71,7 @@ function goBack() {
   <div class="item-detail-page" v-if="itemStore.currentItem">
     <div class="page-header">
       <div>
-        <Button
-          icon="pi pi-arrow-left"
-          severity="secondary"
-          text
-          rounded
-          @click="goBack"
-        />
+        <Button icon="pi pi-arrow-left" severity="secondary" text rounded @click="goBack" />
         <h1 class="page-title">{{ t('inventory.item.detail') }}</h1>
       </div>
     </div>

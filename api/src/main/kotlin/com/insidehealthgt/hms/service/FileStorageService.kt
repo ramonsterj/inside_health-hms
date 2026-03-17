@@ -35,6 +35,7 @@ enum class StorageDocumentType(val directoryName: String) {
  * Files are organized in patient-specific directories:
  * {base-path}/patients/{patientId}/{documentType}/{uuid}_{filename}
  */
+@Suppress("TooManyFunctions")
 @Service
 class FileStorageService(
     @Value("\${app.file-storage.base-path}")
@@ -114,6 +115,18 @@ class FileStorageService(
         }
 
         return filePath
+    }
+
+    /**
+     * Store an invoice scan for an expense.
+     *
+     * @param expenseId The expense ID for directory organization
+     * @param file The uploaded file
+     * @return The relative storage path from base directory
+     */
+    fun storeExpenseInvoice(expenseId: Long, file: MultipartFile): String {
+        val relativePath = Paths.get("treasury", "expenses", expenseId.toString())
+        return storeMultipartFile(relativePath, file)
     }
 
     /**

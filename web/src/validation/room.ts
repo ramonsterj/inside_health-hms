@@ -22,16 +22,8 @@ export const roomSchema = z.object({
     .int('validation.room.capacity.integer')
     .min(1, 'validation.room.capacity.min')
     .default(1),
-  price: z
-    .number()
-    .min(0, 'validation.inventory.room.price.min')
-    .nullable()
-    .optional(),
-  cost: z
-    .number()
-    .min(0, 'validation.inventory.room.cost.min')
-    .nullable()
-    .optional()
+  price: z.number().min(0, 'validation.inventory.room.price.min').nullable().optional(),
+  cost: z.number().min(0, 'validation.inventory.room.cost.min').nullable().optional()
 })
 
 // Type exports inferred from schemas

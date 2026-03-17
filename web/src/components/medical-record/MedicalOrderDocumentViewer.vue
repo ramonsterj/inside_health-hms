@@ -43,7 +43,8 @@ watch(
 const URL_REVOCATION_DELAY_MS = 5000
 
 async function fetchDocumentBlob(): Promise<Blob | null> {
-  if (!document.value || !documentStore.viewerAdmissionId || !documentStore.viewerOrderId) return null
+  if (!document.value || !documentStore.viewerAdmissionId || !documentStore.viewerOrderId)
+    return null
 
   loading.value = true
   try {

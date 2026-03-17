@@ -1,15 +1,18 @@
 plugins {
-    kotlin("jvm") version "2.3.10"
-    kotlin("plugin.spring") version "2.3.10"
-    kotlin("plugin.jpa") version "2.3.10"
+    kotlin("jvm") version "2.3.0"
+    kotlin("plugin.spring") version "2.3.0"
+    kotlin("plugin.jpa") version "2.3.0"
     id("org.springframework.boot") version "4.0.1"
     id("io.spring.dependency-management") version "1.1.7"
-    id("dev.detekt") version "main-SNAPSHOT"
+    id("dev.detekt") version "2.0.0-alpha.2"
     id("org.owasp.dependencycheck") version "12.2.0"
 }
 
 group = "com.insidehealthgt"
 version = "0.0.1-SNAPSHOT"
+
+// Override Spring Boot's managed dependency versions to address security vulnerabilities
+ext["tomcat.version"] = "11.0.18"
 
 java {
     toolchain {
@@ -19,9 +22,6 @@ java {
 
 repositories {
     mavenCentral()
-    maven {
-        url = uri("https://central.sonatype.com/repository/maven-snapshots/")
-    }
 }
 
 dependencies {
@@ -52,7 +52,7 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
 
     // PDF rendering for thumbnail generation
-    implementation("org.apache.pdfbox:pdfbox:3.0.1")
+    implementation("org.apache.pdfbox:pdfbox:3.0.7")
 
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -95,7 +95,7 @@ dependencyCheck {
 }
 
 dependencies {
-    detektPlugins("dev.detekt:detekt-rules-ktlint-wrapper:main-SNAPSHOT")
+    detektPlugins("dev.detekt:detekt-rules-ktlint-wrapper:2.0.0-alpha.2")
 }
 
 tasks.named("check") {

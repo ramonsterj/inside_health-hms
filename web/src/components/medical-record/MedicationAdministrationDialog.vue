@@ -43,14 +43,13 @@ const statusOptions = [
   { label: t('medicationAdministration.statuses.HELD'), value: AdministrationStatus.HELD }
 ]
 
-const { defineField, handleSubmit, errors, resetForm } =
-  useForm<MedicationAdministrationFormData>({
-    validationSchema: toTypedSchema(createMedicationAdministrationSchema),
-    initialValues: {
-      status: AdministrationStatus.GIVEN,
-      notes: ''
-    }
-  })
+const { defineField, handleSubmit, errors, resetForm } = useForm<MedicationAdministrationFormData>({
+  validationSchema: toTypedSchema(createMedicationAdministrationSchema),
+  initialValues: {
+    status: AdministrationStatus.GIVEN,
+    notes: ''
+  }
+})
 
 const [status] = defineField('status')
 const [notes] = defineField('notes')

@@ -267,6 +267,19 @@ const router = createRouter({
           name: 'inventory-item-edit',
           component: () => import('@/views/inventory/InventoryItemFormView.vue'),
           meta: { requiresPermission: 'inventory-item:update' }
+        },
+        // Treasury routes
+        {
+          path: 'treasury/bank-accounts',
+          name: 'treasury-bank-accounts',
+          component: () => import('@/views/treasury/BankAccountList.vue'),
+          meta: { requiresPermission: 'treasury:read' }
+        },
+        {
+          path: 'treasury/expenses',
+          name: 'treasury-expenses',
+          component: () => import('@/views/treasury/ExpenseList.vue'),
+          meta: { requiresPermission: 'treasury:read' }
         }
       ]
     },

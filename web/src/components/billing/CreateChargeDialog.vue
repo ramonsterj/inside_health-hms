@@ -46,7 +46,7 @@ const [description] = defineField('description')
 const [quantity] = defineField('quantity')
 const [unitPrice] = defineField('unitPrice')
 
-const onSubmit = handleSubmit(async (values) => {
+const onSubmit = handleSubmit(async values => {
   loading.value = true
   try {
     await billingStore.createCharge(props.admissionId, values as unknown as CreateChargeRequest)

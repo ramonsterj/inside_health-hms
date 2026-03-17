@@ -31,9 +31,7 @@ export const useInventoryCategoryStore = defineStore('inventoryCategory', () => 
   async function fetchActiveCategories(): Promise<void> {
     loading.value = true
     try {
-      const response = await api.get<ApiResponse<InventoryCategory[]>>(
-        '/v1/inventory-categories'
-      )
+      const response = await api.get<ApiResponse<InventoryCategory[]>>('/v1/inventory-categories')
       if (response.data.success && response.data.data) {
         activeCategories.value = response.data.data
       }
@@ -58,9 +56,7 @@ export const useInventoryCategoryStore = defineStore('inventoryCategory', () => 
     }
   }
 
-  async function createCategory(
-    data: CreateInventoryCategoryRequest
-  ): Promise<InventoryCategory> {
+  async function createCategory(data: CreateInventoryCategoryRequest): Promise<InventoryCategory> {
     loading.value = true
     try {
       const response = await api.post<ApiResponse<InventoryCategory>>(
@@ -99,9 +95,7 @@ export const useInventoryCategoryStore = defineStore('inventoryCategory', () => 
   async function deleteCategory(id: number): Promise<void> {
     loading.value = true
     try {
-      const response = await api.delete<ApiResponse<void>>(
-        `/v1/admin/inventory-categories/${id}`
-      )
+      const response = await api.delete<ApiResponse<void>>(`/v1/admin/inventory-categories/${id}`)
       if (!response.data.success) {
         throw new Error(response.data.message || 'Delete category failed')
       }

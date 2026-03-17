@@ -50,8 +50,8 @@ const mockCategories: PsychotherapyCategory[] = [
     description: 'Private one-on-one sessions',
     displayOrder: 2,
     active: true,
-    price: 500.00,
-    cost: 200.00,
+    price: 500.0,
+    cost: 200.0,
     createdAt: null,
     updatedAt: null
   },

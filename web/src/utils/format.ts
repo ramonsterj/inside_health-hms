@@ -55,3 +55,9 @@ export function formatPrice(value: number | null | undefined): string {
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-GT', { style: 'currency', currency: 'GTQ' }).format(value)
 }
+
+export function toApiDate(value: Date | string | null | undefined): string | null {
+  if (!value) return null
+  if (value instanceof Date) return value.toISOString().substring(0, 10)
+  return value
+}

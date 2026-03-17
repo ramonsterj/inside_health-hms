@@ -46,9 +46,7 @@ export const useInventoryItemStore = defineStore('inventoryItem', () => {
   async function fetchItem(id: number): Promise<InventoryItem> {
     loading.value = true
     try {
-      const response = await api.get<ApiResponse<InventoryItem>>(
-        `/v1/admin/inventory-items/${id}`
-      )
+      const response = await api.get<ApiResponse<InventoryItem>>(`/v1/admin/inventory-items/${id}`)
       if (response.data.success && response.data.data) {
         currentItem.value = response.data.data
         return response.data.data
@@ -62,10 +60,7 @@ export const useInventoryItemStore = defineStore('inventoryItem', () => {
   async function createItem(data: CreateInventoryItemRequest): Promise<InventoryItem> {
     loading.value = true
     try {
-      const response = await api.post<ApiResponse<InventoryItem>>(
-        '/v1/admin/inventory-items',
-        data
-      )
+      const response = await api.post<ApiResponse<InventoryItem>>('/v1/admin/inventory-items', data)
       if (response.data.success && response.data.data) {
         return response.data.data
       }
@@ -75,10 +70,7 @@ export const useInventoryItemStore = defineStore('inventoryItem', () => {
     }
   }
 
-  async function updateItem(
-    id: number,
-    data: UpdateInventoryItemRequest
-  ): Promise<InventoryItem> {
+  async function updateItem(id: number, data: UpdateInventoryItemRequest): Promise<InventoryItem> {
     loading.value = true
     try {
       const response = await api.put<ApiResponse<InventoryItem>>(
@@ -98,9 +90,7 @@ export const useInventoryItemStore = defineStore('inventoryItem', () => {
   async function deleteItem(id: number): Promise<void> {
     loading.value = true
     try {
-      const response = await api.delete<ApiResponse<void>>(
-        `/v1/admin/inventory-items/${id}`
-      )
+      const response = await api.delete<ApiResponse<void>>(`/v1/admin/inventory-items/${id}`)
       if (!response.data.success) {
         throw new Error(response.data.message || 'Delete item failed')
       }

@@ -286,5 +286,4 @@ function handleFormCancelled() {
   white-space: pre-wrap;
   word-wrap: break-word;
 }
-
 </style>

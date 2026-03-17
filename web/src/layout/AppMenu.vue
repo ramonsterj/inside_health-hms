@@ -91,6 +91,25 @@ const model = computed<MenuItem[]>(() => {
     })
   }
 
+  // Treasury section - visible to users with treasury permissions
+  if (authStore.hasPermission('treasury:read')) {
+    items.push({
+      label: 'nav.treasury',
+      items: [
+        {
+          label: 'nav.bankAccounts',
+          icon: 'pi pi-fw pi-building-columns',
+          to: '/treasury/bank-accounts'
+        },
+        {
+          label: 'nav.expenses',
+          icon: 'pi pi-fw pi-receipt',
+          to: '/treasury/expenses'
+        }
+      ]
+    })
+  }
+
   // Admin section - only visible to admins
   if (authStore.isAdmin) {
     items.push({

@@ -21,9 +21,7 @@ export const useMedicationAdministrationStore = defineStore('medicationAdministr
   ): Promise<void> {
     loading.value = true
     try {
-      const response = await api.get<
-        ApiResponse<PageResponse<MedicationAdministrationResponse>>
-      >(
+      const response = await api.get<ApiResponse<PageResponse<MedicationAdministrationResponse>>>(
         `/v1/admissions/${admissionId}/medical-orders/${orderId}/administrations`,
         { params: { page, size } }
       )

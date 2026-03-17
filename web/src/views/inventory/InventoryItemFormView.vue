@@ -30,7 +30,7 @@ const isEditMode = computed(() => !!route.params.id)
 const itemId = computed(() => Number(route.params.id) || null)
 
 const categoryOptions = computed(() =>
-  categoryStore.activeCategories.map((c) => ({ label: c.name, value: c.id }))
+  categoryStore.activeCategories.map(c => ({ label: c.name, value: c.id }))
 )
 
 const pricingTypeOptions = computed(() => [
@@ -72,7 +72,7 @@ const [active] = defineField('active')
 
 const isTimeBased = computed(() => pricingType.value === PricingType.TIME_BASED)
 
-watch(pricingType, (newVal) => {
+watch(pricingType, newVal => {
   if (newVal === PricingType.FLAT) {
     timeUnit.value = null
     timeInterval.value = null
@@ -110,7 +110,7 @@ async function loadItem() {
   }
 }
 
-const onSubmit = handleSubmit(async (values) => {
+const onSubmit = handleSubmit(async values => {
   loading.value = true
   try {
     const data = {

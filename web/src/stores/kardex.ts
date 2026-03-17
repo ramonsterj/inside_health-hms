@@ -11,16 +11,21 @@ export const useKardexStore = defineStore('kardex', () => {
   const totalPages = ref(0)
   const loading = ref(false)
   let autoRefreshTimer: ReturnType<typeof setInterval> | null = null
-  let lastFetchParams: { page: number; size: number; type?: string | null; search?: string | null } = {
+  let lastFetchParams: {
+    page: number
+    size: number
+    type?: string | null
+    search?: string | null
+  } = {
     page: 0,
-    size: 20,
+    size: 20
   }
 
   async function fetchSummaries(
     page = 0,
     size = 20,
     type?: string | null,
-    search?: string | null,
+    search?: string | null
   ): Promise<void> {
     loading.value = true
     lastFetchParams = { page, size, type, search }
@@ -31,7 +36,7 @@ export const useKardexStore = defineStore('kardex', () => {
 
       const response = await api.get<ApiResponse<PageResponse<KardexAdmissionSummary>>>(
         '/v1/nursing-kardex',
-        { params },
+        { params }
       )
       if (response.data.success && response.data.data) {
         summaries.value = response.data.data.content
@@ -46,7 +51,7 @@ export const useKardexStore = defineStore('kardex', () => {
   async function refreshSingleAdmission(admissionId: number): Promise<void> {
     try {
       const response = await api.get<ApiResponse<KardexAdmissionSummary>>(
-        `/v1/nursing-kardex/${admissionId}`,
+        `/v1/nursing-kardex/${admissionId}`
       )
       if (response.data.success && response.data.data) {
         const index = summaries.value.findIndex(s => s.admissionId === admissionId)
@@ -60,7 +65,7 @@ export const useKardexStore = defineStore('kardex', () => {
         lastFetchParams.page,
         lastFetchParams.size,
         lastFetchParams.type,
-        lastFetchParams.search,
+        lastFetchParams.search
       )
     }
   }
@@ -72,7 +77,7 @@ export const useKardexStore = defineStore('kardex', () => {
         lastFetchParams.page,
         lastFetchParams.size,
         lastFetchParams.type,
-        lastFetchParams.search,
+        lastFetchParams.search
       )
     }, AUTO_REFRESH_INTERVAL_MS)
   }
@@ -92,6 +97,6 @@ export const useKardexStore = defineStore('kardex', () => {
     fetchSummaries,
     refreshSingleAdmission,
     startAutoRefresh,
-    stopAutoRefresh,
+    stopAutoRefresh
   }
 })

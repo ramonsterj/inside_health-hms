@@ -39,7 +39,6 @@ function formatDoctorName(doctor: {
   const salutationLabel = doctor.salutation ? t(`user.salutations.${doctor.salutation}`) : ''
   return `${salutationLabel} ${getFullName(doctor.firstName, doctor.lastName)}`.trim()
 }
-
 </script>
 
 <template>
