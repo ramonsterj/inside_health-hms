@@ -29,6 +29,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       SERVER_PORT: 8081
       FILE_STORAGE_PATH: /var/data/hms/files
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-acceptance}
     volumes:
       - file_storage:/var/data/hms/files
