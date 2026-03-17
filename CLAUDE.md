@@ -308,6 +308,7 @@ class GlobalExceptionHandler {
 - ✅ Hospital Billing System (real-time charge capture, scheduled daily room charges, daily balance, adjustments, invoice generation at discharge, event-driven integration)
 - ✅ Clinical Event Billing Automation (medication administration record, psychotherapy activity billing, medical order billing, procedure admission billing, daily diet charges, discharge auto-invoice)
 - ✅ Medical Order Document Attachments (file upload/download for lab results, thumbnails, permission-based access)
+- ✅ Nursing Kardex Dashboard (aggregated clinical view for nurses: active medications, care instructions, latest vitals, nursing notes, quick actions)
 
 ### Frontend (Complete)
 - ✅ Vue 3.5 + TypeScript 5.9 + Vite 7.x
@@ -327,6 +328,7 @@ class GlobalExceptionHandler {
 - ✅ Medication Administration UI (administer dialog, history with pagination, status badges, inventory item linking on medical orders)
 - ✅ Psychotherapy Category Pricing UI (price/cost fields on category form and list)
 - ✅ Medical Order Document Attachments UI (upload dialog, thumbnail grid, document viewer, count badges on order cards)
+- ✅ Nursing Kardex Dashboard UI (expandable patient cards, medication/vitals/care sections, quick-administer/record-vitals/add-note, auto-refresh, role-based routing from `/dashboard`)
 
 ### Security Tooling
 - ✅ Detekt (Kotlin static analysis)

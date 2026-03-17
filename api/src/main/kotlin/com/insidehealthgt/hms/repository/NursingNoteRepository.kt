@@ -34,6 +34,21 @@ interface NursingNoteRepository : JpaRepository<NursingNote, Long> {
     )
     fun findByIdAndAdmissionId(@Param("noteId") noteId: Long, @Param("admissionId") admissionId: Long): NursingNote?
 
+    @Query(
+        value = """
+            SELECT * FROM (
+                SELECT nn.*, ROW_NUMBER() OVER (
+                    PARTITION BY nn.admission_id
+                    ORDER BY nn.created_at DESC, nn.id DESC
+                ) AS rn
+                FROM nursing_notes nn
+                WHERE nn.admission_id IN (:admissionIds) AND nn.deleted_at IS NULL
+            ) ranked WHERE rn = 1
+        """,
+        nativeQuery = true,
+    )
+    fun findLatestByAdmissionIds(@Param("admissionIds") admissionIds: List<Long>): List<NursingNote>
+
     /**
      * Delete all nursing notes including soft-deleted ones (for test cleanup).
      */

@@ -53,6 +53,7 @@
     "dashboard": "Dashboard",
     "patients": "Patients",
     "admissions": "Admissions",
+    "nursingKardex": "Nursing Kardex",
     "users": "Users",
     "roles": "Roles",
     "triageCodes": "Triage Codes",
@@ -1566,5 +1567,73 @@
     "numberedList": "Numbered List",
     "bulletList": "Bullet List",
     "clearFormatting": "Clear Formatting"
+  },
+  "kardex": {
+    "title": "Nursing Kardex",
+    "subtitle": "Active patient overview",
+    "searchPlaceholder": "Search by patient name...",
+    "filterByType": "Filter by type",
+    "allTypes": "All Types",
+    "refresh": "Refresh",
+    "autoRefresh": "Auto-refresh every 5 min",
+    "noAdmissions": "No active admissions",
+    "daysAdmitted": "{count} day | {count} days",
+    "treatingPhysician": "Physician",
+    "noRoom": "No room",
+    "labels": {
+      "stay": "Stay",
+      "medications": "Medications",
+      "vitals": "Vitals",
+      "instructions": "Instructions"
+    },
+    "medications": {
+      "title": "Active Medications",
+      "count": "{count} active medication | {count} active medications",
+      "empty": "No active medication orders",
+      "dose": "Dose",
+      "route": "Route",
+      "frequency": "Frequency",
+      "schedule": "Schedule",
+      "administer": "Administer",
+      "lastAdmin": "Last administered",
+      "neverAdministered": "Not yet administered",
+      "noInventoryLink": "No inventory item linked"
+    },
+    "careInstructions": {
+      "title": "Care Instructions",
+      "count": "{count} active instruction | {count} active instructions",
+      "empty": "No active care instructions",
+      "since": "Since"
+    },
+    "vitals": {
+      "title": "Latest Vital Signs",
+      "empty": "No vital signs recorded",
+      "recordedAt": "Recorded",
+      "recordedBy": "By",
+      "bp": "BP",
+      "hr": "HR",
+      "rr": "RR",
+      "temp": "Temp",
+      "spo2": "SpO2",
+      "mmhg": "mmHg",
+      "bpm": "bpm",
+      "perMin": "/min",
+      "celsius": "°C",
+      "percent": "%",
+      "hoursAgo": "{hours}h ago",
+      "never": "Never",
+      "overdue": "Overdue",
+      "recordVitals": "Record Vitals"
+    },
+    "notes": {
+      "lastNote": "Last Note",
+      "noNotes": "No nursing notes",
+      "addNote": "Add Note"
+    },
+    "actions": {
+      "viewDetail": "View Detail",
+      "expand": "Expand",
+      "collapse": "Collapse"
+    }
   }
 }

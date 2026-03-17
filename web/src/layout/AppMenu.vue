@@ -59,6 +59,11 @@ const model = computed<MenuItem[]>(() => {
       icon: 'pi pi-fw pi-building',
       to: '/admissions'
     })
+    clinicalItems.push({
+      label: 'nav.nursingKardex',
+      icon: 'pi pi-fw pi-clipboard',
+      to: '/nursing-kardex'
+    })
   }
   if (clinicalItems.length > 0) {
     items.push({

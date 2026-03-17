@@ -176,7 +176,7 @@ function handleDocumentUploaded() {
   <div class="admission-detail-page">
     <div class="page-header">
       <div class="header-left">
-        <Button icon="pi pi-arrow-left" text rounded @click="router.push({ name: 'admissions' })" />
+        <Button icon="pi pi-arrow-left" text rounded @click="router.back()" />
         <h1 class="page-title">{{ t('admission.details') }}</h1>
       </div>
       <div class="header-actions" v-if="admission">

@@ -1,6 +1,7 @@
 package com.insidehealthgt.hms.repository
 
 import com.insidehealthgt.hms.entity.MedicalOrder
+import com.insidehealthgt.hms.entity.MedicalOrderCategory
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -31,4 +32,19 @@ interface MedicalOrderRepository : JpaRepository<MedicalOrder, Long> {
         """,
     )
     fun findByIdAndAdmissionId(@Param("orderId") orderId: Long, @Param("admissionId") admissionId: Long): MedicalOrder?
+
+    @Query(
+        """
+        SELECT mo FROM MedicalOrder mo
+        LEFT JOIN FETCH mo.inventoryItem
+        WHERE mo.admission.id IN :admissionIds
+        AND mo.status = com.insidehealthgt.hms.entity.MedicalOrderStatus.ACTIVE
+        AND mo.category IN :categories
+        ORDER BY mo.category, mo.startDate ASC
+        """,
+    )
+    fun findActiveByAdmissionIdsAndCategories(
+        @Param("admissionIds") admissionIds: List<Long>,
+        @Param("categories") categories: List<MedicalOrderCategory>,
+    ): List<MedicalOrder>
 }
