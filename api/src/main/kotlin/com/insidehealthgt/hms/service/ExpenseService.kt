@@ -27,6 +27,20 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+data class CreatePaidExpenseCommand(
+    val supplierName: String,
+    val category: ExpenseCategory,
+    val amount: BigDecimal,
+    val expenseDate: LocalDate,
+    val invoiceNumber: String,
+    val bankAccountId: Long,
+    val paymentDate: LocalDate,
+    val paymentReference: String? = null,
+    val invoiceDocumentPath: String? = null,
+    val treasuryEmployeeId: Long? = null,
+    val notes: String? = null,
+)
+
 @Suppress("TooManyFunctions")
 @Service
 class ExpenseService(
@@ -193,6 +207,33 @@ class ExpenseService(
         findEntityById(id) // verify expense exists
         return expensePaymentRepository.findAllByExpenseIdOrderByPaymentDateAsc(id)
             .map { ExpensePaymentResponse.from(it) }
+    }
+
+    @Transactional
+    fun createPaidExpense(command: CreatePaidExpenseCommand): Expense {
+        val bankAccount = bankAccountService.findEntityById(command.bankAccountId)
+        val expense = Expense(
+            supplierName = command.supplierName,
+            category = command.category,
+            amount = command.amount,
+            expenseDate = command.expenseDate,
+            invoiceNumber = command.invoiceNumber,
+            invoiceDocumentPath = command.invoiceDocumentPath,
+            status = ExpenseStatus.PAID,
+            paidAmount = command.amount,
+            treasuryEmployeeId = command.treasuryEmployeeId,
+            notes = command.notes?.takeIf { it.isNotBlank() },
+        )
+        val savedExpense = expenseRepository.save(expense)
+        val payment = ExpensePayment(
+            expense = savedExpense,
+            amount = command.amount,
+            paymentDate = command.paymentDate,
+            bankAccount = bankAccount,
+            reference = command.paymentReference,
+        )
+        expensePaymentRepository.save(payment)
+        return savedExpense
     }
 
     fun findEntityById(id: Long): Expense = expenseRepository.findById(id)

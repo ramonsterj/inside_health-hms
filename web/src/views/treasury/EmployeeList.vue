@@ -92,6 +92,10 @@ function viewPayroll(employee: TreasuryEmployee) {
   router.push({ name: 'employee-payroll', params: { id: employee.id } })
 }
 
+function viewDoctorFees(employee: TreasuryEmployee) {
+  router.push({ name: 'employee-doctor-fees', params: { id: employee.id } })
+}
+
 function openTerminate(employee: TreasuryEmployee) {
   terminatingEmployee.value = employee
   terminationDate.value = new Date()
@@ -260,6 +264,15 @@ function compensationDisplay(employee: TreasuryEmployee): string {
                   rounded
                   v-tooltip.top="data.employeeType === EmployeeType.PAYROLL ? t('treasury.payroll.title') : t('treasury.employee.contractorPayments')"
                   @click="viewPayroll(data)"
+                />
+                <Button
+                  v-if="data.employeeType === EmployeeType.DOCTOR"
+                  icon="pi pi-money-bill"
+                  severity="success"
+                  text
+                  rounded
+                  v-tooltip.top="t('treasury.doctorFee.title')"
+                  @click="viewDoctorFees(data)"
                 />
                 <Button
                   v-if="canConfigure"

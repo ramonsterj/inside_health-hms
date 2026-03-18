@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import {
   BankAccountType,
+  DoctorFeeBillingType,
   DoctorFeeArrangement,
   EmployeeType,
   ExpenseCategory,
@@ -177,6 +178,41 @@ export const recordContractorPaymentSchema = z.object({
   bankAccountId: z.number().positive().optional().nullable(),
   notes: z.string().optional().or(z.literal(''))
 })
+
+// --- Phase 3: Doctor Fees ---
+
+export const createDoctorFeeSchema = z.object({
+  billingType: z.nativeEnum(DoctorFeeBillingType, {
+    required_error: 'validation.treasury.doctorFee.billingType.required'
+  }),
+  grossAmount: z
+    .number({ required_error: 'validation.treasury.doctorFee.grossAmount.required' })
+    .positive('validation.treasury.doctorFee.grossAmount.positive'),
+  commissionPct: z.number().min(0).max(100).optional().nullable(),
+  feeDate: z.string().min(1, 'validation.treasury.doctorFee.feeDate.required'),
+  patientChargeId: z.number().positive().optional().nullable(),
+  description: z.string().max(500).optional().or(z.literal('')),
+  notes: z.string().optional().or(z.literal(''))
+})
+
+export const updateDoctorFeeStatusSchema = z.object({
+  doctorInvoiceNumber: z
+    .string()
+    .min(1, 'validation.treasury.doctorFee.invoiceNumber.required')
+    .max(100)
+})
+
+export const settleDoctorFeeSchema = z.object({
+  bankAccountId: z
+    .number({ required_error: 'validation.treasury.payment.bankAccountId.required' })
+    .positive(),
+  paymentDate: z.string().min(1, 'validation.treasury.payment.paymentDate.required'),
+  notes: z.string().optional().or(z.literal(''))
+})
+
+export type CreateDoctorFeeFormData = z.infer<typeof createDoctorFeeSchema>
+export type UpdateDoctorFeeStatusFormData = z.infer<typeof updateDoctorFeeStatusSchema>
+export type SettleDoctorFeeFormData = z.infer<typeof settleDoctorFeeSchema>
 
 export type CreateTreasuryEmployeeFormData = z.infer<typeof createTreasuryEmployeeSchema>
 export type UpdateTreasuryEmployeeFormData = z.infer<typeof updateTreasuryEmployeeSchema>

@@ -26,7 +26,7 @@ class InvoiceService(
 
     @Transactional(readOnly = true)
     fun searchInvoices(search: String?): List<InvoiceSummaryResponse> {
-        val effectiveSearch = search?.takeIf { it.isNotBlank() }
+        val effectiveSearch = search?.takeIf { it.isNotBlank() } ?: ""
         return invoiceRepository.searchInvoices(effectiveSearch).map { InvoiceSummaryResponse.from(it) }
     }
 

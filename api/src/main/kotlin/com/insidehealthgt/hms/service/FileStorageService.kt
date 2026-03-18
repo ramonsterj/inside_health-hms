@@ -164,6 +164,18 @@ class FileStorageService(
     }
 
     /**
+     * Store an invoice document for a doctor fee.
+     *
+     * @param doctorFeeId The doctor fee ID for directory organization
+     * @param file The uploaded file
+     * @return The relative storage path from base directory
+     */
+    fun storeDoctorFeeInvoice(doctorFeeId: Long, file: MultipartFile): String {
+        val relativePath = Paths.get("treasury", "doctor-fees", doctorFeeId.toString())
+        return storeMultipartFile(relativePath, file)
+    }
+
+    /**
      * Common file storage logic for MultipartFile uploads.
      *
      * @param directoryPath The relative directory path to store the file in

@@ -31,13 +31,13 @@ interface InvoiceRepository : JpaRepository<Invoice, Long> {
         SELECT i FROM Invoice i
         LEFT JOIN FETCH i.admission a
         LEFT JOIN FETCH a.patient p
-        WHERE (:search IS NULL
+        WHERE (:search = ''
             OR LOWER(i.invoiceNumber) LIKE LOWER(CONCAT('%', :search, '%'))
             OR LOWER(CONCAT(p.firstName, ' ', p.lastName)) LIKE LOWER(CONCAT('%', :search, '%')))
         ORDER BY i.createdAt DESC
         """,
     )
-    fun searchInvoices(@Param("search") search: String?): List<Invoice>
+    fun searchInvoices(@Param("search") search: String): List<Invoice>
 
     @Modifying
     @Transactional

@@ -12,5 +12,5 @@ data class TerminateEmployeeRequest(
     @field:Size(max = 255)
     val terminationReason: String? = null,
 
-    val cancelPendingPayroll: Boolean = false,
+    val cancelPendingPayroll: Boolean? = false,
 )

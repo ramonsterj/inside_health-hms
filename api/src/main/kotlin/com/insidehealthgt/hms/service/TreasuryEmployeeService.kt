@@ -14,11 +14,9 @@ import com.insidehealthgt.hms.dto.response.IndemnizacionResponse
 import com.insidehealthgt.hms.dto.response.PayrollEntryResponse
 import com.insidehealthgt.hms.dto.response.SalaryHistoryResponse
 import com.insidehealthgt.hms.dto.response.TreasuryEmployeeResponse
+import com.insidehealthgt.hms.entity.DoctorFeeStatus
 import com.insidehealthgt.hms.entity.EmployeeType
-import com.insidehealthgt.hms.entity.Expense
 import com.insidehealthgt.hms.entity.ExpenseCategory
-import com.insidehealthgt.hms.entity.ExpensePayment
-import com.insidehealthgt.hms.entity.ExpenseStatus
 import com.insidehealthgt.hms.entity.PayrollEntry
 import com.insidehealthgt.hms.entity.PayrollPeriod
 import com.insidehealthgt.hms.entity.PayrollStatus
@@ -27,7 +25,7 @@ import com.insidehealthgt.hms.entity.TreasuryEmployee
 import com.insidehealthgt.hms.entity.User
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
-import com.insidehealthgt.hms.repository.ExpensePaymentRepository
+import com.insidehealthgt.hms.repository.DoctorFeeRepository
 import com.insidehealthgt.hms.repository.ExpenseRepository
 import com.insidehealthgt.hms.repository.PayrollEntryRepository
 import com.insidehealthgt.hms.repository.SalaryHistoryRepository
@@ -48,8 +46,9 @@ class TreasuryEmployeeService(
     private val employeeRepository: TreasuryEmployeeRepository,
     private val salaryHistoryRepository: SalaryHistoryRepository,
     private val payrollEntryRepository: PayrollEntryRepository,
+    private val doctorFeeRepository: DoctorFeeRepository,
     private val expenseRepository: ExpenseRepository,
-    private val expensePaymentRepository: ExpensePaymentRepository,
+    private val expenseService: ExpenseService,
     private val bankAccountService: BankAccountService,
     private val userRepository: UserRepository,
 ) {
@@ -105,7 +104,7 @@ class TreasuryEmployeeService(
             baseSalary = request.baseSalary,
             contractedRate = request.contractedRate,
             doctorFeeArrangement = request.doctorFeeArrangement,
-            hospitalCommissionPct = request.hospitalCommissionPct,
+            hospitalCommissionPct = request.hospitalCommissionPct ?: BigDecimal.ZERO,
             hireDate = request.hireDate,
             userId = request.userId,
             notes = request.notes?.takeIf { it.isNotBlank() },
@@ -133,7 +132,7 @@ class TreasuryEmployeeService(
         employee.position = request.position?.takeIf { it.isNotBlank() }
         employee.contractedRate = request.contractedRate
         employee.doctorFeeArrangement = request.doctorFeeArrangement
-        employee.hospitalCommissionPct = request.hospitalCommissionPct
+        employee.hospitalCommissionPct = request.hospitalCommissionPct ?: BigDecimal.ZERO
         employee.hireDate = request.hireDate
         employee.userId = request.userId
         employee.notes = request.notes?.takeIf { it.isNotBlank() }
@@ -157,7 +156,7 @@ class TreasuryEmployeeService(
                 )
             }
             currentHistory.effectiveTo = request.effectiveFrom.minusDays(1)
-            salaryHistoryRepository.save(currentHistory)
+            salaryHistoryRepository.saveAndFlush(currentHistory)
         }
 
         // Create new salary history
@@ -248,32 +247,23 @@ class TreasuryEmployeeService(
         if (entry.status != PayrollStatus.PENDING) {
             throw BadRequestException("Payroll entry is not in PENDING status")
         }
-        val bankAccount = bankAccountService.findEntityById(request.bankAccountId)
         val reference = "$PAYROLL_REF_PREFIX${entry.employee.id}-${entry.year}-${entry.period}"
 
         // Auto-create expense
-        val expense = Expense(
-            supplierName = entry.employee.fullName,
-            category = ExpenseCategory.PAYROLL,
-            amount = entry.grossAmount,
-            expenseDate = request.paymentDate,
-            invoiceNumber = reference,
-            status = ExpenseStatus.PAID,
-            paidAmount = entry.grossAmount,
-            treasuryEmployeeId = entry.employee.id,
-            notes = request.notes?.takeIf { it.isNotBlank() },
+        val savedExpense = expenseService.createPaidExpense(
+            CreatePaidExpenseCommand(
+                supplierName = entry.employee.fullName,
+                category = ExpenseCategory.PAYROLL,
+                amount = entry.grossAmount,
+                expenseDate = request.paymentDate,
+                invoiceNumber = reference,
+                bankAccountId = request.bankAccountId,
+                paymentDate = request.paymentDate,
+                paymentReference = reference,
+                treasuryEmployeeId = entry.employee.id,
+                notes = request.notes,
+            ),
         )
-        val savedExpense = expenseRepository.save(expense)
-
-        // Create expense payment
-        val payment = ExpensePayment(
-            expense = savedExpense,
-            amount = entry.grossAmount,
-            paymentDate = request.paymentDate,
-            bankAccount = bankAccount,
-            reference = reference,
-        )
-        expensePaymentRepository.save(payment)
 
         // Mark entry as paid
         entry.status = PayrollStatus.PAID
@@ -297,28 +287,20 @@ class TreasuryEmployeeService(
                 ?: throw BadRequestException("No petty cash account found")
         }
 
-        val expense = Expense(
-            supplierName = employee.fullName,
-            category = ExpenseCategory.PAYROLL,
-            amount = request.amount,
-            expenseDate = request.paymentDate,
-            invoiceNumber = request.invoiceNumber,
-            status = ExpenseStatus.PAID,
-            paidAmount = request.amount,
-            treasuryEmployeeId = id,
-            notes = request.notes?.takeIf { it.isNotBlank() },
+        val savedExpense = expenseService.createPaidExpense(
+            CreatePaidExpenseCommand(
+                supplierName = employee.fullName,
+                category = ExpenseCategory.PAYROLL,
+                amount = request.amount,
+                expenseDate = request.paymentDate,
+                invoiceNumber = request.invoiceNumber,
+                bankAccountId = bankAccount.id!!,
+                paymentDate = request.paymentDate,
+                paymentReference = request.invoiceNumber,
+                treasuryEmployeeId = id,
+                notes = request.notes,
+            ),
         )
-        val savedExpense = expenseRepository.save(expense)
-
-        val payment = ExpensePayment(
-            expense = savedExpense,
-            amount = request.amount,
-            paymentDate = request.paymentDate,
-            bankAccount = bankAccount,
-            reference = request.invoiceNumber,
-        )
-        expensePaymentRepository.save(payment)
-
         return ExpenseResponse.from(savedExpense)
     }
 
@@ -332,7 +314,7 @@ class TreasuryEmployeeService(
         employee.terminationDate = request.terminationDate
         employee.terminationReason = request.terminationReason?.takeIf { it.isNotBlank() }
 
-        if (request.cancelPendingPayroll) {
+        if (request.cancelPendingPayroll == true) {
             val pendingEntries = payrollEntryRepository.findAllByEmployeeIdAndStatusOrderByDueDateAsc(
                 id,
                 PayrollStatus.PENDING,
@@ -421,6 +403,22 @@ class TreasuryEmployeeService(
                 )
             }
         }
+
+        // Doctor fee settlements
+        doctorFeeRepository.findAllByTreasuryEmployeeIdAndStatus(employeeId, DoctorFeeStatus.PAID)
+            .forEach { fee ->
+                result.add(
+                    EmployeePaymentHistoryResponse(
+                        type = EmployeePaymentType.DOCTOR_FEE_SETTLEMENT,
+                        amount = fee.netAmount,
+                        date = fee.feeDate,
+                        reference = fee.doctorInvoiceNumber,
+                        status = fee.status.name,
+                        relatedEntityId = fee.id!!,
+                        createdAt = fee.createdAt,
+                    ),
+                )
+            }
 
         return result.sortedByDescending { it.date }
     }

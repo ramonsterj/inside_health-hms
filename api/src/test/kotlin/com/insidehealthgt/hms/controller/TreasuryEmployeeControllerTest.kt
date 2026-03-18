@@ -237,7 +237,7 @@ class TreasuryEmployeeControllerTest : AbstractIntegrationTest() {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.data").isArray)
-            .andExpect(jsonPath("$.data.length()").value(24))
+            .andExpect(jsonPath("$.data.length()").value(14))
     }
 
     @Test
@@ -260,7 +260,7 @@ class TreasuryEmployeeControllerTest : AbstractIntegrationTest() {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.data").isArray)
-            .andExpect(jsonPath("$.data.length()").value(24))
+            .andExpect(jsonPath("$.data.length()").value(14))
     }
 
     @Test
@@ -441,7 +441,10 @@ class TreasuryEmployeeControllerTest : AbstractIntegrationTest() {
             "fullName" to name,
             "employeeType" to type,
         )
-        if (type == "PAYROLL") request["baseSalary"] = 5000.00
+        if (type == "PAYROLL") {
+            request["baseSalary"] = 5000.00
+            request["hireDate"] = "2024-01-01"
+        }
         if (type == "CONTRACTOR") request["contractedRate"] = 3000.00
 
         val result = mockMvc.perform(
