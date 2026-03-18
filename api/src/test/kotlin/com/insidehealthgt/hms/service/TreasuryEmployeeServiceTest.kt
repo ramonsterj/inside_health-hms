@@ -14,7 +14,6 @@ import com.insidehealthgt.hms.entity.DoctorFeeArrangement
 import com.insidehealthgt.hms.entity.EmployeeType
 import com.insidehealthgt.hms.entity.Expense
 import com.insidehealthgt.hms.entity.ExpenseCategory
-import com.insidehealthgt.hms.entity.ExpensePayment
 import com.insidehealthgt.hms.entity.ExpenseStatus
 import com.insidehealthgt.hms.entity.PayrollEntry
 import com.insidehealthgt.hms.entity.PayrollPeriod
@@ -23,7 +22,7 @@ import com.insidehealthgt.hms.entity.SalaryHistory
 import com.insidehealthgt.hms.entity.TreasuryEmployee
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
-import com.insidehealthgt.hms.repository.ExpensePaymentRepository
+import com.insidehealthgt.hms.repository.DoctorFeeRepository
 import com.insidehealthgt.hms.repository.ExpenseRepository
 import com.insidehealthgt.hms.repository.PayrollEntryRepository
 import com.insidehealthgt.hms.repository.SalaryHistoryRepository
@@ -45,14 +44,15 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LargeClass")
 class TreasuryEmployeeServiceTest {
 
     private lateinit var employeeRepository: TreasuryEmployeeRepository
     private lateinit var salaryHistoryRepository: SalaryHistoryRepository
     private lateinit var payrollEntryRepository: PayrollEntryRepository
+    private lateinit var doctorFeeRepository: DoctorFeeRepository
     private lateinit var expenseRepository: ExpenseRepository
-    private lateinit var expensePaymentRepository: ExpensePaymentRepository
+    private lateinit var expenseService: ExpenseService
     private lateinit var bankAccountService: BankAccountService
     private lateinit var userRepository: UserRepository
     private lateinit var service: TreasuryEmployeeService
@@ -113,8 +113,9 @@ class TreasuryEmployeeServiceTest {
         employeeRepository = mock()
         salaryHistoryRepository = mock()
         payrollEntryRepository = mock()
+        doctorFeeRepository = mock()
         expenseRepository = mock()
-        expensePaymentRepository = mock()
+        expenseService = mock()
         bankAccountService = mock()
         userRepository = mock()
 
@@ -122,8 +123,9 @@ class TreasuryEmployeeServiceTest {
             employeeRepository,
             salaryHistoryRepository,
             payrollEntryRepository,
+            doctorFeeRepository,
             expenseRepository,
-            expensePaymentRepository,
+            expenseService,
             bankAccountService,
             userRepository,
         )
@@ -254,7 +256,7 @@ class TreasuryEmployeeServiceTest {
 
         assertNotNull(currentHistory.effectiveTo) // history was closed
         assertEquals(BigDecimal("6000.00"), pendingEntry.baseSalary) // pending entry updated
-        verify(salaryHistoryRepository).save(currentHistory) // close old
+        verify(salaryHistoryRepository).saveAndFlush(currentHistory) // close old
         verify(salaryHistoryRepository).save(
             org.mockito.kotlin.argThat<SalaryHistory> { baseSalary == BigDecimal("6000.00") },
         ) // new history
@@ -436,21 +438,18 @@ class TreasuryEmployeeServiceTest {
     fun `payPayrollEntry creates expense and payment, marks entry as PAID`() {
         val employee = makeEmployee()
         val entry = makePayrollEntry(employee = employee)
-        val bankAccount = makeBankAccount()
 
         whenever(payrollEntryRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(entry))
-        whenever(bankAccountService.findEntityById(20L)).thenReturn(bankAccount)
         val savedExpense = Expense(
             supplierName = "Ana Lopez",
-            category = com.insidehealthgt.hms.entity.ExpenseCategory.PAYROLL,
+            category = ExpenseCategory.PAYROLL,
             amount = BigDecimal("5000.00"),
             expenseDate = LocalDate.now(),
             invoiceNumber = "PAYROLL-1-2026-MARCH",
-            status = com.insidehealthgt.hms.entity.ExpenseStatus.PAID,
+            status = ExpenseStatus.PAID,
             paidAmount = BigDecimal("5000.00"),
         ).also { it.id = 50L }
-        whenever(expenseRepository.save(any<Expense>())).thenReturn(savedExpense)
-        whenever(expensePaymentRepository.save(any<ExpensePayment>())).thenAnswer { it.arguments[0] }
+        whenever(expenseService.createPaidExpense(any())).thenReturn(savedExpense)
         whenever(payrollEntryRepository.save(any<PayrollEntry>())).thenAnswer { it.arguments[0] }
 
         val result = service.payPayrollEntry(
@@ -461,8 +460,7 @@ class TreasuryEmployeeServiceTest {
         assertEquals(PayrollStatus.PAID, entry.status)
         assertNotNull(entry.paidDate)
         assertEquals(50L, entry.expenseId)
-        verify(expenseRepository).save(any())
-        verify(expensePaymentRepository).save(any())
+        verify(expenseService).createPaidExpense(any())
     }
 
     // ─── recordContractorPayment ───────────────────────────────────────────────
@@ -494,11 +492,16 @@ class TreasuryEmployeeServiceTest {
         whenever(employeeRepository.findById(1L)).thenReturn(Optional.of(contractor))
         val bankAccount = makeBankAccount()
         whenever(bankAccountService.findEntityById(20L)).thenReturn(bankAccount)
-        whenever(expenseRepository.save(any<Expense>())).thenAnswer { invocation ->
-            val e = invocation.getArgument<Expense>(0)
-            e.also { it.id = 60L }
-        }
-        whenever(expensePaymentRepository.save(any<ExpensePayment>())).thenAnswer { it.arguments[0] }
+        val savedExpense = Expense(
+            supplierName = "Ana Lopez",
+            category = ExpenseCategory.PAYROLL,
+            amount = BigDecimal("2000.00"),
+            expenseDate = LocalDate.now(),
+            invoiceNumber = "INV-CONTRACTOR-001",
+            status = ExpenseStatus.PAID,
+            paidAmount = BigDecimal("2000.00"),
+        ).also { it.id = 60L }
+        whenever(expenseService.createPaidExpense(any())).thenReturn(savedExpense)
 
         val result = service.recordContractorPayment(
             1L,
@@ -511,8 +514,7 @@ class TreasuryEmployeeServiceTest {
         )
 
         assertNotNull(result)
-        verify(expenseRepository).save(any())
-        verify(expensePaymentRepository).save(any())
+        verify(expenseService).createPaidExpense(any())
     }
 
     @Test
@@ -525,10 +527,16 @@ class TreasuryEmployeeServiceTest {
         whenever(employeeRepository.findById(1L)).thenReturn(Optional.of(contractor))
         val pettyCash = makeBankAccount(id = 30L)
         whenever(bankAccountService.findPettyCashEntity()).thenReturn(pettyCash)
-        whenever(expenseRepository.save(any<Expense>())).thenAnswer { invocation ->
-            invocation.getArgument<Expense>(0).also { it.id = 70L }
-        }
-        whenever(expensePaymentRepository.save(any<ExpensePayment>())).thenAnswer { it.arguments[0] }
+        val savedExpense = Expense(
+            supplierName = "Ana Lopez",
+            category = ExpenseCategory.PAYROLL,
+            amount = BigDecimal("1500.00"),
+            expenseDate = LocalDate.now(),
+            invoiceNumber = "INV-002",
+            status = ExpenseStatus.PAID,
+            paidAmount = BigDecimal("1500.00"),
+        ).also { it.id = 70L }
+        whenever(expenseService.createPaidExpense(any())).thenReturn(savedExpense)
 
         service.recordContractorPayment(
             1L,

@@ -34,9 +34,9 @@ import com.insidehealthgt.hms.repository.MedicalOrderRepository
 import com.insidehealthgt.hms.repository.NursingNoteRepository
 import com.insidehealthgt.hms.repository.PasswordResetTokenRepository
 import com.insidehealthgt.hms.repository.PatientChargeRepository
-import com.insidehealthgt.hms.repository.PayrollEntryRepository
 import com.insidehealthgt.hms.repository.PatientIdDocumentRepository
 import com.insidehealthgt.hms.repository.PatientRepository
+import com.insidehealthgt.hms.repository.PayrollEntryRepository
 import com.insidehealthgt.hms.repository.PermissionRepository
 import com.insidehealthgt.hms.repository.ProgressNoteRepository
 import com.insidehealthgt.hms.repository.PsychotherapyActivityRepository
@@ -196,9 +196,11 @@ abstract class AbstractIntegrationTest {
         // Reference tables (triage_codes, psychotherapy_categories)
         // contain migration-seeded data. Only test-created rows are removed
         // (seeded rows have created_by IS NULL since they come from Flyway).
+        jdbcTemplate.execute("DELETE FROM doctor_fees")
         jdbcTemplate.execute("DELETE FROM payroll_entries")
         jdbcTemplate.execute("DELETE FROM salary_history")
         jdbcTemplate.execute("DELETE FROM income_records")
+        jdbcTemplate.execute("DELETE FROM expense_payments")
         jdbcTemplate.execute("DELETE FROM expenses")
         jdbcTemplate.execute("DELETE FROM treasury_employees")
         jdbcTemplate.execute("DELETE FROM bank_accounts")

@@ -1035,6 +1035,21 @@
         "bankAccountId": {
           "required": "La cuenta bancaria es requerida"
         }
+      },
+      "doctorFee": {
+        "billingType": {
+          "required": "El tipo de facturación es requerido"
+        },
+        "grossAmount": {
+          "required": "El monto bruto es requerido",
+          "positive": "El monto bruto debe ser positivo"
+        },
+        "feeDate": {
+          "required": "La fecha es requerida"
+        },
+        "invoiceNumber": {
+          "required": "El número de factura del doctor es requerido"
+        }
       }
     }
   },
@@ -1931,6 +1946,48 @@
       },
       "filters": {
         "allTypes": "Todos los Tipos"
+      }
+    },
+    "doctorFee": {
+      "title": "Honorarios Médicos",
+      "new": "Nuevo Honorario",
+      "feeDate": "Fecha",
+      "billingType": "Tipo de Facturación",
+      "grossAmount": "Monto Bruto",
+      "commissionPct": "Comisión %",
+      "netAmount": "Monto Neto",
+      "patientChargeId": "ID de Cargo (opcional)",
+      "description": "Descripción",
+      "doctorInvoiceNumber": "No. Factura del Doctor",
+      "invoiceNumber": "No. Factura",
+      "invoiceDocument": "Documento de Factura",
+      "invoiceDocumentHint": "PDF o imagen (opcional)",
+      "submitInvoice": "Presentar Factura",
+      "uploadDocument": "Subir Documento",
+      "settle": "Liquidar",
+      "confirmSettle": "Confirmar Liquidación",
+      "totalFees": "Total Honorarios",
+      "totalGross": "Total Bruto",
+      "totalNet": "Total Neto",
+      "totalCommission": "Total Comisión",
+      "empty": "No se encontraron honorarios",
+      "created": "Honorario creado exitosamente",
+      "invoiced": "Factura presentada exitosamente",
+      "settled": "Honorario liquidado exitosamente",
+      "deleted": "Honorario eliminado exitosamente",
+      "documentUploaded": "Documento subido exitosamente",
+      "confirmDelete": "¿Está seguro de eliminar este honorario?",
+      "statuses": {
+        "PENDING": "Pendiente",
+        "INVOICED": "Facturado",
+        "PAID": "Pagado"
+      },
+      "billingTypes": {
+        "HOSPITAL_BILLED": "Facturado por Hospital",
+        "EXTERNAL": "Externo"
+      },
+      "filters": {
+        "allStatuses": "Todos los Estados"
       }
     },
     "payroll": {

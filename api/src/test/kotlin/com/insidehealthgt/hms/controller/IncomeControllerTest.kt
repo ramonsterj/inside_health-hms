@@ -125,7 +125,7 @@ class IncomeControllerTest : AbstractIntegrationTest() {
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.data.content").isArray)
             .andExpect(jsonPath("$.data.content.length()").value(2))
-            .andExpect(jsonPath("$.data.totalElements").value(2))
+            .andExpect(jsonPath("$.data.page.totalElements").value(2))
     }
 
     @Test
@@ -300,11 +300,7 @@ class IncomeControllerTest : AbstractIntegrationTest() {
 
     // ============ HELPERS ============
 
-    private fun createIncome(
-        description: String,
-        category: String,
-        amount: Double,
-    ): Long {
+    private fun createIncome(description: String, category: String, amount: Double): Long {
         val request = mapOf(
             "description" to description,
             "category" to category,

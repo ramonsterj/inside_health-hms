@@ -1035,6 +1035,21 @@
         "bankAccountId": {
           "required": "Bank account is required"
         }
+      },
+      "doctorFee": {
+        "billingType": {
+          "required": "Billing type is required"
+        },
+        "grossAmount": {
+          "required": "Gross amount is required",
+          "positive": "Gross amount must be positive"
+        },
+        "feeDate": {
+          "required": "Fee date is required"
+        },
+        "invoiceNumber": {
+          "required": "Doctor invoice number is required"
+        }
       }
     }
   },
@@ -1931,6 +1946,48 @@
       },
       "filters": {
         "allTypes": "All Types"
+      }
+    },
+    "doctorFee": {
+      "title": "Doctor Fees",
+      "new": "New Fee",
+      "feeDate": "Fee Date",
+      "billingType": "Billing Type",
+      "grossAmount": "Gross Amount",
+      "commissionPct": "Commission %",
+      "netAmount": "Net Amount",
+      "patientChargeId": "Charge ID (optional)",
+      "description": "Description",
+      "doctorInvoiceNumber": "Doctor Invoice #",
+      "invoiceNumber": "Invoice #",
+      "invoiceDocument": "Invoice Document",
+      "invoiceDocumentHint": "PDF or image (optional)",
+      "submitInvoice": "Submit Invoice",
+      "uploadDocument": "Upload Document",
+      "settle": "Settle",
+      "confirmSettle": "Confirm Settlement",
+      "totalFees": "Total Fees",
+      "totalGross": "Total Gross",
+      "totalNet": "Total Net",
+      "totalCommission": "Total Commission",
+      "empty": "No doctor fees found",
+      "created": "Doctor fee created successfully",
+      "invoiced": "Invoice submitted successfully",
+      "settled": "Doctor fee settled successfully",
+      "deleted": "Doctor fee deleted successfully",
+      "documentUploaded": "Document uploaded successfully",
+      "confirmDelete": "Are you sure you want to delete this doctor fee?",
+      "statuses": {
+        "PENDING": "Pending",
+        "INVOICED": "Invoiced",
+        "PAID": "Paid"
+      },
+      "billingTypes": {
+        "HOSPITAL_BILLED": "Hospital Billed",
+        "EXTERNAL": "External"
+      },
+      "filters": {
+        "allStatuses": "All Statuses"
       }
     },
     "payroll": {

@@ -29,6 +29,15 @@ kotlin {
 
 ---
 
+## 🚨 ZERO TOLERANCE: BUGS & BROKEN TESTS
+
+- **All tests must pass.** No exceptions.
+- **Bugs must be fixed when found**, regardless of who introduced them or whether they are pre-existing.
+- **Broken tests must be fixed immediately** when identified — do not skip, disable, or ignore them.
+- Before considering any task complete, run the relevant test suite and verify all tests pass.
+
+---
+
 ## ✅ CRITICAL RULES
 
 ### 1. Entities MUST Inherit BaseEntity
@@ -128,7 +137,7 @@ com.insidehealthgt.hms/
 **Location**: `src/main/resources/db/migration/`
 **Naming**: `V{version}__{description}.sql`
 
-**Current migrations**: V001-V073 (users, audit_logs, roles/permissions, password_reset_tokens, locale, patients, admissions, file storage, admission types, document types, clinical histories, progress notes, medical orders, psychotherapy categories, psychotherapy activities, nursing notes, vital signs, inventory categories, inventory items, inventory movements, inventory permissions, room pricing, patient charges, invoices, billing permissions, billing adjustments, medication administrations, psychotherapy category pricing, medical order inventory link, medication administration permissions, billing configure permission, diet charge unique index, unaccent extension, psychologist permissions, medical order documents, medical order document permissions)
+**Current migrations**: V001-V085 (users, audit_logs, roles/permissions, password_reset_tokens, locale, patients, admissions, file storage, admission types, document types, clinical histories, progress notes, medical orders, psychotherapy categories, psychotherapy activities, nursing notes, vital signs, inventory categories, inventory items, inventory movements, inventory permissions, room pricing, patient charges, invoices, billing permissions, billing adjustments, medication administrations, psychotherapy category pricing, medical order inventory link, medication administration permissions, billing configure permission, diet charge unique index, unaccent extension, psychologist permissions, medical order documents, medical order document permissions, bank accounts, treasury employees, salary history, expenses, expense payments, income records, payroll entries, treasury permissions, doctor fees)
 
 ```sql
 -- Example: Always include BaseEntity fields in new tables
@@ -309,6 +318,8 @@ class GlobalExceptionHandler {
 - ✅ Clinical Event Billing Automation (medication administration record, psychotherapy activity billing, medical order billing, procedure admission billing, daily diet charges, discharge auto-invoice)
 - ✅ Medical Order Document Attachments (file upload/download for lab results, thumbnails, permission-based access)
 - ✅ Nursing Kardex Dashboard (aggregated clinical view for nurses: active medications, care instructions, latest vitals, nursing notes, quick actions)
+- ✅ Treasury Module Phase 1-2 (bank accounts, expenses, expense payments, income, employees, salary history, payroll, contractor payments)
+- ✅ Doctor Fee Billing (Phase 3: fee creation, invoice submission, document upload, settlement with auto-expense creation, payment history integration)
 
 ### Frontend (Complete)
 - ✅ Vue 3.5 + TypeScript 5.9 + Vite 7.x
@@ -329,6 +340,8 @@ class GlobalExceptionHandler {
 - ✅ Psychotherapy Category Pricing UI (price/cost fields on category form and list)
 - ✅ Medical Order Document Attachments UI (upload dialog, thumbnail grid, document viewer, count badges on order cards)
 - ✅ Nursing Kardex Dashboard UI (expandable patient cards, medication/vitals/care sections, quick-administer/record-vitals/add-note, auto-refresh, role-based routing from `/dashboard`)
+- ✅ Treasury UI (bank accounts, expenses, income, employees, payroll, contractor payments)
+- ✅ Doctor Fee Billing UI (fee list with summary, create form with net amount preview, invoice dialog, settle dialog, document upload, status-based actions)
 
 ### Security Tooling
 - ✅ Detekt (Kotlin static analysis)

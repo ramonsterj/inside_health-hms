@@ -319,6 +319,72 @@ export interface RecordPayrollPaymentRequest {
   notes?: string | null
 }
 
+// --- Phase 3: Doctor Fees ---
+
+export enum DoctorFeeStatus {
+  PENDING = 'PENDING',
+  INVOICED = 'INVOICED',
+  PAID = 'PAID'
+}
+
+export enum DoctorFeeBillingType {
+  HOSPITAL_BILLED = 'HOSPITAL_BILLED',
+  EXTERNAL = 'EXTERNAL'
+}
+
+export interface DoctorFee {
+  id: number
+  treasuryEmployeeId: number
+  employeeName: string
+  patientChargeId: number | null
+  billingType: DoctorFeeBillingType
+  grossAmount: number
+  commissionPct: number
+  netAmount: number
+  status: DoctorFeeStatus
+  doctorInvoiceNumber: string | null
+  invoiceDocumentPath: string | null
+  expenseId: number | null
+  feeDate: string
+  description: string | null
+  notes: string | null
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+export interface DoctorFeeSummary {
+  employeeId: number
+  employeeName: string
+  totalFees: number
+  totalGross: number
+  totalNet: number
+  totalCommission: number
+  pendingCount: number
+  invoicedCount: number
+  paidCount: number
+}
+
+export interface CreateDoctorFeeRequest {
+  patientChargeId?: number | null
+  billingType: DoctorFeeBillingType
+  grossAmount: number
+  commissionPct?: number | null
+  feeDate: string
+  description?: string | null
+  notes?: string | null
+}
+
+export interface UpdateDoctorFeeStatusRequest {
+  status: DoctorFeeStatus
+  doctorInvoiceNumber: string
+}
+
+export interface SettleDoctorFeeRequest {
+  bankAccountId: number
+  paymentDate: string
+  notes?: string | null
+}
+
 export interface InvoiceSummary {
   id: number
   invoiceNumber: string

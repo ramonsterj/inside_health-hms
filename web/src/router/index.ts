@@ -298,6 +298,12 @@ const router = createRouter({
           name: 'employee-payroll',
           component: () => import('@/views/treasury/EmployeePayrollView.vue'),
           meta: { requiresPermission: 'treasury:read' }
+        },
+        {
+          path: 'treasury/employees/:id/doctor-fees',
+          name: 'employee-doctor-fees',
+          component: () => import('@/views/treasury/DoctorFeeList.vue'),
+          meta: { requiresPermission: 'treasury:read' }
         }
       ]
     },

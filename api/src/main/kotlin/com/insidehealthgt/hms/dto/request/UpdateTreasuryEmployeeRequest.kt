@@ -28,7 +28,7 @@ data class UpdateTreasuryEmployeeRequest(
 
     @field:DecimalMin("0")
     @field:DecimalMax("100")
-    val hospitalCommissionPct: BigDecimal = BigDecimal.ZERO,
+    val hospitalCommissionPct: BigDecimal? = null,
 
     val hireDate: LocalDate? = null,
 

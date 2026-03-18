@@ -88,6 +88,69 @@ class ExpenseServiceTest {
         whenever(userRepository.findAllById(any())).thenReturn(emptyList())
     }
 
+    // ─── createPaidExpense ────────────────────────────────────────────────────
+
+    @Test
+    fun `createPaidExpense saves expense with PAID status and creates payment`() {
+        val bankAccount = makeBankAccount()
+        whenever(bankAccountService.findEntityById(10L)).thenReturn(bankAccount)
+        whenever(expenseRepository.save(any<Expense>())).thenAnswer { invocation ->
+            val e = invocation.getArgument<Expense>(0)
+            e.also { it.id = 42L }
+        }
+        whenever(expensePaymentRepository.save(any<ExpensePayment>())).thenAnswer { it.arguments[0] }
+
+        val command = CreatePaidExpenseCommand(
+            supplierName = "Dr. Garcia",
+            category = ExpenseCategory.SERVICES,
+            amount = BigDecimal("1000.00"),
+            expenseDate = LocalDate.of(2026, 3, 15),
+            invoiceNumber = "DOCTOR-FEE-1",
+            bankAccountId = 10L,
+            paymentDate = LocalDate.of(2026, 3, 15),
+            paymentReference = "DOCTOR-FEE-1",
+            invoiceDocumentPath = "/docs/invoice.pdf",
+            treasuryEmployeeId = 5L,
+            notes = "Settlement",
+        )
+
+        val result = expenseService.createPaidExpense(command)
+
+        assertEquals(ExpenseStatus.PAID, result.status)
+        assertEquals(BigDecimal("1000.00"), result.paidAmount)
+        assertEquals("Dr. Garcia", result.supplierName)
+        assertEquals(ExpenseCategory.SERVICES, result.category)
+        assertEquals("/docs/invoice.pdf", result.invoiceDocumentPath)
+        assertEquals(5L, result.treasuryEmployeeId)
+        verify(expenseRepository).save(any())
+        verify(expensePaymentRepository).save(any())
+    }
+
+    @Test
+    fun `createPaidExpense normalizes blank notes to null`() {
+        val bankAccount = makeBankAccount()
+        whenever(bankAccountService.findEntityById(10L)).thenReturn(bankAccount)
+        whenever(expenseRepository.save(any<Expense>())).thenAnswer { invocation ->
+            invocation.getArgument<Expense>(0).also { it.id = 43L }
+        }
+        whenever(expensePaymentRepository.save(any<ExpensePayment>())).thenAnswer { it.arguments[0] }
+
+        val command = CreatePaidExpenseCommand(
+            supplierName = "Employee",
+            category = ExpenseCategory.PAYROLL,
+            amount = BigDecimal("500.00"),
+            expenseDate = LocalDate.now(),
+            invoiceNumber = "PAY-001",
+            bankAccountId = 10L,
+            paymentDate = LocalDate.now(),
+            notes = "   ",
+        )
+
+        val result = expenseService.createPaidExpense(command)
+
+        assertEquals(null, result.notes)
+    }
+
     // ─── create ────────────────────────────────────────────────────────────────
 
     @Test
