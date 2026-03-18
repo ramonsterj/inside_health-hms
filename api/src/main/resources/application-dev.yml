@@ -6,6 +6,7 @@ spring:
   flyway:
     locations: classpath:db/migration,classpath:db/seed
     ignore-migration-patterns: "*:missing"
+    out-of-order: true
 
 app:
   file-storage:

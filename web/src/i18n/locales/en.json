@@ -46,7 +46,11 @@
     },
     "from": "From",
     "to": "To",
-    "clear": "Clear"
+    "clear": "Clear",
+    "present": "Present",
+    "date": "Date",
+    "type": "Type",
+    "reference": "Reference"
   },
   "nav": {
     "home": "Home",
@@ -71,7 +75,9 @@
     "logout": "Logout",
     "treasury": "Treasury",
     "bankAccounts": "Bank Accounts",
-    "expenses": "Expenses"
+    "expenses": "Expenses",
+    "income": "Income",
+    "employees": "Employees & Personnel"
   },
   "auth": {
     "login": {
@@ -979,6 +985,56 @@
         "bankAccountId": {
           "required": "Bank account is required"
         }
+      },
+      "employee": {
+        "fullName": {
+          "required": "Full name is required"
+        },
+        "employeeType": {
+          "required": "Employee type is required"
+        },
+        "baseSalary": {
+          "required": "Base salary is required for payroll employees"
+        },
+        "contractedRate": {
+          "required": "Contracted rate is required for contractors"
+        },
+        "salary": {
+          "required": "Salary amount is required",
+          "positive": "Salary must be positive",
+          "effectiveFrom": {
+            "required": "Effective date is required"
+          }
+        }
+      },
+      "income": {
+        "description": {
+          "required": "Description is required"
+        },
+        "category": {
+          "required": "Category is required"
+        },
+        "amount": {
+          "required": "Amount is required",
+          "positive": "Amount must be positive"
+        },
+        "incomeDate": {
+          "required": "Income date is required"
+        },
+        "bankAccountId": {
+          "required": "Bank account is required"
+        },
+        "invoiceId": {
+          "required": "Invoice is required"
+        }
+      },
+      "payroll": {
+        "paymentDate": {
+          "required": "Payment date is required"
+        },
+        "bankAccountId": {
+          "required": "Bank account is required"
+        }
       }
     }
   },
@@ -1781,6 +1837,138 @@
       "record": "Record Payment",
       "created": "Payment recorded successfully",
       "empty": "No payments recorded"
+    },
+    "income": {
+      "title": "Income",
+      "description": "Description",
+      "category": "Category",
+      "amount": "Amount",
+      "incomeDate": "Date",
+      "reference": "Reference",
+      "bankAccount": "Bank Account",
+      "invoice": "Invoice",
+      "invoicePlaceholder": "Select an invoice",
+      "invoiceSearchPlaceholder": "Search by invoice number or patient name...",
+      "notes": "Notes",
+      "new": "New Income",
+      "edit": "Edit Income",
+      "created": "Income recorded successfully",
+      "updated": "Income updated successfully",
+      "deleted": "Income deleted successfully",
+      "confirmDelete": "Are you sure you want to delete this income record?",
+      "empty": "No income records found",
+      "categories": {
+        "PATIENT_PAYMENT": "Patient Payment",
+        "INSURANCE_PAYMENT": "Insurance Payment",
+        "DONATION": "Donation",
+        "GOVERNMENT_SUBSIDY": "Government Subsidy",
+        "OTHER_INCOME": "Other Income"
+      },
+      "filters": {
+        "allCategories": "All Categories",
+        "allAccounts": "All Accounts"
+      }
+    },
+    "employee": {
+      "title": "Employees & Personnel",
+      "fullName": "Full Name",
+      "employeeType": "Type",
+      "taxId": "Tax ID / NIT",
+      "position": "Position",
+      "baseSalary": "Base Salary",
+      "contractedRate": "Contracted Rate",
+      "contractedRateLabel": "Rate",
+      "compensation": "Compensation",
+      "doctorFeeArrangement": "Fee Arrangement",
+      "hospitalCommissionPct": "Hospital Commission %",
+      "hireDate": "Hire Date",
+      "terminationDate": "Termination Date",
+      "terminationReason": "Termination Reason",
+      "active": "Active",
+      "activeOnly": "Active Only",
+      "notes": "Notes",
+      "new": "New Employee",
+      "edit": "Edit Employee",
+      "created": "Employee created successfully",
+      "updated": "Employee updated successfully",
+      "terminated": "Employee terminated",
+      "terminate": "Terminate",
+      "terminateTitle": "Terminate Employee",
+      "terminateWarning": "You are about to terminate {name}.",
+      "terminateConfirm": "This action cannot be undone easily. Please confirm.",
+      "cancelPendingPayroll": "Cancel pending payroll entries",
+      "empty": "No employees found",
+      "types": {
+        "PAYROLL": "Payroll",
+        "CONTRACTOR": "Contractor",
+        "DOCTOR": "Doctor"
+      },
+      "doctorFeeArrangements": {
+        "HOSPITAL_BILLED": "Hospital Billed",
+        "EXTERNAL": "External"
+      },
+      "indemnizacion": {
+        "title": "Indemnización Liability",
+        "daysWorked": "Days Worked",
+        "liability": "Estimated Liability"
+      },
+      "salaryHistoryTitle": "Salary History",
+      "noSalaryHistory": "No salary history",
+      "updateSalary": "Update Salary",
+      "salaryUpdated": "Salary updated successfully",
+      "newSalary": "New Salary",
+      "effectiveFrom": "Effective From",
+      "effectivePeriod": "Effective Period",
+      "contractorPayments": "Contractor Payments",
+      "recordPayment": "Record Payment",
+      "contractorPaymentRecorded": "Payment recorded successfully",
+      "paymentHistoryTitle": "Payment History",
+      "noPayments": "No payments found",
+      "paymentTypes": {
+        "PAYROLL_ENTRY": "Payroll",
+        "CONTRACTOR_PAYMENT": "Contractor Payment",
+        "DOCTOR_FEE_SETTLEMENT": "Doctor Fee Settlement"
+      },
+      "filters": {
+        "allTypes": "All Types"
+      }
+    },
+    "payroll": {
+      "title": "Payroll Schedule",
+      "period": "Period",
+      "grossAmount": "Gross Amount",
+      "dueDate": "Due Date",
+      "paidDate": "Paid Date",
+      "paymentDate": "Payment Date",
+      "employee": "Employee",
+      "status": "Status",
+      "generateFor": "Generate {year}",
+      "generated": "Payroll schedule generated",
+      "pay": "Pay",
+      "payEntry": "Pay Payroll Entry",
+      "paid": "Payroll entry paid successfully",
+      "empty": "No payroll entries found",
+      "statuses": {
+        "PENDING": "Pending",
+        "PAID": "Paid",
+        "CANCELLED": "Cancelled"
+      },
+      "periods": {
+        "JANUARY": "January",
+        "FEBRUARY": "February",
+        "MARCH": "March",
+        "APRIL": "April",
+        "MAY": "May",
+        "JUNE": "June",
+        "JULY": "July",
+        "AUGUST": "August",
+        "SEPTEMBER": "September",
+        "OCTOBER": "October",
+        "NOVEMBER": "November",
+        "DECEMBER": "December",
+        "BONO_14": "Bono 14",
+        "AGUINALDO": "Aguinaldo"
+      }
     }
   }
 }

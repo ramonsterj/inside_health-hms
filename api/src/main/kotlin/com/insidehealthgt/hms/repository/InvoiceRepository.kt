@@ -23,6 +23,22 @@ interface InvoiceRepository : JpaRepository<Invoice, Long> {
 
     fun existsByAdmissionId(admissionId: Long): Boolean
 
+    @Query("SELECT i.id, i.invoiceNumber FROM Invoice i WHERE i.id IN :ids")
+    fun findInvoiceNumbersByIds(@Param("ids") ids: Collection<Long>): List<Array<Any>>
+
+    @Query(
+        """
+        SELECT i FROM Invoice i
+        LEFT JOIN FETCH i.admission a
+        LEFT JOIN FETCH a.patient p
+        WHERE (:search IS NULL
+            OR LOWER(i.invoiceNumber) LIKE LOWER(CONCAT('%', :search, '%'))
+            OR LOWER(CONCAT(p.firstName, ' ', p.lastName)) LIKE LOWER(CONCAT('%', :search, '%')))
+        ORDER BY i.createdAt DESC
+        """,
+    )
+    fun searchInvoices(@Param("search") search: String?): List<Invoice>
+
     @Modifying
     @Transactional
     @Query("DELETE FROM invoices", nativeQuery = true)

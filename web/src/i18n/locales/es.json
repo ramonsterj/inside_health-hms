@@ -46,7 +46,11 @@
     },
     "from": "Desde",
     "to": "Hasta",
-    "clear": "Limpiar"
+    "clear": "Limpiar",
+    "present": "Presente",
+    "date": "Fecha",
+    "type": "Tipo",
+    "reference": "Referencia"
   },
   "nav": {
     "home": "Inicio",
@@ -71,7 +75,9 @@
     "logout": "Cerrar Sesión",
     "treasury": "Tesorería",
     "bankAccounts": "Cuentas Bancarias",
-    "expenses": "Gastos"
+    "expenses": "Gastos",
+    "income": "Ingresos",
+    "employees": "Personal y Empleados"
   },
   "auth": {
     "login": {
@@ -979,6 +985,56 @@
         "bankAccountId": {
           "required": "La cuenta bancaria es requerida"
         }
+      },
+      "employee": {
+        "fullName": {
+          "required": "El nombre completo es requerido"
+        },
+        "employeeType": {
+          "required": "El tipo de empleado es requerido"
+        },
+        "baseSalary": {
+          "required": "El salario base es requerido para empleados de planilla"
+        },
+        "contractedRate": {
+          "required": "La tarifa contratada es requerida para contratistas"
+        },
+        "salary": {
+          "required": "El monto del salario es requerido",
+          "positive": "El salario debe ser positivo",
+          "effectiveFrom": {
+            "required": "La fecha de vigencia es requerida"
+          }
+        }
+      },
+      "income": {
+        "description": {
+          "required": "La descripción es requerida"
+        },
+        "category": {
+          "required": "La categoría es requerida"
+        },
+        "amount": {
+          "required": "El monto es requerido",
+          "positive": "El monto debe ser positivo"
+        },
+        "incomeDate": {
+          "required": "La fecha del ingreso es requerida"
+        },
+        "bankAccountId": {
+          "required": "La cuenta bancaria es requerida"
+        },
+        "invoiceId": {
+          "required": "La factura es requerida"
+        }
+      },
+      "payroll": {
+        "paymentDate": {
+          "required": "La fecha de pago es requerida"
+        },
+        "bankAccountId": {
+          "required": "La cuenta bancaria es requerida"
+        }
       }
     }
   },
@@ -1781,6 +1837,138 @@
       "record": "Registrar Pago",
       "created": "Pago registrado exitosamente",
       "empty": "No hay pagos registrados"
+    },
+    "income": {
+      "title": "Ingresos",
+      "description": "Descripción",
+      "category": "Categoría",
+      "amount": "Monto",
+      "incomeDate": "Fecha",
+      "reference": "Referencia",
+      "bankAccount": "Cuenta Bancaria",
+      "invoice": "Factura",
+      "invoicePlaceholder": "Seleccione una factura",
+      "invoiceSearchPlaceholder": "Buscar por número de factura o nombre de paciente...",
+      "notes": "Notas",
+      "new": "Nuevo Ingreso",
+      "edit": "Editar Ingreso",
+      "created": "Ingreso registrado exitosamente",
+      "updated": "Ingreso actualizado exitosamente",
+      "deleted": "Ingreso eliminado exitosamente",
+      "confirmDelete": "¿Está seguro de eliminar este registro de ingreso?",
+      "empty": "No se encontraron ingresos",
+      "categories": {
+        "PATIENT_PAYMENT": "Pago de Paciente",
+        "INSURANCE_PAYMENT": "Pago de Seguro",
+        "DONATION": "Donación",
+        "GOVERNMENT_SUBSIDY": "Subsidio Gubernamental",
+        "OTHER_INCOME": "Otro Ingreso"
+      },
+      "filters": {
+        "allCategories": "Todas las Categorías",
+        "allAccounts": "Todas las Cuentas"
+      }
+    },
+    "employee": {
+      "title": "Personal y Empleados",
+      "fullName": "Nombre Completo",
+      "employeeType": "Tipo",
+      "taxId": "NIT",
+      "position": "Cargo",
+      "baseSalary": "Salario Base",
+      "contractedRate": "Tarifa Contratada",
+      "contractedRateLabel": "Tarifa",
+      "compensation": "Compensación",
+      "doctorFeeArrangement": "Modalidad de Honorarios",
+      "hospitalCommissionPct": "Comisión Hospital %",
+      "hireDate": "Fecha de Ingreso",
+      "terminationDate": "Fecha de Baja",
+      "terminationReason": "Motivo de Baja",
+      "active": "Activo",
+      "activeOnly": "Solo Activos",
+      "notes": "Notas",
+      "new": "Nuevo Empleado",
+      "edit": "Editar Empleado",
+      "created": "Empleado creado exitosamente",
+      "updated": "Empleado actualizado exitosamente",
+      "terminated": "Empleado dado de baja",
+      "terminate": "Dar de Baja",
+      "terminateTitle": "Dar de Baja a Empleado",
+      "terminateWarning": "Está a punto de dar de baja a {name}.",
+      "terminateConfirm": "Esta acción es difícil de revertir. Por favor confirme.",
+      "cancelPendingPayroll": "Cancelar entradas de planilla pendientes",
+      "empty": "No se encontraron empleados",
+      "types": {
+        "PAYROLL": "Planilla",
+        "CONTRACTOR": "Contratista",
+        "DOCTOR": "Médico"
+      },
+      "doctorFeeArrangements": {
+        "HOSPITAL_BILLED": "Facturado por Hospital",
+        "EXTERNAL": "Externo"
+      },
+      "indemnizacion": {
+        "title": "Pasivo por Indemnización",
+        "daysWorked": "Días Trabajados",
+        "liability": "Pasivo Estimado"
+      },
+      "salaryHistoryTitle": "Historial de Salarios",
+      "noSalaryHistory": "Sin historial de salarios",
+      "updateSalary": "Actualizar Salario",
+      "salaryUpdated": "Salario actualizado exitosamente",
+      "newSalary": "Nuevo Salario",
+      "effectiveFrom": "Vigente Desde",
+      "effectivePeriod": "Período de Vigencia",
+      "contractorPayments": "Pagos a Contratistas",
+      "recordPayment": "Registrar Pago",
+      "contractorPaymentRecorded": "Pago registrado exitosamente",
+      "paymentHistoryTitle": "Historial de Pagos",
+      "noPayments": "No se encontraron pagos",
+      "paymentTypes": {
+        "PAYROLL_ENTRY": "Planilla",
+        "CONTRACTOR_PAYMENT": "Pago a Contratista",
+        "DOCTOR_FEE_SETTLEMENT": "Liquidación de Honorarios"
+      },
+      "filters": {
+        "allTypes": "Todos los Tipos"
+      }
+    },
+    "payroll": {
+      "title": "Planilla",
+      "period": "Período",
+      "grossAmount": "Monto Bruto",
+      "dueDate": "Fecha de Pago",
+      "paidDate": "Fecha Pagado",
+      "paymentDate": "Fecha de Pago",
+      "employee": "Empleado",
+      "status": "Estado",
+      "generateFor": "Generar {year}",
+      "generated": "Planilla generada exitosamente",
+      "pay": "Pagar",
+      "payEntry": "Pagar Entrada de Planilla",
+      "paid": "Entrada de planilla pagada exitosamente",
+      "empty": "No se encontraron entradas de planilla",
+      "statuses": {
+        "PENDING": "Pendiente",
+        "PAID": "Pagado",
+        "CANCELLED": "Cancelado"
+      },
+      "periods": {
+        "JANUARY": "Enero",
+        "FEBRUARY": "Febrero",
+        "MARCH": "Marzo",
+        "APRIL": "Abril",
+        "MAY": "Mayo",
+        "JUNE": "Junio",
+        "JULY": "Julio",
+        "AUGUST": "Agosto",
+        "SEPTEMBER": "Septiembre",
+        "OCTOBER": "Octubre",
+        "NOVEMBER": "Noviembre",
+        "DECEMBER": "Diciembre",
+        "BONO_14": "Bono 14",
+        "AGUINALDO": "Aguinaldo"
+      }
     }
   }
 }

@@ -105,6 +105,16 @@ const model = computed<MenuItem[]>(() => {
           label: 'nav.expenses',
           icon: 'pi pi-fw pi-receipt',
           to: '/treasury/expenses'
+        },
+        {
+          label: 'nav.income',
+          icon: 'pi pi-fw pi-arrow-circle-down',
+          to: '/treasury/income'
+        },
+        {
+          label: 'nav.employees',
+          icon: 'pi pi-fw pi-id-card',
+          to: '/treasury/employees'
         }
       ]
     })

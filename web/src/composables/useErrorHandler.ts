@@ -83,11 +83,13 @@ export function useErrorHandler() {
 
     // First try code-based translation
     if (code && Object.hasOwn(ERROR_CODE_MAP, code)) {
+      // eslint-disable-next-line security/detect-object-injection -- guarded by Object.hasOwn
       return t(ERROR_CODE_MAP[code]!)
     }
 
     // Then try message-based translation for specific known messages
     if (Object.hasOwn(ERROR_MESSAGE_MAP, rawMessage)) {
+      // eslint-disable-next-line security/detect-object-injection -- guarded by Object.hasOwn
       return t(ERROR_MESSAGE_MAP[rawMessage]!)
     }
 
@@ -112,6 +114,7 @@ export function useErrorHandler() {
       for (const [field, messages] of Object.entries(fieldErrors)) {
         const firstMessage = messages[0]
         if (firstMessage) {
+          // eslint-disable-next-line security/detect-object-injection -- field comes from Object.entries()
           veeErrors[field] = firstMessage
         }
       }

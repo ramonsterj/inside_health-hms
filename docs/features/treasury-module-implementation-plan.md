@@ -4,17 +4,17 @@
 
 The Treasury & Expense Management Module is broken into 5 self-contained phases, each deliverable independently. Phases 2, 3, and 4 are largely independent of each other once Phase 1 is done and can be developed in parallel.
 
-| Phase | Summary | Depends On |
-|-------|---------|------------|
-| 1 — Bank Accounts + Expenses | Core financial records | — |
-| 2 — Income + Payroll | Revenue + personnel costs | Phase 1 |
-| 3 — Doctor Fees | Doctor compensation workflow | Phase 1 |
-| 4 — Reconciliation | Bank statement upload + matching | Phase 1 |
-| 5 — Dashboard + Reports | Aggregated views | Phases 1–4 |
+| Phase | Summary | Depends On | Status |
+|-------|---------|------------|--------|
+| 1 — Bank Accounts + Expenses | Core financial records | — | ✅ Done |
+| 2 — Income + Payroll | Revenue + personnel costs | Phase 1 | ✅ Done |
+| 3 — Doctor Fees | Doctor compensation workflow | Phase 1 | |
+| 4 — Reconciliation | Bank statement upload + matching | Phase 1 | |
+| 5 — Dashboard + Reports | Aggregated views | Phases 1–4 | |
 
 ---
 
-## Phase 1 — Bank Accounts + Expense Management
+## Phase 1 — Bank Accounts + Expense Management ✅
 
 **Scope**: The financial backbone. Everything else builds on this.
 
@@ -46,7 +46,7 @@ Key logic:
 
 ---
 
-## Phase 2 — Income + Employee/Payroll Compensation
+## Phase 2 — Income + Employee/Payroll Compensation ✅
 
 **Scope**: Revenue tracking and the full personnel cost picture.
 
@@ -65,7 +65,7 @@ Key logic:
 - Payroll payment via `POST .../payroll/{entryId}/pay` → auto-creates linked `Expense` with reference `PAYROLL-{employeeId}-{year}-{period}`
 - Indemnización calculation: `base_salary × (days_worked / 365)`, computed dynamically — never stored
 - Employee termination: sets `active=false` + `termination_date` in same transaction
-- Unified payment history endpoint covering payroll entries, contractor payments, and doctor fee settlements per employee
+- Unified payment history endpoint covering payroll entries and contractor payments per employee (doctor fee settlements deferred to Phase 3 — will be added to the payment history aggregation when `DoctorFee` entity exists)
 
 ### Frontend
 

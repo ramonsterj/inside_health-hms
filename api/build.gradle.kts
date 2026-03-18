@@ -75,6 +75,12 @@ kotlin {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    systemProperty("file.encoding", "UTF-8")
+    outputs.upToDateWhen { false }
+    reports {
+        junitXml.required.set(true)
+        junitXml.outputLocation.set(layout.buildDirectory.dir("test-results/test"))
+    }
 }
 
 tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {

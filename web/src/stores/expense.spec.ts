@@ -10,8 +10,8 @@ vi.mock('@/services/api', () => ({
     get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
-    delete: vi.fn(),
-  },
+    delete: vi.fn()
+  }
 }))
 
 const mockedApi = api as unknown as {
@@ -39,7 +39,7 @@ const mockExpense: Expense = {
   createdAt: '2026-03-01T10:00:00',
   updatedAt: '2026-03-01T10:00:00',
   createdBy: null,
-  updatedBy: null,
+  updatedBy: null
 }
 
 const mockPayment: ExpensePayment = {
@@ -52,11 +52,11 @@ const mockPayment: ExpensePayment = {
   maskedAccountNumber: '****1234',
   reference: 'TRF-001',
   notes: null,
-  createdAt: '2026-03-10T09:00:00',
+  createdAt: '2026-03-10T09:00:00'
 }
 
 const apiSuccess = <T>(data: T) => ({
-  data: { success: true, data, message: null },
+  data: { success: true, data, message: null }
 })
 
 const pageSuccess = (items: Expense[]) => ({
@@ -64,9 +64,9 @@ const pageSuccess = (items: Expense[]) => ({
     success: true,
     data: {
       content: items,
-      page: { totalElements: items.length, totalPages: 1, size: 20, number: 0 },
-    },
-  },
+      page: { totalElements: items.length, totalPages: 1, size: 20, number: 0 }
+    }
+  }
 })
 
 describe('useExpenseStore', () => {
@@ -83,7 +83,7 @@ describe('useExpenseStore', () => {
 
     expect(store.expenses).toHaveLength(1)
     expect(store.totalExpenses).toBe(1)
-    expect(store.expenses[0].supplierName).toBe('Proveedor SA')
+    expect(store.expenses[0]!.supplierName).toBe('Proveedor SA')
   })
 
   it('fetchExpenses passes filters as query params', async () => {
@@ -95,8 +95,8 @@ describe('useExpenseStore', () => {
     expect(mockedApi.get).toHaveBeenCalledWith(
       '/v1/treasury/expenses',
       expect.objectContaining({
-        params: expect.objectContaining({ status: 'PENDING', search: 'sup' }),
-      }),
+        params: expect.objectContaining({ status: 'PENDING', search: 'sup' })
+      })
     )
   })
 
@@ -119,7 +119,9 @@ describe('useExpenseStore', () => {
   })
 
   it('fetchExpense throws when expense not found', async () => {
-    mockedApi.get.mockResolvedValueOnce({ data: { success: false, data: null, message: 'Not found' } })
+    mockedApi.get.mockResolvedValueOnce({
+      data: { success: false, data: null, message: 'Not found' }
+    })
     const store = useExpenseStore()
 
     await expect(store.fetchExpense(99)).rejects.toThrow('Not found')
@@ -136,7 +138,7 @@ describe('useExpenseStore', () => {
       expenseDate: '2026-03-01',
       invoiceNumber: 'INV-001',
       dueDate: '2026-04-01',
-      isPaid: false,
+      isPaid: false
     })
 
     expect(result).toEqual(mockExpense)
@@ -146,13 +148,22 @@ describe('useExpenseStore', () => {
   it('createExpense uploads invoice file when provided', async () => {
     mockedApi.post
       .mockResolvedValueOnce(apiSuccess(mockExpense)) // create
-      .mockResolvedValueOnce(apiSuccess({ ...mockExpense, invoiceDocumentPath: 'path/to/invoice.pdf' })) // upload
+      .mockResolvedValueOnce(
+        apiSuccess({ ...mockExpense, invoiceDocumentPath: 'path/to/invoice.pdf' })
+      ) // upload
     const store = useExpenseStore()
     const file = new File(['content'], 'invoice.pdf', { type: 'application/pdf' })
 
     const result = await store.createExpense(
-      { supplierName: 'S', category: ExpenseCategory.SUPPLIES, amount: 100, expenseDate: '2026-03-01', invoiceNumber: 'INV', isPaid: false },
-      file,
+      {
+        supplierName: 'S',
+        category: ExpenseCategory.SUPPLIES,
+        amount: 100,
+        expenseDate: '2026-03-01',
+        invoiceNumber: 'INV',
+        isPaid: false
+      },
+      file
     )
 
     expect(mockedApi.post).toHaveBeenCalledTimes(2)
@@ -169,7 +180,7 @@ describe('useExpenseStore', () => {
       category: ExpenseCategory.SUPPLIES,
       amount: 500,
       expenseDate: '2026-03-01',
-      invoiceNumber: 'INV-001',
+      invoiceNumber: 'INV-001'
     })
 
     expect(result.supplierName).toBe('Updated Supplier')
@@ -199,11 +210,14 @@ describe('useExpenseStore', () => {
     const result = await store.recordPayment(1, {
       amount: 200,
       paymentDate: '2026-03-10',
-      bankAccountId: 5,
+      bankAccountId: 5
     })
 
     expect(result).toEqual(mockPayment)
-    expect(mockedApi.post).toHaveBeenCalledWith('/v1/treasury/expenses/1/payments', expect.any(Object))
+    expect(mockedApi.post).toHaveBeenCalledWith(
+      '/v1/treasury/expenses/1/payments',
+      expect.any(Object)
+    )
   })
 
   it('fetchPayments populates payments array', async () => {
@@ -213,7 +227,7 @@ describe('useExpenseStore', () => {
     await store.fetchPayments(1)
 
     expect(store.payments).toHaveLength(1)
-    expect(store.payments[0].amount).toBe(200)
+    expect(store.payments[0]!.amount).toBe(200)
   })
 
   it('uploadInvoiceDocument posts multipart and returns updated expense', async () => {
@@ -228,7 +242,7 @@ describe('useExpenseStore', () => {
     expect(mockedApi.post).toHaveBeenCalledWith(
       '/v1/treasury/expenses/1/invoice-document',
       expect.any(FormData),
-      expect.objectContaining({ headers: { 'Content-Type': 'multipart/form-data' } }),
+      expect.objectContaining({ headers: { 'Content-Type': 'multipart/form-data' } })
     )
   })
 

@@ -94,9 +94,12 @@ class BankAccountService(
     fun findEntityById(id: Long): BankAccount = bankAccountRepository.findById(id)
         .orElseThrow { ResourceNotFoundException("Bank account not found with id: $id") }
 
+    fun findPettyCashEntity(): BankAccount? = bankAccountRepository.findByIsPettyCashTrue()
+
     fun computeBookBalance(account: BankAccount): BigDecimal {
         val expensePayments = bankAccountRepository.sumExpensePaymentsByBankAccountId(account.id!!)
-        return account.openingBalance.subtract(expensePayments)
+        val income = bankAccountRepository.sumIncomeByBankAccountId(account.id!!)
+        return account.openingBalance.add(income).subtract(expensePayments)
     }
 
     private fun buildResponseList(accounts: List<BankAccount>): List<BankAccountResponse> {

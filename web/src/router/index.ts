@@ -280,6 +280,24 @@ const router = createRouter({
           name: 'treasury-expenses',
           component: () => import('@/views/treasury/ExpenseList.vue'),
           meta: { requiresPermission: 'treasury:read' }
+        },
+        {
+          path: 'treasury/income',
+          name: 'treasury-income',
+          component: () => import('@/views/treasury/IncomeList.vue'),
+          meta: { requiresPermission: 'treasury:read' }
+        },
+        {
+          path: 'treasury/employees',
+          name: 'treasury-employees',
+          component: () => import('@/views/treasury/EmployeeList.vue'),
+          meta: { requiresPermission: 'treasury:read' }
+        },
+        {
+          path: 'treasury/employees/:id/payroll',
+          name: 'employee-payroll',
+          component: () => import('@/views/treasury/EmployeePayrollView.vue'),
+          meta: { requiresPermission: 'treasury:read' }
         }
       ]
     },

@@ -24,6 +24,7 @@ export function usePhoneNumberList(phoneNumbers: Ref<PhoneNumberRequest[]>) {
     if (index < 0 || index >= phoneNumbers.value.length) {
       return
     }
+    // eslint-disable-next-line security/detect-object-injection -- index is bounds-checked above
     const currentPhone = phoneNumbers.value[index]
     // If this phone is being marked as primary, uncheck all others
     if (phone.isPrimary && currentPhone && !currentPhone.isPrimary) {

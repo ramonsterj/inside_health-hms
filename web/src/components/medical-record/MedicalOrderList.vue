@@ -73,10 +73,13 @@ const filteredOrders = computed(() => {
   >
 
   for (const category of categoryOrder) {
+    // eslint-disable-next-line security/detect-object-injection -- category is MedicalOrderCategory enum value
     const categoryOrders = orders.value[category] || []
     if (statusFilter.value === 'ALL') {
+      // eslint-disable-next-line security/detect-object-injection
       result[category] = categoryOrders
     } else {
+      // eslint-disable-next-line security/detect-object-injection
       result[category] = categoryOrders.filter(o => o.status === statusFilter.value)
     }
   }
@@ -87,6 +90,7 @@ const filteredOrders = computed(() => {
 // Count orders per category for display
 function getCategoryCount(category: MedicalOrderCategory): number {
   if (!filteredOrders.value) return 0
+  // eslint-disable-next-line security/detect-object-injection -- category is MedicalOrderCategory enum value
   return filteredOrders.value[category]?.length || 0
 }
 

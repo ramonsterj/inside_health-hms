@@ -96,5 +96,6 @@ const chargeTypeSeverityMap: Record<ChargeType, TagSeverity> = {
 }
 
 export function getChargeTypeSeverity(type: ChargeType): TagSeverity {
+  // eslint-disable-next-line security/detect-object-injection -- type is ChargeType enum value
   return chargeTypeSeverityMap[type] || 'secondary'
 }
