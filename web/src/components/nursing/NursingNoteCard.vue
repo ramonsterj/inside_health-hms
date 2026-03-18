@@ -83,6 +83,7 @@ function handleEdit() {
     </template>
     <template #content>
       <div class="note-content">
+        <!-- eslint-disable-next-line vue/no-v-html -- content is sanitized via DOMPurify before binding -->
         <div class="description" :class="{ expanded }" v-html="sanitizedDescription"></div>
         <Button
           :label="expanded ? t('common.collapse') : t('common.expand')"

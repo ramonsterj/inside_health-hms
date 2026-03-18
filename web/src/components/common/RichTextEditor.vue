@@ -50,6 +50,7 @@ const sanitizedContent = computed(() => sanitizeHtml(internalValue.value))
       {{ label }}
       <span v-if="required" class="required-mark">*</span>
     </label>
+    <!-- eslint-disable-next-line vue/no-v-html -- content is sanitized via DOMPurify before binding -->
     <div v-if="readonly" class="readonly-content" v-html="sanitizedContent"></div>
     <Editor
       v-else

@@ -8,6 +8,8 @@ import com.insidehealthgt.hms.dto.request.EmergencyContactRequest
 import com.insidehealthgt.hms.dto.response.ApiResponse
 import com.insidehealthgt.hms.dto.response.AuthResponse
 import com.insidehealthgt.hms.entity.AdmissionType
+import com.insidehealthgt.hms.entity.BankAccount
+import com.insidehealthgt.hms.entity.BankAccountType
 import com.insidehealthgt.hms.entity.EducationLevel
 import com.insidehealthgt.hms.entity.MaritalStatus
 import com.insidehealthgt.hms.entity.Salutation
@@ -18,9 +20,12 @@ import com.insidehealthgt.hms.repository.AdmissionConsultingPhysicianRepository
 import com.insidehealthgt.hms.repository.AdmissionDocumentRepository
 import com.insidehealthgt.hms.repository.AdmissionRepository
 import com.insidehealthgt.hms.repository.AuditLogRepository
+import com.insidehealthgt.hms.repository.BankAccountRepository
 import com.insidehealthgt.hms.repository.ClinicalHistoryRepository
 import com.insidehealthgt.hms.repository.DocumentTypeRepository
 import com.insidehealthgt.hms.repository.EmergencyContactRepository
+import com.insidehealthgt.hms.repository.ExpenseRepository
+import com.insidehealthgt.hms.repository.IncomeRepository
 import com.insidehealthgt.hms.repository.InventoryCategoryRepository
 import com.insidehealthgt.hms.repository.InventoryItemRepository
 import com.insidehealthgt.hms.repository.InventoryMovementRepository
@@ -29,6 +34,7 @@ import com.insidehealthgt.hms.repository.MedicalOrderRepository
 import com.insidehealthgt.hms.repository.NursingNoteRepository
 import com.insidehealthgt.hms.repository.PasswordResetTokenRepository
 import com.insidehealthgt.hms.repository.PatientChargeRepository
+import com.insidehealthgt.hms.repository.PayrollEntryRepository
 import com.insidehealthgt.hms.repository.PatientIdDocumentRepository
 import com.insidehealthgt.hms.repository.PatientRepository
 import com.insidehealthgt.hms.repository.PermissionRepository
@@ -38,6 +44,8 @@ import com.insidehealthgt.hms.repository.PsychotherapyCategoryRepository
 import com.insidehealthgt.hms.repository.RefreshTokenRepository
 import com.insidehealthgt.hms.repository.RoleRepository
 import com.insidehealthgt.hms.repository.RoomRepository
+import com.insidehealthgt.hms.repository.SalaryHistoryRepository
+import com.insidehealthgt.hms.repository.TreasuryEmployeeRepository
 import com.insidehealthgt.hms.repository.TriageCodeRepository
 import com.insidehealthgt.hms.repository.UserPhoneNumberRepository
 import com.insidehealthgt.hms.repository.UserRepository
@@ -90,10 +98,16 @@ abstract class AbstractIntegrationTest {
     protected lateinit var auditLogRepository: AuditLogRepository
 
     @Autowired
+    protected lateinit var bankAccountRepository: BankAccountRepository
+
+    @Autowired
     protected lateinit var clinicalHistoryRepository: ClinicalHistoryRepository
 
     @Autowired
     protected lateinit var documentTypeRepository: DocumentTypeRepository
+
+    @Autowired
+    protected lateinit var incomeRepository: IncomeRepository
 
     @Autowired
     protected lateinit var inventoryCategoryRepository: InventoryCategoryRepository
@@ -111,6 +125,9 @@ abstract class AbstractIntegrationTest {
     protected lateinit var emergencyContactRepository: EmergencyContactRepository
 
     @Autowired
+    protected lateinit var expenseRepository: ExpenseRepository
+
+    @Autowired
     protected lateinit var medicalOrderRepository: MedicalOrderRepository
 
     @Autowired
@@ -121,6 +138,9 @@ abstract class AbstractIntegrationTest {
 
     @Autowired
     protected lateinit var patientChargeRepository: PatientChargeRepository
+
+    @Autowired
+    protected lateinit var payrollEntryRepository: PayrollEntryRepository
 
     @Autowired
     protected lateinit var patientIdDocumentRepository: PatientIdDocumentRepository
@@ -150,6 +170,12 @@ abstract class AbstractIntegrationTest {
     protected lateinit var roomRepository: RoomRepository
 
     @Autowired
+    protected lateinit var salaryHistoryRepository: SalaryHistoryRepository
+
+    @Autowired
+    protected lateinit var treasuryEmployeeRepository: TreasuryEmployeeRepository
+
+    @Autowired
     protected lateinit var triageCodeRepository: TriageCodeRepository
 
     @Autowired
@@ -170,6 +196,12 @@ abstract class AbstractIntegrationTest {
         // Reference tables (triage_codes, psychotherapy_categories)
         // contain migration-seeded data. Only test-created rows are removed
         // (seeded rows have created_by IS NULL since they come from Flyway).
+        jdbcTemplate.execute("DELETE FROM payroll_entries")
+        jdbcTemplate.execute("DELETE FROM salary_history")
+        jdbcTemplate.execute("DELETE FROM income_records")
+        jdbcTemplate.execute("DELETE FROM expenses")
+        jdbcTemplate.execute("DELETE FROM treasury_employees")
+        jdbcTemplate.execute("DELETE FROM bank_accounts")
         jdbcTemplate.execute("DELETE FROM medication_administrations")
         jdbcTemplate.execute("DELETE FROM patient_charges")
         jdbcTemplate.execute("DELETE FROM invoices")
@@ -438,5 +470,16 @@ abstract class AbstractIntegrationTest {
             post("/api/v1/admissions/$id/discharge")
                 .header("Authorization", "Bearer $token"),
         ).andExpect(status().isOk)
+    }
+
+    protected fun createBankAccount(name: String = "Test Account"): Long {
+        val account = bankAccountRepository.save(
+            BankAccount(
+                name = name,
+                accountType = BankAccountType.CHECKING,
+                currency = "GTQ",
+            ),
+        )
+        return account.id!!
     }
 }

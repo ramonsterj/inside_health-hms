@@ -13,6 +13,8 @@ interface BankAccountRepository : JpaRepository<BankAccount, Long> {
 
     fun findAllByActiveTrueOrderByNameAsc(): List<BankAccount>
 
+    fun findByIsPettyCashTrue(): BankAccount?
+
     fun existsByName(name: String): Boolean
 
     @Query(
@@ -32,4 +34,15 @@ interface BankAccountRepository : JpaRepository<BankAccount, Long> {
         nativeQuery = true,
     )
     fun sumExpensePaymentsByBankAccountId(bankAccountId: Long): BigDecimal
+
+    /**
+     * Sum all non-deleted income records for a given bank account.
+     * Used to compute the book balance.
+     */
+    @Query(
+        value = "SELECT COALESCE(SUM(ir.amount), 0) FROM income_records ir " +
+            "WHERE ir.bank_account_id = :bankAccountId AND ir.deleted_at IS NULL",
+        nativeQuery = true,
+    )
+    fun sumIncomeByBankAccountId(bankAccountId: Long): BigDecimal
 }

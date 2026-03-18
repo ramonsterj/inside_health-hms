@@ -1,6 +1,7 @@
 package com.insidehealthgt.hms.service
 
 import com.insidehealthgt.hms.dto.response.InvoiceResponse
+import com.insidehealthgt.hms.dto.response.InvoiceSummaryResponse
 import com.insidehealthgt.hms.entity.Invoice
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ConflictException
@@ -22,6 +23,12 @@ class InvoiceService(
     private val admissionRepository: AdmissionRepository,
     private val userRepository: UserRepository,
 ) {
+
+    @Transactional(readOnly = true)
+    fun searchInvoices(search: String?): List<InvoiceSummaryResponse> {
+        val effectiveSearch = search?.takeIf { it.isNotBlank() }
+        return invoiceRepository.searchInvoices(effectiveSearch).map { InvoiceSummaryResponse.from(it) }
+    }
 
     @Transactional(readOnly = true)
     fun getInvoice(admissionId: Long): InvoiceResponse {

@@ -10,8 +10,8 @@ vi.mock('@/services/api', () => ({
     get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
-    delete: vi.fn(),
-  },
+    delete: vi.fn()
+  }
 }))
 
 const mockedApi = api as unknown as {
@@ -36,7 +36,7 @@ const mockAccount: BankAccount = {
   createdAt: '2026-01-01T00:00:00',
   updatedAt: '2026-01-01T00:00:00',
   createdBy: null,
-  updatedBy: null,
+  updatedBy: null
 }
 
 const mockPettyCash: BankAccount = {
@@ -45,11 +45,11 @@ const mockPettyCash: BankAccount = {
   name: 'Caja Chica',
   accountType: BankAccountType.PETTY_CASH,
   isPettyCash: true,
-  maskedAccountNumber: null,
+  maskedAccountNumber: null
 }
 
 const apiSuccess = <T>(data: T) => ({
-  data: { success: true, data, message: null },
+  data: { success: true, data, message: null }
 })
 
 describe('useBankAccountStore', () => {
@@ -65,7 +65,7 @@ describe('useBankAccountStore', () => {
     await store.fetchBankAccounts()
 
     expect(store.bankAccounts).toHaveLength(2)
-    expect(store.bankAccounts[0].name).toBe('Banco Industrial')
+    expect(store.bankAccounts[0]!.name).toBe('Banco Industrial')
   })
 
   it('fetchBankAccounts sets loading to false on success', async () => {
@@ -106,7 +106,9 @@ describe('useBankAccountStore', () => {
   })
 
   it('fetchBankAccount throws when account not found', async () => {
-    mockedApi.get.mockResolvedValueOnce({ data: { success: false, data: null, message: 'Not found' } })
+    mockedApi.get.mockResolvedValueOnce({
+      data: { success: false, data: null, message: 'Not found' }
+    })
     const store = useBankAccountStore()
 
     await expect(store.fetchBankAccount(99)).rejects.toThrow('Not found')
@@ -120,7 +122,7 @@ describe('useBankAccountStore', () => {
       name: 'Banco Industrial',
       accountType: BankAccountType.CHECKING,
       currency: 'GTQ',
-      openingBalance: 10000,
+      openingBalance: 10000
     })
 
     expect(result).toEqual(mockAccount)
@@ -135,7 +137,7 @@ describe('useBankAccountStore', () => {
     const result = await store.updateBankAccount(1, {
       name: 'Updated Name',
       accountType: BankAccountType.CHECKING,
-      currency: 'GTQ',
+      currency: 'GTQ'
     })
 
     expect(result.name).toBe('Updated Name')
@@ -152,7 +154,9 @@ describe('useBankAccountStore', () => {
   })
 
   it('deleteBankAccount throws on failure', async () => {
-    mockedApi.delete.mockResolvedValueOnce({ data: { success: false, message: 'Cannot delete petty cash' } })
+    mockedApi.delete.mockResolvedValueOnce({
+      data: { success: false, message: 'Cannot delete petty cash' }
+    })
     const store = useBankAccountStore()
 
     await expect(store.deleteBankAccount(2)).rejects.toThrow('Cannot delete petty cash')

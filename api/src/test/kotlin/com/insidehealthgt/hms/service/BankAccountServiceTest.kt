@@ -62,6 +62,7 @@ class BankAccountServiceTest {
         val account = makeAccount()
         whenever(bankAccountRepository.findAllByOrderByNameAsc()).thenReturn(listOf(account))
         whenever(bankAccountRepository.sumExpensePaymentsByBankAccountId(1L)).thenReturn(BigDecimal.ZERO)
+        whenever(bankAccountRepository.sumIncomeByBankAccountId(1L)).thenReturn(BigDecimal.ZERO)
 
         val result = bankAccountService.findAll()
 
@@ -109,6 +110,7 @@ class BankAccountServiceTest {
         val saved = makeAccount(name = "New Account", accountType = BankAccountType.SAVINGS)
         whenever(bankAccountRepository.save(any<BankAccount>())).thenReturn(saved)
         whenever(bankAccountRepository.sumExpensePaymentsByBankAccountId(1L)).thenReturn(BigDecimal.ZERO)
+        whenever(bankAccountRepository.sumIncomeByBankAccountId(1L)).thenReturn(BigDecimal.ZERO)
 
         val result = bankAccountService.create(request)
 
@@ -138,6 +140,7 @@ class BankAccountServiceTest {
             saved
         }
         whenever(bankAccountRepository.sumExpensePaymentsByBankAccountId(any())).thenReturn(BigDecimal.ZERO)
+        whenever(bankAccountRepository.sumIncomeByBankAccountId(any())).thenReturn(BigDecimal.ZERO)
 
         bankAccountService.create(request)
     }
@@ -225,6 +228,7 @@ class BankAccountServiceTest {
     fun `computeBookBalance subtracts expense payments from opening balance`() {
         val account = makeAccount()
         whenever(bankAccountRepository.sumExpensePaymentsByBankAccountId(1L)).thenReturn(BigDecimal("300.00"))
+        whenever(bankAccountRepository.sumIncomeByBankAccountId(1L)).thenReturn(BigDecimal.ZERO)
 
         val balance = bankAccountService.computeBookBalance(account)
 
@@ -235,6 +239,7 @@ class BankAccountServiceTest {
     fun `computeBookBalance returns opening balance when no payments`() {
         val account = makeAccount()
         whenever(bankAccountRepository.sumExpensePaymentsByBankAccountId(1L)).thenReturn(BigDecimal.ZERO)
+        whenever(bankAccountRepository.sumIncomeByBankAccountId(1L)).thenReturn(BigDecimal.ZERO)
 
         val balance = bankAccountService.computeBookBalance(account)
 

@@ -99,6 +99,7 @@ async function loadClinicalHistory() {
 
 function getFieldValue(field: ClinicalHistoryFieldName): string {
   if (!clinicalHistory.value) return ''
+  // eslint-disable-next-line security/detect-object-injection
   const value = (clinicalHistory.value[field] as string) || ''
   return sanitizeHtml(value)
 }
@@ -188,6 +189,7 @@ function handleFormCancelled() {
                 <label class="field-label">
                   {{ t(`medicalRecord.clinicalHistory.fields.${field}`) }}
                 </label>
+                <!-- eslint-disable-next-line vue/no-v-html -- content is sanitized via sanitizeHtml() -->
                 <div class="field-value" v-html="getFieldValue(field) || '-'"></div>
               </div>
             </div>
