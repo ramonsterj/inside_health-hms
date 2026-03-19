@@ -1050,6 +1050,23 @@
         "invoiceNumber": {
           "required": "El número de factura del doctor es requerido"
         }
+      },
+      "reconciliation": {
+        "fileType": {
+          "required": "El tipo de archivo es requerido"
+        },
+        "dateColumn": {
+          "required": "La columna de fecha es requerida"
+        },
+        "debitColumn": {
+          "required": "La columna de débito es requerida"
+        },
+        "creditColumn": {
+          "required": "La columna de crédito es requerida"
+        },
+        "reason": {
+          "required": "La razón es requerida"
+        }
       }
     }
   },
@@ -1947,6 +1964,69 @@
       "filters": {
         "allTypes": "Todos los Tipos"
       }
+    },
+    "reconciliation": {
+      "title": "Estados de Cuenta",
+      "upload": "Subir Estado",
+      "uploadTitle": "Subir Estado de Cuenta",
+      "columnMapping": "Mapeo de Columnas",
+      "columnMappingTitle": "Configurar Mapeo de Columnas",
+      "reconcile": "Conciliar",
+      "complete": "Completar Estado",
+      "statementDate": "Fecha del Estado",
+      "fileName": "Nombre de Archivo",
+      "file": "Archivo",
+      "status": "Estado",
+      "progress": "Progreso",
+      "summary": "Resumen",
+      "totalRows": "Total Filas",
+      "transactionDate": "Fecha",
+      "description": "Descripción",
+      "reference": "Referencia",
+      "debit": "Débito",
+      "credit": "Crédito",
+      "matchStatusLabel": "Estado",
+      "matchedTo": "Conciliado Con",
+      "confirm": "Confirmar",
+      "reject": "Rechazar",
+      "acknowledge": "Reconocer",
+      "acknowledgeTitle": "Reconocer Fila",
+      "reason": "Razón",
+      "createExpense": "Crear Gasto",
+      "createIncome": "Crear Ingreso",
+      "fileType": "Tipo de Archivo",
+      "hasHeader": "Tiene Encabezado",
+      "dateColumn": "Columna de Fecha",
+      "descriptionColumn": "Columna de Descripción",
+      "referenceColumn": "Columna de Referencia",
+      "debitColumn": "Columna de Débito",
+      "creditColumn": "Columna de Crédito",
+      "balanceColumn": "Columna de Saldo",
+      "dateFormatLabel": "Formato de Fecha",
+      "skipRows": "Omitir Filas",
+      "statuses": {
+        "IN_PROGRESS": "En Proceso",
+        "COMPLETED": "Completado"
+      },
+      "matchStatuses": {
+        "UNMATCHED": "Sin Conciliar",
+        "SUGGESTED": "Sugerido",
+        "MATCHED": "Conciliado",
+        "ACKNOWLEDGED": "Reconocido"
+      },
+      "noRows": "No se encontraron filas",
+      "empty": "No se encontraron estados de cuenta",
+      "uploaded": "Estado de cuenta subido exitosamente",
+      "deleted": "Estado de cuenta eliminado exitosamente",
+      "completed": "Estado de cuenta completado exitosamente",
+      "mappingSaved": "Mapeo de columnas guardado exitosamente",
+      "matchConfirmed": "Conciliación confirmada",
+      "matchRejected": "Conciliación rechazada",
+      "rowAcknowledged": "Fila reconocida",
+      "expenseCreated": "Gasto creado y conciliado",
+      "incomeCreated": "Ingreso creado y conciliado",
+      "confirmDelete": "¿Está seguro de eliminar este estado de cuenta?",
+      "statements": "Estados"
     },
     "doctorFee": {
       "title": "Honorarios Médicos",

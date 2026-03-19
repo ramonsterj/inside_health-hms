@@ -413,3 +413,116 @@ export interface UpdateIncomeRequest {
   invoiceId?: number | null
   notes?: string | null
 }
+
+// --- Phase 4: Bank Statement Reconciliation ---
+
+export enum BankStatementStatus {
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED'
+}
+
+export enum MatchStatus {
+  UNMATCHED = 'UNMATCHED',
+  SUGGESTED = 'SUGGESTED',
+  MATCHED = 'MATCHED',
+  ACKNOWLEDGED = 'ACKNOWLEDGED'
+}
+
+export enum MatchedEntityType {
+  EXPENSE_PAYMENT = 'EXPENSE_PAYMENT',
+  INCOME = 'INCOME'
+}
+
+export enum StatementFileType {
+  XLSX = 'XLSX',
+  CSV = 'CSV'
+}
+
+export interface ColumnMapping {
+  id: number
+  bankAccountId: number
+  fileType: StatementFileType
+  hasHeader: boolean
+  dateColumn: string
+  descriptionColumn: string | null
+  referenceColumn: string | null
+  debitColumn: string
+  creditColumn: string
+  balanceColumn: string | null
+  dateFormat: string
+  skipRows: number
+}
+
+export interface SaveColumnMappingRequest {
+  fileType: StatementFileType
+  hasHeader: boolean
+  dateColumn: string
+  descriptionColumn?: string | null
+  referenceColumn?: string | null
+  debitColumn: string
+  creditColumn: string
+  balanceColumn?: string | null
+  dateFormat: string
+  skipRows: number
+}
+
+export interface BankStatement {
+  id: number
+  bankAccountId: number
+  bankAccountName: string
+  fileName: string
+  statementDate: string
+  status: BankStatementStatus
+  totalRows: number
+  matchedCount: number
+  unmatchedCount: number
+  acknowledgedCount: number
+  suggestedCount: number
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+export interface BankStatementRow {
+  id: number
+  bankStatementId: number
+  rowNumber: number
+  transactionDate: string
+  description: string | null
+  reference: string | null
+  debitAmount: number | null
+  creditAmount: number | null
+  balance: number | null
+  matchStatus: MatchStatus
+  matchedEntityType: MatchedEntityType | null
+  matchedEntityId: number | null
+  matchedEntityDescription: string | null
+  acknowledgedReason: string | null
+}
+
+export interface MatchRowRequest {
+  matchedEntityType: MatchedEntityType
+  matchedEntityId: number
+}
+
+export interface AcknowledgeRowRequest {
+  reason: string
+}
+
+export interface CreateExpenseFromRowRequest {
+  supplierName: string
+  category: ExpenseCategory
+  description?: string | null
+  amount: number
+  expenseDate: string
+  invoiceNumber: string
+  notes?: string | null
+}
+
+export interface CreateIncomeFromRowRequest {
+  description: string
+  category: IncomeCategory
+  amount: number
+  incomeDate: string
+  reference?: string | null
+  notes?: string | null
+}
