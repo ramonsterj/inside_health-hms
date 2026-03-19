@@ -164,6 +164,18 @@ class FileStorageService(
     }
 
     /**
+     * Store a bank statement file.
+     *
+     * @param bankAccountId The bank account ID for directory organization
+     * @param file The uploaded file
+     * @return The relative storage path from base directory
+     */
+    fun storeBankStatement(bankAccountId: Long, file: MultipartFile): String {
+        val relativePath = Paths.get("treasury", "statements", bankAccountId.toString())
+        return storeMultipartFile(relativePath, file)
+    }
+
+    /**
      * Store an invoice document for a doctor fee.
      *
      * @param doctorFeeId The doctor fee ID for directory organization

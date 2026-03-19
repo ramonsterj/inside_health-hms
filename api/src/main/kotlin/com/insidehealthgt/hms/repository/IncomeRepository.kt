@@ -8,4 +8,11 @@ import org.springframework.stereotype.Repository
 @Repository
 interface IncomeRepository :
     JpaRepository<Income, Long>,
-    JpaSpecificationExecutor<Income>
+    JpaSpecificationExecutor<Income> {
+
+    fun findAllByBankAccountIdAndIncomeDateBetween(
+        bankAccountId: Long,
+        from: java.time.LocalDate,
+        to: java.time.LocalDate,
+    ): List<Income>
+}

@@ -304,6 +304,19 @@ const router = createRouter({
           name: 'employee-doctor-fees',
           component: () => import('@/views/treasury/DoctorFeeList.vue'),
           meta: { requiresPermission: 'treasury:read' }
+        },
+        // Bank Statement Reconciliation
+        {
+          path: 'treasury/bank-accounts/:bankAccountId/statements',
+          name: 'bank-statements',
+          component: () => import('@/views/treasury/BankStatementList.vue'),
+          meta: { requiresPermission: 'treasury:reconcile' }
+        },
+        {
+          path: 'treasury/bank-accounts/:bankAccountId/statements/:statementId/reconcile',
+          name: 'bank-statement-reconcile',
+          component: () => import('@/views/treasury/ReconciliationView.vue'),
+          meta: { requiresPermission: 'treasury:reconcile' }
         }
       ]
     },

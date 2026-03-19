@@ -157,6 +157,16 @@ async function deleteAccount(id: number) {
             <template #body="{ data }">
               <div class="action-buttons">
                 <Button
+                  v-if="!data.isPettyCash"
+                  icon="pi pi-file"
+                  severity="info"
+                  text
+                  rounded
+                  v-tooltip.top="t('treasury.reconciliation.statements')"
+                  :aria-label="t('treasury.reconciliation.statements')"
+                  @click="$router.push({ name: 'bank-statements', params: { bankAccountId: data.id } })"
+                />
+                <Button
                   v-if="canConfigure"
                   icon="pi pi-pencil"
                   severity="secondary"

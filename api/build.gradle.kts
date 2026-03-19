@@ -53,6 +53,10 @@ dependencies {
 
     // PDF rendering for thumbnail generation
     implementation("org.apache.pdfbox:pdfbox:3.0.7")
+    // XLSX parsing
+    implementation("org.apache.poi:poi-ooxml:5.3.0")
+    // CSV parsing
+    implementation("com.opencsv:opencsv:5.11.2")
 
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")

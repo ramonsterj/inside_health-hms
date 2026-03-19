@@ -5,7 +5,8 @@ import {
   DoctorFeeArrangement,
   EmployeeType,
   ExpenseCategory,
-  IncomeCategory
+  IncomeCategory,
+  StatementFileType
 } from '@/types/treasury'
 
 export const createBankAccountSchema = z.object({
@@ -220,3 +221,27 @@ export type UpdateSalaryFormData = z.infer<typeof updateSalarySchema>
 export type CreateIncomeFormData = z.infer<typeof createIncomeSchema>
 export type RecordPayrollPaymentFormData = z.infer<typeof recordPayrollPaymentSchema>
 export type RecordContractorPaymentFormData = z.infer<typeof recordContractorPaymentSchema>
+
+// --- Phase 4: Bank Statement Reconciliation ---
+
+export const saveColumnMappingSchema = z.object({
+  fileType: z.nativeEnum(StatementFileType, {
+    required_error: 'validation.treasury.reconciliation.fileType.required'
+  }),
+  hasHeader: z.boolean().default(true),
+  dateColumn: z.string().min(1, 'validation.treasury.reconciliation.dateColumn.required').max(50),
+  descriptionColumn: z.string().max(50).optional().or(z.literal('')),
+  referenceColumn: z.string().max(50).optional().or(z.literal('')),
+  debitColumn: z.string().min(1, 'validation.treasury.reconciliation.debitColumn.required').max(50),
+  creditColumn: z.string().min(1, 'validation.treasury.reconciliation.creditColumn.required').max(50),
+  balanceColumn: z.string().max(50).optional().or(z.literal('')),
+  dateFormat: z.string().min(1).max(30).default('dd/MM/yyyy'),
+  skipRows: z.number().min(0).default(0)
+})
+
+export const acknowledgeRowSchema = z.object({
+  reason: z.string().min(1, 'validation.treasury.reconciliation.reason.required').max(255)
+})
+
+export type SaveColumnMappingFormData = z.infer<typeof saveColumnMappingSchema>
+export type AcknowledgeRowFormData = z.infer<typeof acknowledgeRowSchema>

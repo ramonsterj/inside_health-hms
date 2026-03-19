@@ -8,4 +8,10 @@ import org.springframework.stereotype.Repository
 interface ExpensePaymentRepository : JpaRepository<ExpensePayment, Long> {
 
     fun findAllByExpenseIdOrderByPaymentDateAsc(expenseId: Long): List<ExpensePayment>
+
+    fun findAllByBankAccountIdAndPaymentDateBetween(
+        bankAccountId: Long,
+        from: java.time.LocalDate,
+        to: java.time.LocalDate,
+    ): List<ExpensePayment>
 }
