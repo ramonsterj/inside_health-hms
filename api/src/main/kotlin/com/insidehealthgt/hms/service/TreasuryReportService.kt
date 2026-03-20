@@ -16,6 +16,8 @@ import com.insidehealthgt.hms.dto.response.TreasuryDashboardResponse
 import com.insidehealthgt.hms.dto.response.UpcomingPayableItem
 import com.insidehealthgt.hms.dto.response.UpcomingPaymentsResponse
 import com.insidehealthgt.hms.entity.BankStatementStatus
+import com.insidehealthgt.hms.entity.DoctorFee
+import com.insidehealthgt.hms.entity.DoctorFeeStatus
 import com.insidehealthgt.hms.entity.EmployeeType
 import com.insidehealthgt.hms.entity.Expense
 import com.insidehealthgt.hms.entity.ExpenseCategory
@@ -26,6 +28,7 @@ import com.insidehealthgt.hms.entity.PayrollStatus
 import com.insidehealthgt.hms.entity.TreasuryEmployee
 import com.insidehealthgt.hms.repository.BankAccountRepository
 import com.insidehealthgt.hms.repository.BankStatementRepository
+import com.insidehealthgt.hms.repository.DoctorFeeRepository
 import com.insidehealthgt.hms.repository.ExpensePaymentRepository
 import com.insidehealthgt.hms.repository.ExpenseRepository
 import com.insidehealthgt.hms.repository.IncomeRepository
@@ -36,6 +39,8 @@ import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
+import java.time.Month
+import java.time.YearMonth
 import java.time.temporal.ChronoUnit
 
 @Suppress("TooManyFunctions")
@@ -49,6 +54,7 @@ class TreasuryReportService(
     private val payrollEntryRepository: PayrollEntryRepository,
     private val employeeRepository: TreasuryEmployeeRepository,
     private val bankStatementRepository: BankStatementRepository,
+    private val doctorFeeRepository: DoctorFeeRepository,
 ) {
 
     companion object {
@@ -58,6 +64,10 @@ class TreasuryReportService(
         private const val RECENT_TRANSACTION_LIMIT = 10
         private const val COVERAGE_SCALE = 2
         private const val PERCENTAGE_MULTIPLIER = 100
+        private const val TYPE_EXPENSE = "EXPENSE"
+        private const val TYPE_PAYROLL = "PAYROLL"
+        private const val TYPE_EXPENSE_PAYMENT = "EXPENSE_PAYMENT"
+        private const val TYPE_INCOME = "INCOME"
         private val PENDING_STATUSES = listOf(ExpenseStatus.PENDING, ExpenseStatus.PARTIALLY_PAID)
     }
 
@@ -196,7 +206,7 @@ class TreasuryReportService(
                 .findTop10ByBankAccountIdOrderByPaymentDateDesc(account.id!!)
                 .map { payment ->
                     RecentTransactionItem(
-                        type = "EXPENSE_PAYMENT",
+                        type = TYPE_EXPENSE_PAYMENT,
                         date = payment.paymentDate,
                         description = payment.expense.supplierName,
                         amount = payment.amount.negate(),
@@ -207,7 +217,7 @@ class TreasuryReportService(
                 .findTop10ByBankAccountIdOrderByIncomeDateDesc(account.id!!)
                 .map { income ->
                     RecentTransactionItem(
-                        type = "INCOME",
+                        type = TYPE_INCOME,
                         date = income.incomeDate,
                         description = income.description,
                         amount = income.amount,
@@ -227,7 +237,7 @@ class TreasuryReportService(
                 openingBalance = account.openingBalance,
                 bookBalance = bookBalance,
                 lastStatementDate = lastStatement?.statementDate,
-                lastStatementBalance = null,
+                lastStatementBalance = lastStatement?.endingBalance,
                 active = account.active,
                 recentTransactions = recentTransactions,
             )
@@ -244,7 +254,7 @@ class TreasuryReportService(
     fun getEmployeeCompensation(year: Int): EmployeeCompensationResponse {
         val employees = employeeRepository.findAllByActiveTrueOrderByFullNameAsc()
         val yearStart = LocalDate.ofYearDay(year, 1)
-        val yearEnd = java.time.YearMonth.of(year, java.time.Month.DECEMBER).atEndOfMonth()
+        val yearEnd = YearMonth.of(year, Month.DECEMBER).atEndOfMonth()
 
         // Pre-fetch all data to avoid N+1 queries
         val paidEntriesByEmployee = payrollEntryRepository.findAllByStatusAndPaidDateBetween(
@@ -269,6 +279,17 @@ class TreasuryReportService(
             },
         ).groupBy { it.treasuryEmployeeId }
 
+        // Doctor fee data
+        val paidDoctorFees = doctorFeeRepository.findAllByStatusAndFeeDateBetween(
+            DoctorFeeStatus.PAID,
+            yearStart,
+            yearEnd,
+        ).groupBy { it.treasuryEmployee.id }
+
+        val pendingDoctorFees = doctorFeeRepository.findAllByStatusIn(
+            listOf(DoctorFeeStatus.PENDING, DoctorFeeStatus.INVOICED),
+        ).groupBy { it.treasuryEmployee.id }
+
         val compensationItems = employees.map { employee ->
             buildCompensationItem(
                 employee,
@@ -276,6 +297,8 @@ class TreasuryReportService(
                 pendingEntriesByEmployee,
                 payrollPaymentsInYear,
                 pendingPayrollExpenses,
+                paidDoctorFees,
+                pendingDoctorFees,
             )
         }
 
@@ -365,6 +388,8 @@ class TreasuryReportService(
         pendingEntriesByEmployee: Map<Long?, List<PayrollEntry>>,
         payrollPaymentsInYear: List<ExpensePayment>,
         pendingPayrollExpenses: Map<Long?, List<Expense>>,
+        paidDoctorFees: Map<Long?, List<DoctorFee>>,
+        pendingDoctorFees: Map<Long?, List<DoctorFee>>,
     ): EmployeeCompensationItem {
         val ytdPayments: BigDecimal
         val pendingAmount: BigDecimal
@@ -389,8 +414,11 @@ class TreasuryReportService(
             }
 
             EmployeeType.DOCTOR -> {
-                ytdPayments = BigDecimal.ZERO
-                pendingAmount = BigDecimal.ZERO
+                val paidFees = paidDoctorFees[employee.id] ?: emptyList()
+                ytdPayments = paidFees.sumOf { it.netAmount }
+
+                val unpaidFees = pendingDoctorFees[employee.id] ?: emptyList()
+                pendingAmount = unpaidFees.sumOf { it.netAmount }
             }
         }
 
@@ -411,7 +439,7 @@ class TreasuryReportService(
     ): List<UpcomingPayableItem> {
         val expenseItems = expenses.map { expense ->
             UpcomingPayableItem(
-                type = "EXPENSE",
+                type = TYPE_EXPENSE,
                 id = expense.id!!,
                 description = expense.supplierName,
                 amount = expense.amount.subtract(expense.paidAmount),
@@ -422,7 +450,7 @@ class TreasuryReportService(
         }
         val payrollItems = payrollEntries.map { entry ->
             UpcomingPayableItem(
-                type = "PAYROLL",
+                type = TYPE_PAYROLL,
                 id = entry.id!!,
                 description = entry.periodLabel,
                 amount = entry.grossAmount,

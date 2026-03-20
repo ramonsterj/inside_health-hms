@@ -30,7 +30,15 @@ interface PayrollEntryRepository : JpaRepository<PayrollEntry, Long> {
 
     fun findAllByStatusOrderByDueDateAsc(status: PayrollStatus): List<PayrollEntry>
 
-    fun findAllByStatusAndDueDateBetween(status: PayrollStatus, from: java.time.LocalDate, to: java.time.LocalDate): List<PayrollEntry>
+    fun findAllByStatusAndDueDateBetween(
+        status: PayrollStatus,
+        from: java.time.LocalDate,
+        to: java.time.LocalDate,
+    ): List<PayrollEntry>
 
-    fun findAllByStatusAndPaidDateBetween(status: PayrollStatus, from: java.time.LocalDate, to: java.time.LocalDate): List<PayrollEntry>
+    fun findAllByStatusAndPaidDateBetween(
+        status: PayrollStatus,
+        from: java.time.LocalDate,
+        to: java.time.LocalDate,
+    ): List<PayrollEntry>
 }

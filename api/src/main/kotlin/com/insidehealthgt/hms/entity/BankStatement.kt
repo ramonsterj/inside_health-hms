@@ -9,6 +9,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.SQLRestriction
+import java.math.BigDecimal
 import java.time.LocalDate
 
 @Entity
@@ -47,5 +48,14 @@ class BankStatement(
 
     @Column(name = "suggested_count", nullable = false)
     var suggestedCount: Int = 0,
+
+    @Column(name = "period_start")
+    var periodStart: LocalDate? = null,
+
+    @Column(name = "period_end")
+    var periodEnd: LocalDate? = null,
+
+    @Column(name = "ending_balance", precision = 12, scale = 2)
+    var endingBalance: BigDecimal? = null,
 
 ) : BaseEntity()

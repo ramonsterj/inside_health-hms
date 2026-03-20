@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import java.time.LocalDate
@@ -55,12 +56,22 @@ class ExpenseController(private val expenseService: ExpenseService) {
         return ResponseEntity.ok(ApiResponse.success(expense))
     }
 
-    @PostMapping
+    @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     @PreAuthorize("hasAuthority('treasury:write')")
     fun createExpense(
         @Valid @RequestBody request: CreateExpenseRequest,
     ): ResponseEntity<ApiResponse<ExpenseResponse>> {
         val expense = expenseService.create(request)
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(expense))
+    }
+
+    @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @PreAuthorize("hasAuthority('treasury:write')")
+    fun createExpenseWithFile(
+        @RequestPart("data") @Valid request: CreateExpenseRequest,
+        @RequestPart("file") file: MultipartFile,
+    ): ResponseEntity<ApiResponse<ExpenseResponse>> {
+        val expense = expenseService.create(request, file)
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(expense))
     }
 

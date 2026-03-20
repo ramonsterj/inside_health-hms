@@ -362,6 +362,8 @@ export interface DoctorFeeSummary {
   pendingCount: number
   invoicedCount: number
   paidCount: number
+  amountPaid: number
+  outstandingBalance: number
 }
 
 export interface CreateDoctorFeeRequest {
@@ -417,6 +419,7 @@ export interface UpdateIncomeRequest {
 // --- Phase 4: Bank Statement Reconciliation ---
 
 export enum BankStatementStatus {
+  PENDING = 'PENDING',
   IN_PROGRESS = 'IN_PROGRESS',
   COMPLETED = 'COMPLETED'
 }
@@ -478,6 +481,9 @@ export interface BankStatement {
   unmatchedCount: number
   acknowledgedCount: number
   suggestedCount: number
+  periodStart: string | null
+  periodEnd: string | null
+  endingBalance: number | null
   createdAt: string | null
   updatedAt: string | null
 }
@@ -497,6 +503,7 @@ export interface BankStatementRow {
   matchedEntityId: number | null
   matchedEntityDescription: string | null
   acknowledgedReason: string | null
+  nonLedger: boolean
 }
 
 export interface MatchRowRequest {
@@ -506,6 +513,7 @@ export interface MatchRowRequest {
 
 export interface AcknowledgeRowRequest {
   reason: string
+  nonLedger: boolean
 }
 
 export interface CreateExpenseFromRowRequest {

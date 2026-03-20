@@ -240,7 +240,8 @@ export const saveColumnMappingSchema = z.object({
 })
 
 export const acknowledgeRowSchema = z.object({
-  reason: z.string().min(1, 'validation.treasury.reconciliation.reason.required').max(255)
+  reason: z.string().min(1, 'validation.treasury.reconciliation.reason.required').max(255),
+  nonLedger: z.boolean().default(false)
 })
 
 export type SaveColumnMappingFormData = z.infer<typeof saveColumnMappingSchema>

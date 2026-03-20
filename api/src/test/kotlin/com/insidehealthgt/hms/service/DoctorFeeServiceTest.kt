@@ -215,9 +215,27 @@ class DoctorFeeServiceTest {
     // ─── updateStatus ───────────────────────────────────────────────────────────
 
     @Test
+    fun `updateStatus throws BadRequestException when invoice document is missing`() {
+        val employee = makeEmployee()
+        val fee = makeDoctorFee(employee = employee, status = DoctorFeeStatus.PENDING, invoiceDocumentPath = null)
+        whenever(doctorFeeRepository.findById(1L)).thenReturn(Optional.of(fee))
+
+        val request = UpdateDoctorFeeStatusRequest(
+            status = DoctorFeeStatus.INVOICED,
+            doctorInvoiceNumber = "INV-2026-001",
+        )
+
+        assertThrows<BadRequestException> { service.updateStatus(10L, 1L, request) }
+    }
+
+    @Test
     fun `updateStatus transitions from PENDING to INVOICED`() {
         val employee = makeEmployee()
-        val fee = makeDoctorFee(employee = employee, status = DoctorFeeStatus.PENDING)
+        val fee = makeDoctorFee(
+            employee = employee,
+            status = DoctorFeeStatus.PENDING,
+            invoiceDocumentPath = "/storage/doctor-fees/1/invoice.pdf",
+        )
         whenever(doctorFeeRepository.findById(1L)).thenReturn(Optional.of(fee))
         whenever(doctorFeeRepository.save(any<DoctorFee>())).thenAnswer { it.arguments[0] }
 
@@ -451,6 +469,7 @@ class DoctorFeeServiceTest {
                 2L,
                 2L,
                 1L,
+                BigDecimal("850.00"),
             ),
         )
         whenever(doctorFeeRepository.aggregateSummary(10L)).thenReturn(summaryRow)
@@ -466,5 +485,7 @@ class DoctorFeeServiceTest {
         assertEquals(2, result.pendingCount)
         assertEquals(2, result.invoicedCount)
         assertEquals(1, result.paidCount)
+        assertEquals(BigDecimal("850.00"), result.amountPaid)
+        assertEquals(BigDecimal("3400.00"), result.outstandingBalance)
     }
 }

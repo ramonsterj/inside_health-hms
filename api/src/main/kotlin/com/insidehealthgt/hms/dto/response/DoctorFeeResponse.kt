@@ -59,4 +59,6 @@ data class DoctorFeeSummaryResponse(
     val pendingCount: Int,
     val invoicedCount: Int,
     val paidCount: Int,
+    val amountPaid: BigDecimal,
+    val outstandingBalance: BigDecimal,
 )

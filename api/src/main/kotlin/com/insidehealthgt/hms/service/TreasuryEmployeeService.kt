@@ -356,18 +356,20 @@ class TreasuryEmployeeService(
         val hireDate = employee.hireDate
             ?: throw BadRequestException("Employee has no hire date set")
 
-        val today = LocalDate.now()
-        val daysWorked = ChronoUnit.DAYS.between(hireDate, today)
-        val liability = computeIndemnizacionLiability(salary, hireDate, today)
+        // Use termination date if employee is terminated; otherwise use today
+        val asOfDate = employee.terminationDate ?: LocalDate.now()
+        val daysWorked = ChronoUnit.DAYS.between(hireDate, asOfDate)
+        val liability = computeIndemnizacionLiability(salary, hireDate, asOfDate)
 
         return IndemnizacionResponse(
             employeeId = employee.id!!,
             employeeName = employee.fullName,
             baseSalary = salary,
             hireDate = hireDate,
+            terminationDate = employee.terminationDate,
             daysWorked = daysWorked,
             liability = liability,
-            asOfDate = today,
+            asOfDate = asOfDate,
         )
     }
 
@@ -443,7 +445,6 @@ class TreasuryEmployeeService(
 
     private fun isIndemnizacionEligible(employee: TreasuryEmployee): Boolean =
         employee.employeeType == EmployeeType.PAYROLL &&
-            employee.active &&
             employee.baseSalary != null &&
             employee.hireDate != null
 
@@ -452,7 +453,8 @@ class TreasuryEmployeeService(
         usersById: Map<Long, User> = emptyMap(),
     ): TreasuryEmployeeResponse {
         val indemnizacionLiability = if (isIndemnizacionEligible(employee)) {
-            computeIndemnizacionLiability(employee.baseSalary!!, employee.hireDate!!, LocalDate.now())
+            val asOfDate = employee.terminationDate ?: LocalDate.now()
+            computeIndemnizacionLiability(employee.baseSalary!!, employee.hireDate!!, asOfDate)
         } else {
             null
         }

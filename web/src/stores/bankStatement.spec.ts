@@ -48,6 +48,9 @@ const mockStatement: BankStatement = {
   unmatchedCount: 2,
   acknowledgedCount: 0,
   suggestedCount: 1,
+  periodStart: null,
+  periodEnd: null,
+  endingBalance: null,
   createdAt: '2026-01-15T00:00:00',
   updatedAt: '2026-01-15T00:00:00'
 }
@@ -66,7 +69,8 @@ const mockRow: BankStatementRow = {
   matchedEntityType: null,
   matchedEntityId: null,
   matchedEntityDescription: null,
-  acknowledgedReason: null
+  acknowledgedReason: null,
+  nonLedger: false
 }
 
 const mockMapping: ColumnMapping = {
@@ -180,11 +184,11 @@ describe('useBankStatementStore', () => {
     mockedApi.post.mockResolvedValueOnce(apiSuccess(acknowledgedRow))
     store.rows = [mockRow]
 
-    const result = await store.acknowledgeRow(10, 1, 1, { reason: 'Duplicate' })
+    const result = await store.acknowledgeRow(10, 1, 1, { reason: 'Duplicate', nonLedger: true })
 
     expect(mockedApi.post).toHaveBeenCalledWith(
       '/v1/treasury/bank-accounts/10/statements/1/rows/1/acknowledge',
-      { reason: 'Duplicate' }
+      { reason: 'Duplicate', nonLedger: true }
     )
     expect(result.matchStatus).toBe(MatchStatus.ACKNOWLEDGED)
   })

@@ -217,6 +217,16 @@ function goBack() {
             </span>
           </div>
           <div class="summary-item">
+            <span class="summary-label">{{ t('treasury.doctorFee.amountPaid') }}</span>
+            <span class="summary-value">{{ formatCurrency(doctorFeeStore.summary.amountPaid) }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">{{ t('treasury.doctorFee.outstandingBalance') }}</span>
+            <span class="summary-value outstanding">
+              {{ formatCurrency(doctorFeeStore.summary.outstandingBalance) }}
+            </span>
+          </div>
+          <div class="summary-item">
             <Tag :value="`${t('treasury.doctorFee.statuses.PENDING')}: ${doctorFeeStore.summary.pendingCount}`" severity="warn" />
           </div>
           <div class="summary-item">
@@ -234,7 +244,7 @@ function goBack() {
       <template #content>
         <div class="filters-grid">
           <div class="filter-field">
-            <label>{{ t('treasury.expense.status') }}</label>
+            <label>{{ t('treasury.doctorFee.status') }}</label>
             <Select
               v-model="filterStatus"
               :options="statusOptions"
