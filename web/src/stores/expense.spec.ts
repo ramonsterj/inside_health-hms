@@ -145,12 +145,10 @@ describe('useExpenseStore', () => {
     expect(mockedApi.post).toHaveBeenCalledWith('/v1/treasury/expenses', expect.any(Object))
   })
 
-  it('createExpense uploads invoice file when provided', async () => {
-    mockedApi.post
-      .mockResolvedValueOnce(apiSuccess(mockExpense)) // create
-      .mockResolvedValueOnce(
-        apiSuccess({ ...mockExpense, invoiceDocumentPath: 'path/to/invoice.pdf' })
-      ) // upload
+  it('createExpense sends single multipart request when file is provided', async () => {
+    mockedApi.post.mockResolvedValueOnce(
+      apiSuccess({ ...mockExpense, invoiceDocumentPath: 'path/to/invoice.pdf' })
+    )
     const store = useExpenseStore()
     const file = new File(['content'], 'invoice.pdf', { type: 'application/pdf' })
 
@@ -166,7 +164,12 @@ describe('useExpenseStore', () => {
       file
     )
 
-    expect(mockedApi.post).toHaveBeenCalledTimes(2)
+    expect(mockedApi.post).toHaveBeenCalledTimes(1)
+    expect(mockedApi.post).toHaveBeenCalledWith(
+      '/v1/treasury/expenses',
+      expect.any(FormData),
+      expect.objectContaining({ headers: { 'Content-Type': 'multipart/form-data' } })
+    )
     expect(result.invoiceDocumentPath).toBe('path/to/invoice.pdf')
   })
 

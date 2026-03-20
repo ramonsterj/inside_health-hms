@@ -254,6 +254,7 @@ class DoctorFeeControllerTest : AbstractIntegrationTest() {
     fun `update status to INVOICED with invoice number`() {
         val employeeId = createDoctorEmployee()
         val feeId = createDoctorFee(employeeId)
+        uploadInvoiceDocument(employeeId, feeId)
 
         mockMvc.perform(
             put("/api/v1/treasury/employees/$employeeId/doctor-fees/$feeId/status")
@@ -393,12 +394,10 @@ class DoctorFeeControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `settle returns 400 when invoice document is missing`() {
+    fun `settle returns 400 when fee is still PENDING`() {
         val employeeId = createDoctorEmployee()
         val feeId = createDoctorFee(employeeId)
-
-        submitInvoice(employeeId, feeId, "INV-NO-DOC-001")
-        // Intentionally skip uploadInvoiceDocument
+        // Fee is still PENDING — settle requires INVOICED status
 
         mockMvc.perform(
             post("/api/v1/treasury/employees/$employeeId/doctor-fees/$feeId/settle")
@@ -537,6 +536,7 @@ class DoctorFeeControllerTest : AbstractIntegrationTest() {
     }
 
     private fun submitInvoice(employeeId: Long, feeId: Long, invoiceNumber: String = "INV-001") {
+        uploadInvoiceDocument(employeeId, feeId)
         val request = mapOf("status" to "INVOICED", "doctorInvoiceNumber" to invoiceNumber)
         mockMvc.perform(
             put("/api/v1/treasury/employees/$employeeId/doctor-fees/$feeId/status")

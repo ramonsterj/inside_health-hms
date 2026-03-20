@@ -21,6 +21,7 @@ data class BankStatementRowResponse(
     val matchedEntityId: Long?,
     val matchedEntityDescription: String?,
     val acknowledgedReason: String?,
+    val nonLedger: Boolean,
 ) {
     companion object {
         fun from(row: BankStatementRow, matchedEntityDescription: String? = null): BankStatementRowResponse =
@@ -39,6 +40,7 @@ data class BankStatementRowResponse(
                 matchedEntityId = row.matchedEntityId,
                 matchedEntityDescription = matchedEntityDescription,
                 acknowledgedReason = row.acknowledgedReason,
+                nonLedger = row.nonLedger,
             )
     }
 }

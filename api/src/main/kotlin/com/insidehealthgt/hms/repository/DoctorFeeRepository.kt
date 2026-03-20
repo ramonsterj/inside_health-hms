@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
+import java.time.LocalDate
 import java.util.Optional
 
 @Repository
@@ -19,6 +20,10 @@ interface DoctorFeeRepository :
     fun findByPatientChargeIdAndBillingType(chargeId: Long, billingType: DoctorFeeBillingType): DoctorFee?
 
     fun findAllByTreasuryEmployeeIdAndStatus(employeeId: Long, status: DoctorFeeStatus): List<DoctorFee>
+
+    fun findAllByStatusAndFeeDateBetween(status: DoctorFeeStatus, from: LocalDate, to: LocalDate): List<DoctorFee>
+
+    fun findAllByStatusIn(statuses: List<DoctorFeeStatus>): List<DoctorFee>
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT f FROM DoctorFee f WHERE f.id = :id AND f.deletedAt IS NULL")
@@ -31,7 +36,8 @@ interface DoctorFeeRepository :
                COALESCE(SUM(f.netAmount), 0),
                COALESCE(SUM(CASE WHEN f.status = 'PENDING' THEN 1 ELSE 0 END), 0),
                COALESCE(SUM(CASE WHEN f.status = 'INVOICED' THEN 1 ELSE 0 END), 0),
-               COALESCE(SUM(CASE WHEN f.status = 'PAID' THEN 1 ELSE 0 END), 0)
+               COALESCE(SUM(CASE WHEN f.status = 'PAID' THEN 1 ELSE 0 END), 0),
+               COALESCE(SUM(CASE WHEN f.status = 'PAID' THEN f.netAmount ELSE 0 END), 0)
         FROM DoctorFee f
         WHERE f.treasuryEmployee.id = :employeeId
         """,

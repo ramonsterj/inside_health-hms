@@ -64,15 +64,21 @@ export const useExpenseStore = defineStore('expense', () => {
   async function createExpense(data: CreateExpenseRequest, invoiceFile?: File): Promise<Expense> {
     loading.value = true
     try {
-      const response = await api.post<ApiResponse<Expense>>('/v1/treasury/expenses', data)
+      let response
+      if (invoiceFile) {
+        const formData = new FormData()
+        formData.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }))
+        formData.append('file', invoiceFile)
+        response = await api.post<ApiResponse<Expense>>('/v1/treasury/expenses', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+      } else {
+        response = await api.post<ApiResponse<Expense>>('/v1/treasury/expenses', data)
+      }
       if (!response.data.success || !response.data.data) {
         throw new Error(response.data.message || 'Failed to create expense')
       }
-      let expense = response.data.data
-      if (invoiceFile) {
-        expense = await uploadInvoiceDocument(expense.id, invoiceFile)
-      }
-      return expense
+      return response.data.data
     } finally {
       loading.value = false
     }

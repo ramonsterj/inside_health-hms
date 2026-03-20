@@ -17,6 +17,7 @@ import com.insidehealthgt.hms.entity.PayrollStatus
 import com.insidehealthgt.hms.entity.TreasuryEmployee
 import com.insidehealthgt.hms.repository.BankAccountRepository
 import com.insidehealthgt.hms.repository.BankStatementRepository
+import com.insidehealthgt.hms.repository.DoctorFeeRepository
 import com.insidehealthgt.hms.repository.ExpensePaymentRepository
 import com.insidehealthgt.hms.repository.ExpenseRepository
 import com.insidehealthgt.hms.repository.IncomeRepository
@@ -45,6 +46,7 @@ class TreasuryReportServiceTest {
     private lateinit var payrollEntryRepository: PayrollEntryRepository
     private lateinit var employeeRepository: TreasuryEmployeeRepository
     private lateinit var bankStatementRepository: BankStatementRepository
+    private lateinit var doctorFeeRepository: DoctorFeeRepository
 
     private lateinit var service: TreasuryReportService
 
@@ -58,6 +60,7 @@ class TreasuryReportServiceTest {
         payrollEntryRepository = mock()
         employeeRepository = mock()
         bankStatementRepository = mock()
+        doctorFeeRepository = mock()
 
         service = TreasuryReportService(
             bankAccountRepository = bankAccountRepository,
@@ -68,6 +71,7 @@ class TreasuryReportServiceTest {
             payrollEntryRepository = payrollEntryRepository,
             employeeRepository = employeeRepository,
             bankStatementRepository = bankStatementRepository,
+            doctorFeeRepository = doctorFeeRepository,
         )
     }
 
@@ -596,6 +600,12 @@ class TreasuryReportServiceTest {
             .thenReturn(emptyList())
         whenever(payrollEntryRepository.findAllByStatusOrderByDueDateAsc(PayrollStatus.PENDING))
             .thenReturn(listOf(pendingEntry))
+        whenever(expenseRepository.findAll(any<org.springframework.data.jpa.domain.Specification<Expense>>()))
+            .thenReturn(emptyList())
+        whenever(doctorFeeRepository.findAllByStatusAndFeeDateBetween(any(), any(), any()))
+            .thenReturn(emptyList())
+        whenever(doctorFeeRepository.findAllByStatusIn(any()))
+            .thenReturn(emptyList())
 
         val result = service.getEmployeeCompensation(2026)
 
@@ -659,6 +669,10 @@ class TreasuryReportServiceTest {
             .thenReturn(emptyList())
         whenever(payrollEntryRepository.findAllByStatusOrderByDueDateAsc(PayrollStatus.PENDING))
             .thenReturn(emptyList())
+        whenever(doctorFeeRepository.findAllByStatusAndFeeDateBetween(any(), any(), any()))
+            .thenReturn(emptyList())
+        whenever(doctorFeeRepository.findAllByStatusIn(any()))
+            .thenReturn(emptyList())
 
         val result = service.getEmployeeCompensation(2026)
 
@@ -673,7 +687,7 @@ class TreasuryReportServiceTest {
     }
 
     @Test
-    fun `getEmployeeCompensation with DOCTOR employee returns zero amounts`() {
+    fun `getEmployeeCompensation with DOCTOR employee returns zero when no fees`() {
         val employee = makeEmployee(
             id = 3L,
             fullName = "Dr. Ramirez",
@@ -688,6 +702,12 @@ class TreasuryReportServiceTest {
         whenever(payrollEntryRepository.findAllByStatusOrderByDueDateAsc(PayrollStatus.PENDING))
             .thenReturn(emptyList())
         whenever(expensePaymentRepository.findAllByPaymentDateBetween(any(), any()))
+            .thenReturn(emptyList())
+        whenever(expenseRepository.findAll(any<org.springframework.data.jpa.domain.Specification<Expense>>()))
+            .thenReturn(emptyList())
+        whenever(doctorFeeRepository.findAllByStatusAndFeeDateBetween(any(), any(), any()))
+            .thenReturn(emptyList())
+        whenever(doctorFeeRepository.findAllByStatusIn(any()))
             .thenReturn(emptyList())
 
         val result = service.getEmployeeCompensation(2026)
@@ -709,6 +729,12 @@ class TreasuryReportServiceTest {
         whenever(payrollEntryRepository.findAllByStatusOrderByDueDateAsc(PayrollStatus.PENDING))
             .thenReturn(emptyList())
         whenever(expensePaymentRepository.findAllByPaymentDateBetween(any(), any()))
+            .thenReturn(emptyList())
+        whenever(expenseRepository.findAll(any<org.springframework.data.jpa.domain.Specification<Expense>>()))
+            .thenReturn(emptyList())
+        whenever(doctorFeeRepository.findAllByStatusAndFeeDateBetween(any(), any(), any()))
+            .thenReturn(emptyList())
+        whenever(doctorFeeRepository.findAllByStatusIn(any()))
             .thenReturn(emptyList())
 
         val result = service.getEmployeeCompensation(2026)

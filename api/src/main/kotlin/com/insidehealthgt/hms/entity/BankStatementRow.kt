@@ -56,4 +56,7 @@ class BankStatementRow(
     @Column(name = "acknowledged_reason", length = 255)
     var acknowledgedReason: String? = null,
 
+    @Column(name = "non_ledger", nullable = false)
+    var nonLedger: Boolean = false,
+
 ) : BaseEntity()

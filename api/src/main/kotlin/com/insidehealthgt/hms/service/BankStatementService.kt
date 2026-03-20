@@ -103,18 +103,27 @@ class BankStatementService(
 
         val storagePath = fileStorageService.storeBankStatement(bankAccountId, file)
 
+        val parsedRows = when (mapping.fileType) {
+            StatementFileType.XLSX -> parseXlsx(fileBytes, mapping)
+            StatementFileType.CSV -> parseCsv(fileBytes, mapping)
+        }
+
         val statement = BankStatement(
             bankAccount = bankAccount,
             fileName = fileName,
             filePath = storagePath,
             statementDate = statementDate,
+            status = BankStatementStatus.PENDING,
         )
-        val savedStatement = bankStatementRepository.save(statement)
 
-        val parsedRows = when (mapping.fileType) {
-            StatementFileType.XLSX -> parseXlsx(fileBytes, mapping)
-            StatementFileType.CSV -> parseCsv(fileBytes, mapping)
+        if (parsedRows.isNotEmpty()) {
+            statement.periodStart = parsedRows.minOf { it.date }
+            statement.periodEnd = parsedRows.maxOf { it.date }
+            val lastRowWithBalance = parsedRows.lastOrNull { it.balance != null }
+            statement.endingBalance = lastRowWithBalance?.balance
         }
+
+        val savedStatement = bankStatementRepository.save(statement)
 
         var rowNumber = 1
         val rows = parsedRows.map { parsed ->
@@ -175,9 +184,13 @@ class BankStatementService(
         bankStatementRepository.save(statement)
     }
 
+    @Suppress("ThrowsCount")
     @Transactional
     fun completeStatement(bankAccountId: Long, statementId: Long): BankStatementResponse {
         val statement = findStatementEntity(bankAccountId, statementId)
+        if (statement.status != BankStatementStatus.IN_PROGRESS) {
+            throw BadRequestException("Can only complete statements in IN_PROGRESS status")
+        }
         val unmatchedCount = bankStatementRowRepository.countByBankStatementIdAndMatchStatus(
             statementId,
             MatchStatus.UNMATCHED,
@@ -189,6 +202,17 @@ class BankStatementService(
         if (unmatchedCount > 0 || suggestedCount > 0) {
             throw BadRequestException(
                 "Cannot complete statement: $unmatchedCount unmatched and $suggestedCount suggested rows remain",
+            )
+        }
+
+        // Block completion if any ACKNOWLEDGED rows represent real cash movements (not marked as non-ledger)
+        val acknowledgedLedgerRows = bankStatementRowRepository
+            .findAllByBankStatementIdOrderByRowNumberAsc(statementId)
+            .filter { it.matchStatus == MatchStatus.ACKNOWLEDGED && !it.nonLedger }
+        if (acknowledgedLedgerRows.isNotEmpty()) {
+            throw BadRequestException(
+                "Cannot complete statement: ${acknowledgedLedgerRows.size} acknowledged row(s) represent " +
+                    "real cash movements and must be converted to Expense or Income before completion",
             )
         }
         statement.status = BankStatementStatus.COMPLETED

@@ -2,6 +2,7 @@ package com.insidehealthgt.hms.dto.response
 
 import com.insidehealthgt.hms.entity.BankStatement
 import com.insidehealthgt.hms.entity.BankStatementStatus
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -17,6 +18,9 @@ data class BankStatementResponse(
     val unmatchedCount: Int,
     val acknowledgedCount: Int,
     val suggestedCount: Int,
+    val periodStart: LocalDate?,
+    val periodEnd: LocalDate?,
+    val endingBalance: BigDecimal?,
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?,
 ) {
@@ -33,6 +37,9 @@ data class BankStatementResponse(
             unmatchedCount = statement.unmatchedCount,
             acknowledgedCount = statement.acknowledgedCount,
             suggestedCount = statement.suggestedCount,
+            periodStart = statement.periodStart,
+            periodEnd = statement.periodEnd,
+            endingBalance = statement.endingBalance,
             createdAt = statement.createdAt,
             updatedAt = statement.updatedAt,
         )

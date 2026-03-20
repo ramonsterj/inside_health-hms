@@ -8,6 +8,7 @@ data class IndemnizacionResponse(
     val employeeName: String,
     val baseSalary: BigDecimal,
     val hireDate: LocalDate,
+    val terminationDate: LocalDate?,
     val daysWorked: Long,
     val liability: BigDecimal,
     val asOfDate: LocalDate,

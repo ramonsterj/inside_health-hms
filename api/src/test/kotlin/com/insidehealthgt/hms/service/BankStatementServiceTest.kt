@@ -60,12 +60,17 @@ class BankStatementServiceTest {
         return mapping
     }
 
-    private fun makeStatement(bankAccount: BankAccount, id: Long = 1L): BankStatement {
+    private fun makeStatement(
+        bankAccount: BankAccount,
+        id: Long = 1L,
+        status: BankStatementStatus = BankStatementStatus.IN_PROGRESS,
+    ): BankStatement {
         val statement = BankStatement(
             bankAccount = bankAccount,
             fileName = "test.xlsx",
             filePath = "/path/test.xlsx",
             statementDate = LocalDate.of(2026, 1, 15),
+            status = status,
         )
         statement.id = id
         statement.totalRows = 5
@@ -275,7 +280,7 @@ class BankStatementServiceTest {
     }
 
     @Test
-    fun `completeStatement succeeds when no unmatched or suggested rows`() {
+    fun `completeStatement succeeds when no unmatched or suggested rows and no ledger acknowledged rows`() {
         val bankAccount = makeBankAccount()
         val statement = makeStatement(bankAccount)
         statement.unmatchedCount = 0
@@ -286,11 +291,43 @@ class BankStatementServiceTest {
             .thenReturn(0)
         whenever(bankStatementRowRepository.countByBankStatementIdAndMatchStatus(1L, MatchStatus.SUGGESTED))
             .thenReturn(0)
+        // All acknowledged rows are non-ledger
+        val acknowledgedRow = makeRow(statement).also {
+            it.matchStatus = MatchStatus.ACKNOWLEDGED
+            it.nonLedger = true
+        }
+        whenever(bankStatementRowRepository.findAllByBankStatementIdOrderByRowNumberAsc(1L))
+            .thenReturn(listOf(acknowledgedRow))
         whenever(bankStatementRepository.save(any())).thenReturn(statement)
 
         val result = service.completeStatement(1L, 1L)
 
         assertEquals(BankStatementStatus.COMPLETED, statement.status)
+    }
+
+    @Test
+    fun `completeStatement fails when acknowledged ledger rows exist`() {
+        val bankAccount = makeBankAccount()
+        val statement = makeStatement(bankAccount)
+        statement.unmatchedCount = 0
+        statement.suggestedCount = 0
+
+        whenever(bankStatementRepository.findByIdAndBankAccountId(1L, 1L)).thenReturn(statement)
+        whenever(bankStatementRowRepository.countByBankStatementIdAndMatchStatus(1L, MatchStatus.UNMATCHED))
+            .thenReturn(0)
+        whenever(bankStatementRowRepository.countByBankStatementIdAndMatchStatus(1L, MatchStatus.SUGGESTED))
+            .thenReturn(0)
+        // Acknowledged row NOT marked as non-ledger (real cash movement)
+        val acknowledgedRow = makeRow(statement).also {
+            it.matchStatus = MatchStatus.ACKNOWLEDGED
+            it.nonLedger = false
+        }
+        whenever(bankStatementRowRepository.findAllByBankStatementIdOrderByRowNumberAsc(1L))
+            .thenReturn(listOf(acknowledgedRow))
+
+        assertThrows<BadRequestException> {
+            service.completeStatement(1L, 1L)
+        }
     }
 
     @Test
@@ -303,6 +340,18 @@ class BankStatementServiceTest {
             .thenReturn(2)
         whenever(bankStatementRowRepository.countByBankStatementIdAndMatchStatus(1L, MatchStatus.SUGGESTED))
             .thenReturn(0)
+
+        assertThrows<BadRequestException> {
+            service.completeStatement(1L, 1L)
+        }
+    }
+
+    @Test
+    fun `completeStatement fails when status is PENDING`() {
+        val bankAccount = makeBankAccount()
+        val statement = makeStatement(bankAccount, status = BankStatementStatus.PENDING)
+
+        whenever(bankStatementRepository.findByIdAndBankAccountId(1L, 1L)).thenReturn(statement)
 
         assertThrows<BadRequestException> {
             service.completeStatement(1L, 1L)

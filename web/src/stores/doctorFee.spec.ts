@@ -46,7 +46,9 @@ const mockSummary: DoctorFeeSummary = {
   totalCommission: 450,
   pendingCount: 1,
   invoicedCount: 1,
-  paidCount: 1
+  paidCount: 1,
+  amountPaid: 850,
+  outstandingBalance: 1700
 }
 
 function apiSuccess<T>(data: T) {

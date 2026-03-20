@@ -43,6 +43,7 @@ class DoctorFeeService(
         private const val SUMMARY_IDX_PENDING = 3
         private const val SUMMARY_IDX_INVOICED = 4
         private const val SUMMARY_IDX_PAID = 5
+        private const val SUMMARY_IDX_AMOUNT_PAID = 6
         private val HUNDRED = BigDecimal(100)
     }
 
@@ -96,6 +97,9 @@ class DoctorFeeService(
         }
         if (request.doctorInvoiceNumber.isNullOrBlank()) {
             throw BadRequestException("Doctor invoice number is required for INVOICED status")
+        }
+        if (fee.invoiceDocumentPath.isNullOrBlank()) {
+            throw BadRequestException("Invoice document must be uploaded before transitioning to INVOICED status")
         }
         fee.status = DoctorFeeStatus.INVOICED
         fee.doctorInvoiceNumber = request.doctorInvoiceNumber
@@ -193,6 +197,7 @@ class DoctorFeeService(
         val pendingCount = (row[SUMMARY_IDX_PENDING] as Long).toInt()
         val invoicedCount = (row[SUMMARY_IDX_INVOICED] as Long).toInt()
         val paidCount = (row[SUMMARY_IDX_PAID] as Long).toInt()
+        val amountPaid = row[SUMMARY_IDX_AMOUNT_PAID] as BigDecimal
 
         return DoctorFeeSummaryResponse(
             employeeId = employee.id!!,
@@ -204,6 +209,8 @@ class DoctorFeeService(
             pendingCount = pendingCount,
             invoicedCount = invoicedCount,
             paidCount = paidCount,
+            amountPaid = amountPaid,
+            outstandingBalance = totalNet.subtract(amountPaid),
         )
     }
 

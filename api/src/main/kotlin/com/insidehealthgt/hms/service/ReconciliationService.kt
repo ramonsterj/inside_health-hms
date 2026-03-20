@@ -7,6 +7,7 @@ import com.insidehealthgt.hms.dto.request.CreateIncomeRequest
 import com.insidehealthgt.hms.dto.request.MatchRowRequest
 import com.insidehealthgt.hms.dto.response.BankStatementRowResponse
 import com.insidehealthgt.hms.entity.BankStatementRow
+import com.insidehealthgt.hms.entity.BankStatementStatus
 import com.insidehealthgt.hms.entity.ExpensePayment
 import com.insidehealthgt.hms.entity.Income
 import com.insidehealthgt.hms.entity.MatchStatus
@@ -140,6 +141,7 @@ class ReconciliationService(
         }
         row.matchStatus = MatchStatus.ACKNOWLEDGED
         row.acknowledgedReason = request.reason
+        row.nonLedger = request.nonLedger
         val saved = bankStatementRowRepository.save(row)
         updateStatementCounters(statementId)
         return BankStatementRowResponse.from(saved)
@@ -233,47 +235,61 @@ class ReconciliationService(
         }
     }
 
+    private fun <T> matchRow(
+        row: BankStatementRow,
+        candidates: List<T>,
+        entityType: MatchedEntityType,
+        rowAmount: BigDecimal?,
+        amountOf: (T) -> BigDecimal,
+        dateOf: (T) -> LocalDate,
+        idOf: (T) -> Long?,
+        matchedEntityIds: MutableSet<String>,
+    ) {
+        val matches = candidates.filter { candidate ->
+            amountOf(candidate).compareTo(rowAmount) == 0 &&
+                isWithinDateTolerance(row.transactionDate, dateOf(candidate)) &&
+                "$entityType:${idOf(candidate)}" !in matchedEntityIds
+        }
+
+        if (matches.size == 1) {
+            val matchId = idOf(matches[0])
+            matchedEntityIds.add("$entityType:$matchId")
+            row.matchStatus = MatchStatus.SUGGESTED
+            row.matchedEntityType = entityType
+            row.matchedEntityId = matchId
+            bankStatementRowRepository.save(row)
+        }
+    }
+
     private fun matchDebitRow(
         row: BankStatementRow,
         payments: List<ExpensePayment>,
         matchedEntityIds: MutableSet<String>,
-    ) {
-        val candidates = payments.filter { payment ->
-            payment.amount.compareTo(row.debitAmount) == 0 &&
-                isWithinDateTolerance(row.transactionDate, payment.paymentDate) &&
-                "${MatchedEntityType.EXPENSE_PAYMENT}:${payment.id}" !in matchedEntityIds
-        }
-
-        if (candidates.size == 1) {
-            val entityKey = "${MatchedEntityType.EXPENSE_PAYMENT}:${candidates[0].id}"
-            matchedEntityIds.add(entityKey)
-            row.matchStatus = MatchStatus.SUGGESTED
-            row.matchedEntityType = MatchedEntityType.EXPENSE_PAYMENT
-            row.matchedEntityId = candidates[0].id
-            bankStatementRowRepository.save(row)
-        }
-    }
+    ) = matchRow(
+        row = row,
+        candidates = payments,
+        entityType = MatchedEntityType.EXPENSE_PAYMENT,
+        rowAmount = row.debitAmount,
+        amountOf = { it.amount },
+        dateOf = { it.paymentDate },
+        idOf = { it.id },
+        matchedEntityIds = matchedEntityIds,
+    )
 
     private fun matchCreditRow(
         row: BankStatementRow,
         incomeRecords: List<Income>,
         matchedEntityIds: MutableSet<String>,
-    ) {
-        val candidates = incomeRecords.filter { income ->
-            income.amount.compareTo(row.creditAmount) == 0 &&
-                isWithinDateTolerance(row.transactionDate, income.incomeDate) &&
-                "${MatchedEntityType.INCOME}:${income.id}" !in matchedEntityIds
-        }
-
-        if (candidates.size == 1) {
-            val entityKey = "${MatchedEntityType.INCOME}:${candidates[0].id}"
-            matchedEntityIds.add(entityKey)
-            row.matchStatus = MatchStatus.SUGGESTED
-            row.matchedEntityType = MatchedEntityType.INCOME
-            row.matchedEntityId = candidates[0].id
-            bankStatementRowRepository.save(row)
-        }
-    }
+    ) = matchRow(
+        row = row,
+        candidates = incomeRecords,
+        entityType = MatchedEntityType.INCOME,
+        rowAmount = row.creditAmount,
+        amountOf = { it.amount },
+        dateOf = { it.incomeDate },
+        idOf = { it.id },
+        matchedEntityIds = matchedEntityIds,
+    )
 
     private fun isWithinDateTolerance(statementDate: LocalDate, recordDate: LocalDate): Boolean {
         val diff = abs(statementDate.toEpochDay() - recordDate.toEpochDay())
@@ -334,6 +350,9 @@ class ReconciliationService(
         statement.unmatchedCount = countMap[MatchStatus.UNMATCHED] ?: 0
         statement.suggestedCount = countMap[MatchStatus.SUGGESTED] ?: 0
         statement.acknowledgedCount = countMap[MatchStatus.ACKNOWLEDGED] ?: 0
+        if (statement.status == BankStatementStatus.PENDING) {
+            statement.status = BankStatementStatus.IN_PROGRESS
+        }
         bankStatementRepository.save(statement)
     }
 }

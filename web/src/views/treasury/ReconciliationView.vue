@@ -11,6 +11,7 @@ import Tag from 'primevue/tag'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
+import Checkbox from 'primevue/checkbox'
 import Select from 'primevue/select'
 import DatePicker from 'primevue/datepicker'
 import InputNumber from 'primevue/inputnumber'
@@ -43,6 +44,7 @@ const selectedRow = ref<BankStatementRow | null>(null)
 
 // Acknowledge form
 const acknowledgeReason = ref('')
+const acknowledgeNonLedger = ref(false)
 
 // Create expense form
 const expenseForm = ref({
@@ -151,6 +153,7 @@ async function onRejectMatch(row: BankStatementRow) {
 function openAcknowledge(row: BankStatementRow) {
   selectedRow.value = row
   acknowledgeReason.value = ''
+  acknowledgeNonLedger.value = false
   showAcknowledgeDialog.value = true
 }
 
@@ -158,7 +161,8 @@ async function submitAcknowledge() {
   if (!selectedRow.value || !acknowledgeReason.value.trim()) return
   try {
     await store.acknowledgeRow(bankAccountId.value, statementId.value, selectedRow.value.id, {
-      reason: acknowledgeReason.value.trim()
+      reason: acknowledgeReason.value.trim(),
+      nonLedger: acknowledgeNonLedger.value
     })
     showSuccess('treasury.reconciliation.rowAcknowledged')
     showAcknowledgeDialog.value = false
@@ -253,8 +257,8 @@ async function onComplete() {
   }
 }
 
-function refreshStatement() {
-  store.fetchStatement(bankAccountId.value, statementId.value)
+async function refreshStatement() {
+  await store.fetchStatement(bankAccountId.value, statementId.value)
 }
 </script>
 
@@ -311,20 +315,20 @@ function refreshStatement() {
             <span>{{ store.currentStatement.totalRows }}</span>
           </div>
           <div class="summary-item">
-            <Tag :value="`${store.currentStatement.matchedCount} matched`" severity="success" />
+            <Tag :value="`${store.currentStatement.matchedCount} ${t('treasury.reconciliation.matchStatuses.MATCHED')}`" severity="success" />
             <Tag
               v-if="store.currentStatement.suggestedCount > 0"
-              :value="`${store.currentStatement.suggestedCount} suggested`"
+              :value="`${store.currentStatement.suggestedCount} ${t('treasury.reconciliation.matchStatuses.SUGGESTED')}`"
               severity="info"
             />
             <Tag
               v-if="store.currentStatement.unmatchedCount > 0"
-              :value="`${store.currentStatement.unmatchedCount} unmatched`"
+              :value="`${store.currentStatement.unmatchedCount} ${t('treasury.reconciliation.matchStatuses.UNMATCHED')}`"
               severity="warn"
             />
             <Tag
               v-if="store.currentStatement.acknowledgedCount > 0"
-              :value="`${store.currentStatement.acknowledgedCount} acknowledged`"
+              :value="`${store.currentStatement.acknowledgedCount} ${t('treasury.reconciliation.matchStatuses.ACKNOWLEDGED')}`"
               severity="secondary"
             />
           </div>
@@ -490,6 +494,10 @@ function refreshStatement() {
       <div class="form-field">
         <label>{{ t('treasury.reconciliation.reason') }}</label>
         <Textarea v-model="acknowledgeReason" rows="3" class="w-full" />
+      </div>
+      <div class="form-field flex items-center gap-2">
+        <Checkbox v-model="acknowledgeNonLedger" :binary="true" input-id="nonLedger" />
+        <label for="nonLedger">{{ t('treasury.reconciliation.nonLedger') }}</label>
       </div>
       <template #footer>
         <Button
