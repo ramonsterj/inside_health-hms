@@ -5,10 +5,10 @@
 app:
   cors:
     additional-origins:
-      - "https://hms.dropsmethod.com"
+      - "https://hms.insidehealthgt.com"
   csp:
     connect-src-extra:
-      - "https://hms.dropsmethod.com"
+      - "https://hms.insidehealthgt.com"
 
 server:
   forward-headers-strategy: native
