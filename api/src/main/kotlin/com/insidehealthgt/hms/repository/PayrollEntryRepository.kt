@@ -27,4 +27,10 @@ interface PayrollEntryRepository : JpaRepository<PayrollEntry, Long> {
         year: Int,
         period: com.insidehealthgt.hms.entity.PayrollPeriod,
     ): Boolean
+
+    fun findAllByStatusOrderByDueDateAsc(status: PayrollStatus): List<PayrollEntry>
+
+    fun findAllByStatusAndDueDateBetween(status: PayrollStatus, from: java.time.LocalDate, to: java.time.LocalDate): List<PayrollEntry>
+
+    fun findAllByStatusAndPaidDateBetween(status: PayrollStatus, from: java.time.LocalDate, to: java.time.LocalDate): List<PayrollEntry>
 }

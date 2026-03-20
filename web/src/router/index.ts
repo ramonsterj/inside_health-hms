@@ -305,6 +305,49 @@ const router = createRouter({
           component: () => import('@/views/treasury/DoctorFeeList.vue'),
           meta: { requiresPermission: 'treasury:read' }
         },
+        // Treasury Dashboard & Reports
+        {
+          path: 'treasury',
+          name: 'treasury-dashboard',
+          component: () => import('@/views/treasury/TreasuryDashboard.vue'),
+          meta: { requiresPermission: 'treasury:report' }
+        },
+        {
+          path: 'treasury/reports/monthly',
+          name: 'treasury-monthly-report',
+          component: () => import('@/views/treasury/MonthlyReport.vue'),
+          meta: { requiresPermission: 'treasury:report' }
+        },
+        {
+          path: 'treasury/reports/upcoming',
+          name: 'treasury-upcoming-payments',
+          component: () => import('@/views/treasury/UpcomingPayments.vue'),
+          meta: { requiresPermission: 'treasury:report' }
+        },
+        {
+          path: 'treasury/reports/bank-summary',
+          name: 'treasury-bank-summary',
+          component: () => import('@/views/treasury/BankSummaryReport.vue'),
+          meta: { requiresPermission: 'treasury:report' }
+        },
+        {
+          path: 'treasury/reports/compensation',
+          name: 'treasury-compensation',
+          component: () => import('@/views/treasury/CompensationSummary.vue'),
+          meta: { requiresPermission: 'treasury:report' }
+        },
+        {
+          path: 'treasury/reports/indemnizacion',
+          name: 'treasury-indemnizacion',
+          component: () => import('@/views/treasury/IndemnizacionLiabilityReport.vue'),
+          meta: { requiresPermission: 'treasury:report' }
+        },
+        {
+          path: 'treasury/reports/reconciliation',
+          name: 'treasury-reconciliation-summary',
+          component: () => import('@/views/treasury/ReconciliationSummary.vue'),
+          meta: { requiresPermission: 'treasury:report' }
+        },
         // Bank Statement Reconciliation
         {
           path: 'treasury/bank-accounts/:bankAccountId/statements',

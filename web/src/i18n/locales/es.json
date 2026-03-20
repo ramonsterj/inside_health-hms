@@ -77,7 +77,15 @@
     "bankAccounts": "Cuentas Bancarias",
     "expenses": "Gastos",
     "income": "Ingresos",
-    "employees": "Personal y Empleados"
+    "employees": "Personal y Empleados",
+    "treasuryDashboard": "Panel",
+    "reports": "Reportes",
+    "monthlyReport": "Reporte Mensual",
+    "upcomingPayments": "Pagos Próximos",
+    "bankSummary": "Resumen Bancario",
+    "compensationSummary": "Compensación",
+    "indemnizacionReport": "Indemnización",
+    "reconciliationSummary": "Conciliación"
   },
   "auth": {
     "login": {
@@ -2105,6 +2113,115 @@
         "DECEMBER": "Diciembre",
         "BONO_14": "Bono 14",
         "AGUINALDO": "Aguinaldo"
+      }
+    },
+    "report": {
+      "common": {
+        "type": "Tipo",
+        "description": "Descripción",
+        "amount": "Monto",
+        "category": "Categoría",
+        "count": "Cantidad",
+        "total": "Total",
+        "from": "Desde",
+        "to": "Hasta",
+        "filter": "Filtrar",
+        "dueDate": "Fecha de Vencimiento",
+        "date": "Fecha",
+        "reference": "Referencia",
+        "name": "Nombre",
+        "employee": "Empleado",
+        "supplier": "Proveedor",
+        "supplierEmployee": "Proveedor / Empleado",
+        "refresh": "Actualizar",
+        "active": "Activo",
+        "inactive": "Inactivo",
+        "employees": "Empleados"
+      },
+      "dashboard": {
+        "title": "Panel de Tesorería",
+        "totalBalance": "Saldo Total",
+        "pendingPayables": "Cuentas por Pagar",
+        "next7Days": "Próximos 7 Días",
+        "obligations": "obligaciones",
+        "bankBalances": "Saldos Bancarios",
+        "accountName": "Cuenta",
+        "currency": "Moneda",
+        "balance": "Saldo",
+        "upcomingObligations": "Obligaciones Próximas (7 Días)",
+        "reports": "Reportes Rápidos"
+      },
+      "monthly": {
+        "title": "Reporte Mensual",
+        "expensesByCategory": "Gastos por Categoría",
+        "incomeByCategory": "Ingresos por Categoría",
+        "totalExpenses": "Total de Gastos",
+        "totalIncome": "Total de Ingresos",
+        "netBalance": "Balance Neto",
+        "noData": "No se encontraron datos para este período"
+      },
+      "upcoming": {
+        "title": "Pagos Próximos",
+        "windowDays": "Ventana (días)",
+        "totalAmount": "Monto Total",
+        "expenses": "Gastos",
+        "payroll": "Planilla",
+        "empty": "No se encontraron pagos próximos",
+        "types": {
+          "EXPENSE": "Gasto",
+          "PAYROLL": "Planilla"
+        }
+      },
+      "bankSummary": {
+        "title": "Resumen de Cuentas Bancarias",
+        "totalBalance": "Saldo Total en Libros",
+        "accountName": "Nombre de Cuenta",
+        "bankName": "Banco",
+        "accountType": "Tipo",
+        "openingBalance": "Saldo Inicial",
+        "bookBalance": "Saldo en Libros",
+        "lastStatement": "Último Estado",
+        "status": "Estado",
+        "recentTransactions": "Transacciones Recientes",
+        "noTransactions": "Sin transacciones recientes",
+        "empty": "No se encontraron cuentas bancarias",
+        "transactionTypes": {
+          "EXPENSE_PAYMENT": "Pago",
+          "INCOME": "Ingreso"
+        }
+      },
+      "compensation": {
+        "title": "Compensación de Empleados",
+        "year": "Año",
+        "totalYtd": "Total Pagado en el Año",
+        "totalPending": "Total Pendiente",
+        "position": "Puesto",
+        "compensation": "Compensación Base",
+        "ytdPayments": "Pagado en el Año",
+        "pending": "Pendiente",
+        "empty": "No se encontraron empleados"
+      },
+      "indemnizacion": {
+        "title": "Pasivo de Indemnización",
+        "asOfDate": "A la Fecha",
+        "grandTotal": "Pasivo Total",
+        "hireDate": "Fecha de Ingreso",
+        "tenure": "Antigüedad",
+        "salary": "Salario Actual",
+        "liability": "Pasivo",
+        "empty": "No se encontraron empleados elegibles"
+      },
+      "reconciliationSummary": {
+        "title": "Resumen de Conciliación",
+        "account": "Cuenta Bancaria",
+        "statements": "Estados de Cuenta",
+        "totalRows": "Filas Totales",
+        "matched": "Conciliadas",
+        "unmatched": "Sin Conciliar",
+        "acknowledged": "Reconocidas",
+        "coverage": "Cobertura",
+        "lastReconciliation": "Última Conciliación",
+        "empty": "No se encontraron datos de conciliación"
       }
     }
   }

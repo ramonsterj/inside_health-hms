@@ -77,7 +77,15 @@
     "bankAccounts": "Bank Accounts",
     "expenses": "Expenses",
     "income": "Income",
-    "employees": "Employees & Personnel"
+    "employees": "Employees & Personnel",
+    "treasuryDashboard": "Dashboard",
+    "reports": "Reports",
+    "monthlyReport": "Monthly Report",
+    "upcomingPayments": "Upcoming Payments",
+    "bankSummary": "Bank Summary",
+    "compensationSummary": "Compensation",
+    "indemnizacionReport": "Indemnización",
+    "reconciliationSummary": "Reconciliation"
   },
   "auth": {
     "login": {
@@ -2105,6 +2113,115 @@
         "DECEMBER": "December",
         "BONO_14": "Bono 14",
         "AGUINALDO": "Aguinaldo"
+      }
+    },
+    "report": {
+      "common": {
+        "type": "Type",
+        "description": "Description",
+        "amount": "Amount",
+        "category": "Category",
+        "count": "Count",
+        "total": "Total",
+        "from": "From",
+        "to": "To",
+        "filter": "Filter",
+        "dueDate": "Due Date",
+        "date": "Date",
+        "reference": "Reference",
+        "name": "Name",
+        "employee": "Employee",
+        "supplier": "Supplier",
+        "supplierEmployee": "Supplier / Employee",
+        "refresh": "Refresh",
+        "active": "Active",
+        "inactive": "Inactive",
+        "employees": "Employees"
+      },
+      "dashboard": {
+        "title": "Treasury Dashboard",
+        "totalBalance": "Total Balance",
+        "pendingPayables": "Pending Payables",
+        "next7Days": "Next 7 Days",
+        "obligations": "obligations",
+        "bankBalances": "Bank Balances",
+        "accountName": "Account",
+        "currency": "Currency",
+        "balance": "Balance",
+        "upcomingObligations": "Upcoming Obligations (7 Days)",
+        "reports": "Quick Reports"
+      },
+      "monthly": {
+        "title": "Monthly Report",
+        "expensesByCategory": "Expenses by Category",
+        "incomeByCategory": "Income by Category",
+        "totalExpenses": "Total Expenses",
+        "totalIncome": "Total Income",
+        "netBalance": "Net Balance",
+        "noData": "No data found for this period"
+      },
+      "upcoming": {
+        "title": "Upcoming Payments",
+        "windowDays": "Window (days)",
+        "totalAmount": "Total Amount",
+        "expenses": "Expenses",
+        "payroll": "Payroll",
+        "empty": "No upcoming payments found",
+        "types": {
+          "EXPENSE": "Expense",
+          "PAYROLL": "Payroll"
+        }
+      },
+      "bankSummary": {
+        "title": "Bank Account Summary",
+        "totalBalance": "Total Book Balance",
+        "accountName": "Account Name",
+        "bankName": "Bank",
+        "accountType": "Type",
+        "openingBalance": "Opening Balance",
+        "bookBalance": "Book Balance",
+        "lastStatement": "Last Statement",
+        "status": "Status",
+        "recentTransactions": "Recent Transactions",
+        "noTransactions": "No recent transactions",
+        "empty": "No bank accounts found",
+        "transactionTypes": {
+          "EXPENSE_PAYMENT": "Payment",
+          "INCOME": "Income"
+        }
+      },
+      "compensation": {
+        "title": "Employee Compensation",
+        "year": "Year",
+        "totalYtd": "Total YTD Payments",
+        "totalPending": "Total Pending",
+        "position": "Position",
+        "compensation": "Base Compensation",
+        "ytdPayments": "YTD Payments",
+        "pending": "Pending",
+        "empty": "No employees found"
+      },
+      "indemnizacion": {
+        "title": "Indemnización Liability",
+        "asOfDate": "As of Date",
+        "grandTotal": "Grand Total Liability",
+        "hireDate": "Hire Date",
+        "tenure": "Tenure",
+        "salary": "Current Salary",
+        "liability": "Liability",
+        "empty": "No eligible employees found"
+      },
+      "reconciliationSummary": {
+        "title": "Reconciliation Summary",
+        "account": "Bank Account",
+        "statements": "Statements",
+        "totalRows": "Total Rows",
+        "matched": "Matched",
+        "unmatched": "Unmatched",
+        "acknowledged": "Acknowledged",
+        "coverage": "Coverage",
+        "lastReconciliation": "Last Reconciliation",
+        "empty": "No reconciliation data found"
       }
     }
   }

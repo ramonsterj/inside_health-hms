@@ -526,3 +526,139 @@ export interface CreateIncomeFromRowRequest {
   reference?: string | null
   notes?: string | null
 }
+
+// --- Phase 5: Treasury Reports ---
+
+export type UpcomingPayableType = 'EXPENSE' | 'PAYROLL'
+export type RecentTransactionType = 'EXPENSE_PAYMENT' | 'INCOME'
+
+export interface BankBalanceSnapshot {
+  bankAccountId: number
+  name: string
+  bookBalance: number
+  currency: string
+  active: boolean
+}
+
+export interface UpcomingPayableItem {
+  type: UpcomingPayableType
+  id: number
+  description: string
+  amount: number
+  dueDate: string
+  employeeName: string | null
+  supplierName: string | null
+  category: string | null
+}
+
+export interface TreasuryDashboardData {
+  bankBalances: BankBalanceSnapshot[]
+  pendingPayablesCount: number
+  pendingPayablesTotal: number
+  next7DayObligations: UpcomingPayableItem[]
+  next7DayTotal: number
+}
+
+export interface MonthlyCategoryBreakdown {
+  category: string
+  label: string
+  total: number
+  count: number
+}
+
+export interface MonthlyPaymentReport {
+  from: string
+  to: string
+  expensesByCategory: MonthlyCategoryBreakdown[]
+  totalExpenses: number
+  incomeByCategory: MonthlyCategoryBreakdown[]
+  totalIncome: number
+  netBalance: number
+}
+
+export interface UpcomingPaymentsData {
+  windowDays: number
+  from: string
+  to: string
+  items: UpcomingPayableItem[]
+  totalAmount: number
+  expenseCount: number
+  payrollCount: number
+}
+
+export interface RecentTransactionItem {
+  type: RecentTransactionType
+  date: string
+  description: string
+  amount: number
+  reference: string | null
+}
+
+export interface BankAccountSummaryItem {
+  bankAccountId: number
+  name: string
+  bankName: string | null
+  accountType: string
+  currency: string
+  openingBalance: number
+  bookBalance: number
+  lastStatementDate: string | null
+  lastStatementBalance: number | null
+  active: boolean
+  recentTransactions: RecentTransactionItem[]
+}
+
+export interface BankAccountSummaryData {
+  accounts: BankAccountSummaryItem[]
+  totalBookBalance: number
+}
+
+export interface EmployeeCompensationItem {
+  employeeId: number
+  fullName: string
+  employeeType: string
+  position: string | null
+  compensation: number | null
+  ytdPayments: number
+  pendingAmount: number
+}
+
+export interface EmployeeCompensationData {
+  year: number
+  employees: EmployeeCompensationItem[]
+  totalYtdPayments: number
+  totalPending: number
+}
+
+export interface IndemnizacionLiabilityItem {
+  employeeId: number
+  fullName: string
+  position: string | null
+  hireDate: string
+  tenureDays: number
+  currentSalary: number
+  liability: number
+}
+
+export interface IndemnizacionLiabilityData {
+  asOfDate: string
+  employees: IndemnizacionLiabilityItem[]
+  grandTotal: number
+}
+
+export interface ReconciliationSummaryItem {
+  bankAccountId: number
+  bankAccountName: string
+  lastReconciliationDate: string | null
+  lastStatementStatus: string | null
+  totalStatements: number
+  totalRows: number
+  matchedCount: number
+  unmatchedCount: number
+  acknowledgedCount: number
+  coveragePct: number
+}
+
+export interface ReconciliationSummaryData {
+  accounts: ReconciliationSummaryItem[]
+}
