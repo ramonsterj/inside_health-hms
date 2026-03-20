@@ -10,4 +10,6 @@ interface BankStatementRepository : JpaRepository<BankStatement, Long> {
     fun findAllByBankAccountIdOrderByStatementDateDesc(bankAccountId: Long): List<BankStatement>
 
     fun findByIdAndBankAccountId(id: Long, bankAccountId: Long): BankStatement?
+
+    fun findTopByBankAccountIdOrderByStatementDateDesc(bankAccountId: Long): BankStatement?
 }

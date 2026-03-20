@@ -15,4 +15,8 @@ interface IncomeRepository :
         from: java.time.LocalDate,
         to: java.time.LocalDate,
     ): List<Income>
+
+    fun findAllByIncomeDateBetween(from: java.time.LocalDate, to: java.time.LocalDate): List<Income>
+
+    fun findTop10ByBankAccountIdOrderByIncomeDateDesc(bankAccountId: Long): List<Income>
 }

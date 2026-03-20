@@ -14,4 +14,8 @@ interface ExpensePaymentRepository : JpaRepository<ExpensePayment, Long> {
         from: java.time.LocalDate,
         to: java.time.LocalDate,
     ): List<ExpensePayment>
+
+    fun findTop10ByBankAccountIdOrderByPaymentDateDesc(bankAccountId: Long): List<ExpensePayment>
+
+    fun findAllByPaymentDateBetween(from: java.time.LocalDate, to: java.time.LocalDate): List<ExpensePayment>
 }

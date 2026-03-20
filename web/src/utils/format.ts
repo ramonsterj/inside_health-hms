@@ -52,7 +52,8 @@ export function formatPrice(value: number | null | undefined): string {
   return `Q${value.toFixed(2)}`
 }
 
-export function formatCurrency(value: number): string {
+export function formatCurrency(value: number | null | undefined): string {
+  if (value == null) return 'Q 0.00'
   return new Intl.NumberFormat('es-GT', { style: 'currency', currency: 'GTQ' }).format(value)
 }
 

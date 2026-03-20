@@ -61,6 +61,21 @@ class TreasuryEmployeeService(
         private const val BONO_14_DAY = 15
         private const val AGUINALDO_MONTH = 12
         private const val AGUINALDO_DAY = 15
+
+        fun computeIndemnizacionLiability(
+            baseSalary: BigDecimal,
+            hireDate: LocalDate,
+            asOfDate: LocalDate,
+        ): BigDecimal {
+            val daysWorked = ChronoUnit.DAYS.between(hireDate, asOfDate)
+            return baseSalary.multiply(
+                BigDecimal(daysWorked).divide(
+                    BigDecimal(DAYS_IN_YEAR),
+                    INDEMNIZACION_DIVISION_SCALE,
+                    RoundingMode.HALF_UP,
+                ),
+            ).setScale(2, RoundingMode.HALF_UP)
+        }
     }
 
     @Transactional(readOnly = true)
@@ -444,17 +459,6 @@ class TreasuryEmployeeService(
         val createdByUser = employee.createdBy?.let { usersById[it] ?: userRepository.findById(it).orElse(null) }
         val updatedByUser = employee.updatedBy?.let { usersById[it] ?: userRepository.findById(it).orElse(null) }
         return TreasuryEmployeeResponse.from(employee, indemnizacionLiability, createdByUser, updatedByUser)
-    }
-
-    private fun computeIndemnizacionLiability(
-        baseSalary: BigDecimal,
-        hireDate: LocalDate,
-        asOfDate: LocalDate,
-    ): BigDecimal {
-        val daysWorked = ChronoUnit.DAYS.between(hireDate, asOfDate)
-        return baseSalary.multiply(
-            BigDecimal(daysWorked).divide(BigDecimal(DAYS_IN_YEAR), INDEMNIZACION_DIVISION_SCALE, RoundingMode.HALF_UP),
-        ).setScale(2, RoundingMode.HALF_UP)
     }
 
     private fun validateEmployeeTypeFields(type: EmployeeType, baseSalary: BigDecimal?, contractedRate: BigDecimal?) {

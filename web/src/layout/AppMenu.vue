@@ -92,10 +92,21 @@ const model = computed<MenuItem[]>(() => {
   }
 
   // Treasury section - visible to users with treasury permissions
-  if (authStore.hasPermission('treasury:read')) {
-    items.push({
-      label: 'nav.treasury',
-      items: [
+  const hasTreasuryRead = authStore.hasPermission('treasury:read')
+  const hasTreasuryReport = authStore.hasPermission('treasury:report')
+  if (hasTreasuryRead || hasTreasuryReport) {
+    const treasuryItems: MenuItem[] = []
+
+    if (hasTreasuryReport) {
+      treasuryItems.push({
+        label: 'nav.treasuryDashboard',
+        icon: 'pi pi-fw pi-chart-bar',
+        to: '/treasury'
+      })
+    }
+
+    if (hasTreasuryRead) {
+      treasuryItems.push(
         {
           label: 'nav.bankAccounts',
           icon: 'pi pi-fw pi-building-columns',
@@ -115,8 +126,47 @@ const model = computed<MenuItem[]>(() => {
           label: 'nav.employees',
           icon: 'pi pi-fw pi-id-card',
           to: '/treasury/employees'
-        }
-      ]
+        },
+      )
+    }
+
+    if (hasTreasuryReport) {
+      treasuryItems.push({
+        label: 'nav.reports',
+        icon: 'pi pi-fw pi-chart-line',
+        path: '/reports',
+        items: [
+          {
+            label: 'nav.monthlyReport',
+            to: '/treasury/reports/monthly'
+          },
+          {
+            label: 'nav.upcomingPayments',
+            to: '/treasury/reports/upcoming'
+          },
+          {
+            label: 'nav.bankSummary',
+            to: '/treasury/reports/bank-summary'
+          },
+          {
+            label: 'nav.compensationSummary',
+            to: '/treasury/reports/compensation'
+          },
+          {
+            label: 'nav.indemnizacionReport',
+            to: '/treasury/reports/indemnizacion'
+          },
+          {
+            label: 'nav.reconciliationSummary',
+            to: '/treasury/reports/reconciliation'
+          }
+        ]
+      })
+    }
+
+    items.push({
+      label: 'nav.treasury',
+      items: treasuryItems
     })
   }
 
