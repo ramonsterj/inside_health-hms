@@ -34,6 +34,10 @@ const authStore = useAuthStore()
 
 const isEditMode = computed(() => !!route.params.id)
 const patientId = computed(() => Number(route.params.id) || null)
+const admitToRoomFromQuery = computed(() => {
+  const id = route.query.admitToRoom
+  return typeof id === 'string' && id.length > 0 ? id : null
+})
 
 const loading = ref(false)
 const showDuplicateDialog = ref(false)
@@ -192,8 +196,18 @@ const onSubmit = handleSubmit(async values => {
       await patientStore.updatePatient(patientId.value, data)
       showSuccess('patient.updateSuccess')
     } else {
-      await patientStore.createPatient(data)
+      const patient = await patientStore.createPatient(data)
       showSuccess('patient.createSuccess')
+      if (admitToRoomFromQuery.value) {
+        router.push({
+          name: 'admission-create',
+          query: {
+            patientId: String(patient.id),
+            roomId: admitToRoomFromQuery.value
+          }
+        })
+        return
+      }
     }
     router.push({ name: 'patients' })
   } catch (error) {
@@ -210,6 +224,10 @@ const onSubmit = handleSubmit(async values => {
 })
 
 function cancel() {
+  if (!isEditMode.value && admitToRoomFromQuery.value) {
+    router.push({ name: 'patients', query: { admitToRoom: admitToRoomFromQuery.value } })
+    return
+  }
   router.push({ name: 'patients' })
 }
 

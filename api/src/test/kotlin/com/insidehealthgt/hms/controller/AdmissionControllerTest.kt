@@ -186,6 +186,43 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
+    fun `create hospitalization should ignore non-hospitalization admissions when checking room capacity`() {
+        val singleBedRoom = roomRepository.save(
+            Room(
+                number = "TEST-102",
+                type = RoomType.PRIVATE,
+                gender = RoomGender.FEMALE,
+                capacity = 1,
+            ),
+        )
+
+        val ambulatoryRequest = createValidAdmissionRequest().copy(
+            roomId = singleBedRoom.id!!,
+            type = AdmissionType.AMBULATORY,
+        )
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(ambulatoryRequest)),
+        ).andExpect(status().isCreated)
+
+        val hospitalizationRequest = createValidAdmissionRequest().copy(
+            patientId = createSecondPatient(administrativeStaffToken),
+            roomId = singleBedRoom.id!!,
+            type = AdmissionType.HOSPITALIZATION,
+        )
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(hospitalizationRequest)),
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.data.room.id").value(singleBedRoom.id))
+    }
+
+    @Test
     fun `create admission should fail for doctor role`() {
         val request = createValidAdmissionRequest()
 

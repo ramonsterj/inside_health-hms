@@ -2,7 +2,11 @@ package com.insidehealthgt.hms.service
 
 import com.insidehealthgt.hms.dto.request.CreateRoomRequest
 import com.insidehealthgt.hms.dto.request.UpdateRoomRequest
+import com.insidehealthgt.hms.dto.response.BedOccupancyResponse
+import com.insidehealthgt.hms.dto.response.BedOccupant
+import com.insidehealthgt.hms.dto.response.OccupancySummary
 import com.insidehealthgt.hms.dto.response.RoomAvailabilityResponse
+import com.insidehealthgt.hms.dto.response.RoomOccupancyItem
 import com.insidehealthgt.hms.dto.response.RoomResponse
 import com.insidehealthgt.hms.entity.Room
 import com.insidehealthgt.hms.exception.BadRequestException
@@ -10,11 +14,15 @@ import com.insidehealthgt.hms.exception.ResourceNotFoundException
 import com.insidehealthgt.hms.repository.AdmissionRepository
 import com.insidehealthgt.hms.repository.RoomRepository
 import com.insidehealthgt.hms.repository.UserRepository
+import com.insidehealthgt.hms.repository.projection.RoomOccupancyRow
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.LocalDateTime
 
 @Service
+@Suppress("TooManyFunctions")
 class RoomService(
     private val roomRepository: RoomRepository,
     private val admissionRepository: AdmissionRepository,
@@ -61,6 +69,75 @@ class RoomService(
 
     @Transactional(readOnly = true)
     fun hasAvailableBeds(roomId: Long): Boolean = getAvailableBeds(roomId) > 0
+
+    /**
+     * Builds a hospital-wide bed occupancy snapshot in one query.
+     *
+     * Filter rules:
+     * - Soft-deleted rooms are excluded (enforced by `@SQLRestriction` on [Room]).
+     * - An admission counts as occupying a bed only when it is `ACTIVE`, not soft-deleted,
+     *   and of type `HOSPITALIZATION` (other types do not require a room — see
+     *   [com.insidehealthgt.hms.entity.AdmissionType.requiresRoom]).
+     */
+    @Transactional(readOnly = true)
+    fun getBedOccupancy(): BedOccupancyResponse {
+        val rows = roomRepository.findRoomsWithActiveAdmissions()
+        val rooms = rows.groupBy { it.roomId }
+            .map { (_, roomRows) -> toRoomOccupancyItem(roomRows) }
+            .sortedBy { it.number }
+
+        val totalBeds = rooms.sumOf { it.capacity }
+        val occupiedBeds = rooms.sumOf { it.occupiedBeds }
+        val freeBeds = totalBeds - occupiedBeds
+        val occupancyPercent = if (totalBeds == 0) {
+            0.0
+        } else {
+            BigDecimal(occupiedBeds * PERCENT_SCALE)
+                .divide(BigDecimal(totalBeds), 2, RoundingMode.HALF_UP)
+                .toDouble()
+        }
+
+        return BedOccupancyResponse(
+            summary = OccupancySummary(
+                totalBeds = totalBeds,
+                occupiedBeds = occupiedBeds,
+                freeBeds = freeBeds,
+                occupancyPercent = occupancyPercent,
+            ),
+            rooms = rooms,
+        )
+    }
+
+    private fun toRoomOccupancyItem(rows: List<RoomOccupancyRow>): RoomOccupancyItem {
+        val first = rows.first()
+        // Repository query orders by `a.admissionDate`; `groupBy` preserves insertion order.
+        val occupants = rows
+            .filter { it.admissionId != null }
+            .map { row ->
+                BedOccupant(
+                    admissionId = row.admissionId!!,
+                    patientId = row.patientId!!,
+                    patientName = "${row.patientFirstName.orEmpty()} ${row.patientLastName.orEmpty()}".trim(),
+                    admissionDate = row.admissionDate!!.toLocalDate(),
+                )
+            }
+            .take(first.capacity)
+        val occupiedBeds = occupants.size
+        return RoomOccupancyItem(
+            id = first.roomId,
+            number = first.roomNumber,
+            type = first.roomType,
+            gender = first.roomGender,
+            capacity = first.capacity,
+            occupiedBeds = occupiedBeds,
+            availableBeds = (first.capacity - occupiedBeds).coerceAtLeast(0),
+            occupants = occupants,
+        )
+    }
+
+    private companion object {
+        const val PERCENT_SCALE = 100
+    }
 
     @Transactional
     fun createRoom(request: CreateRoomRequest): RoomResponse {

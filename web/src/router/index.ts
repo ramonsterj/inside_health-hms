@@ -123,6 +123,13 @@ const router = createRouter({
           component: () => import('@/views/admissions/AdmissionFormView.vue'),
           meta: { requiresPermission: 'admission:update' }
         },
+        // Bed Occupancy
+        {
+          path: 'bed-occupancy',
+          name: 'bed-occupancy',
+          component: () => import('@/views/operations/BedOccupancyView.vue'),
+          meta: { requiresPermission: 'room:occupancy-view' }
+        },
         // Billing routes
         {
           path: 'admissions/:id/charges',

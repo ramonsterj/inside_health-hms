@@ -648,7 +648,7 @@ CREATE INDEX idx_admission_consulting_physicians_physician_id ON admission_consu
 | Path | Component | Auth Required | Permission | Notes |
 |------|-----------|---------------|------------|-------|
 | `/admissions` | `AdmissionList` | Yes | `admission:read` | |
-| `/admissions/new?patientId={id}` | `AdmissionWizard` | Yes | `admission:create` | Requires patientId query param |
+| `/admissions/new?patientId={id}&roomId={id}` | `AdmissionWizard` | Yes | `admission:create` | Requires `patientId`. Optional `roomId` pre-selects the bed (added by the bed occupancy "Admit here" deep-link); ignored if the room is unavailable for the patient's gender. |
 | `/admissions/:id` | `AdmissionDetail` | Yes | `admission:read` | |
 | `/admissions/:id/edit` | `AdmissionWizard` | Yes | `admission:update` | |
 | `/admin/triage-codes` | `TriageCodeList` | Yes | `triage-code:read` |
