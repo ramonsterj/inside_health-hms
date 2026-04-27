@@ -59,5 +59,6 @@ export interface KardexVitalSignSummary {
   respiratoryRate: number
   temperature: number
   oxygenSaturation: number
+  glucose: number | null
   recordedByName: string | null
 }

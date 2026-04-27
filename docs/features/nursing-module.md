@@ -6,6 +6,7 @@
 |---------|------|--------|---------|
 | 1.0 | 2026-02-05 | @author | Initial draft |
 | 1.1 | 2026-02-05 | @claude | Added recordedAt field, BP physiological validation, discharge checks, chart endpoint, fixed permission migration, documented canEdit logic |
+| 1.2 | 2026-04-27 | @claude | Added Glucometría (blood glucose) as an optional vital sign field — implemented end-to-end (V090 migration, entity/DTO/service, form/table/charts/kardex, EN+ES i18n, controller + store tests) |
 
 ---
 
@@ -75,6 +76,7 @@ The Nursing Module allows nursing staff and doctors to document patient care dur
   - **Respiratory Rate** (Frecuencia Respiratoria): required, integer, 5-60 breaths/min
   - **Temperature** (Temperatura): required, decimal (1 decimal place), 30.0-45.0 °C
   - **Oxygen Saturation** (Oximetría): required, integer, 50-100 %
+  - **Glucometría** (Blood glucose): **optional**, integer, 20-600 mg/dL. Captured only when clinically indicated (diabetics, monitoring orders); not all vitals readings include it.
   - **Other** (Otros): optional, max 1000 characters
 - View vital signs in tabular format (chronological by `recordedAt`, newest first)
 - View vital signs in chart format (line graphs over time for each measurement)
@@ -144,6 +146,7 @@ canEdit = (
 - When respiratory rate is outside 5-60 range, return 400 Bad Request with localized message.
 - When temperature is outside 30.0-45.0 range, return 400 Bad Request with localized message.
 - When oxygen saturation is outside 50-100 range, return 400 Bad Request with localized message.
+- When glucose is provided and outside 20-600 range, return 400 Bad Request with message "Glucose must be between 20 and 600 mg/dL" / "La glucometría debe estar entre 20 y 600 mg/dL". When glucose is omitted/null, the request is accepted.
 - When a required vital sign field is missing, return 400 Bad Request with localized message.
 - When editing vital signs after 24 hours (non-admin), return 403 Forbidden with time limit message.
 - When editing vital signs created by another user (non-admin), return 403 Forbidden.
@@ -314,6 +317,7 @@ canEdit = (
 | `V043__create_nursing_notes_table.sql` | Creates nursing_notes table |
 | `V044__create_vital_signs_table.sql` | Creates vital_signs table with recorded_at field |
 | `V045__add_nursing_permissions.sql` | Adds nursing-note and vital-sign permissions with role assignments |
+| `V090__add_glucose_to_vital_signs.sql` | Adds optional `glucose` column (mg/dL) with CHECK constraint (NULL or 20–600) |
 
 ### Schema
 
@@ -785,6 +789,7 @@ private fun validateRecordedAt(recordedAt: LocalDateTime?) {
 - [ ] Input validation in place (ranges, required fields)
 - [ ] Blood pressure physiological validation (systolic > diastolic)
 - [ ] RecordedAt future validation
+- [ ] Glucose accepts null/omitted, accepts 20–600, rejects out-of-range
 - [ ] Edit time limit (24h) enforced
 - [ ] Creator-only edit restriction enforced
 - [ ] Admin override for edit restrictions

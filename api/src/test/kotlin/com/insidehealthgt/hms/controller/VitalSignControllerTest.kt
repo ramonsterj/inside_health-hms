@@ -567,6 +567,110 @@ class VitalSignControllerTest : AbstractIntegrationTest() {
             .andExpect(status().isBadRequest)
     }
 
+    // ============ GLUCOSE (GLUCOMETRÍA) TESTS ============
+
+    @Test
+    fun `create vital signs with glucose value stores and returns it`() {
+        val request = CreateVitalSignRequest(
+            systolicBp = 120,
+            diastolicBp = 80,
+            heartRate = 72,
+            respiratoryRate = 16,
+            temperature = BigDecimal("36.5"),
+            oxygenSaturation = 98,
+            glucose = 110,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/vital-signs")
+                .header("Authorization", "Bearer $nurseToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.data.glucose").value(110))
+    }
+
+    @Test
+    fun `create vital signs without glucose returns null glucose`() {
+        val request = createDefaultVitalSignRequest()
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/vital-signs")
+                .header("Authorization", "Bearer $nurseToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.data.glucose").doesNotExist())
+    }
+
+    @Test
+    fun `create fails with glucose below 20`() {
+        val request = CreateVitalSignRequest(
+            systolicBp = 120,
+            diastolicBp = 80,
+            heartRate = 72,
+            respiratoryRate = 16,
+            temperature = BigDecimal("36.5"),
+            oxygenSaturation = 98,
+            glucose = 19,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/vital-signs")
+                .header("Authorization", "Bearer $nurseToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `create fails with glucose above 600`() {
+        val request = CreateVitalSignRequest(
+            systolicBp = 120,
+            diastolicBp = 80,
+            heartRate = 72,
+            respiratoryRate = 16,
+            temperature = BigDecimal("36.5"),
+            oxygenSaturation = 98,
+            glucose = 601,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/vital-signs")
+                .header("Authorization", "Bearer $nurseToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `update can add glucose value to existing vital sign`() {
+        val vitalSignId = createVitalSignAndGetId(nurseToken)
+
+        val updateRequest = CreateVitalSignRequest(
+            systolicBp = 120,
+            diastolicBp = 80,
+            heartRate = 72,
+            respiratoryRate = 16,
+            temperature = BigDecimal("36.5"),
+            oxygenSaturation = 98,
+            glucose = 95,
+        )
+
+        mockMvc.perform(
+            put("/api/v1/admissions/$admissionId/vital-signs/$vitalSignId")
+                .header("Authorization", "Bearer $nurseToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.glucose").value(95))
+    }
+
     // ============ UNAUTHENTICATED / NON-EXISTENT ADMISSION TESTS ============
 
     @Test
