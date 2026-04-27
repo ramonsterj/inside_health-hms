@@ -65,6 +65,13 @@ const model = computed<MenuItem[]>(() => {
       to: '/nursing-kardex'
     })
   }
+  if (authStore.hasPermission('room:occupancy-view')) {
+    clinicalItems.push({
+      label: 'nav.bedOccupancy',
+      icon: 'pi pi-fw pi-th-large',
+      to: '/bed-occupancy'
+    })
+  }
   if (clinicalItems.length > 0) {
     items.push({
       label: 'nav.clinical',

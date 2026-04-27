@@ -61,6 +61,7 @@
     "patients": "Patients",
     "admissions": "Admissions",
     "nursingKardex": "Nursing Kardex",
+    "bedOccupancy": "Bed Occupancy",
     "users": "Users",
     "roles": "Roles",
     "triageCodes": "Triage Codes",
@@ -1143,6 +1144,7 @@
     "new": "New Room",
     "edit": "Edit Room",
     "number": "Room Number",
+    "numberPrefix": "Room ",
     "type": "Room Type",
     "gender": "Sex",
     "capacity": "Capacity",
@@ -1160,6 +1162,55 @@
     "genders": {
       "MALE": "Men",
       "FEMALE": "Women"
+    }
+  },
+  "bedOccupancy": {
+    "title": "Bed Occupancy",
+    "refresh": "Refresh",
+    "lastUpdated": "Last updated at {time}",
+    "empty": "No rooms configured — ask an admin to add rooms.",
+    "emptyFiltered": "No rooms match the selected filters.",
+    "summary": {
+      "total": "Total beds",
+      "occupied": "Occupied",
+      "free": "Free",
+      "percent": "Occupancy"
+    },
+    "filter": {
+      "gender": {
+        "all": "All sexes",
+        "male": "Men",
+        "female": "Women"
+      },
+      "type": {
+        "all": "All types",
+        "private": "Single",
+        "shared": "Double"
+      },
+      "status": {
+        "all": "All beds",
+        "free": "Free only",
+        "occupied": "Occupied only"
+      }
+    },
+    "search": {
+      "placeholder": "Search by room number or patient name",
+      "matchHighlight": "Matches search query"
+    },
+    "bed": {
+      "free": "Free",
+      "occupied": "Occupied",
+      "admitHere": "Admit here",
+      "viewAdmissionFor": "View admission for {name}"
+    },
+    "error": {
+      "loadFailed": "Could not load bed occupancy.",
+      "stale": "Last updated {time} — could not refresh.",
+      "retry": "Retry"
+    },
+    "relativeTime": {
+      "justNow": "just now",
+      "minutesAgo": "{count} min ago | {count} min ago"
     }
   },
   "admission": {
@@ -1204,6 +1255,8 @@
     "deleted": "Admission deleted successfully.",
     "patientAlreadyAdmitted": "Patient already has an active admission. Please discharge the existing admission first.",
     "patientAlreadyAdmittedWarning": "This patient already has an active admission. You must discharge the existing admission before creating a new one.",
+    "roomPreselectGenderMismatch": "Could not pre-select room {number}: it is reserved for {gender}. Please pick another room.",
+    "roomPreselectUnavailable": "The selected room is no longer available. Please pick another room.",
     "discharged": "Patient discharged successfully.",
     "confirmDischarge": "Are you sure you want to discharge this patient?",
     "confirmDelete": "Are you sure you want to delete this admission?",

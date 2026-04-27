@@ -40,6 +40,36 @@ export interface RoomAvailability {
   availableBeds: number
 }
 
+export interface BedOccupant {
+  admissionId: number
+  patientId: number
+  patientName: string
+  admissionDate: string
+}
+
+export interface RoomOccupancyItem {
+  id: number
+  number: string
+  type: RoomType
+  gender: RoomGender
+  capacity: number
+  occupiedBeds: number
+  availableBeds: number
+  occupants: BedOccupant[]
+}
+
+export interface OccupancySummary {
+  totalBeds: number
+  occupiedBeds: number
+  freeBeds: number
+  occupancyPercent: number
+}
+
+export interface BedOccupancyResponse {
+  summary: OccupancySummary
+  rooms: RoomOccupancyItem[]
+}
+
 export interface CreateRoomRequest {
   number: string
   type: RoomType

@@ -55,7 +55,7 @@ ON CONFLICT (code) DO NOTHING;
 -- STEP 3: REBUILD ROLE PERMISSIONS
 -- ============================================================================
 -- This section must replicate ALL permission grants from versioned migrations
--- V020-V067, since the seed file runs after migrations and the DELETE below
+-- V020-V091, since the seed file runs after migrations and the DELETE below
 -- wipes any migration-granted role_permissions.
 -- ============================================================================
 DELETE FROM role_permissions;
@@ -75,7 +75,7 @@ CROSS JOIN permissions p
 WHERE r.code = 'USER' AND p.code IN ('user:read') AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
 -- ADMINISTRATIVE_STAFF: patient management + admission + documents
--- Sources: V020, V025, V034
+-- Sources: V020, V025, V034, V091
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
@@ -85,7 +85,7 @@ WHERE r.code = 'ADMINISTRATIVE_STAFF'
     'user:read',
     'patient:create', 'patient:read', 'patient:update',
     'patient:upload-id', 'patient:view-id',
-    'triage-code:read', 'room:read',
+    'triage-code:read', 'room:read', 'room:occupancy-view',
     'admission:create', 'admission:read', 'admission:update',
     'admission:upload-consent', 'admission:view-consent',
     'admission:view-documents', 'admission:upload-documents', 'admission:download-documents',
@@ -137,7 +137,7 @@ WHERE r.code = 'PSYCHOLOGIST'
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
 -- NURSE: nursing + clinical read + MAR + psychotherapy read + billing read
--- Sources: V020, V025, V038, V042, V045, V061, V066
+-- Sources: V020, V025, V038, V042, V045, V061, V066, V091
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
@@ -146,7 +146,7 @@ WHERE r.code = 'NURSE'
   AND p.code IN (
     'user:read',
     'patient:read',
-    'triage-code:read', 'room:read',
+    'triage-code:read', 'room:read', 'room:occupancy-view',
     'admission:read',
     'admission:view-consent', 'admission:view-documents', 'admission:download-documents',
     'clinical-history:read',
@@ -161,7 +161,7 @@ WHERE r.code = 'NURSE'
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
 -- CHIEF_NURSE: same as NURSE + patient:update, admission:update, progress-note:update
--- Sources: V020, V025, V038 (extended), V042, V045, V066
+-- Sources: V020, V025, V038 (extended), V042, V045, V066, V091
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
@@ -170,7 +170,7 @@ WHERE r.code = 'CHIEF_NURSE'
   AND p.code IN (
     'user:read',
     'patient:read', 'patient:update',
-    'triage-code:read', 'room:read',
+    'triage-code:read', 'room:read', 'room:occupancy-view',
     'admission:read', 'admission:update',
     'admission:view-consent', 'admission:view-documents', 'admission:download-documents',
     'clinical-history:read',

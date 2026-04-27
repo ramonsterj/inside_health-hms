@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
@@ -22,6 +22,7 @@ import { getFullName } from '@/utils/format'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const toast = useToast()
 const confirm = useConfirm()
 const { showError, showSuccess } = useErrorHandler()
@@ -77,10 +78,22 @@ function editPatient(patientId: number) {
 }
 
 function admitPatient(patientId: number) {
-  router.push({ name: 'admission-create', query: { patientId: patientId.toString() } })
+  // When the user arrived from the bed-occupancy "Admit here" deep-link,
+  // forward the room to the admission wizard so it can pre-select the bed.
+  const query: Record<string, string> = { patientId: patientId.toString() }
+  const admitToRoom = route.query.admitToRoom
+  if (typeof admitToRoom === 'string' && admitToRoom.length > 0) {
+    query.roomId = admitToRoom
+  }
+  router.push({ name: 'admission-create', query })
 }
 
 function createNewPatient() {
+  const admitToRoom = route.query.admitToRoom
+  if (typeof admitToRoom === 'string' && admitToRoom.length > 0) {
+    router.push({ name: 'patient-create', query: { admitToRoom } })
+    return
+  }
   router.push({ name: 'patient-create' })
 }
 

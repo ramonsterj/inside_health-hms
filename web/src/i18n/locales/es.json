@@ -61,6 +61,7 @@
     "patients": "Pacientes",
     "admissions": "Hospitalizaciones",
     "nursingKardex": "Kardex de Enfermería",
+    "bedOccupancy": "Ocupación de Camas",
     "users": "Usuarios",
     "roles": "Roles",
     "triageCodes": "Códigos de Triage",
@@ -1143,6 +1144,7 @@
     "new": "Nueva Habitación",
     "edit": "Editar Habitación",
     "number": "Código",
+    "numberPrefix": "Habitación ",
     "type": "Tipo",
     "gender": "Sexo",
     "capacity": "Capacidad",
@@ -1160,6 +1162,55 @@
     "genders": {
       "MALE": "Hombres",
       "FEMALE": "Mujeres"
+    }
+  },
+  "bedOccupancy": {
+    "title": "Ocupación de Camas",
+    "refresh": "Actualizar",
+    "lastUpdated": "Última actualización a las {time}",
+    "empty": "No hay habitaciones configuradas — solicite a un administrador que las agregue.",
+    "emptyFiltered": "Ninguna habitación coincide con los filtros seleccionados.",
+    "summary": {
+      "total": "Camas totales",
+      "occupied": "Ocupadas",
+      "free": "Libres",
+      "percent": "Ocupación"
+    },
+    "filter": {
+      "gender": {
+        "all": "Todos los sexos",
+        "male": "Hombres",
+        "female": "Mujeres"
+      },
+      "type": {
+        "all": "Todos los tipos",
+        "private": "Sencilla",
+        "shared": "Doble"
+      },
+      "status": {
+        "all": "Todas las camas",
+        "free": "Solo libres",
+        "occupied": "Solo ocupadas"
+      }
+    },
+    "search": {
+      "placeholder": "Buscar por número de habitación o nombre del paciente",
+      "matchHighlight": "Coincide con la búsqueda"
+    },
+    "bed": {
+      "free": "Libre",
+      "occupied": "Ocupada",
+      "admitHere": "Ingresar aquí",
+      "viewAdmissionFor": "Ver admisión de {name}"
+    },
+    "error": {
+      "loadFailed": "No se pudo cargar la ocupación de camas.",
+      "stale": "Última actualización {time} — no se pudo actualizar.",
+      "retry": "Reintentar"
+    },
+    "relativeTime": {
+      "justNow": "hace un momento",
+      "minutesAgo": "hace {count} min | hace {count} min"
     }
   },
   "admission": {
@@ -1204,6 +1255,8 @@
     "deleted": "Admisión eliminada éxitosamente.",
     "patientAlreadyAdmitted": "El paciente ya tiene una admisión activa. Por favor de de alta la admisión existente primero.",
     "patientAlreadyAdmittedWarning": "Este paciente ya tiene una admisión activa. Debe dar de alta la admisión existente antes de crear una nueva.",
+    "roomPreselectGenderMismatch": "No se pudo preseleccionar la habitación {number}: está reservada para {gender}. Seleccione otra habitación.",
+    "roomPreselectUnavailable": "La habitación seleccionada ya no está disponible. Seleccione otra habitación.",
     "discharged": "Paciente dado de alta éxitosamente.",
     "confirmDischarge": "¿Está seguro de que desea dar de alta a este paciente?",
     "confirmDelete": "¿Está seguro de que desea eliminar esta admisión?",

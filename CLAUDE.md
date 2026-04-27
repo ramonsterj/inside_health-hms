@@ -137,7 +137,7 @@ com.insidehealthgt.hms/
 **Location**: `src/main/resources/db/migration/`
 **Naming**: `V{version}__{description}.sql`
 
-**Current migrations**: V001-V090 (users, audit_logs, roles/permissions, password_reset_tokens, locale, patients, admissions, file storage, admission types, document types, clinical histories, progress notes, medical orders, psychotherapy categories, psychotherapy activities, nursing notes, vital signs, inventory categories, inventory items, inventory movements, inventory permissions, room pricing, patient charges, invoices, billing permissions, billing adjustments, medication administrations, psychotherapy category pricing, medical order inventory link, medication administration permissions, billing configure permission, diet charge unique index, unaccent extension, psychologist permissions, medical order documents, medical order document permissions, bank accounts, treasury employees, salary history, expenses, expense payments, income records, payroll entries, treasury permissions, doctor fees, bank account column mappings, bank statements, seed treasury test data, treasury integrity fixes, vital_signs glucose column)
+**Current migrations**: V001-V091 (users, audit_logs, roles/permissions, password_reset_tokens, locale, patients, admissions, file storage, admission types, document types, clinical histories, progress notes, medical orders, psychotherapy categories, psychotherapy activities, nursing notes, vital signs, inventory categories, inventory items, inventory movements, inventory permissions, room pricing, patient charges, invoices, billing permissions, billing adjustments, medication administrations, psychotherapy category pricing, medical order inventory link, medication administration permissions, billing configure permission, diet charge unique index, unaccent extension, psychologist permissions, medical order documents, medical order document permissions, bank accounts, treasury employees, salary history, expenses, expense payments, income records, payroll entries, treasury permissions, doctor fees, bank account column mappings, bank statements, seed treasury test data, treasury integrity fixes, vital_signs glucose column, room occupancy permission)
 
 ```sql
 -- Example: Always include BaseEntity fields in new tables
@@ -321,6 +321,7 @@ class GlobalExceptionHandler {
 - ✅ Treasury Module Phase 1-2 (bank accounts, expenses, expense payments, income, employees, salary history, payroll, contractor payments)
 - ✅ Doctor Fee Billing (Phase 3: fee creation, invoice submission, document upload, settlement with auto-expense creation, payment history integration)
 - ✅ Bank Statement Reconciliation (Phase 4: XLSX/CSV upload with configurable column mappings, auto-match against expense payments and income, confirm/reject suggestions, manual match, acknowledge rows, create expense/income from unmatched rows, statement completion)
+- ✅ Bed Occupancy View (aggregated `GET /api/v1/rooms/occupancy` endpoint, gated by new `room:occupancy-view` permission granted to ADMIN/NURSE/CHIEF_NURSE/ADMINISTRATIVE_STAFF — explicitly NOT to DOCTOR; counts only ACTIVE non-deleted HOSPITALIZATION admissions)
 
 ### Frontend (Complete)
 - ✅ Vue 3.5 + TypeScript 5.9 + Vite 7.x
@@ -345,6 +346,7 @@ class GlobalExceptionHandler {
 - ✅ Doctor Fee Billing UI (fee list with summary, create form with net amount preview, invoice dialog, settle dialog, document upload, status-based actions)
 - ✅ Bank Statement Reconciliation UI (statement list with progress, upload dialog, column mapping config, reconciliation view with color-coded rows, confirm/reject/acknowledge/create expense/income actions, complete statement)
 - ✅ Admissions list cards view with grouping by gender or type, persisted per user via localStorage (Dashboard and Admissions screen share preferences)
+- ✅ Bed Occupancy View UI (`/bed-occupancy`: per-room cards with one bed slot per capacity, summary header, filters by sex/type/status, search by room number or patient name, 30s auto-refresh paused on hidden tab, "Admit here" deep-link that pre-selects the room in the admission wizard via `?roomId=`)
 
 ### Security Tooling
 - ✅ Detekt (Kotlin static analysis)

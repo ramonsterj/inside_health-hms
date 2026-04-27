@@ -38,6 +38,10 @@ const patientIdFromQuery = computed(() => {
   const id = route.query.patientId
   return id ? Number(id) : null
 })
+const roomIdFromQuery = computed(() => {
+  const id = route.query.roomId
+  return id ? Number(id) : null
+})
 
 // Patient
 const selectedPatient = ref<PatientSummary | null>(null)
@@ -82,6 +86,10 @@ watch(selectedType, newType => {
 // Errors
 const errors = ref<Record<string, string>>({})
 
+// Warning shown when ?roomId could not be pre-selected (e.g. gender mismatch
+// or room no longer available). Cleared when the user picks any room.
+const roomPreselectWarning = ref<string | null>(null)
+
 onMounted(async () => {
   try {
     await Promise.all([
@@ -94,6 +102,7 @@ onMounted(async () => {
       await loadAdmission()
     } else if (patientIdFromQuery.value) {
       await loadPatient()
+      preselectRoomFromQuery()
     } else {
       // No patient specified, redirect back
       showError(t('admission.errors.invalidPatient'))
@@ -133,6 +142,32 @@ async function loadPatient() {
     router.push({ name: 'patients' })
   }
 }
+
+function preselectRoomFromQuery() {
+  if (!roomIdFromQuery.value) return
+  const room = filteredAvailableRooms.value.find(r => r.id === roomIdFromQuery.value)
+  if (room) {
+    selectedRoom.value = room.id
+    return
+  }
+  // Room couldn't be pre-selected. Tell the user why so they don't think the
+  // form ignored their click on the bed occupancy view.
+  const rawRoom = roomStore.availableRooms.find(r => r.id === roomIdFromQuery.value)
+  if (rawRoom) {
+    roomPreselectWarning.value = t('admission.roomPreselectGenderMismatch', {
+      number: rawRoom.number,
+      gender: t(`room.genders.${rawRoom.gender}`)
+    })
+  } else {
+    roomPreselectWarning.value = t('admission.roomPreselectUnavailable')
+  }
+}
+
+watch(selectedRoom, value => {
+  if (value !== null) {
+    roomPreselectWarning.value = null
+  }
+})
 
 function getDoctorLabel(doctor: Doctor): string {
   const salutationLabel = doctor.salutation ? t(`user.salutations.${doctor.salutation}`) : ''
@@ -288,6 +323,9 @@ function cancel() {
                 :placeholder="t('admission.selectRoom')"
                 :class="{ 'p-invalid': errors.room }"
               />
+              <Message v-if="roomPreselectWarning" severity="warn" :closable="false">
+                {{ roomPreselectWarning }}
+              </Message>
               <Message v-if="errors.room" severity="error" :closable="false">
                 {{ errors.room }}
               </Message>

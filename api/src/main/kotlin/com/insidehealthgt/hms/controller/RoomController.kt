@@ -3,6 +3,7 @@ package com.insidehealthgt.hms.controller
 import com.insidehealthgt.hms.dto.request.CreateRoomRequest
 import com.insidehealthgt.hms.dto.request.UpdateRoomRequest
 import com.insidehealthgt.hms.dto.response.ApiResponse
+import com.insidehealthgt.hms.dto.response.BedOccupancyResponse
 import com.insidehealthgt.hms.dto.response.RoomAvailabilityResponse
 import com.insidehealthgt.hms.dto.response.RoomResponse
 import com.insidehealthgt.hms.service.RoomService
@@ -35,6 +36,13 @@ class RoomController(private val roomService: RoomService) {
     fun listAvailableRooms(): ResponseEntity<ApiResponse<List<RoomAvailabilityResponse>>> {
         val rooms = roomService.findAvailableRooms()
         return ResponseEntity.ok(ApiResponse.success(rooms))
+    }
+
+    @GetMapping("/occupancy")
+    @PreAuthorize("hasAuthority('room:occupancy-view')")
+    fun getBedOccupancy(): ResponseEntity<ApiResponse<BedOccupancyResponse>> {
+        val occupancy = roomService.getBedOccupancy()
+        return ResponseEntity.ok(ApiResponse.success(occupancy))
     }
 
     @GetMapping("/{id}")
