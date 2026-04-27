@@ -1242,6 +1242,35 @@
     },
     "errors": {
       "invalidPatient": "Patient not found. Please select a patient from the list."
+    },
+    "listView": {
+      "view": "View",
+      "viewAction": "View",
+      "viewActionFor": "View admission for {name}",
+      "viewModes": {
+        "cards": "Cards",
+        "table": "Table"
+      },
+      "groupBy": "Group by",
+      "groupByOptions": {
+        "none": "None",
+        "gender": "Gender",
+        "type": "Type",
+        "triage": "Triage"
+      },
+      "groups": {
+        "female": "Female",
+        "male": "Male",
+        "other": "Other",
+        "untriaged": "No triage"
+      },
+      "labels": {
+        "doctor": "Doctor",
+        "room": "Room",
+        "triage": "Triage",
+        "admitted": "Admitted",
+        "status": "Status"
+      }
     }
   },
   "document": {

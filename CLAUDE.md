@@ -344,6 +344,7 @@ class GlobalExceptionHandler {
 - ✅ Treasury UI (bank accounts, expenses, income, employees, payroll, contractor payments)
 - ✅ Doctor Fee Billing UI (fee list with summary, create form with net amount preview, invoice dialog, settle dialog, document upload, status-based actions)
 - ✅ Bank Statement Reconciliation UI (statement list with progress, upload dialog, column mapping config, reconciliation view with color-coded rows, confirm/reject/acknowledge/create expense/income actions, complete statement)
+- ✅ Admissions list cards view with grouping by gender or type, persisted per user via localStorage (Dashboard and Admissions screen share preferences)
 
 ### Security Tooling
 - ✅ Detekt (Kotlin static analysis)
