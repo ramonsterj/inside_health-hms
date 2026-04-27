@@ -132,6 +132,99 @@ test.describe('Authentication - Login Errors', () => {
     await expect(page).toHaveURL(/\/login/)
     await expect(page.getByRole('button', { name: 'Sign In' })).toBeEnabled()
   })
+
+  test('shows error toast with backend feedback message on invalid credentials', async ({
+    page
+  }) => {
+    // Mock login endpoint with the real backend ErrorResponse shape
+    await page.route('**/api/auth/login', async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          error: { code: 'UNAUTHORIZED', message: 'Invalid email or password' }
+        })
+      })
+    })
+
+    await page.goto('/login')
+
+    await page.getByLabel('Email or Username').fill('wronguser')
+    await page.locator('#password input').fill('wrongpassword')
+    await page.getByRole('button', { name: 'Sign In' }).click()
+
+    // Toast is mounted at App root so it renders on guest routes like /login.
+    const toast = page.locator('.p-toast-message-error')
+    await expect(toast).toBeVisible({ timeout: 5000 })
+    await expect(toast).toContainText('Login Failed')
+    await expect(toast).toContainText('Invalid email or password')
+
+    // Should stay on login page
+    await expect(page).toHaveURL(/\/login/)
+  })
+
+  test('still shows feedback toast when backend response has no error body', async ({ page }) => {
+    // Edge case: backend returns 401 with no body — the user must still see *some* feedback
+    await page.route('**/api/auth/login', async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({})
+      })
+    })
+
+    await page.goto('/login')
+
+    await page.getByLabel('Email or Username').fill('wronguser')
+    await page.locator('#password input').fill('wrongpassword')
+    await page.getByRole('button', { name: 'Sign In' }).click()
+
+    const toast = page.locator('.p-toast-message-error')
+    await expect(toast).toBeVisible({ timeout: 5000 })
+    await expect(toast).toContainText('Login Failed')
+
+    await expect(page).toHaveURL(/\/login/)
+  })
+
+  test('sends Accept-Language and shows localized Spanish error toast', async ({ page }) => {
+    // Set the user's locale to Spanish before the app loads
+    await page.addInitScript(() => {
+      localStorage.setItem('locale', 'es')
+    })
+
+    let receivedAcceptLanguage: string | null = null
+    await page.route('**/api/auth/login', async (route) => {
+      receivedAcceptLanguage = route.request().headers()['accept-language'] ?? null
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Correo electrónico o contraseña inválidos'
+          }
+        })
+      })
+    })
+
+    await page.goto('/login')
+
+    await page.getByLabel(/correo|email/i).fill('wronguser')
+    await page.locator('#password input').fill('wrongpassword')
+    await page.getByRole('button', { name: /iniciar sesión|sign in/i }).click()
+
+    const toast = page.locator('.p-toast-message-error')
+    await expect(toast).toBeVisible({ timeout: 5000 })
+    // Spanish summary from frontend i18n
+    await expect(toast).toContainText('Error de Inicio de Sesión')
+    // Spanish detail from backend (mocked to simulate localized response)
+    await expect(toast).toContainText('Correo electrónico o contraseña inválidos')
+
+    // Verify the frontend signaled its locale to the backend
+    expect(receivedAcceptLanguage).toBe('es')
+
+    await expect(page).toHaveURL(/\/login/)
+  })
 })
 
 test.describe('Authentication - Password Field', () => {

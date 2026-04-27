@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { tokenStorage } from '@/utils/tokenStorage'
 import { useSessionExpiration } from '@/composables/useSessionExpiration'
+import { getCurrentLocale } from '@/i18n'
 import type { ApiResponse, AuthResponse } from '@/types'
 
 interface RetryableRequest extends InternalAxiosRequestConfig {
@@ -14,13 +15,14 @@ const api = axios.create({
   }
 })
 
-// Request interceptor - attach access token
+// Request interceptor - attach access token and current locale
 api.interceptors.request.use(
   config => {
     const token = tokenStorage.getAccessToken()
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    config.headers['Accept-Language'] = getCurrentLocale()
     return config
   },
   error => Promise.reject(error)

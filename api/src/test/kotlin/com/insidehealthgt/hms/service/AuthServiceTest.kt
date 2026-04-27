@@ -47,6 +47,7 @@ class AuthServiceTest {
         jwtTokenProvider = mock()
         refreshTokenService = mock()
         messageService = mock {
+            on { authLoginFailed() } doReturn "Invalid email or password"
             on { errorAuthAccountStatus(org.mockito.kotlin.any()) } doReturn "Account disabled"
             on { errorAuthAccountStatusInactive() } doReturn "inactive"
             on { errorAuthAccountStatusSuspended() } doReturn "suspended"
