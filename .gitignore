@@ -64,3 +64,9 @@ test-output/
 
 # File storage (local dev and tests)
 data/
+
+# Node (stray root-level installs; real node_modules lives under web/)
+node_modules/
+
+# Claude Code local state
+.claude/scheduled_tasks.lock

@@ -118,6 +118,8 @@ Register hospital admissions starting from the patient list view. Staff selects 
 - Sets dischargeDate to current timestamp
 - Room available beds automatically incremented
 
+> Alternate list views (cards, grouping) are specified in [admissions-list-view.md](./admissions-list-view.md).
+
 ### Room Availability Logic
 
 - Available beds = capacity - count of ACTIVE admissions for that room

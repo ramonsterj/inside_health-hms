@@ -1242,6 +1242,35 @@
     },
     "errors": {
       "invalidPatient": "Paciente no encontrado. Por favor seleccione un paciente de la lista."
+    },
+    "listView": {
+      "view": "Vista",
+      "viewAction": "Ver",
+      "viewActionFor": "Ver admisión de {name}",
+      "viewModes": {
+        "cards": "Tarjetas",
+        "table": "Tabla"
+      },
+      "groupBy": "Agrupar por",
+      "groupByOptions": {
+        "none": "Ninguno",
+        "gender": "Sexo",
+        "type": "Tipo",
+        "triage": "Triage"
+      },
+      "groups": {
+        "female": "Femenino",
+        "male": "Masculino",
+        "other": "Otro",
+        "untriaged": "Sin triage"
+      },
+      "labels": {
+        "doctor": "Médico",
+        "room": "Habitación",
+        "triage": "Triage",
+        "admitted": "Admitido",
+        "status": "Estado"
+      }
     }
   },
   "document": {
