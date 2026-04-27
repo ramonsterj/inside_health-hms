@@ -51,6 +51,11 @@ const { freshnessClass, freshnessLabel } = useVitalsFreshness(
         <span class="vital-value">{{ props.vitalSigns.oxygenSaturation }}</span>
         <span class="vital-unit">{{ t('kardex.vitals.percent') }}</span>
       </div>
+      <div v-if="props.vitalSigns.glucose != null" class="vital-item">
+        <span class="vital-label">{{ t('kardex.vitals.glucose') }}</span>
+        <span class="vital-value">{{ props.vitalSigns.glucose }}</span>
+        <span class="vital-unit">{{ t('kardex.vitals.mgPerDl') }}</span>
+      </div>
       <span class="vitals-separator">·</span>
       <span :class="['freshness', freshnessClass]">{{ freshnessLabel }}</span>
       <span class="vitals-separator">·</span>

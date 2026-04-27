@@ -215,6 +215,15 @@ onMounted(loadVitalSigns)
             <span class="unit">{{ t('nursing.vitalSigns.units.percent') }}</span>
           </template>
         </Column>
+        <Column field="glucose" :header="t('nursing.vitalSigns.fields.glucose')">
+          <template #body="{ data }">
+            <template v-if="data.glucose != null">
+              {{ data.glucose }}
+              <span class="unit">{{ t('nursing.vitalSigns.units.mgPerDl') }}</span>
+            </template>
+            <span v-else class="unit">—</span>
+          </template>
+        </Column>
         <Column :header="t('common.createdBy')">
           <template #body="{ data }">
             {{ formatAuthor(data) }}

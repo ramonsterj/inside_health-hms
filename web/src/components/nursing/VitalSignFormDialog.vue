@@ -42,6 +42,7 @@ const [heartRate, heartRateAttrs] = defineField('heartRate')
 const [respiratoryRate, respiratoryRateAttrs] = defineField('respiratoryRate')
 const [temperature, temperatureAttrs] = defineField('temperature')
 const [oxygenSaturation, oxygenSaturationAttrs] = defineField('oxygenSaturation')
+const [glucose, glucoseAttrs] = defineField('glucose')
 const [other, otherAttrs] = defineField('other')
 
 // Local date state for the DatePicker
@@ -64,6 +65,7 @@ watch(visible, newValue => {
           respiratoryRate: vs.respiratoryRate,
           temperature: vs.temperature,
           oxygenSaturation: vs.oxygenSaturation,
+          glucose: vs.glucose ?? null,
           other: vs.other || ''
         }
       })
@@ -79,6 +81,7 @@ watch(visible, newValue => {
           respiratoryRate: undefined as unknown as number,
           temperature: undefined as unknown as number,
           oxygenSaturation: undefined as unknown as number,
+          glucose: null,
           other: ''
         }
       })
@@ -115,6 +118,7 @@ const onSubmit = handleSubmit(async values => {
       respiratoryRate: values.respiratoryRate,
       temperature: values.temperature,
       oxygenSaturation: values.oxygenSaturation,
+      glucose: values.glucose ?? null,
       other: values.other || null
     }
 
@@ -296,6 +300,28 @@ function handleCancel() {
             {{ t(errors.oxygenSaturation) }}
           </small>
         </div>
+      </div>
+
+      <!-- Glucometría (optional) -->
+      <div class="form-field full-width">
+        <label for="glucose">{{ t('nursing.vitalSigns.fields.glucose') }}</label>
+        <div class="input-with-unit">
+          <InputNumber
+            id="glucose"
+            v-model="glucose"
+            v-bind="glucoseAttrs"
+            :min="20"
+            :max="600"
+            :useGrouping="false"
+            :placeholder="t('nursing.vitalSigns.placeholders.glucose')"
+            :class="{ 'p-invalid': errors.glucose }"
+          />
+          <span class="unit">{{ t('nursing.vitalSigns.units.mgPerDl') }}</span>
+        </div>
+        <small class="field-hint">{{ t('nursing.vitalSigns.hints.glucose') }}</small>
+        <small v-if="errors.glucose" class="p-error">
+          {{ t(errors.glucose) }}
+        </small>
       </div>
 
       <!-- Other observations -->

@@ -165,6 +165,7 @@ data class KardexVitalSignSummary(
     val respiratoryRate: Int,
     val temperature: BigDecimal,
     val oxygenSaturation: Int,
+    val glucose: Int?,
     val recordedByName: String?,
 ) {
     companion object {
@@ -176,6 +177,7 @@ data class KardexVitalSignSummary(
             respiratoryRate = vs.respiratoryRate,
             temperature = vs.temperature,
             oxygenSaturation = vs.oxygenSaturation,
+            glucose = vs.glucose,
             recordedByName = vs.createdBy?.let { usersById[it] }?.displayName(),
         )
     }

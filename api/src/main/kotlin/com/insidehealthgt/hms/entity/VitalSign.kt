@@ -40,6 +40,9 @@ class VitalSign(
     @Column(name = "oxygen_saturation", nullable = false)
     var oxygenSaturation: Int,
 
+    @Column(name = "glucose")
+    var glucose: Int? = null,
+
     @Column(length = 1000)
     var other: String? = null,
 

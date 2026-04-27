@@ -91,7 +91,7 @@ All entities inherit from `BaseEntity` (providing `id`, `createdAt`, `updatedAt`
 | Entity | Table | Key Fields | Relationships |
 |--------|-------|------------|---------------|
 | **NursingNote** | `nursing_notes` | `description` | ManyToOne → Admission |
-| **VitalSign** | `vital_signs` | `recordedAt`, `systolicBp`, `diastolicBp`, `heartRate`, `respiratoryRate`, `temperature`, `oxygenSaturation`, `other` | ManyToOne → Admission |
+| **VitalSign** | `vital_signs` | `recordedAt`, `systolicBp`, `diastolicBp`, `heartRate`, `respiratoryRate`, `temperature`, `oxygenSaturation`, `glucose` (optional, mg/dL), `other` | ManyToOne → Admission |
 
 **Inventory Management:**
 

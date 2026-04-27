@@ -920,6 +920,11 @@
           "min": "La oximetría debe ser al menos 50%.",
           "max": "La oximetría debe ser como máximo 100%."
         },
+        "glucose": {
+          "integer": "La glucometría debe ser un número entero.",
+          "min": "La glucometría debe ser al menos 20 mg/dL.",
+          "max": "La glucometría debe ser como máximo 600 mg/dL."
+        },
         "other": {
           "max": "Las otras observacíones deben tener como máximo 1000 caracteres."
         },
@@ -1685,6 +1690,7 @@
       "charts": "Gráficos",
       "empty": "No hay signos vitales registrados.",
       "noChartData": "No hay datos disponibles para gráficos.",
+      "glucoseNoData": "Aún no se han registrado mediciones de glucometría.",
       "created": "Signos vitales registrados éxitosamente.",
       "updated": "Signos vitales actualizados éxitosamente.",
       "fields": {
@@ -1696,21 +1702,25 @@
         "respiratoryRate": "Frecuencia Respiratoria",
         "temperature": "Temperatura",
         "oxygenSaturation": "Oximetría",
+        "glucose": "Glucometría",
         "other": "Otras Observacíones"
       },
       "placeholders": {
         "recordedAt": "Seleccione fecha y hora",
+        "glucose": "Opcional",
         "other": "Observacíones adicionales..."
       },
       "hints": {
-        "recordedAt": "Deje vacío para usar la hora actual"
+        "recordedAt": "Deje vacío para usar la hora actual",
+        "glucose": "Opcional — dejar vacío si no se midió"
       },
       "units": {
         "mmHg": "mmHg",
         "bpm": "lpm",
         "breathsPerMin": "resp/min",
         "celsius": "°C",
-        "percent": "%"
+        "percent": "%",
+        "mgPerDl": "mg/dL"
       },
       "filter": {
         "dateRange": "Rango de Fechas",
@@ -1728,6 +1738,7 @@
         "respiratoryRate": "Frecuencia Respiratoria",
         "temperature": "Temperatura",
         "oxygenSaturation": "Oximetría",
+        "glucose": "Glucometría",
         "systolic": "Sistólica",
         "diastolic": "Diastólica"
       },
@@ -1852,11 +1863,13 @@
       "rr": "FR",
       "temp": "Temp",
       "spo2": "SpO2",
+      "glucose": "Glu",
       "mmhg": "mmHg",
       "bpm": "lpm",
       "perMin": "/min",
       "celsius": "°C",
       "percent": "%",
+      "mgPerDl": "mg/dL",
       "hoursAgo": "hace {hours}h",
       "never": "Nunca",
       "overdue": "Atrasado",

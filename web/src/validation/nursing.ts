@@ -66,6 +66,15 @@ export const vitalSignSchema = z
       .int('validation.nursing.vitalSign.oxygenSaturation.integer')
       .min(50, 'validation.nursing.vitalSign.oxygenSaturation.min')
       .max(100, 'validation.nursing.vitalSign.oxygenSaturation.max'),
+    glucose: z
+      .number({
+        invalid_type_error: 'validation.nursing.vitalSign.glucose.integer'
+      })
+      .int('validation.nursing.vitalSign.glucose.integer')
+      .min(20, 'validation.nursing.vitalSign.glucose.min')
+      .max(600, 'validation.nursing.vitalSign.glucose.max')
+      .nullable()
+      .optional(),
     other: z
       .string()
       .max(1000, 'validation.nursing.vitalSign.other.max')
