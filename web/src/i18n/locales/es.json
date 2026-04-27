@@ -101,7 +101,7 @@
       "success": "Bienvenido de nuevo!",
       "successDetail": "Has iniciado sesión éxitosamente.",
       "failed": "Error de Inicio de Sesión",
-      "failedDetail": "Error al iniciar sesión. Verifica tus credenciales."
+      "failedDetail": "El correo/usuario o la contraseña son incorrectos. Por favor, inténtalo de nuevo."
     },
     "register": {
       "title": "Crear Cuenta",

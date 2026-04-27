@@ -36,10 +36,10 @@ class AuthService(
 
     private fun findAndValidateUser(identifier: String, password: String): User {
         val user = userRepository.findByIdentifierWithRolesAndPermissions(identifier)
-            ?: throw InvalidCredentialsException()
+            ?: throw InvalidCredentialsException(messageService.authLoginFailed())
 
         if (!passwordEncoder.matches(password, user.passwordHash)) {
-            throw InvalidCredentialsException()
+            throw InvalidCredentialsException(messageService.authLoginFailed())
         }
 
         return user

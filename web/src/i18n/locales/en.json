@@ -101,7 +101,7 @@
       "success": "Welcome back!",
       "successDetail": "You have successfully logged in.",
       "failed": "Login Failed",
-      "failedDetail": "Login failed. Please check your credentials."
+      "failedDetail": "The email/username or password is incorrect. Please try again."
     },
     "register": {
       "title": "Create Account",
