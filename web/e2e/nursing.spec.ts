@@ -106,6 +106,7 @@ const mockVitalSigns = [
     respiratoryRate: 18,
     temperature: 36.8,
     oxygenSaturation: 97,
+    glucose: null,
     other: null,
     createdAt: '2026-02-05T14:00:00Z',
     updatedAt: '2026-02-05T14:00:00Z',
@@ -129,6 +130,7 @@ const mockVitalSigns = [
     respiratoryRate: 16,
     temperature: 36.5,
     oxygenSaturation: 98,
+    glucose: null,
     other: null,
     createdAt: '2026-02-05T10:30:00Z',
     updatedAt: '2026-02-05T10:30:00Z',
@@ -649,6 +651,7 @@ test.describe('Nursing Module', () => {
       await expect(page.locator('#respiratoryRate')).toBeVisible()
       await expect(page.locator('#temperature')).toBeVisible()
       await expect(page.locator('#oxygenSaturation')).toBeVisible()
+      await expect(page.locator('#glucose')).toBeVisible()
       await expect(page.getByRole('button', { name: /Save/i })).toBeVisible()
     })
   })

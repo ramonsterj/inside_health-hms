@@ -28,6 +28,7 @@ const mockVitalSign: VitalSignResponse = {
   respiratoryRate: 16,
   temperature: 36.5,
   oxygenSaturation: 98,
+  glucose: null,
   other: null,
   createdAt: '2026-02-05T10:30:00Z',
   updatedAt: '2026-02-05T10:30:00Z',
@@ -53,6 +54,7 @@ const mockVitalSigns: VitalSignResponse[] = [
     respiratoryRate: 15,
     temperature: 36.3,
     oxygenSaturation: 99,
+    glucose: 105,
     other: 'Evening reading',
     createdAt: '2026-02-05T22:00:00Z',
     updatedAt: '2026-02-05T22:00:00Z',
@@ -76,6 +78,7 @@ const mockVitalSigns: VitalSignResponse[] = [
     respiratoryRate: 18,
     temperature: 36.8,
     oxygenSaturation: 97,
+    glucose: null,
     other: null,
     createdAt: '2026-02-05T14:00:00Z',
     updatedAt: '2026-02-05T14:00:00Z',
@@ -99,6 +102,7 @@ const mockVitalSigns: VitalSignResponse[] = [
     respiratoryRate: 16,
     temperature: 36.5,
     oxygenSaturation: 98,
+    glucose: null,
     other: null,
     createdAt: '2026-02-05T10:30:00Z',
     updatedAt: '2026-02-05T10:30:00Z',
@@ -350,6 +354,33 @@ describe('useVitalSignStore', () => {
           oxygenSaturation: 98
         })
       ).rejects.toThrow('Cannot modify records for discharged admissions')
+    })
+
+    it('should round-trip glucose value when provided', async () => {
+      const createRequest = {
+        systolicBp: 120,
+        diastolicBp: 80,
+        heartRate: 72,
+        respiratoryRate: 16,
+        temperature: 36.5,
+        oxygenSaturation: 98,
+        glucose: 110
+      }
+
+      mockedApi.post.mockResolvedValueOnce({
+        data: { success: true, data: { ...mockVitalSign, glucose: 110 } }
+      })
+      mockedApi.get.mockResolvedValueOnce(mockPageResponse(mockVitalSigns, 3))
+      mockedApi.get.mockResolvedValueOnce(mockListResponse(mockVitalSigns))
+
+      const store = useVitalSignStore()
+      const result = await store.createVitalSign(100, createRequest)
+
+      expect(mockedApi.post).toHaveBeenCalledWith(
+        '/v1/admissions/100/vital-signs',
+        expect.objectContaining({ glucose: 110 })
+      )
+      expect(result.glucose).toBe(110)
     })
   })
 

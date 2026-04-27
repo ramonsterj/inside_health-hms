@@ -133,6 +133,7 @@ class VitalSignService(
             respiratoryRate = request.respiratoryRate!!,
             temperature = request.temperature!!,
             oxygenSaturation = request.oxygenSaturation!!,
+            glucose = request.glucose,
             other = request.other,
         )
 
@@ -164,6 +165,7 @@ class VitalSignService(
         vitalSign.respiratoryRate = request.respiratoryRate!!
         vitalSign.temperature = request.temperature!!
         vitalSign.oxygenSaturation = request.oxygenSaturation!!
+        vitalSign.glucose = request.glucose
         vitalSign.other = request.other
 
         val saved = vitalSignRepository.save(vitalSign)

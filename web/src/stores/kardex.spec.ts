@@ -55,6 +55,7 @@ const mockSummary = {
     respiratoryRate: 16,
     temperature: 36.5,
     oxygenSaturation: 98,
+    glucose: null,
     recordedByName: 'Nurse Johnson'
   },
   hoursSinceLastVitals: 2.5,

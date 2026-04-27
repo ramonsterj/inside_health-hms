@@ -124,6 +124,7 @@ function createMockKardexSummary(overrides: Record<string, unknown> = {}) {
       respiratoryRate: 16,
       temperature: 36.5,
       oxygenSaturation: 97,
+      glucose: null,
       recordedByName: 'Ana Lopez',
     },
     hoursSinceLastVitals: 2.5,

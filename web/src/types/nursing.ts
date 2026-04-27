@@ -36,6 +36,7 @@ export interface VitalSignResponse {
   respiratoryRate: number
   temperature: number
   oxygenSaturation: number
+  glucose: number | null
   other: string | null
   createdAt: string
   updatedAt: string
@@ -52,6 +53,7 @@ export interface CreateVitalSignRequest {
   respiratoryRate: number
   temperature: number
   oxygenSaturation: number
+  glucose?: number | null
   other?: string | null
 }
 
@@ -63,6 +65,7 @@ export interface UpdateVitalSignRequest {
   respiratoryRate: number
   temperature: number
   oxygenSaturation: number
+  glucose?: number | null
   other?: string | null
 }
 

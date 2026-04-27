@@ -137,7 +137,7 @@ com.insidehealthgt.hms/
 **Location**: `src/main/resources/db/migration/`
 **Naming**: `V{version}__{description}.sql`
 
-**Current migrations**: V001-V089 (users, audit_logs, roles/permissions, password_reset_tokens, locale, patients, admissions, file storage, admission types, document types, clinical histories, progress notes, medical orders, psychotherapy categories, psychotherapy activities, nursing notes, vital signs, inventory categories, inventory items, inventory movements, inventory permissions, room pricing, patient charges, invoices, billing permissions, billing adjustments, medication administrations, psychotherapy category pricing, medical order inventory link, medication administration permissions, billing configure permission, diet charge unique index, unaccent extension, psychologist permissions, medical order documents, medical order document permissions, bank accounts, treasury employees, salary history, expenses, expense payments, income records, payroll entries, treasury permissions, doctor fees, bank account column mappings, bank statements, seed treasury test data, treasury integrity fixes)
+**Current migrations**: V001-V090 (users, audit_logs, roles/permissions, password_reset_tokens, locale, patients, admissions, file storage, admission types, document types, clinical histories, progress notes, medical orders, psychotherapy categories, psychotherapy activities, nursing notes, vital signs, inventory categories, inventory items, inventory movements, inventory permissions, room pricing, patient charges, invoices, billing permissions, billing adjustments, medication administrations, psychotherapy category pricing, medical order inventory link, medication administration permissions, billing configure permission, diet charge unique index, unaccent extension, psychologist permissions, medical order documents, medical order document permissions, bank accounts, treasury employees, salary history, expenses, expense payments, income records, payroll entries, treasury permissions, doctor fees, bank account column mappings, bank statements, seed treasury test data, treasury integrity fixes, vital_signs glucose column)
 
 ```sql
 -- Example: Always include BaseEntity fields in new tables
@@ -312,7 +312,7 @@ class GlobalExceptionHandler {
 - ✅ File System Storage for patient documents (ID docs, consent forms)
 - ✅ Medical Record System (clinical histories, progress notes, medical orders)
 - ✅ Psychotherapeutic Activities (activity registration for hospitalized patients, category management)
-- ✅ Nursing Module (nursing notes, vital signs with 24h edit window, discharge protection)
+- ✅ Nursing Module (nursing notes, vital signs — BP, HR, RR, temperature, oxygen saturation, glucometría — with 24h edit window, discharge protection)
 - ✅ Inventory Management (categories, items with flat/time-based pricing, stock movements, low stock report, room pricing)
 - ✅ Hospital Billing System (real-time charge capture, scheduled daily room charges, daily balance, adjustments, invoice generation at discharge, event-driven integration)
 - ✅ Clinical Event Billing Automation (medication administration record, psychotherapy activity billing, medical order billing, procedure admission billing, daily diet charges, discharge auto-invoice)

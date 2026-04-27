@@ -919,6 +919,11 @@
           "min": "Oxygen saturation must be at least 50%.",
           "max": "Oxygen saturation must be at most 100%."
         },
+        "glucose": {
+          "integer": "Glucose must be a whole number.",
+          "min": "Glucose must be at least 20 mg/dL.",
+          "max": "Glucose must be at most 600 mg/dL."
+        },
         "other": {
           "max": "Other observations must be at most 1000 characters."
         },
@@ -1632,6 +1637,7 @@
       "charts": "Charts",
       "empty": "No vital signs recorded.",
       "noChartData": "No data available for charts.",
+      "glucoseNoData": "No glucose readings recorded yet.",
       "created": "Vital signs recorded successfully.",
       "updated": "Vital signs updated successfully.",
       "fields": {
@@ -1643,21 +1649,25 @@
         "respiratoryRate": "Respiratory Rate",
         "temperature": "Temperature",
         "oxygenSaturation": "Oxygen Saturation",
+        "glucose": "Blood Glucose",
         "other": "Other Observations"
       },
       "placeholders": {
         "recordedAt": "Select date and time",
+        "glucose": "Optional",
         "other": "Additional observations..."
       },
       "hints": {
-        "recordedAt": "Leave empty to use current time"
+        "recordedAt": "Leave empty to use current time",
+        "glucose": "Optional — leave empty if not measured"
       },
       "units": {
         "mmHg": "mmHg",
         "bpm": "bpm",
         "breathsPerMin": "breaths/min",
         "celsius": "°C",
-        "percent": "%"
+        "percent": "%",
+        "mgPerDl": "mg/dL"
       },
       "filter": {
         "dateRange": "Date Range",
@@ -1675,6 +1685,7 @@
         "respiratoryRate": "Respiratory Rate",
         "temperature": "Temperature",
         "oxygenSaturation": "Oxygen Saturation",
+        "glucose": "Blood Glucose",
         "systolic": "Systolic",
         "diastolic": "Diastolic"
       },
@@ -1799,11 +1810,13 @@
       "rr": "RR",
       "temp": "Temp",
       "spo2": "SpO2",
+      "glucose": "Glu",
       "mmhg": "mmHg",
       "bpm": "bpm",
       "perMin": "/min",
       "celsius": "°C",
       "percent": "%",
+      "mgPerDl": "mg/dL",
       "hoursAgo": "{hours}h ago",
       "never": "Never",
       "overdue": "Overdue",

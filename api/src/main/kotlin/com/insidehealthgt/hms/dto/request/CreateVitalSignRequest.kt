@@ -42,6 +42,10 @@ data class CreateVitalSignRequest(
     @field:Max(value = 100, message = "Oxygen saturation must be at most 100%")
     val oxygenSaturation: Int? = null,
 
+    @field:Min(value = 20, message = "Glucose must be at least 20 mg/dL")
+    @field:Max(value = 600, message = "Glucose must be at most 600 mg/dL")
+    val glucose: Int? = null,
+
     @field:Size(max = 1000, message = "Other observations must be at most 1000 characters")
     val other: String? = null,
 )

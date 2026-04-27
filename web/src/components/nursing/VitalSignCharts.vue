@@ -226,6 +226,36 @@ const spo2ChartOptions = computed(() => ({
   }
 }))
 
+const hasGlucoseData = computed(() => sortedData.value.some(vs => vs.glucose !== null))
+
+const glucoseChartData = computed(() => ({
+  labels: labels.value,
+  datasets: [
+    {
+      label: t('nursing.vitalSigns.chartLabels.glucose'),
+      data: sortedData.value.map(vs => vs.glucose ?? null),
+      borderColor: '#eab308',
+      backgroundColor: 'rgba(234, 179, 8, 0.1)',
+      tension: 0.4,
+      fill: true,
+      spanGaps: false
+    }
+  ]
+}))
+
+const glucoseChartOptions = computed(() => ({
+  ...baseChartOptions,
+  scales: {
+    ...baseChartOptions.scales,
+    y: {
+      title: {
+        display: true,
+        text: t('nursing.vitalSigns.units.mgPerDl')
+      }
+    }
+  }
+}))
+
 // Watch for admission changes
 watch(
   () => props.admissionId,
@@ -305,6 +335,23 @@ onMounted(loadChartData)
             <Chart type="line" :data="spo2ChartData" :options="spo2ChartOptions" />
           </div>
         </div>
+
+        <!-- Glucose — always rendered, with empty-state placeholder when no data -->
+        <div class="chart-panel">
+          <h4 class="chart-title">{{ t('nursing.vitalSigns.chartLabels.glucose') }}</h4>
+          <div class="chart-container">
+            <Chart
+              v-if="hasGlucoseData"
+              type="line"
+              :data="glucoseChartData"
+              :options="glucoseChartOptions"
+            />
+            <div v-else class="chart-empty-state">
+              <i class="pi pi-info-circle empty-icon-sm"></i>
+              <p>{{ t('nursing.vitalSigns.glucoseNoData') }}</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -359,6 +406,27 @@ onMounted(loadChartData)
   font-size: 3rem;
   margin-bottom: 1rem;
   opacity: 0.5;
+}
+
+.chart-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: var(--p-text-muted-color);
+  font-size: 0.9rem;
+}
+
+.empty-icon-sm {
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.5;
+}
+
+.chart-empty-state p {
+  margin: 0;
 }
 
 .charts-grid {
