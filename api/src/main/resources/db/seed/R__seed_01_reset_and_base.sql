@@ -5,6 +5,16 @@
 -- WARNING: DESTRUCTIVE - DO NOT use in production!
 -- Default password for all users: admin123
 -- Last updated: 2026-03-03 (fix KETAMINE_INFUSION enum typo in seed 03)
+--
+-- !!! READ BEFORE EDITING ANY R__seed_*.sql FILE !!!
+-- This file TRUNCATEs patients/admissions/vitals/notes/meds/billing tables.
+-- Re-inserts of those rows live in R__seed_02..07. Flyway re-runs a
+-- repeatable migration only when ITS OWN checksum changes — so editing
+-- ONLY this file wipes data without re-running the sibling files that
+-- repopulate it (we hit this in PR #53). Whenever any R__seed_*.sql is
+-- modified, bump the SEED-BUNDLE-VERSION line below in ALL seven files
+-- so they re-run together.
+-- SEED-BUNDLE-VERSION: 2026-04-27a
 -- ============================================================================
 
 SET session_replication_role = replica;
