@@ -62,6 +62,7 @@
     "admissions": "Admissions",
     "nursingKardex": "Nursing Kardex",
     "bedOccupancy": "Bed Occupancy",
+    "medicalOrdersByState": "Medical Orders by State",
     "users": "Users",
     "roles": "Roles",
     "triageCodes": "Triage Codes",
@@ -1090,6 +1091,7 @@
     "unauthorized": "You are not authorized to perform this action.",
     "notFound": "The requested resource was not found.",
     "serverError": "Server error. Please try again later.",
+    "fileTooLarge": "The uploaded file exceeds the maximum allowed size.",
     "sessionExpired": "Your session has expired. Please log in again.",
     "badRequest": "Invalid request. Please check your input.",
     "forbidden": "Access denied. You do not have permission.",
@@ -1464,6 +1466,45 @@
       "orders": "orders",
       "orderedBy": "Ordered by",
       "discontinuedBy": "Discontinued by",
+      "authorizedBy": "Authorized by",
+      "inProgressBy": "Marked in progress by",
+      "resultsReceivedBy": "Results uploaded by",
+      "actions": {
+        "authorize": "Authorize",
+        "reject": "Reject",
+        "emergencyAuthorize": "Emergency authorize",
+        "markInProgress": "Mark in progress",
+        "markInProgressLab": "Sample taken",
+        "markInProgressReferral": "Patient referred",
+        "markInProgressTest": "Test administered",
+        "uploadResults": "Upload Results"
+      },
+      "transitions": {
+        "authorized": "Order authorized.",
+        "rejected": "Order rejected.",
+        "markedInProgress": "Order marked as in progress.",
+        "resultsReceived": "Results received."
+      },
+      "confirmAuthorize": "Authorize this medical order?",
+      "confirmReject": "Reject this medical order?",
+      "confirmMarkInProgress": "Mark this order as in progress? After this, the order can no longer be discontinued.",
+      "rejectReason": "Reason (optional)",
+      "rejectReasonPlaceholder": "e.g., insurance coverage pending",
+      "rejectionReason": "Rejection reason",
+      "emergencyAuthorize": {
+        "title": "Emergency Authorize",
+        "warning": "Use this only when no admin staff is available to record family consent (after-hours, crisis, etc.). The audit trail will show that you used the override.",
+        "reasonLabel": "Reason",
+        "noteLabel": "Notes",
+        "notePlaceholder": "Optional details (required when reason is Other)",
+        "banner": "Emergency-authorized",
+        "reasons": {
+          "PATIENT_IN_CRISIS": "Patient in crisis",
+          "AFTER_HOURS_NO_ADMIN": "After-hours, no admin staff available",
+          "FAMILY_UNREACHABLE": "Family unreachable",
+          "OTHER": "Other"
+        }
+      },
       "categories": {
         "ORDENES_MEDICAS": "General Medical Orders",
         "MEDICAMENTOS": "Medications",
@@ -1478,8 +1519,36 @@
         "OTRAS": "Other Orders"
       },
       "statuses": {
-        "ACTIVE": "Active",
-        "DISCONTINUED": "Discontinued"
+        "ACTIVA": "Active",
+        "SOLICITADO": "Requested",
+        "NO_AUTORIZADO": "Not Authorized",
+        "AUTORIZADO": "Authorized",
+        "EN_PROCESO": "In progress",
+        "RESULTADOS_RECIBIDOS": "Results Received",
+        "DESCONTINUADO": "Discontinued"
+      },
+      "byState": {
+        "title": "Medical Orders by State",
+        "subtitle": "Cross-admission view of all medical orders.",
+        "filters": {
+          "status": "Status",
+          "category": "Category",
+          "anyStatus": "Any status",
+          "anyCategory": "Any category",
+          "clear": "Clear filters"
+        },
+        "columns": {
+          "patient": "Patient",
+          "category": "Category",
+          "summary": "Summary",
+          "status": "Status",
+          "requestedBy": "Requested by",
+          "requestedAt": "Requested at",
+          "documents": "Docs",
+          "actions": "Actions"
+        },
+        "openAdmission": "Open Admission",
+        "empty": "No medical orders match the current filters."
       },
       "routes": {
         "ORAL": "Oral",

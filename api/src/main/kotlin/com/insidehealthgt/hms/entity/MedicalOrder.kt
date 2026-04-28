@@ -15,6 +15,7 @@ import java.time.LocalDateTime
 @Entity
 @Table(name = "medical_orders")
 @SQLRestriction("deleted_at IS NULL")
+@Suppress("LongParameterList")
 class MedicalOrder(
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -50,9 +51,46 @@ class MedicalOrder(
     @Column(columnDefinition = "TEXT")
     var observations: String? = null,
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 30)
     @Enumerated(EnumType.STRING)
-    var status: MedicalOrderStatus = MedicalOrderStatus.ACTIVE,
+    var status: MedicalOrderStatus = category.initialStatus(),
+
+    @Column(name = "authorized_at")
+    var authorizedAt: LocalDateTime? = null,
+
+    @Column(name = "authorized_by")
+    var authorizedBy: Long? = null,
+
+    @Column(name = "in_progress_at")
+    var inProgressAt: LocalDateTime? = null,
+
+    @Column(name = "in_progress_by")
+    var inProgressBy: Long? = null,
+
+    @Column(name = "results_received_at")
+    var resultsReceivedAt: LocalDateTime? = null,
+
+    @Column(name = "results_received_by")
+    var resultsReceivedBy: Long? = null,
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    var rejectionReason: String? = null,
+
+    @Column(name = "emergency_authorized", nullable = false)
+    var emergencyAuthorized: Boolean = false,
+
+    @Column(name = "emergency_reason", length = 40)
+    @Enumerated(EnumType.STRING)
+    var emergencyReason: EmergencyAuthorizationReason? = null,
+
+    @Column(name = "emergency_reason_note", columnDefinition = "TEXT")
+    var emergencyReasonNote: String? = null,
+
+    @Column(name = "emergency_at")
+    var emergencyAt: LocalDateTime? = null,
+
+    @Column(name = "emergency_by")
+    var emergencyBy: Long? = null,
 
     @Column(name = "discontinued_at")
     var discontinuedAt: LocalDateTime? = null,

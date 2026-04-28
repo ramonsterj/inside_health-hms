@@ -1,6 +1,7 @@
 package com.insidehealthgt.hms.dto.response
 
 import com.insidehealthgt.hms.entity.AdministrationRoute
+import com.insidehealthgt.hms.entity.EmergencyAuthorizationReason
 import com.insidehealthgt.hms.entity.MedicalOrder
 import com.insidehealthgt.hms.entity.MedicalOrderCategory
 import com.insidehealthgt.hms.entity.MedicalOrderStatus
@@ -8,6 +9,7 @@ import com.insidehealthgt.hms.entity.User
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+@Suppress("LongParameterList")
 data class MedicalOrderResponse(
     val id: Long,
     val admissionId: Long,
@@ -21,6 +23,18 @@ data class MedicalOrderResponse(
     val schedule: String?,
     val observations: String?,
     val status: MedicalOrderStatus,
+    val authorizedAt: LocalDateTime?,
+    val authorizedBy: MedicalStaffResponse?,
+    val inProgressAt: LocalDateTime?,
+    val inProgressBy: MedicalStaffResponse?,
+    val resultsReceivedAt: LocalDateTime?,
+    val resultsReceivedBy: MedicalStaffResponse?,
+    val rejectionReason: String?,
+    val emergencyAuthorized: Boolean,
+    val emergencyReason: EmergencyAuthorizationReason?,
+    val emergencyReasonNote: String?,
+    val emergencyAt: LocalDateTime?,
+    val emergencyBy: MedicalStaffResponse?,
     val discontinuedAt: LocalDateTime?,
     val discontinuedBy: MedicalStaffResponse?,
     val createdAt: LocalDateTime?,
@@ -32,11 +46,16 @@ data class MedicalOrderResponse(
     val documentCount: Int = 0,
 ) {
     companion object {
+        @Suppress("LongParameterList")
         fun from(
             medicalOrder: MedicalOrder,
             createdByUser: User? = null,
             updatedByUser: User? = null,
             discontinuedByUser: User? = null,
+            authorizedByUser: User? = null,
+            inProgressByUser: User? = null,
+            resultsReceivedByUser: User? = null,
+            emergencyByUser: User? = null,
             documentCount: Int = 0,
         ): MedicalOrderResponse = MedicalOrderResponse(
             id = medicalOrder.id!!,
@@ -51,15 +70,29 @@ data class MedicalOrderResponse(
             schedule = medicalOrder.schedule,
             observations = medicalOrder.observations,
             status = medicalOrder.status,
+            authorizedAt = medicalOrder.authorizedAt,
+            authorizedBy = authorizedByUser.toStaff(),
+            inProgressAt = medicalOrder.inProgressAt,
+            inProgressBy = inProgressByUser.toStaff(),
+            resultsReceivedAt = medicalOrder.resultsReceivedAt,
+            resultsReceivedBy = resultsReceivedByUser.toStaff(),
+            rejectionReason = medicalOrder.rejectionReason,
+            emergencyAuthorized = medicalOrder.emergencyAuthorized,
+            emergencyReason = medicalOrder.emergencyReason,
+            emergencyReasonNote = medicalOrder.emergencyReasonNote,
+            emergencyAt = medicalOrder.emergencyAt,
+            emergencyBy = emergencyByUser.toStaff(),
             discontinuedAt = medicalOrder.discontinuedAt,
-            discontinuedBy = discontinuedByUser?.let { MedicalStaffResponse.from(it) },
+            discontinuedBy = discontinuedByUser.toStaff(),
             createdAt = medicalOrder.createdAt,
             updatedAt = medicalOrder.updatedAt,
-            createdBy = createdByUser?.let { MedicalStaffResponse.from(it) },
-            updatedBy = updatedByUser?.let { MedicalStaffResponse.from(it) },
+            createdBy = createdByUser.toStaff(),
+            updatedBy = updatedByUser.toStaff(),
             inventoryItemId = medicalOrder.inventoryItem?.id,
             inventoryItemName = medicalOrder.inventoryItem?.name,
             documentCount = documentCount,
         )
+
+        private fun User?.toStaff(): MedicalStaffResponse? = this?.let { MedicalStaffResponse.from(it) }
     }
 }

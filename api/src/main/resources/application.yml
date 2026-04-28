@@ -25,6 +25,11 @@ spring:
   jackson:
     default-property-inclusion: NON_NULL
 
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 30MB
+
 server:
   port: ${SERVER_PORT:8081}
 

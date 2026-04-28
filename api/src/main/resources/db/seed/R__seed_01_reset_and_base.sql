@@ -14,7 +14,7 @@
 -- repopulate it (we hit this in PR #53). Whenever any R__seed_*.sql is
 -- modified, bump the SEED-BUNDLE-VERSION line below in ALL seven files
 -- so they re-run together.
--- SEED-BUNDLE-VERSION: 2026-04-27a
+-- SEED-BUNDLE-VERSION: 2026-04-28a
 -- ============================================================================
 
 SET session_replication_role = replica;
@@ -65,7 +65,7 @@ ON CONFLICT (code) DO NOTHING;
 -- STEP 3: REBUILD ROLE PERMISSIONS
 -- ============================================================================
 -- This section must replicate ALL permission grants from versioned migrations
--- V020-V091, since the seed file runs after migrations and the DELETE below
+-- V020-V093, since the seed file runs after migrations and the DELETE below
 -- wipes any migration-granted role_permissions.
 -- ============================================================================
 DELETE FROM role_permissions;
@@ -85,7 +85,7 @@ CROSS JOIN permissions p
 WHERE r.code = 'USER' AND p.code IN ('user:read') AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
 -- ADMINISTRATIVE_STAFF: patient management + admission + documents
--- Sources: V020, V025, V034, V091
+-- Sources: V020, V025, V034, V091, V093
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
@@ -100,12 +100,13 @@ WHERE r.code = 'ADMINISTRATIVE_STAFF'
     'admission:upload-consent', 'admission:view-consent',
     'admission:view-documents', 'admission:upload-documents', 'admission:download-documents',
     'document-type:read',
-    'billing:read', 'invoice:read'
+    'billing:read', 'invoice:read',
+    'medical-order:read', 'medical-order:authorize'
   )
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
 -- DOCTOR: clinical + nursing + psychotherapy read + billing read + MAR read
--- Sources: V020, V025, V038, V042, V045, V061, V066
+-- Sources: V020, V025, V038, V042, V045, V061, V066, V093
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
@@ -120,6 +121,7 @@ WHERE r.code = 'DOCTOR'
     'clinical-history:create', 'clinical-history:read',
     'progress-note:create', 'progress-note:read',
     'medical-order:create', 'medical-order:read', 'medical-order:discontinue',
+    'medical-order:emergency-authorize', 'medical-order:mark-in-progress',
     'nursing-note:read', 'nursing-note:create', 'nursing-note:update',
     'vital-sign:read', 'vital-sign:create', 'vital-sign:update',
     'psychotherapy-activity:read', 'psychotherapy-category:read',
@@ -161,7 +163,7 @@ WHERE r.code = 'NURSE'
     'admission:view-consent', 'admission:view-documents', 'admission:download-documents',
     'clinical-history:read',
     'progress-note:create', 'progress-note:read',
-    'medical-order:read',
+    'medical-order:read', 'medical-order:mark-in-progress',
     'nursing-note:read', 'nursing-note:create', 'nursing-note:update',
     'vital-sign:read', 'vital-sign:create', 'vital-sign:update',
     'psychotherapy-activity:read', 'psychotherapy-category:read',
@@ -185,7 +187,7 @@ WHERE r.code = 'CHIEF_NURSE'
     'admission:view-consent', 'admission:view-documents', 'admission:download-documents',
     'clinical-history:read',
     'progress-note:create', 'progress-note:read', 'progress-note:update',
-    'medical-order:read',
+    'medical-order:read', 'medical-order:mark-in-progress',
     'nursing-note:read', 'nursing-note:create', 'nursing-note:update',
     'vital-sign:read', 'vital-sign:create', 'vital-sign:update',
     'psychotherapy-activity:read', 'psychotherapy-category:read',

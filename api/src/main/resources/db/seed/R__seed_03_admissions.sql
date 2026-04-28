@@ -1,7 +1,7 @@
 -- ============================================================================
 -- SEED FILE 03: Staff, Psych Categories, Patient Notes, Admissions
 -- ============================================================================
--- SEED-BUNDLE-VERSION: 2026-04-27a (see R__seed_01 header for the rule)
+-- SEED-BUNDLE-VERSION: 2026-04-28a (see R__seed_01 header for the rule)
 
 SET session_replication_role = replica;
 

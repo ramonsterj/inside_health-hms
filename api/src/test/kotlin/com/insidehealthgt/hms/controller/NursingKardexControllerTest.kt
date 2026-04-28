@@ -294,12 +294,8 @@ class NursingKardexControllerTest : AbstractIntegrationTest() {
             frequency = "Every 6 hours",
             schedule = "06:00, 12:00, 18:00, 00:00",
         )
-        mockMvc.perform(
-            post("/api/v1/admissions/$admissionId/medical-orders")
-                .header("Authorization", "Bearer $token")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)),
-        ).andExpect(status().isCreated)
+        val createdId = createOrderAndGetId(admissionId, token, request)
+        authorize(admissionId, createdId)
     }
 
     private fun createCareInstruction(admissionId: Long, token: String) {
@@ -308,12 +304,27 @@ class NursingKardexControllerTest : AbstractIntegrationTest() {
             startDate = LocalDate.now(),
             observations = "Low sodium diet",
         )
-        mockMvc.perform(
+        // Directive categories (DIETA, etc.) are created directly in ACTIVA — they
+        // don't have an authorize step. The kardex query now matches both ACTIVA and AUTORIZADO.
+        createOrderAndGetId(admissionId, token, request)
+    }
+
+    private fun createOrderAndGetId(admissionId: Long, token: String, request: CreateMedicalOrderRequest): Long {
+        val result = mockMvc.perform(
             post("/api/v1/admissions/$admissionId/medical-orders")
                 .header("Authorization", "Bearer $token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)),
-        ).andExpect(status().isCreated)
+        ).andExpect(status().isCreated).andReturn()
+        return objectMapper.readTree(result.response.contentAsString).get("data").get("id").asLong()
+    }
+
+    // Kardex queries filter by AUTORIZADO. Tests must authorize after creation.
+    private fun authorize(admissionId: Long, orderId: Long) {
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
+                .header("Authorization", "Bearer $adminToken"),
+        ).andExpect(status().isOk)
     }
 
     private fun createVitalSigns(admissionId: Long, token: String) {

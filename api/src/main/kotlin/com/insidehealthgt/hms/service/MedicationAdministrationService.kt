@@ -83,8 +83,8 @@ class MedicationAdministrationService(
             throw BadRequestException(messageService.errorMedicationAdmissionDischarged())
         }
 
-        // Verify order is active
-        if (order.status == MedicalOrderStatus.DISCONTINUED) {
+        // Verify order is active (not discontinued / rejected / pending authorization)
+        if (order.status != MedicalOrderStatus.AUTORIZADO) {
             throw BadRequestException(messageService.errorMedicationOrderDiscontinued())
         }
 

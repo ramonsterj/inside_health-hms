@@ -113,7 +113,7 @@ const mockLabOrder = {
   frequency: null,
   schedule: null,
   observations: 'Complete blood count',
-  status: 'ACTIVE',
+  status: 'AUTORIZADO',
   discontinuedAt: null,
   discontinuedBy: null,
   inventoryItemId: null,

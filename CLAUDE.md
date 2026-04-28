@@ -137,7 +137,7 @@ com.insidehealthgt.hms/
 **Location**: `src/main/resources/db/migration/`
 **Naming**: `V{version}__{description}.sql`
 
-**Current migrations**: V001-V091 (users, audit_logs, roles/permissions, password_reset_tokens, locale, patients, admissions, file storage, admission types, document types, clinical histories, progress notes, medical orders, psychotherapy categories, psychotherapy activities, nursing notes, vital signs, inventory categories, inventory items, inventory movements, inventory permissions, room pricing, patient charges, invoices, billing permissions, billing adjustments, medication administrations, psychotherapy category pricing, medical order inventory link, medication administration permissions, billing configure permission, diet charge unique index, unaccent extension, psychologist permissions, medical order documents, medical order document permissions, bank accounts, treasury employees, salary history, expenses, expense payments, income records, payroll entries, treasury permissions, doctor fees, bank account column mappings, bank statements, seed treasury test data, treasury integrity fixes, vital_signs glucose column, room occupancy permission)
+**Current migrations**: V001-V093 (users, audit_logs, roles/permissions, password_reset_tokens, locale, patients, admissions, file storage, admission types, document types, clinical histories, progress notes, medical orders, psychotherapy categories, psychotherapy activities, nursing notes, vital signs, inventory categories, inventory items, inventory movements, inventory permissions, room pricing, patient charges, invoices, billing permissions, billing adjustments, medication administrations, psychotherapy category pricing, medical order inventory link, medication administration permissions, billing configure permission, diet charge unique index, unaccent extension, psychologist permissions, medical order documents, medical order document permissions, bank accounts, treasury employees, salary history, expenses, expense payments, income records, payroll entries, treasury permissions, doctor fees, bank account column mappings, bank statements, seed treasury test data, treasury integrity fixes, vital_signs glucose column, room occupancy permission, medical order category-driven workflow states + emergency authorization columns, medical order workflow permissions — authorize, emergency-authorize, mark-in-progress)
 
 ```sql
 -- Example: Always include BaseEntity fields in new tables
@@ -311,6 +311,7 @@ class GlobalExceptionHandler {
 - ✅ Patient Admission (admissions, triage codes, rooms, discharge flow)
 - ✅ File System Storage for patient documents (ID docs, consent forms)
 - ✅ Medical Record System (clinical histories, progress notes, medical orders)
+- ✅ Medical Order Workflow (three category-driven shapes — directive `ACTIVA`, authorize-only `MEDICAMENTOS`, authorize+execute+results for labs / referencias / pruebas psicométricas. States: `ACTIVA`, `SOLICITADO`, `NO_AUTORIZADO`, `AUTORIZADO`, `EN_PROCESO`, `RESULTADOS_RECIBIDOS`, `DESCONTINUADO`. Endpoints: authorize, reject, emergency-authorize, mark-in-progress, discontinue. Billing fires on authorization, results auto-saved on document upload, discontinue blocked once `EN_PROCESO`.)
 - ✅ Psychotherapeutic Activities (activity registration for hospitalized patients, category management)
 - ✅ Nursing Module (nursing notes, vital signs — BP, HR, RR, temperature, oxygen saturation, glucometría — with 24h edit window, discharge protection)
 - ✅ Inventory Management (categories, items with flat/time-based pricing, stock movements, low stock report, room pricing)
@@ -347,6 +348,7 @@ class GlobalExceptionHandler {
 - ✅ Bank Statement Reconciliation UI (statement list with progress, upload dialog, column mapping config, reconciliation view with color-coded rows, confirm/reject/acknowledge/create expense/income actions, complete statement)
 - ✅ Admissions list cards view with grouping by gender or type, persisted per user via localStorage (Dashboard and Admissions screen share preferences)
 - ✅ Bed Occupancy View UI (`/bed-occupancy`: per-room cards with one bed slot per capacity, summary header, filters by sex/type/status, search by room number or patient name, 30s auto-refresh paused on hidden tab, "Admit here" deep-link that pre-selects the room in the admission wizard via `?roomId=`)
+- ✅ Medical Orders by State dashboard (`/medical-orders`): cross-admission listing with status / category / date filters, contextual action buttons per state (authorize, reject, emergency-authorize, mark-in-progress, upload result document, discontinue), state badge with color mapping per state shape
 
 ### Security Tooling
 - ✅ Detekt (Kotlin static analysis)

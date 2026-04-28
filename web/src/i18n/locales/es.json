@@ -62,6 +62,7 @@
     "admissions": "Hospitalizaciones",
     "nursingKardex": "Kardex de Enfermería",
     "bedOccupancy": "Ocupación de Camas",
+    "medicalOrdersByState": "Órdenes Médicas por Estado",
     "users": "Usuarios",
     "roles": "Roles",
     "triageCodes": "Códigos de Triage",
@@ -1090,6 +1091,7 @@
     "unauthorized": "No estas autorizado para realizar esta acción.",
     "notFound": "El recurso solicitado no fue encontrado.",
     "serverError": "Error del servidor. Por favor intenta más tarde.",
+    "fileTooLarge": "El archivo cargado excede el tamaño máximo permitido.",
     "sessionExpired": "Tu sesión ha expirado. Por favor inicia sesión de nuevo.",
     "badRequest": "Solicitud invalida. Por favor verifica tu entrada.",
     "forbidden": "Acceso denegado. No tienes permiso.",
@@ -1464,6 +1466,45 @@
       "orders": "ordenes",
       "orderedBy": "Ordenado por",
       "discontinuedBy": "Descontinuado por",
+      "authorizedBy": "Autorizado por",
+      "inProgressBy": "Marcado en proceso por",
+      "resultsReceivedBy": "Resultados subidos por",
+      "actions": {
+        "authorize": "Autorizar",
+        "reject": "No autorizar",
+        "emergencyAuthorize": "Autorización de emergencia",
+        "markInProgress": "Marcar en proceso",
+        "markInProgressLab": "Muestra tomada",
+        "markInProgressReferral": "Paciente referido",
+        "markInProgressTest": "Prueba administrada",
+        "uploadResults": "Subir resultados"
+      },
+      "transitions": {
+        "authorized": "Orden autorizada.",
+        "rejected": "Orden no autorizada.",
+        "markedInProgress": "Orden marcada en proceso.",
+        "resultsReceived": "Resultados recibidos."
+      },
+      "confirmAuthorize": "¿Autorizar esta orden médica?",
+      "confirmReject": "¿No autorizar esta orden médica?",
+      "confirmMarkInProgress": "¿Marcar esta orden en proceso? Después de esto, ya no podrá ser descontinuada.",
+      "rejectReason": "Razón (opcional)",
+      "rejectReasonPlaceholder": "ej. pendiente de cobertura del seguro",
+      "rejectionReason": "Razón de no autorización",
+      "emergencyAuthorize": {
+        "title": "Autorización de emergencia",
+        "warning": "Use esto solo cuando no haya personal administrativo disponible para registrar el consentimiento familiar (fuera de horario, crisis, etc.). El registro de auditoría mostrará que utilizó la anulación.",
+        "reasonLabel": "Razón",
+        "noteLabel": "Notas",
+        "notePlaceholder": "Detalles opcionales (requerido cuando la razón es Otra)",
+        "banner": "Autorizada por emergencia",
+        "reasons": {
+          "PATIENT_IN_CRISIS": "Paciente en crisis",
+          "AFTER_HOURS_NO_ADMIN": "Fuera de horario, sin personal administrativo",
+          "FAMILY_UNREACHABLE": "Familia no localizable",
+          "OTHER": "Otra"
+        }
+      },
       "categories": {
         "ORDENES_MEDICAS": "Órdenes Médicas Generales",
         "MEDICAMENTOS": "Medicamentos",
@@ -1478,8 +1519,36 @@
         "OTRAS": "Otras Ordenes"
       },
       "statuses": {
-        "ACTIVE": "Activa",
-        "DISCONTINUED": "Descontinuada"
+        "ACTIVA": "Activa",
+        "SOLICITADO": "Solicitado",
+        "NO_AUTORIZADO": "No autorizado",
+        "AUTORIZADO": "Autorizado",
+        "EN_PROCESO": "En proceso",
+        "RESULTADOS_RECIBIDOS": "Resultados recibidos",
+        "DESCONTINUADO": "Descontinuado"
+      },
+      "byState": {
+        "title": "Órdenes Médicas por Estado",
+        "subtitle": "Vista entre admisiones de todas las órdenes médicas.",
+        "filters": {
+          "status": "Estado",
+          "category": "Categoría",
+          "anyStatus": "Cualquier estado",
+          "anyCategory": "Cualquier categoría",
+          "clear": "Limpiar filtros"
+        },
+        "columns": {
+          "patient": "Paciente",
+          "category": "Categoría",
+          "summary": "Resumen",
+          "status": "Estado",
+          "requestedBy": "Solicitado por",
+          "requestedAt": "Solicitado el",
+          "documents": "Docs",
+          "actions": "Acciones"
+        },
+        "openAdmission": "Abrir Admisión",
+        "empty": "No hay órdenes médicas que coincidan con los filtros."
       },
       "routes": {
         "ORAL": "Oral",

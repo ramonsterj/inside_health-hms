@@ -70,6 +70,7 @@ class MessageService(private val messageSource: MessageSource) {
     fun errorConflict() = getMessage("error.conflict")
     fun errorValidation() = getMessage("error.validation")
     fun errorInternal() = getMessage("error.internal")
+    fun errorFileTooLarge() = getMessage("error.file.too.large")
     fun errorInvalidToken() = getMessage("error.invalid.token")
     fun errorInvalidCredentials() = getMessage("error.invalid.credentials")
     fun errorAccountDisabled() = getMessage("error.account.disabled")
@@ -234,6 +235,8 @@ class MessageService(private val messageSource: MessageSource) {
     fun errorMedicalOrderDocumentFileEmpty() = getMessage("error.medical.order.document.file.empty")
     fun errorMedicalOrderDocumentFileSize() = getMessage("error.medical.order.document.file.size")
     fun errorMedicalOrderDocumentFileType() = getMessage("error.medical.order.document.file.type")
+    fun errorMedicalOrderDocumentInvalidStatus() = getMessage("error.medical.order.document.invalid.status")
+    fun errorMedicalOrderDocumentInvalidCategory() = getMessage("error.medical.order.document.invalid.category")
 
     // === Duplicate Patient Error Messages ===
 

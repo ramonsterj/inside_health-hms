@@ -14,7 +14,7 @@ import com.insidehealthgt.hms.entity.PatientCharge
 import com.insidehealthgt.hms.entity.Room
 import com.insidehealthgt.hms.event.AdmissionCreatedEvent
 import com.insidehealthgt.hms.event.InventoryDispensedEvent
-import com.insidehealthgt.hms.event.MedicalOrderCreatedEvent
+import com.insidehealthgt.hms.event.MedicalOrderAuthorizedEvent
 import com.insidehealthgt.hms.event.PsychotherapyActivityCreatedEvent
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
@@ -218,7 +218,7 @@ class BillingService(
     }
 
     @Transactional
-    fun createChargeFromMedicalOrder(event: MedicalOrderCreatedEvent) {
+    fun createChargeFromMedicalOrder(event: MedicalOrderAuthorizedEvent) {
         val admission = admissionRepository.findByIdWithRelations(event.admissionId)
             ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(event.admissionId))
 

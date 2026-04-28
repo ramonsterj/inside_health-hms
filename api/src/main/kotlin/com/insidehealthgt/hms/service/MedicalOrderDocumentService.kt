@@ -1,12 +1,16 @@
 package com.insidehealthgt.hms.service
 
 import com.insidehealthgt.hms.dto.response.MedicalOrderDocumentResponse
+import com.insidehealthgt.hms.entity.MedicalOrder
 import com.insidehealthgt.hms.entity.MedicalOrderDocument
+import com.insidehealthgt.hms.entity.MedicalOrderStatus
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
 import com.insidehealthgt.hms.repository.MedicalOrderDocumentRepository
 import com.insidehealthgt.hms.repository.MedicalOrderRepository
 import com.insidehealthgt.hms.repository.UserRepository
+import com.insidehealthgt.hms.security.CustomUserDetails
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -18,6 +22,7 @@ import java.util.UUID
 class MedicalOrderDocumentService(
     private val medicalOrderDocumentRepository: MedicalOrderDocumentRepository,
     private val medicalOrderRepository: MedicalOrderRepository,
+    private val medicalOrderService: MedicalOrderService,
     private val userRepository: UserRepository,
     private val fileStorageService: FileStorageService,
     private val thumbnailService: ThumbnailService,
@@ -34,6 +39,7 @@ class MedicalOrderDocumentService(
         val order = medicalOrderRepository.findByIdAndAdmissionId(orderId, admissionId)
             ?: throw ResourceNotFoundException("Medical order not found with id: $orderId for admission: $admissionId")
 
+        validateOrderAcceptsDocuments(order)
         validateFile(file)
 
         val storagePath = fileStorageService.storeFileForMedicalOrder(admissionId, orderId, file)
@@ -55,7 +61,23 @@ class MedicalOrderDocumentService(
         )
 
         val savedDocument = medicalOrderDocumentRepository.save(document)
+
+        // Auto-transition: if the order was awaiting results (AUTORIZADO or EN_PROCESO),
+        // this upload satisfies that and transitions it to RESULTADOS_RECIBIDOS in the
+        // same transaction.
+        medicalOrderService.markResultsReceivedFromDocumentUpload(order, getCurrentUserId())
+
         return buildResponse(savedDocument, admissionId)
+    }
+
+    private fun getCurrentUserId(): Long {
+        val auth = SecurityContextHolder.getContext().authentication
+        val principal = auth?.principal
+        return if (principal is CustomUserDetails) {
+            principal.id
+        } else {
+            throw IllegalStateException("Unable to get current user ID")
+        }
     }
 
     @Transactional(readOnly = true)
@@ -128,6 +150,15 @@ class MedicalOrderDocumentService(
             ?: throw ResourceNotFoundException("Document not found with id: $documentId for order: $orderId")
     }
 
+    private fun validateOrderAcceptsDocuments(order: MedicalOrder) {
+        if (!order.category.supportsResults()) {
+            throw BadRequestException(messageService.errorMedicalOrderDocumentInvalidCategory())
+        }
+        if (order.status !in UPLOADABLE_STATES) {
+            throw BadRequestException(messageService.errorMedicalOrderDocumentInvalidStatus())
+        }
+    }
+
     private fun validateFile(file: MultipartFile) {
         val error = when {
             file.isEmpty -> messageService.errorMedicalOrderDocumentFileEmpty()
@@ -174,5 +205,15 @@ class MedicalOrderDocumentService(
 
     companion object {
         const val THUMBNAIL_SUFFIX = "_thumb.png"
+
+        // Documents represent results, so they may only be attached after authorization and
+        // before the order is rejected or discontinued. RESULTADOS_RECIBIDOS is included so
+        // additional results can be added to an order whose first upload already moved it
+        // to the terminal state.
+        private val UPLOADABLE_STATES = setOf(
+            MedicalOrderStatus.AUTORIZADO,
+            MedicalOrderStatus.EN_PROCESO,
+            MedicalOrderStatus.RESULTADOS_RECIBIDOS,
+        )
     }
 }

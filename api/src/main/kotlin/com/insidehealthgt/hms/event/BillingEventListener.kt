@@ -61,9 +61,9 @@ class BillingEventListener(private val billingService: BillingService, private v
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    fun handleMedicalOrderCreated(event: MedicalOrderCreatedEvent) {
+    fun handleMedicalOrderAuthorized(event: MedicalOrderAuthorizedEvent) {
         log.info(
-            "Received MedicalOrderCreatedEvent for admission {} category {}",
+            "Received MedicalOrderAuthorizedEvent for admission {} category {}",
             event.admissionId,
             event.category,
         )
