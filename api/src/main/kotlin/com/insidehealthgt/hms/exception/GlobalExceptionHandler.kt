@@ -16,6 +16,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.HandlerMethodValidationException
+import org.springframework.web.multipart.MaxUploadSizeExceededException
 
 @RestControllerAdvice
 @Suppress("TooManyFunctions")
@@ -195,6 +196,21 @@ class GlobalExceptionHandler(private val messageService: MessageService) {
                         code = "VALIDATION_ERROR",
                         message = messageService.errorValidation(),
                         details = details,
+                    ),
+                ),
+            )
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException::class)
+    fun handleMaxUploadSize(ex: MaxUploadSizeExceededException): ResponseEntity<ErrorResponse> {
+        logger.debug("Upload exceeded max size: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.PAYLOAD_TOO_LARGE)
+            .body(
+                ErrorResponse(
+                    error = ErrorDetails(
+                        code = "FILE_TOO_LARGE",
+                        message = messageService.errorFileTooLarge(),
                     ),
                 ),
             )

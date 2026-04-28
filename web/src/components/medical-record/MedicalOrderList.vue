@@ -41,10 +41,33 @@ const canUpdate = computed(() => authStore.hasPermission('medical-order:update')
 
 const statusOptions = computed(() => [
   { label: t('common.all'), value: 'ALL' },
-  { label: t('medicalRecord.medicalOrder.statuses.ACTIVE'), value: MedicalOrderStatus.ACTIVE },
   {
-    label: t('medicalRecord.medicalOrder.statuses.DISCONTINUED'),
-    value: MedicalOrderStatus.DISCONTINUED
+    label: t('medicalRecord.medicalOrder.statuses.ACTIVA'),
+    value: MedicalOrderStatus.ACTIVA
+  },
+  {
+    label: t('medicalRecord.medicalOrder.statuses.SOLICITADO'),
+    value: MedicalOrderStatus.SOLICITADO
+  },
+  {
+    label: t('medicalRecord.medicalOrder.statuses.AUTORIZADO'),
+    value: MedicalOrderStatus.AUTORIZADO
+  },
+  {
+    label: t('medicalRecord.medicalOrder.statuses.EN_PROCESO'),
+    value: MedicalOrderStatus.EN_PROCESO
+  },
+  {
+    label: t('medicalRecord.medicalOrder.statuses.RESULTADOS_RECIBIDOS'),
+    value: MedicalOrderStatus.RESULTADOS_RECIBIDOS
+  },
+  {
+    label: t('medicalRecord.medicalOrder.statuses.NO_AUTORIZADO'),
+    value: MedicalOrderStatus.NO_AUTORIZADO
+  },
+  {
+    label: t('medicalRecord.medicalOrder.statuses.DESCONTINUADO'),
+    value: MedicalOrderStatus.DESCONTINUADO
   }
 ])
 
@@ -213,6 +236,7 @@ function handleOrderSaved() {
               :canEdit="canUpdate"
               @edit="openEditDialog(order)"
               @discontinue="handleDiscontinue(order)"
+              @refresh="loadOrders()"
             />
           </div>
         </AccordionContent>

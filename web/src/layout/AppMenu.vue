@@ -72,6 +72,13 @@ const model = computed<MenuItem[]>(() => {
       to: '/bed-occupancy'
     })
   }
+  if (authStore.hasPermission('medical-order:read')) {
+    clinicalItems.push({
+      label: 'nav.medicalOrdersByState',
+      icon: 'pi pi-fw pi-file-edit',
+      to: '/medical-orders'
+    })
+  }
   if (clinicalItems.length > 0) {
     items.push({
       label: 'nav.clinical',

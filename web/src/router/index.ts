@@ -51,6 +51,12 @@ const router = createRouter({
           meta: { requiresPermission: 'admission:read' }
         },
         {
+          path: 'medical-orders',
+          name: 'medical-orders-by-state',
+          component: () => import('@/views/medical-orders/MedicalOrdersByStateView.vue'),
+          meta: { requiresPermission: 'medical-order:read' }
+        },
+        {
           path: 'profile',
           name: 'profile',
           component: () => import('@/views/ProfileView.vue')

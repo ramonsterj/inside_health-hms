@@ -208,13 +208,15 @@ abstract class AbstractIntegrationTest {
         jdbcTemplate.execute("DELETE FROM patient_charges")
         jdbcTemplate.execute("DELETE FROM invoices")
         jdbcTemplate.execute("DELETE FROM inventory_movements")
+        // medical_orders.inventory_item_id references inventory_items, so orders must be
+        // removed first.
+        jdbcTemplate.execute("DELETE FROM medical_order_documents")
+        jdbcTemplate.execute("DELETE FROM medical_orders")
         jdbcTemplate.execute("DELETE FROM inventory_items")
         jdbcTemplate.execute("DELETE FROM inventory_categories WHERE created_by IS NOT NULL")
         jdbcTemplate.execute("DELETE FROM nursing_notes")
         jdbcTemplate.execute("DELETE FROM vital_signs")
         jdbcTemplate.execute("DELETE FROM psychotherapy_activities")
-        jdbcTemplate.execute("DELETE FROM medical_order_documents")
-        jdbcTemplate.execute("DELETE FROM medical_orders")
         jdbcTemplate.execute("DELETE FROM progress_notes")
         jdbcTemplate.execute("DELETE FROM clinical_histories")
         jdbcTemplate.execute("DELETE FROM admission_consulting_physicians")

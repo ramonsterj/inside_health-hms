@@ -5,19 +5,30 @@ import { useConfirm } from 'primevue/useconfirm'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Badge from 'primevue/badge'
-import Tag from 'primevue/tag'
 import { formatDateTime, formatDate } from '@/utils/format'
-import { MedicalOrderStatus, MedicalOrderCategory } from '@/types/medicalRecord'
+import {
+  MedicalOrderStatus,
+  MedicalOrderCategory,
+  RESULTS_BEARING_CATEGORIES,
+  isTerminalStatus,
+  canDiscontinueStatus,
+  canUploadResultDocument,
+  categoryRequiresAuthorization
+} from '@/types/medicalRecord'
 import type { MedicalOrderResponse } from '@/types/medicalRecord'
 import type { MedicalOrderDocument } from '@/types/document'
 import { useAuthStore } from '@/stores/auth'
 import { useMedicalOrderDocumentStore } from '@/stores/medicalOrderDocument'
+import { useMedicalOrderStore } from '@/stores/medicalOrder'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import DocumentThumbnail from '@/components/documents/DocumentThumbnail.vue'
+import MedicalOrderStateBadge from './MedicalOrderStateBadge.vue'
 import MedicationAdministrationDialog from './MedicationAdministrationDialog.vue'
 import MedicationAdministrationHistory from './MedicationAdministrationHistory.vue'
 import MedicalOrderDocumentUploadDialog from './MedicalOrderDocumentUploadDialog.vue'
 import MedicalOrderDocumentViewer from './MedicalOrderDocumentViewer.vue'
+import MedicalOrderRejectDialog from './MedicalOrderRejectDialog.vue'
+import MedicalOrderEmergencyAuthorizeDialog from './MedicalOrderEmergencyAuthorizeDialog.vue'
 
 const props = defineProps<{
   order: MedicalOrderResponse
@@ -28,12 +39,14 @@ const emit = defineEmits<{
   edit: []
   discontinue: []
   documentCountChanged: []
+  refresh: []
 }>()
 
 const { t } = useI18n()
 const confirm = useConfirm()
 const authStore = useAuthStore()
 const documentStore = useMedicalOrderDocumentStore()
+const orderStore = useMedicalOrderStore()
 const { showError, showSuccess } = useErrorHandler()
 
 const URL_REVOCATION_DELAY_MS = 5000
@@ -43,23 +56,75 @@ const showHistory = ref(false)
 const showUploadDialog = ref(false)
 const showAttachments = ref(false)
 const attachmentsLoaded = ref(false)
+const showRejectDialog = ref(false)
+const showEmergencyDialog = ref(false)
 const historyRef = ref<InstanceType<typeof MedicationAdministrationHistory> | null>(null)
 
-const isActive = computed(() => props.order.status === MedicalOrderStatus.ACTIVE)
+const isAuthorized = computed(() => props.order.status === MedicalOrderStatus.AUTORIZADO)
+const isTerminal = computed(() => isTerminalStatus(props.order.status))
 const isMedicationCategory = computed(
   () => props.order.category === MedicalOrderCategory.MEDICAMENTOS
 )
+const isResultsBearingCategory = computed(() =>
+  RESULTS_BEARING_CATEGORIES.includes(props.order.category)
+)
+const requiresAuthorization = computed(() => categoryRequiresAuthorization(props.order.category))
+
+// Medication administration only makes sense for AUTORIZADO medication orders.
 const canAdminister = computed(
   () =>
     authStore.hasPermission('medication-administration:create') &&
     isMedicationCategory.value &&
-    isActive.value &&
+    isAuthorized.value &&
     props.order.inventoryItemId !== null
 )
-const canUploadDocument = computed(() => authStore.hasPermission('medical-order:upload-document'))
+const canUploadDocument = computed(
+  () =>
+    authStore.hasPermission('medical-order:upload-document') &&
+    canUploadResultDocument(props.order.category, props.order.status)
+)
 const canDeleteDocument = computed(() => authStore.hasPermission('medical-order:delete-document'))
 
-const statusSeverity = computed(() => (isActive.value ? 'success' : 'secondary'))
+// State-machine gating for the action buttons. Each button only shows when the order is in the
+// right state AND the user holds the required permission.
+const canAuthorize = computed(
+  () =>
+    authStore.hasPermission('medical-order:authorize') &&
+    requiresAuthorization.value &&
+    props.order.status === MedicalOrderStatus.SOLICITADO
+)
+const canReject = canAuthorize
+const canEmergencyAuthorize = computed(
+  () =>
+    authStore.hasPermission('medical-order:emergency-authorize') &&
+    requiresAuthorization.value &&
+    props.order.status === MedicalOrderStatus.SOLICITADO
+)
+const canMarkInProgress = computed(
+  () =>
+    authStore.hasPermission('medical-order:mark-in-progress') &&
+    isResultsBearingCategory.value &&
+    isAuthorized.value
+)
+const canDiscontinue = computed(
+  () =>
+    authStore.hasPermission('medical-order:discontinue') &&
+    canDiscontinueStatus(props.order.status)
+)
+
+// Per-category label for the "mark in progress" button.
+const markInProgressLabel = computed(() => {
+  switch (props.order.category) {
+    case MedicalOrderCategory.LABORATORIOS:
+      return t('medicalRecord.medicalOrder.actions.markInProgressLab')
+    case MedicalOrderCategory.REFERENCIAS_MEDICAS:
+      return t('medicalRecord.medicalOrder.actions.markInProgressReferral')
+    case MedicalOrderCategory.PRUEBAS_PSICOMETRICAS:
+      return t('medicalRecord.medicalOrder.actions.markInProgressTest')
+    default:
+      return t('medicalRecord.medicalOrder.actions.markInProgress')
+  }
+})
 
 const documents = computed(() => documentStore.getDocuments(props.order.id))
 const localDocumentCount = computed(() =>
@@ -74,13 +139,18 @@ const authorName = computed(() => {
   return `${salutationLabel} ${fullName}`.trim() || '-'
 })
 
-const discontinuedByName = computed(() => {
-  if (!props.order.discontinuedBy) return '-'
-  const staff = props.order.discontinuedBy
+function staffDisplayName(staff: MedicalOrderResponse['discontinuedBy']): string {
+  if (!staff) return '-'
   const salutationLabel = staff.salutation ? t(`user.salutations.${staff.salutation}`) : ''
   const fullName = `${staff.firstName || ''} ${staff.lastName || ''}`.trim()
   return `${salutationLabel} ${fullName}`.trim() || '-'
-})
+}
+
+const discontinuedByName = computed(() => staffDisplayName(props.order.discontinuedBy))
+const authorizedByName = computed(() => staffDisplayName(props.order.authorizedBy))
+const inProgressByName = computed(() => staffDisplayName(props.order.inProgressBy))
+const resultsReceivedByName = computed(() => staffDisplayName(props.order.resultsReceivedBy))
+const emergencyByName = computed(() => staffDisplayName(props.order.emergencyBy))
 
 function confirmDiscontinue() {
   confirm.require({
@@ -90,6 +160,61 @@ function confirmDiscontinue() {
     acceptClass: 'p-button-warning',
     accept: () => emit('discontinue')
   })
+}
+
+function confirmAuthorize() {
+  confirm.require({
+    message: t('medicalRecord.medicalOrder.confirmAuthorize'),
+    header: t('common.confirm'),
+    icon: 'pi pi-check-circle',
+    acceptClass: 'p-button-success',
+    accept: doAuthorize
+  })
+}
+
+async function doAuthorize() {
+  try {
+    await orderStore.authorizeMedicalOrder(props.order.admissionId, props.order.id)
+    showSuccess('medicalRecord.medicalOrder.transitions.authorized')
+    emit('refresh')
+  } catch (error) {
+    showError(error)
+  }
+}
+
+function confirmMarkInProgress() {
+  confirm.require({
+    message: t('medicalRecord.medicalOrder.confirmMarkInProgress'),
+    header: t('common.confirm'),
+    icon: 'pi pi-clock',
+    accept: doMarkInProgress
+  })
+}
+
+async function doMarkInProgress() {
+  try {
+    await orderStore.markInProgress(props.order.admissionId, props.order.id)
+    showSuccess('medicalRecord.medicalOrder.transitions.markedInProgress')
+    emit('refresh')
+  } catch (error) {
+    showError(error)
+  }
+}
+
+function openRejectDialog() {
+  showRejectDialog.value = true
+}
+
+function onRejected() {
+  emit('refresh')
+}
+
+function openEmergencyDialog() {
+  showEmergencyDialog.value = true
+}
+
+function onEmergencyAuthorized() {
+  emit('refresh')
 }
 
 function openAdministrationDialog() {
@@ -179,7 +304,7 @@ async function deleteDocument(doc: MedicalOrderDocument) {
 </script>
 
 <template>
-  <Card class="medical-order-card" :class="{ discontinued: !isActive }">
+  <Card class="medical-order-card" :class="{ discontinued: isTerminal }">
     <template #content>
       <div class="order-content">
         <!-- Header Row -->
@@ -200,10 +325,7 @@ async function deleteDocument(doc: MedicalOrderDocument) {
             <!-- Schedule -->
             <span v-if="order.schedule" class="schedule">{{ order.schedule }}</span>
           </div>
-          <Tag
-            :value="t(`medicalRecord.medicalOrder.statuses.${order.status}`)"
-            :severity="statusSeverity"
-          />
+          <MedicalOrderStateBadge :status="order.status" />
         </div>
 
         <!-- Observations -->
@@ -232,8 +354,56 @@ async function deleteDocument(doc: MedicalOrderDocument) {
           </span>
         </div>
 
+        <!-- Authorized Info -->
+        <div v-if="order.authorizedAt && order.status !== MedicalOrderStatus.NO_AUTORIZADO" class="meta-row">
+          <i class="pi pi-check-circle" style="color: var(--p-green-600); margin-right: 0.25rem"></i>
+          {{ t('medicalRecord.medicalOrder.authorizedBy') }}: {{ authorizedByName }}
+          <span class="date-small">({{ formatDateTime(order.authorizedAt) }})</span>
+        </div>
+
+        <!-- Emergency Authorization Info -->
+        <div v-if="order.emergencyAuthorized" class="emergency-info">
+          <i class="pi pi-bolt"></i>
+          {{ t('medicalRecord.medicalOrder.emergencyAuthorize.banner') }}:
+          {{
+            order.emergencyReason
+              ? t(`medicalRecord.medicalOrder.emergencyAuthorize.reasons.${order.emergencyReason}`)
+              : '—'
+          }}
+          <div v-if="order.emergencyReasonNote" class="emergency-note">
+            “{{ order.emergencyReasonNote }}”
+          </div>
+          <div class="date-small">
+            {{ emergencyByName }} ({{ formatDateTime(order.emergencyAt) }})
+          </div>
+        </div>
+
+        <!-- Rejection Info -->
+        <div v-if="order.status === MedicalOrderStatus.NO_AUTORIZADO" class="rejection-info">
+          <i class="pi pi-times-circle"></i>
+          {{ t('medicalRecord.medicalOrder.rejectionReason') }}:
+          {{ order.rejectionReason || '—' }}
+          <div class="date-small">
+            {{ authorizedByName }} ({{ formatDateTime(order.authorizedAt) }})
+          </div>
+        </div>
+
+        <!-- In Progress Info -->
+        <div v-if="order.inProgressAt" class="meta-row">
+          <i class="pi pi-clock" style="color: var(--p-orange-600); margin-right: 0.25rem"></i>
+          {{ t('medicalRecord.medicalOrder.inProgressBy') }}: {{ inProgressByName }}
+          <span class="date-small">({{ formatDateTime(order.inProgressAt) }})</span>
+        </div>
+
+        <!-- Results Received Info -->
+        <div v-if="order.resultsReceivedAt" class="meta-row">
+          <i class="pi pi-inbox" style="color: var(--p-blue-600); margin-right: 0.25rem"></i>
+          {{ t('medicalRecord.medicalOrder.resultsReceivedBy') }}: {{ resultsReceivedByName }}
+          <span class="date-small">({{ formatDateTime(order.resultsReceivedAt) }})</span>
+        </div>
+
         <!-- Discontinued Info -->
-        <div v-if="!isActive && order.discontinuedAt" class="discontinued-info">
+        <div v-if="order.discontinuedAt" class="discontinued-info">
           <i class="pi pi-ban"></i>
           {{ t('medicalRecord.medicalOrder.discontinuedBy') }}: {{ discontinuedByName }}
           <span class="date-small">({{ formatDateTime(order.discontinuedAt) }})</span>
@@ -250,12 +420,48 @@ async function deleteDocument(doc: MedicalOrderDocument) {
             @click="emit('edit')"
           />
           <Button
-            v-if="canEdit && isActive"
+            v-if="canAuthorize"
+            icon="pi pi-check"
+            :label="t('medicalRecord.medicalOrder.actions.authorize')"
+            text
+            size="small"
+            severity="success"
+            @click="confirmAuthorize"
+          />
+          <Button
+            v-if="canReject"
+            icon="pi pi-times"
+            :label="t('medicalRecord.medicalOrder.actions.reject')"
+            text
+            size="small"
+            severity="danger"
+            @click="openRejectDialog"
+          />
+          <Button
+            v-if="canEmergencyAuthorize"
+            icon="pi pi-bolt"
+            :label="t('medicalRecord.medicalOrder.actions.emergencyAuthorize')"
+            text
+            size="small"
+            severity="warn"
+            @click="openEmergencyDialog"
+          />
+          <Button
+            v-if="canMarkInProgress"
+            icon="pi pi-play"
+            :label="markInProgressLabel"
+            text
+            size="small"
+            severity="warn"
+            @click="confirmMarkInProgress"
+          />
+          <Button
+            v-if="canDiscontinue"
             icon="pi pi-ban"
             :label="t('medicalRecord.medicalOrder.discontinue')"
             text
             size="small"
-            severity="warning"
+            severity="warn"
             @click="confirmDiscontinue"
           />
           <Button
@@ -356,6 +562,22 @@ async function deleteDocument(doc: MedicalOrderDocument) {
 
   <!-- Document Viewer -->
   <MedicalOrderDocumentViewer />
+
+  <!-- Reject Dialog -->
+  <MedicalOrderRejectDialog
+    v-model:visible="showRejectDialog"
+    :admissionId="order.admissionId"
+    :orderId="order.id"
+    @rejected="onRejected"
+  />
+
+  <!-- Emergency Authorize Dialog -->
+  <MedicalOrderEmergencyAuthorizeDialog
+    v-model:visible="showEmergencyDialog"
+    :admissionId="order.admissionId"
+    :orderId="order.id"
+    @authorized="onEmergencyAuthorized"
+  />
 </template>
 
 <style scoped>
@@ -466,6 +688,42 @@ async function deleteDocument(doc: MedicalOrderDocument) {
 
 .discontinued-info i {
   font-size: 0.875rem;
+}
+
+.rejection-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--p-red-700);
+  padding: 0.5rem;
+  background: var(--p-red-50);
+  border-radius: var(--p-border-radius);
+}
+
+.rejection-info i {
+  margin-right: 0.25rem;
+}
+
+.emergency-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--p-orange-800);
+  padding: 0.5rem;
+  background: var(--p-orange-50);
+  border-radius: var(--p-border-radius);
+}
+
+.emergency-info i {
+  margin-right: 0.25rem;
+}
+
+.emergency-note {
+  font-style: italic;
+  font-size: 0.8125rem;
+  color: var(--p-orange-700);
 }
 
 .order-actions {

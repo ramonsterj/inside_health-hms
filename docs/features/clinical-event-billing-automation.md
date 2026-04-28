@@ -6,6 +6,7 @@
 |---------|------|--------|---------|
 | 1.0 | 2026-02-12 | @author | Initial draft |
 | 1.1 | 2026-02-12 | @author | Clarify `billable` field (was `chargeCreated`), add `DIET` charge type, fix frontend paths, add permission migration details, clarify phase dependencies, add pagination, fix Zod schemas |
+| 1.2 | 2026-04-28 | @author | Phase 3: medical order billing now triggers on `AUTORIZADO` (not creation); rename `MedicalOrderCreatedEvent` → `MedicalOrderAuthorizedEvent`. See `medical-psychiatric-record.md` for the workflow-states feature that drove this change. |
 
 ---
 
@@ -89,15 +90,16 @@ Automatically generate billing charges and inventory deductions when clinical ev
 ### Phase 3: Medical Order → Billing
 
 - The `inventoryItem` FK on `MedicalOrder` (added in V065, shipped with Phase 1) is now used for automatic billing.
-- When a `MedicalOrder` is created with one of the following categories AND has a linked inventory item:
+- When a `MedicalOrder` transitions to `AUTORIZADO` with one of the following categories AND has a linked inventory item:
   - `LABORATORIOS` → creates `LAB` charge
   - `CUIDADOS_ESPECIALES` → creates `PROCEDURE` charge
   - `REFERENCIAS_MEDICAS` → creates `SERVICE` charge
   - `PRUEBAS_PSICOMETRICAS` → creates `SERVICE` charge
   - `ACTIVIDAD_FISICA` → creates `SERVICE` charge
-- Publish a `MedicalOrderCreatedEvent` with category, admission, and pricing info.
+- Publish a `MedicalOrderAuthorizedEvent` with category, admission, and pricing info.
 - `BillingEventListener` maps the category to the appropriate `ChargeType` and creates the charge.
 - Orders without a linked inventory item generate no automatic charge (log info message).
+- Orders that are rejected (`NO_AUTORIZADO`) never generate a charge. See the medical order workflow states feature in `medical-psychiatric-record.md` for the full state model.
 
 ### Phase 4: Procedure Admission Types → Billing + Inventory
 
@@ -504,7 +506,7 @@ WHERE r.code = 'ADMIN' AND p.code = 'billing:configure';
 | Event | Published By | Handled By | Trigger |
 |-------|-------------|------------|---------|
 | `PsychotherapyActivityCreatedEvent` | `PsychotherapyActivityService` | `BillingEventListener` | Activity created with priced category |
-| `MedicalOrderCreatedEvent` | `MedicalOrderService` | `BillingEventListener` | Order created with linked inventory item |
+| `MedicalOrderAuthorizedEvent` | `MedicalOrderService` | `BillingEventListener` | Order authorized (`AUTORIZADO`) with linked inventory item |
 | `AdmissionCreatedEvent` | `AdmissionService` | `BillingEventListener` | Admission of type ELECTROSHOCK_THERAPY or KETAMINE_INFUSION |
 
 ### Event Definitions
@@ -517,8 +519,8 @@ data class PsychotherapyActivityCreatedEvent(
     val price: BigDecimal,
 )
 
-// MedicalOrderCreatedEvent
-data class MedicalOrderCreatedEvent(
+// MedicalOrderAuthorizedEvent (renamed from MedicalOrderCreatedEvent in v1.2; published from MedicalOrderService.authorize())
+data class MedicalOrderAuthorizedEvent(
     val admissionId: Long,
     val category: MedicalOrderCategory,
     val inventoryItemId: Long,

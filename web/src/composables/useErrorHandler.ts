@@ -18,7 +18,8 @@ const ERROR_CODE_MAP: Record<string, string> = {
   VALIDATION_ERROR: 'errors.validation',
   INVALID_REQUEST_BODY: 'errors.badRequest',
   AUTHENTICATION_FAILED: 'errors.authenticationFailed',
-  INTERNAL_ERROR: 'errors.serverError'
+  INTERNAL_ERROR: 'errors.serverError',
+  FILE_TOO_LARGE: 'errors.fileTooLarge'
 }
 
 /**

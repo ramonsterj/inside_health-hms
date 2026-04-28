@@ -116,7 +116,7 @@ const mockMedicationOrder = {
   frequency: 'Once daily',
   schedule: 'Morning with breakfast',
   observations: 'Monitor for side effects',
-  status: 'ACTIVE',
+  status: 'AUTORIZADO',
   discontinuedAt: null,
   discontinuedBy: null,
   createdAt: '2026-01-24T10:00:00',
@@ -149,7 +149,7 @@ const mockDietOrder = {
   frequency: null,
   schedule: 'Low sodium diet',
   observations: 'Avoid processed foods',
-  status: 'ACTIVE',
+  status: 'ACTIVA',
   discontinuedAt: null,
   discontinuedBy: null,
   createdAt: '2026-01-24T11:00:00',
@@ -176,7 +176,7 @@ const mockDiscontinuedOrder = {
   frequency: 'PRN',
   schedule: 'For acute anxiety',
   observations: null,
-  status: 'DISCONTINUED',
+  status: 'DESCONTINUADO',
   discontinuedAt: '2026-01-25T14:00:00',
   discontinuedBy: {
     id: 2,
@@ -433,7 +433,7 @@ test.describe('Medical Record - Medical Orders', () => {
     await page.route('**/api/v1/admissions/1/medical-orders', async route => {
       if (route.request().method() === 'GET') {
         const orders = orderDiscontinued
-          ? [{ ...mockMedicationOrder, status: 'DISCONTINUED', discontinuedAt: '2026-01-25T14:00:00' }]
+          ? [{ ...mockMedicationOrder, status: 'DESCONTINUADO', discontinuedAt: '2026-01-25T14:00:00' }]
           : [mockMedicationOrder]
         await route.fulfill({
           status: 200,
@@ -450,7 +450,7 @@ test.describe('Medical Record - Medical Orders', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          data: { ...mockMedicationOrder, status: 'DISCONTINUED' }
+          data: { ...mockMedicationOrder, status: 'DESCONTINUADO' }
         })
       })
     })
@@ -712,7 +712,7 @@ test.describe('Medical Record - Medical Orders', () => {
     await expect(dietAccordion.locator('.p-tag')).toHaveText('1')
   })
 
-  test('filter shows only active orders', async ({ page }) => {
+  test('filter shows only authorized orders', async ({ page }) => {
     await setupAuth(page, mockDoctorUser)
     await setupUserMock(page, mockDoctorUser)
     await setupAdmissionMock(page)
@@ -735,13 +735,13 @@ test.describe('Medical Record - Medical Orders', () => {
     // By default, all orders shown
     await expect(page.getByText(/2 orders|2 órdenes/i)).toBeVisible()
 
-    // Click Active filter (in the SelectButton)
-    await page.locator('.p-selectbutton').getByText(/^Active$|^Activo$/i).click()
+    // Click Authorized filter (in the SelectButton)
+    await page.locator('.p-selectbutton').getByText(/^Authorized$|^Autorizado$/i).click()
 
     // Wait for filter to apply
     await page.waitForTimeout(300)
 
-    // Should now show only 1 order (the active one)
+    // Should now show only 1 order (the authorized medication)
     await expect(page.getByText(/1 orders|1 órdenes/i)).toBeVisible()
 
     // Expand medications
@@ -773,7 +773,7 @@ test.describe('Medical Record - Medical Orders', () => {
     await selectMedicalRecordTab(page, 'medicalOrders')
 
     // Click Discontinued filter (in the SelectButton)
-    await page.locator('.p-selectbutton').getByText(/Discontinued|Suspendida/i).click()
+    await page.locator('.p-selectbutton').getByText(/Discontinued|Descontinuado/i).click()
 
     // Wait for filter to apply
     await page.waitForTimeout(300)
@@ -830,5 +830,626 @@ test.describe('Medical Record - Medical Orders', () => {
 
     // Medication fields should be hidden again
     await expect(page.locator('.medication-fields')).not.toBeVisible()
+  })
+})
+
+// =====================================================================
+// v1.2 workflow states (authorize / reject / emergency-authorize /
+// mark-in-progress / discontinue blocked from EN_PROCESO).
+//
+// These suites use the same mock/setup pattern as the v1.0 suite above
+// but exercise category-driven order shapes:
+//   - MEDICAMENTOS  → SOLICITADO → AUTORIZADO (terminal for meds)
+//   - LABORATORIOS  → SOLICITADO → AUTORIZADO → EN_PROCESO → RESULTADOS_RECIBIDOS
+//   - DIETA         → ACTIVA (directive, no auth flow)
+// =====================================================================
+
+const mockAdminStaffUser = {
+  id: 4,
+  username: 'staff',
+  email: 'staff@example.com',
+  firstName: 'Maria',
+  lastName: 'Garcia',
+  salutation: 'Sra.',
+  roles: ['ADMINISTRATIVE_STAFF'],
+  permissions: [
+    'admission:read',
+    'medical-order:read',
+    'medical-order:authorize'
+  ],
+  status: 'ACTIVE',
+  emailVerified: true,
+  createdAt: '2026-01-01T00:00:00Z',
+  localePreference: 'en'
+}
+
+const mockDoctorWithEmergency = {
+  ...mockDoctorUser,
+  permissions: [
+    ...mockDoctorUser.permissions,
+    'medical-order:emergency-authorize',
+    'medical-order:mark-in-progress'
+  ]
+}
+
+const mockNurseWithMarkInProgress = {
+  ...mockNurseUser,
+  permissions: [...mockNurseUser.permissions, 'medical-order:mark-in-progress']
+}
+
+const mockSolicitadoMedicationOrder = {
+  ...mockMedicationOrder,
+  id: 10,
+  status: 'SOLICITADO',
+  authorizedAt: null,
+  authorizedBy: null,
+  inProgressAt: null,
+  inProgressBy: null,
+  resultsReceivedAt: null,
+  resultsReceivedBy: null,
+  rejectionReason: null,
+  emergencyAuthorized: false,
+  emergencyReason: null,
+  emergencyReasonNote: null,
+  emergencyAt: null,
+  emergencyBy: null
+}
+
+const mockSolicitadoLabOrder = {
+  id: 11,
+  admissionId: 1,
+  category: 'LABORATORIOS',
+  startDate: '2026-01-24',
+  endDate: null,
+  medication: null,
+  dosage: null,
+  route: null,
+  frequency: null,
+  schedule: null,
+  observations: 'Hemograma completo',
+  status: 'SOLICITADO',
+  authorizedAt: null,
+  authorizedBy: null,
+  inProgressAt: null,
+  inProgressBy: null,
+  resultsReceivedAt: null,
+  resultsReceivedBy: null,
+  rejectionReason: null,
+  emergencyAuthorized: false,
+  emergencyReason: null,
+  emergencyReasonNote: null,
+  emergencyAt: null,
+  emergencyBy: null,
+  discontinuedAt: null,
+  discontinuedBy: null,
+  createdAt: '2026-01-24T10:00:00',
+  createdBy: {
+    id: 2,
+    salutation: 'Dra.',
+    firstName: 'Maria',
+    lastName: 'Garcia',
+    roles: ['DOCTOR']
+  },
+  updatedAt: '2026-01-24T10:00:00',
+  updatedBy: null
+}
+
+const mockAutorizadoLabOrder = {
+  ...mockSolicitadoLabOrder,
+  status: 'AUTORIZADO',
+  authorizedAt: '2026-01-24T10:30:00',
+  authorizedBy: {
+    id: 4,
+    salutation: 'Sra.',
+    firstName: 'Maria',
+    lastName: 'Garcia',
+    roles: ['ADMINISTRATIVE_STAFF']
+  }
+}
+
+const mockEnProcesoLabOrder = {
+  ...mockAutorizadoLabOrder,
+  status: 'EN_PROCESO',
+  inProgressAt: '2026-01-24T11:00:00',
+  inProgressBy: {
+    id: 3,
+    salutation: 'Lic.',
+    firstName: 'Ana',
+    lastName: 'Lopez',
+    roles: ['NURSE']
+  }
+}
+
+// Click the accept button of the first visible PrimeVue confirm dialog.
+// MedicalOrderCard mounts a ConfirmDialog per card, so multiple may exist
+// in the DOM — same pattern as the existing discontinue test (line ~478).
+async function acceptFirstConfirmDialog(page: import('@playwright/test').Page) {
+  await page.waitForTimeout(500)
+  await page.evaluate(() => {
+    const dialogs = document.querySelectorAll('.p-confirmdialog')
+    for (const dialog of dialogs) {
+      const acceptBtn = dialog.querySelector(
+        '.p-confirmdialog-accept-button'
+      ) as HTMLButtonElement | null
+      if (acceptBtn && dialog.checkVisibility()) {
+        acceptBtn.click()
+        return
+      }
+    }
+  })
+}
+
+test.describe('Medical Orders v1.2 - Authorize / Reject', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.clear()
+    })
+  })
+
+  test('admin staff can authorize a SOLICITADO medication order', async ({ page }) => {
+    await setupAuth(page, mockAdminStaffUser)
+    await setupUserMock(page, mockAdminStaffUser)
+    await setupAdmissionMock(page)
+
+    let authorized = false
+    let authorizeCalled = false
+
+    await page.route('**/api/v1/admissions/1/medical-orders', async route => {
+      const order = authorized
+        ? {
+            ...mockSolicitadoMedicationOrder,
+            status: 'AUTORIZADO',
+            authorizedAt: '2026-01-24T10:30:00',
+            authorizedBy: mockAdminStaffUser
+          }
+        : mockSolicitadoMedicationOrder
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: createGroupedOrders([order]) })
+      })
+    })
+
+    await page.route('**/api/v1/admissions/1/medical-orders/10/authorize', async route => {
+      authorizeCalled = true
+      authorized = true
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: { ...mockSolicitadoMedicationOrder, status: 'AUTORIZADO' }
+        })
+      })
+    })
+
+    await page.goto('/admissions/1')
+    await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'medicalOrders')
+    await expandAccordionPanel(page, /Medications|Medicamentos/i)
+
+    const orderCard = page.locator('.medical-order-card').first()
+    await expect(orderCard).toBeVisible()
+    // SOLICITADO badge visible (English label is "Requested")
+    await expect(orderCard.getByText(/^Requested$|^Solicitado$/i)).toBeVisible()
+    await waitForOverlaysToClear(page)
+
+    // Authorize button visible for staff with the permission
+    const authorizeBtn = orderCard.getByRole('button', { name: /^Authorize$|^Autorizar$/i })
+    await expect(authorizeBtn).toBeVisible()
+    await authorizeBtn.click()
+
+    await acceptFirstConfirmDialog(page)
+
+    await expect.poll(() => authorizeCalled, { timeout: 5000 }).toBe(true)
+
+    // Status flips to AUTORIZADO
+    await expect(orderCard.getByText(/^Authorized$|^Autorizado$/i)).toBeVisible({ timeout: 10000 })
+  })
+
+  test('admin staff can reject a SOLICITADO order with a reason', async ({ page }) => {
+    await setupAuth(page, mockAdminStaffUser)
+    await setupUserMock(page, mockAdminStaffUser)
+    await setupAdmissionMock(page)
+
+    let rejected = false
+    let capturedReason: string | null = null
+
+    await page.route('**/api/v1/admissions/1/medical-orders', async route => {
+      const order = rejected
+        ? {
+            ...mockSolicitadoMedicationOrder,
+            status: 'NO_AUTORIZADO',
+            rejectionReason: capturedReason
+          }
+        : mockSolicitadoMedicationOrder
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: createGroupedOrders([order]) })
+      })
+    })
+
+    await page.route('**/api/v1/admissions/1/medical-orders/10/reject', async route => {
+      const body = route.request().postDataJSON() as { reason?: string | null }
+      capturedReason = body.reason ?? null
+      rejected = true
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            ...mockSolicitadoMedicationOrder,
+            status: 'NO_AUTORIZADO',
+            rejectionReason: capturedReason
+          }
+        })
+      })
+    })
+
+    await page.goto('/admissions/1')
+    await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'medicalOrders')
+    await expandAccordionPanel(page, /Medications|Medicamentos/i)
+
+    const orderCard = page.locator('.medical-order-card').first()
+    await expect(orderCard).toBeVisible()
+    await waitForOverlaysToClear(page)
+
+    // Click Reject in the card
+    await orderCard.getByRole('button', { name: /^Reject$|^No autorizar$/i }).click()
+
+    // Reject dialog opens with the reason textarea
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+    await dialog.locator('#medical-order-reject-reason').fill('Pendiente de cobertura del seguro')
+
+    // Click the Reject button in the dialog footer
+    await dialog.getByRole('button', { name: /^Reject$|^No autorizar$/i }).click()
+
+    await expect.poll(() => capturedReason, { timeout: 5000 }).toBe(
+      'Pendiente de cobertura del seguro'
+    )
+    await expect(orderCard.getByText(/^Not Authorized$|^No autorizado$/i)).toBeVisible({
+      timeout: 10000
+    })
+  })
+
+  test('doctor cannot authorize (no medical-order:authorize permission)', async ({ page }) => {
+    await setupAuth(page, mockDoctorUser)
+    await setupUserMock(page, mockDoctorUser)
+    await setupAdmissionMock(page)
+
+    await page.route('**/api/v1/admissions/1/medical-orders', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: createGroupedOrders([mockSolicitadoMedicationOrder])
+        })
+      })
+    })
+
+    await page.goto('/admissions/1')
+    await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'medicalOrders')
+    await expandAccordionPanel(page, /Medications|Medicamentos/i)
+
+    const orderCard = page.locator('.medical-order-card').first()
+    await expect(orderCard).toBeVisible()
+
+    await expect(
+      orderCard.getByRole('button', { name: /^Authorize$|^Autorizar$/i })
+    ).not.toBeVisible()
+    await expect(
+      orderCard.getByRole('button', { name: /^Reject$|^No autorizar$/i })
+    ).not.toBeVisible()
+  })
+})
+
+test.describe('Medical Orders v1.2 - Emergency Authorize', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.clear()
+    })
+  })
+
+  test('doctor emergency-authorizes with PATIENT_IN_CRISIS', async ({ page }) => {
+    await setupAuth(page, mockDoctorWithEmergency)
+    await setupUserMock(page, mockDoctorWithEmergency)
+    await setupAdmissionMock(page)
+
+    let authorized = false
+    let capturedBody: { reason?: string; reasonNote?: string | null } = {}
+
+    await page.route('**/api/v1/admissions/1/medical-orders', async route => {
+      const order = authorized
+        ? {
+            ...mockSolicitadoMedicationOrder,
+            status: 'AUTORIZADO',
+            authorizedAt: '2026-01-24T02:00:00',
+            authorizedBy: mockDoctorWithEmergency,
+            emergencyAuthorized: true,
+            emergencyReason: capturedBody.reason ?? null,
+            emergencyReasonNote: capturedBody.reasonNote ?? null,
+            emergencyAt: '2026-01-24T02:00:00',
+            emergencyBy: mockDoctorWithEmergency
+          }
+        : mockSolicitadoMedicationOrder
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: createGroupedOrders([order]) })
+      })
+    })
+
+    await page.route(
+      '**/api/v1/admissions/1/medical-orders/10/emergency-authorize',
+      async route => {
+        capturedBody = route.request().postDataJSON()
+        authorized = true
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              ...mockSolicitadoMedicationOrder,
+              status: 'AUTORIZADO',
+              emergencyAuthorized: true,
+              emergencyReason: capturedBody.reason,
+              emergencyReasonNote: capturedBody.reasonNote ?? null
+            }
+          })
+        })
+      }
+    )
+
+    await page.goto('/admissions/1')
+    await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'medicalOrders')
+    await expandAccordionPanel(page, /Medications|Medicamentos/i)
+
+    const orderCard = page.locator('.medical-order-card').first()
+    await expect(orderCard).toBeVisible()
+    await waitForOverlaysToClear(page)
+
+    await orderCard
+      .getByRole('button', { name: /Emergency authorize|Autorización de emergencia/i })
+      .click()
+
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+    // Warning banner present
+    await expect(dialog.getByText(/no admin staff is available|sin personal administrativo/i))
+      .toBeVisible()
+
+    // Submit is disabled until a reason is selected
+    const submitBtn = dialog.getByRole('button', {
+      name: /Emergency authorize|Autorización de emergencia/i
+    })
+    await expect(submitBtn).toBeDisabled()
+
+    // Pick "Patient in crisis"
+    await dialog.locator('label[for="reason-PATIENT_IN_CRISIS"]').click()
+
+    // Now enabled (note is optional for non-OTHER reasons)
+    await expect(submitBtn).toBeEnabled()
+    await submitBtn.click()
+
+    await expect.poll(() => capturedBody.reason, { timeout: 5000 }).toBe('PATIENT_IN_CRISIS')
+
+    // Card now shows AUTORIZADO + emergency banner
+    await expect(orderCard.getByText(/^Authorized$|^Autorizado$/i)).toBeVisible({
+      timeout: 10000
+    })
+    await expect(orderCard.getByText(/Emergency-authorized|Autorización de emergencia/i))
+      .toBeVisible()
+  })
+
+  test('emergency-authorize with OTHER reason requires a note', async ({ page }) => {
+    await setupAuth(page, mockDoctorWithEmergency)
+    await setupUserMock(page, mockDoctorWithEmergency)
+    await setupAdmissionMock(page)
+
+    await page.route('**/api/v1/admissions/1/medical-orders', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: createGroupedOrders([mockSolicitadoMedicationOrder])
+        })
+      })
+    })
+
+    await page.goto('/admissions/1')
+    await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'medicalOrders')
+    await expandAccordionPanel(page, /Medications|Medicamentos/i)
+
+    const orderCard = page.locator('.medical-order-card').first()
+    await waitForOverlaysToClear(page)
+    await orderCard
+      .getByRole('button', { name: /Emergency authorize|Autorización de emergencia/i })
+      .click()
+
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+
+    const submitBtn = dialog.getByRole('button', {
+      name: /Emergency authorize|Autorización de emergencia/i
+    })
+
+    // Pick OTHER, leave the note empty → submit should stay disabled
+    await dialog.locator('label[for="reason-OTHER"]').click()
+    await expect(submitBtn).toBeDisabled()
+
+    // Required marker (*) appears next to the Notes label when reason is OTHER
+    await expect(dialog.locator('.required-marker')).toBeVisible()
+
+    // Type a note → submit becomes enabled
+    await dialog.locator('#emergency-reason-note').fill('Patient agitated, no admin on call')
+    await expect(submitBtn).toBeEnabled()
+  })
+
+  test('nurse cannot emergency-authorize', async ({ page }) => {
+    await setupAuth(page, mockNurseUser)
+    await setupUserMock(page, mockNurseUser)
+    await setupAdmissionMock(page)
+
+    await page.route('**/api/v1/admissions/1/medical-orders', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: createGroupedOrders([mockSolicitadoMedicationOrder])
+        })
+      })
+    })
+
+    await page.goto('/admissions/1')
+    await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'medicalOrders')
+    await expandAccordionPanel(page, /Medications|Medicamentos/i)
+
+    const orderCard = page.locator('.medical-order-card').first()
+    await expect(orderCard).toBeVisible()
+    await expect(
+      orderCard.getByRole('button', { name: /Emergency authorize|Autorización de emergencia/i })
+    ).not.toBeVisible()
+  })
+})
+
+test.describe('Medical Orders v1.2 - Mark in Progress (results-bearing)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.clear()
+    })
+  })
+
+  test('nurse marks an AUTORIZADO lab order as EN_PROCESO ("Sample taken")', async ({ page }) => {
+    await setupAuth(page, mockNurseWithMarkInProgress)
+    await setupUserMock(page, mockNurseWithMarkInProgress)
+    await setupAdmissionMock(page)
+
+    let inProgress = false
+    let markCalled = false
+
+    await page.route('**/api/v1/admissions/1/medical-orders', async route => {
+      const order = inProgress ? mockEnProcesoLabOrder : mockAutorizadoLabOrder
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: createGroupedOrders([order]) })
+      })
+    })
+
+    await page.route(
+      '**/api/v1/admissions/1/medical-orders/11/mark-in-progress',
+      async route => {
+        markCalled = true
+        inProgress = true
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: mockEnProcesoLabOrder })
+        })
+      }
+    )
+
+    await page.goto('/admissions/1')
+    await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'medicalOrders')
+    await expandAccordionPanel(page, /Laboratory|Laboratorios/i)
+
+    const orderCard = page.locator('.medical-order-card').first()
+    await expect(orderCard).toBeVisible()
+    await waitForOverlaysToClear(page)
+
+    // Per-category label for LABORATORIOS is "Sample taken" (es: "Muestra tomada")
+    const markBtn = orderCard.getByRole('button', { name: /Sample taken|Muestra tomada/i })
+    await expect(markBtn).toBeVisible()
+    await markBtn.click()
+
+    await acceptFirstConfirmDialog(page)
+
+    await expect.poll(() => markCalled, { timeout: 5000 }).toBe(true)
+    await expect(orderCard.getByText(/^In progress$|^En proceso$/i)).toBeVisible({
+      timeout: 10000
+    })
+  })
+
+  test('mark-in-progress button is hidden for non-results categories', async ({ page }) => {
+    await setupAuth(page, mockNurseWithMarkInProgress)
+    await setupUserMock(page, mockNurseWithMarkInProgress)
+    await setupAdmissionMock(page)
+
+    // An AUTORIZADO medication order — meds are auth-only, so mark-in-progress
+    // must NOT appear (would 400 on the backend).
+    const autorizadoMed = {
+      ...mockSolicitadoMedicationOrder,
+      status: 'AUTORIZADO',
+      authorizedAt: '2026-01-24T10:30:00',
+      authorizedBy: mockAdminStaffUser
+    }
+
+    await page.route('**/api/v1/admissions/1/medical-orders', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: createGroupedOrders([autorizadoMed]) })
+      })
+    })
+
+    await page.goto('/admissions/1')
+    await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'medicalOrders')
+    await expandAccordionPanel(page, /Medications|Medicamentos/i)
+
+    const orderCard = page.locator('.medical-order-card').first()
+    await expect(orderCard).toBeVisible()
+
+    // None of the per-category mark-in-progress labels should be visible
+    await expect(
+      orderCard.getByRole('button', {
+        name: /Mark in progress|Marcar en proceso|Sample taken|Muestra tomada|Patient referred|Paciente referido/i
+      })
+    ).not.toBeVisible()
+  })
+
+  test('discontinue is not offered once the lab order is EN_PROCESO', async ({ page }) => {
+    // Spec rule: once the sample has been taken, the order can no longer be cancelled.
+    await setupAuth(page, mockAdminUser)
+    await setupUserMock(page, mockAdminUser)
+    await setupAdmissionMock(page)
+
+    await page.route('**/api/v1/admissions/1/medical-orders', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: createGroupedOrders([mockEnProcesoLabOrder])
+        })
+      })
+    })
+
+    await page.goto('/admissions/1')
+    await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'medicalOrders')
+    await expandAccordionPanel(page, /Laboratory|Laboratorios/i)
+
+    const orderCard = page.locator('.medical-order-card').first()
+    await expect(orderCard).toBeVisible()
+    await expect(orderCard.getByText(/^In progress$|^En proceso$/i)).toBeVisible()
+
+    // Discontinue button must not render in EN_PROCESO
+    await expect(
+      orderCard.getByRole('button', { name: /^Discontinue$|^Suspender$/i })
+    ).not.toBeVisible()
   })
 })

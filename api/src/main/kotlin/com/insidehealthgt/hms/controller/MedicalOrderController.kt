@@ -1,6 +1,8 @@
 package com.insidehealthgt.hms.controller
 
 import com.insidehealthgt.hms.dto.request.CreateMedicalOrderRequest
+import com.insidehealthgt.hms.dto.request.EmergencyAuthorizeMedicalOrderRequest
+import com.insidehealthgt.hms.dto.request.RejectMedicalOrderRequest
 import com.insidehealthgt.hms.dto.request.UpdateMedicalOrderRequest
 import com.insidehealthgt.hms.dto.response.ApiResponse
 import com.insidehealthgt.hms.dto.response.GroupedMedicalOrdersResponse
@@ -67,6 +69,48 @@ class MedicalOrderController(private val medicalOrderService: MedicalOrderServic
         @PathVariable orderId: Long,
     ): ResponseEntity<ApiResponse<MedicalOrderResponse>> {
         val order = medicalOrderService.discontinueMedicalOrder(admissionId, orderId)
+        return ResponseEntity.ok(ApiResponse.success(order))
+    }
+
+    @PostMapping("/{orderId}/authorize")
+    @PreAuthorize("hasAuthority('medical-order:authorize')")
+    fun authorize(
+        @PathVariable admissionId: Long,
+        @PathVariable orderId: Long,
+    ): ResponseEntity<ApiResponse<MedicalOrderResponse>> {
+        val order = medicalOrderService.authorize(admissionId, orderId)
+        return ResponseEntity.ok(ApiResponse.success(order))
+    }
+
+    @PostMapping("/{orderId}/reject")
+    @PreAuthorize("hasAuthority('medical-order:authorize')")
+    fun reject(
+        @PathVariable admissionId: Long,
+        @PathVariable orderId: Long,
+        @Valid @RequestBody(required = false) request: RejectMedicalOrderRequest?,
+    ): ResponseEntity<ApiResponse<MedicalOrderResponse>> {
+        val order = medicalOrderService.reject(admissionId, orderId, request ?: RejectMedicalOrderRequest())
+        return ResponseEntity.ok(ApiResponse.success(order))
+    }
+
+    @PostMapping("/{orderId}/emergency-authorize")
+    @PreAuthorize("hasAuthority('medical-order:emergency-authorize')")
+    fun emergencyAuthorize(
+        @PathVariable admissionId: Long,
+        @PathVariable orderId: Long,
+        @Valid @RequestBody request: EmergencyAuthorizeMedicalOrderRequest,
+    ): ResponseEntity<ApiResponse<MedicalOrderResponse>> {
+        val order = medicalOrderService.emergencyAuthorize(admissionId, orderId, request)
+        return ResponseEntity.ok(ApiResponse.success(order))
+    }
+
+    @PostMapping("/{orderId}/mark-in-progress")
+    @PreAuthorize("hasAuthority('medical-order:mark-in-progress')")
+    fun markInProgress(
+        @PathVariable admissionId: Long,
+        @PathVariable orderId: Long,
+    ): ResponseEntity<ApiResponse<MedicalOrderResponse>> {
+        val order = medicalOrderService.markInProgress(admissionId, orderId)
         return ResponseEntity.ok(ApiResponse.success(order))
     }
 }

@@ -419,6 +419,160 @@ Three sub-modules for medical documentation within admissions:
 
 ---
 
+### MO-13: Newly created order starts in SOLICITADO
+**Role**: DOCTOR
+**Precondition**: Logged in as doctor1, active admission
+**Steps**:
+1. Create a medical order for any category
+2. Open the order card
+**Expected Result**: Order shows the `Solicitado` state badge. No billing charge has been created yet, even for billable categories with a linked inventory item.
+**Type**: Happy Path
+
+---
+
+### MO-14: Administrative staff authorizes a SOLICITADO order
+**Role**: ADMINISTRATIVE_STAFF
+**Precondition**: Logged in as admin-staff user, an order in `SOLICITADO` exists (LABORATORIOS with linked inventory item)
+**Steps**:
+1. Open `/medical-orders` (orders by state)
+2. Filter by status `SOLICITADO`
+3. Click `Authorize` on the order
+**Expected Result**: Order transitions to `AUTORIZADO`. `authorizedAt` and `authorizedBy` are stamped. The corresponding LAB billing charge is created on the admission. The row leaves the `SOLICITADO` bucket.
+**Type**: Happy Path
+
+---
+
+### MO-15: Administrative staff rejects an order with reason
+**Role**: ADMINISTRATIVE_STAFF
+**Precondition**: A `SOLICITADO` order exists
+**Steps**:
+1. From `/medical-orders`, click `Reject` on the order
+2. Enter a rejection reason ("Pendiente cobertura del seguro")
+3. Confirm
+**Expected Result**: Order transitions to `NO_AUTORIZADO` (terminal). The rejection reason is stored and visible on the order card. No billing charge is created.
+**Type**: Happy Path
+
+---
+
+### MO-16: Nurse marks an authorized lab order as in progress
+**Role**: NURSE (or DOCTOR)
+**Precondition**: An `AUTORIZADO` order with category `LABORATORIOS` exists
+**Steps**:
+1. From `/medical-orders` or the admission detail, click `Sample taken` (label varies by category — `Patient referred` for referrals, `Test administered` for psychometric)
+**Expected Result**: Order transitions to `EN_PROCESO`. `inProgressAt` and `inProgressBy` are stamped from the nurse. After this transition the order can no longer be discontinued.
+**Type**: Happy Path
+
+---
+
+### MO-17: Mark-in-progress denied for non-results category
+**Role**: NURSE
+**Precondition**: An `AUTORIZADO` order with category `MEDICAMENTOS` exists
+**Steps**:
+1. Try to invoke `Mark in progress` (UI button should be hidden; API call must be blocked)
+**Expected Result**: API returns 400 with a clear validation message. UI does not render the button for this category.
+**Type**: Negative
+
+---
+
+### MO-18: Uploading a result document auto-marks the order RESULTADOS_RECIBIDOS
+**Role**: DOCTOR (or NURSE)
+**Precondition**: An order in `EN_PROCESO` (or `AUTORIZADO`) exists for a results-bearing category
+**Steps**:
+1. Open the order
+2. Upload a result document (PDF or image)
+**Expected Result**: After the upload completes, the order's state badge updates to `Resultados recibidos`. `resultsReceivedAt` and `resultsReceivedBy` are stamped from the uploader. The document appears in the attachments grid and is viewable by all roles with `medical-order:read`. Uploading from `AUTORIZADO` skips `EN_PROCESO`.
+**Type**: Happy Path
+
+---
+
+### MO-19: Cannot manually set RESULTADOS_RECIBIDOS without a document
+**Role**: ADMIN
+**Precondition**: An order in `EN_PROCESO` exists with no documents uploaded
+**Steps**:
+1. Attempt to PUT the order with `status="RESULTADOS_RECIBIDOS"` directly via API
+**Expected Result**: API returns 400. The only path to `RESULTADOS_RECIBIDOS` is through document upload.
+**Type**: Negative
+
+---
+
+### MO-20: Authorize denied when order is not SOLICITADO
+**Role**: ADMINISTRATIVE_STAFF
+**Precondition**: An order in `AUTORIZADO` (or any non-`SOLICITADO` state) exists
+**Steps**:
+1. Attempt to authorize via API
+**Expected Result**: API returns 400. UI does not show the `Authorize` button for this order.
+**Type**: Negative
+
+---
+
+### MO-21: Discontinue blocked from EN_PROCESO and terminal states
+**Role**: DOCTOR
+**Precondition**: An order in `EN_PROCESO`, `NO_AUTORIZADO`, `RESULTADOS_RECIBIDOS`, or `DESCONTINUADO` exists
+**Steps**:
+1. Attempt to discontinue via API
+**Expected Result**: API returns 400. UI hides the `Discontinue` button for these states. The error message for `EN_PROCESO` clarifies that the sample is at the lab and the order can no longer be cancelled.
+**Type**: Negative
+
+---
+
+### MO-21b: Authorize denied for directive categories
+**Role**: ADMINISTRATIVE_STAFF
+**Precondition**: A `DIETA` order (in `ACTIVA`) exists
+**Steps**:
+1. Attempt to authorize via API
+**Expected Result**: API returns 400 — directive categories don't have an authorization step. UI does not render the `Authorize` button for directive orders.
+**Type**: Negative
+
+---
+
+### MO-21c: Doctor emergency-authorizes a SOLICITADO order
+**Role**: DOCTOR
+**Precondition**: A `SOLICITADO` order (medication, lab, referral, or psychometric) exists
+**Steps**:
+1. From `/medical-orders` or the order card, click `Emergency authorize`
+2. In the dialog, choose a structured reason (`Patient in crisis` / `After-hours, no admin staff available` / `Family unreachable` / `Other`)
+3. If reason is `Other`, fill in the required note
+4. Submit
+**Expected Result**: Order transitions to `AUTORIZADO`. `emergencyAuthorized=true`, `emergencyReason`, `emergencyAt`, `emergencyBy` (and optional `emergencyReasonNote`) are stamped. Billing fires the same as a normal authorize. The card shows an "Emergency-authorized" banner with the reason.
+**Type**: Happy Path
+
+---
+
+### MO-21d: Emergency-authorize requires reasonNote when reason is OTHER
+**Role**: DOCTOR
+**Precondition**: A `SOLICITADO` order exists
+**Steps**:
+1. Submit an emergency-authorize call with `reason="OTHER"` and no `reasonNote`
+**Expected Result**: API returns 400. UI submit button is disabled until the note is filled in.
+**Type**: Negative
+
+---
+
+### MO-22: Orders-by-state dashboard - filtering and navigation
+**Role**: ADMINISTRATIVE_STAFF
+**Precondition**: Several orders in mixed states across multiple admissions
+**Steps**:
+1. Navigate to `/medical-orders` from the sidebar
+2. Default filter selects the action-needed buckets (`SOLICITADO`, `AUTORIZADO`, `EN_PROCESO`) — verify only those orders are shown
+3. Switch the status filter to multi-select `EN_PROCESO, RESULTADOS_RECIBIDOS`
+4. Apply category filter `LABORATORIOS`
+5. Click on a row to open the underlying admission detail
+**Expected Result**: Default filter shows the action-needed buckets. Multi-select status and category filters narrow the list correctly across admissions. Each row links to its admission detail. State badge color matches the spec (green / gray / red / green / amber / blue / secondary).
+**Type**: Happy Path
+
+---
+
+### MO-23: Sidebar entry hidden for roles without medical-order:read
+**Role**: PSYCHOLOGIST (no `medical-order:read`)
+**Precondition**: Logged in as a psychologist
+**Steps**:
+1. Inspect the sidebar
+2. Try to navigate directly to `/medical-orders`
+**Expected Result**: Sidebar does not show the `Medical Orders` entry. Direct navigation returns 403 / redirects to forbidden page.
+**Type**: Negative
+
+---
+
 ## Permission Matrix
 
 | Action | ADMIN | STAFF | DOCTOR | PSYCH | NURSE | CHIEF_NURSE | USER |
@@ -430,8 +584,12 @@ Three sub-modules for medical documentation within admissions:
 | Read progress notes | G | D | G | D | G | G | D |
 | Update progress note | G | D | D | D | D | D | D |
 | Create medical order | G | D | G | D | D | D | D |
-| Read medical orders | G | D | G | D | G | G | D |
+| Read medical orders | G | G | G | D | G | G | D |
 | Update medical order | G | D | D | D | D | D | D |
 | Discontinue order | G | D | G | D | D | D | D |
+| Authorize / reject order | G | G | D | D | D | D | D |
+| Mark "claim results" | G | D | G | D | D | D | D |
+| Upload result document (auto-claims) | G | D | G | D | G | D | D |
+| Open `/medical-orders` dashboard | G | G | G | D | G | G | D |
 
 G = Granted, D = Denied

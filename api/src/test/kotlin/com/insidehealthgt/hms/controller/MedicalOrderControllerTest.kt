@@ -3,8 +3,12 @@ package com.insidehealthgt.hms.controller
 import com.insidehealthgt.hms.dto.request.CreateMedicalOrderRequest
 import com.insidehealthgt.hms.dto.request.UpdateMedicalOrderRequest
 import com.insidehealthgt.hms.entity.AdministrationRoute
+import com.insidehealthgt.hms.entity.InventoryItem
 import com.insidehealthgt.hms.entity.MedicalOrderCategory
 import com.insidehealthgt.hms.entity.User
+import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.hasItem
+import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -13,8 +17,10 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.math.BigDecimal
 import java.time.LocalDate
 
+@Suppress("LargeClass")
 class MedicalOrderControllerTest : AbstractIntegrationTest() {
 
     private lateinit var adminToken: String
@@ -92,7 +98,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.data.medication").value("Lorazepam"))
-            .andExpect(jsonPath("$.data.status").value("ACTIVE"))
+            .andExpect(jsonPath("$.data.status").value("SOLICITADO"))
             .andExpect(jsonPath("$.data.createdBy.firstName").value("Dr. Maria"))
     }
 
@@ -218,7 +224,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
 
     @Test
     fun `doctor can discontinue medical order`() {
-        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.MEDICAMENTOS, "To be discontinued")
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.DIETA, null)
 
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/medical-orders/$orderId/discontinue")
@@ -226,21 +232,22 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.data.status").value("DISCONTINUED"))
+            .andExpect(jsonPath("$.data.status").value("DESCONTINUADO"))
             .andExpect(jsonPath("$.data.discontinuedAt").exists())
             .andExpect(jsonPath("$.data.discontinuedBy.firstName").value("Dr. Maria"))
     }
 
     @Test
     fun `cannot discontinue already discontinued order`() {
-        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.MEDICAMENTOS, "Discontinue me")
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.DIETA, null)
 
-        // First discontinue
+        // First discontinue (DIETA is directive, starts in ACTIVA which is discontinuable)
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/medical-orders/$orderId/discontinue")
                 .header("Authorization", "Bearer $doctorToken"),
         )
             .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("DESCONTINUADO"))
 
         // Second discontinue should fail
         mockMvc.perform(
@@ -248,7 +255,10 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
                 .header("Authorization", "Bearer $doctorToken"),
         )
             .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error.message").value("Medical order is already discontinued"))
+            .andExpect(
+                jsonPath("$.error.message")
+                    .value(containsString("DESCONTINUADO")),
+            )
     }
 
     @Test
@@ -318,9 +328,9 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
 
     @Test
     fun `update discontinued medical order returns 400`() {
-        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.MEDICAMENTOS, "To discontinue")
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.DIETA, null)
 
-        // Discontinue the order first
+        // Discontinue the order first (DIETA starts in ACTIVA, can be discontinued)
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/medical-orders/$orderId/discontinue")
                 .header("Authorization", "Bearer $doctorToken"),
@@ -329,9 +339,9 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
 
         // Try to update the discontinued order
         val updateRequest = UpdateMedicalOrderRequest(
-            category = MedicalOrderCategory.MEDICAMENTOS,
+            category = MedicalOrderCategory.DIETA,
             startDate = LocalDate.now(),
-            medication = "Should fail",
+            observations = "Should fail",
         )
 
         mockMvc.perform(
@@ -341,7 +351,10 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
                 .content(objectMapper.writeValueAsString(updateRequest)),
         )
             .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error.message").value("Cannot update a discontinued medical order"))
+            .andExpect(
+                jsonPath("$.error.message")
+                    .value("Cannot update a medical order in a terminal state (DESCONTINUADO)"),
+            )
     }
 
     // ============ AUDIT TESTS ============
@@ -358,6 +371,444 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
             .andExpect(jsonPath("$.data.createdAt").exists())
             .andExpect(jsonPath("$.data.updatedAt").exists())
             .andExpect(jsonPath("$.data.createdBy.firstName").value("Dr. Maria"))
+    }
+
+    // ============ STATE TRANSITION TESTS ============
+
+    @Test
+    fun `newly created medical order is in SOLICITADO`() {
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
+
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/medical-orders/$orderId")
+                .header("Authorization", "Bearer $doctorToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("SOLICITADO"))
+            .andExpect(jsonPath("$.data.authorizedAt").doesNotExist())
+            .andExpect(jsonPath("$.data.authorizedBy").doesNotExist())
+    }
+
+    @Test
+    fun `admin staff can authorize a SOLICITADO order`() {
+        val (_, staffToken) = createAdminStaffUser()
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Glicemia")
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
+                .header("Authorization", "Bearer $staffToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("AUTORIZADO"))
+            .andExpect(jsonPath("$.data.authorizedAt").exists())
+            .andExpect(jsonPath("$.data.authorizedBy.firstName").exists())
+    }
+
+    @Test
+    fun `admin can authorize a SOLICITADO order`() {
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.MEDICAMENTOS, "Lorazepam")
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
+                .header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("AUTORIZADO"))
+    }
+
+    @Test
+    fun `doctor cannot authorize an order`() {
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.MEDICAMENTOS, "Lorazepam")
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
+                .header("Authorization", "Bearer $doctorToken"),
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `nurse cannot authorize an order`() {
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.MEDICAMENTOS, "Lorazepam")
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
+                .header("Authorization", "Bearer $nurseToken"),
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `cannot authorize an order that is not SOLICITADO`() {
+        val (_, staffToken) = createAdminStaffUser()
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Glicemia")
+
+        // First authorize - succeeds
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
+                .header("Authorization", "Bearer $staffToken"),
+        )
+            .andExpect(status().isOk)
+
+        // Second authorize - blocked
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
+                .header("Authorization", "Bearer $staffToken"),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.message").value(containsString("SOLICITADO")))
+    }
+
+    @Test
+    fun `admin staff can reject a SOLICITADO order with reason`() {
+        val (_, staffToken) = createAdminStaffUser()
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Test")
+
+        val rejectBody = """{"reason":"Pendiente de cobertura del seguro"}"""
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/reject")
+                .header("Authorization", "Bearer $staffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(rejectBody),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("NO_AUTORIZADO"))
+            .andExpect(jsonPath("$.data.rejectionReason").value("Pendiente de cobertura del seguro"))
+    }
+
+    @Test
+    fun `reject with no body is allowed`() {
+        val (_, staffToken) = createAdminStaffUser()
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Test")
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/reject")
+                .header("Authorization", "Bearer $staffToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("NO_AUTORIZADO"))
+    }
+
+    @Test
+    fun `directive order is created in ACTIVA`() {
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.DIETA, null)
+
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/medical-orders/$orderId")
+                .header("Authorization", "Bearer $doctorToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("ACTIVA"))
+    }
+
+    @Test
+    fun `cannot authorize a directive order`() {
+        val (_, staffToken) = createAdminStaffUser()
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.DIETA, null)
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
+                .header("Authorization", "Bearer $staffToken"),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(
+                jsonPath("$.error.message")
+                    .value(containsString("does not require authorization")),
+            )
+    }
+
+    @Test
+    fun `nurse can mark authorized lab order EN_PROCESO`() {
+        val (_, staffToken) = createAdminStaffUser()
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
+                .header("Authorization", "Bearer $staffToken"),
+        ).andExpect(status().isOk)
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/mark-in-progress")
+                .header("Authorization", "Bearer $nurseToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("EN_PROCESO"))
+            .andExpect(jsonPath("$.data.inProgressAt").exists())
+            .andExpect(jsonPath("$.data.inProgressBy.firstName").exists())
+    }
+
+    @Test
+    fun `cannot mark in progress for non-results category`() {
+        val (_, staffToken) = createAdminStaffUser()
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.MEDICAMENTOS, "Lorazepam")
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
+                .header("Authorization", "Bearer $staffToken"),
+        ).andExpect(status().isOk)
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/mark-in-progress")
+                .header("Authorization", "Bearer $nurseToken"),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(
+                jsonPath("$.error.message")
+                    .value(containsString("in-progress phase")),
+            )
+    }
+
+    @Test
+    fun `cannot mark in progress when order is not AUTORIZADO`() {
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Test")
+
+        // Order is in SOLICITADO
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/mark-in-progress")
+                .header("Authorization", "Bearer $nurseToken"),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.message").value(containsString("AUTORIZADO")))
+    }
+
+    @Test
+    fun `discontinue blocked from EN_PROCESO`() {
+        val (_, staffToken) = createAdminStaffUser()
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Test")
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
+                .header("Authorization", "Bearer $staffToken"),
+        ).andExpect(status().isOk)
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/mark-in-progress")
+                .header("Authorization", "Bearer $nurseToken"),
+        ).andExpect(status().isOk)
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/discontinue")
+                .header("Authorization", "Bearer $doctorToken"),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.message").value(containsString("EN_PROCESO")))
+    }
+
+    @Test
+    fun `discontinue blocked from terminal NO_AUTORIZADO state`() {
+        val (_, staffToken) = createAdminStaffUser()
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Test")
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/reject")
+                .header("Authorization", "Bearer $staffToken"),
+        ).andExpect(status().isOk)
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/discontinue")
+                .header("Authorization", "Bearer $doctorToken"),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.message").value(containsString("NO_AUTORIZADO")))
+    }
+
+    @Test
+    fun `doctor can emergency-authorize a SOLICITADO order with reason`() {
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.MEDICAMENTOS, "Stat sedative")
+
+        val body = """{"reason":"PATIENT_IN_CRISIS"}"""
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/emergency-authorize")
+                .header("Authorization", "Bearer $doctorToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("AUTORIZADO"))
+            .andExpect(jsonPath("$.data.emergencyAuthorized").value(true))
+            .andExpect(jsonPath("$.data.emergencyReason").value("PATIENT_IN_CRISIS"))
+            .andExpect(jsonPath("$.data.emergencyAt").exists())
+            .andExpect(jsonPath("$.data.emergencyBy.firstName").exists())
+            .andExpect(jsonPath("$.data.authorizedAt").exists())
+    }
+
+    @Test
+    fun `emergency-authorize with reason OTHER requires reasonNote`() {
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.MEDICAMENTOS, "Stat med")
+
+        val body = """{"reason":"OTHER"}"""
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/emergency-authorize")
+                .header("Authorization", "Bearer $doctorToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error.message").value(containsString("reasonNote")))
+    }
+
+    @Test
+    fun `emergency-authorize requires reason field`() {
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.MEDICAMENTOS, "Stat med")
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/emergency-authorize")
+                .header("Authorization", "Bearer $doctorToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `nurse cannot emergency-authorize`() {
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.MEDICAMENTOS, "Stat med")
+
+        val body = """{"reason":"AFTER_HOURS_NO_ADMIN"}"""
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/emergency-authorize")
+                .header("Authorization", "Bearer $nurseToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body),
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `cannot emergency-authorize a directive order`() {
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.DIETA, null)
+
+        val body = """{"reason":"PATIENT_IN_CRISIS"}"""
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/emergency-authorize")
+                .header("Authorization", "Bearer $doctorToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    // ============ CROSS-ADMISSION DASHBOARD TESTS ============
+
+    @Test
+    fun `cross-admission listing returns orders filtered by status`() {
+        val (_, staffToken) = createAdminStaffUser()
+        val solicitadoId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Lab requested")
+        val authorizedId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Lab authorized")
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$authorizedId/authorize")
+                .header("Authorization", "Bearer $staffToken"),
+        ).andExpect(status().isOk)
+
+        mockMvc.perform(
+            get("/api/v1/medical-orders")
+                .param("status", "SOLICITADO")
+                .header("Authorization", "Bearer $staffToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(
+                jsonPath(
+                    "$.data.content[?(@.id == $solicitadoId)].status",
+                    hasItem("SOLICITADO"),
+                ),
+            )
+            .andExpect(
+                jsonPath(
+                    "$.data.content[?(@.id == $authorizedId)]",
+                    hasSize<Any>(0),
+                ),
+            )
+    }
+
+    @Test
+    fun `cross-admission listing requires medical-order read permission`() {
+        val (_, psychTkn) = createPsychologistUser()
+
+        mockMvc.perform(
+            get("/api/v1/medical-orders")
+                .header("Authorization", "Bearer $psychTkn"),
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    // ============ AUTHORIZATION-TIME BILLING TESTS ============
+
+    @Test
+    fun `authorize on MEDICAMENTOS with inventory item does not create a charge`() {
+        // MEDICAMENTOS bills per-administration via InventoryDispensedEvent. An
+        // authorization-time charge would double-bill against that flow.
+        val item = saveTestInventoryItem("Lorazepam 1mg")
+        val orderId = createMedicalOrderWithItemAndGetId(MedicalOrderCategory.MEDICAMENTOS, item.id!!)
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
+                .header("Authorization", "Bearer $adminToken"),
+        ).andExpect(status().isOk)
+
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/charges")
+                .header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data").isArray)
+            .andExpect(jsonPath("$.data.length()").value(0))
+    }
+
+    @Test
+    fun `authorize on LABORATORIOS with inventory item creates a LAB charge`() {
+        val item = saveTestInventoryItem("Hemograma")
+        val orderId = createMedicalOrderWithItemAndGetId(MedicalOrderCategory.LABORATORIOS, item.id!!)
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
+                .header("Authorization", "Bearer $adminToken"),
+        ).andExpect(status().isOk)
+
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/charges")
+                .header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.length()").value(1))
+            .andExpect(jsonPath("$.data[0].chargeType").value("LAB"))
+            .andExpect(jsonPath("$.data[0].description").value("Hemograma"))
+    }
+
+    private fun saveTestInventoryItem(name: String): InventoryItem {
+        val category = inventoryCategoryRepository.findAll().first()
+        return inventoryItemRepository.save(
+            InventoryItem(
+                category = category,
+                name = name,
+                price = BigDecimal("50.00"),
+                cost = BigDecimal("20.00"),
+                quantity = 100,
+                restockLevel = 10,
+            ),
+        )
+    }
+
+    private fun createMedicalOrderWithItemAndGetId(category: MedicalOrderCategory, inventoryItemId: Long): Long {
+        val request = CreateMedicalOrderRequest(
+            category = category,
+            startDate = LocalDate.now(),
+            inventoryItemId = inventoryItemId,
+        )
+
+        val result = mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders")
+                .header("Authorization", "Bearer $doctorToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        ).andReturn()
+
+        return objectMapper.readTree(result.response.contentAsString)
+            .get("data").get("id").asLong()
     }
 
     private fun createMedicalOrder(category: MedicalOrderCategory, medication: String?) {

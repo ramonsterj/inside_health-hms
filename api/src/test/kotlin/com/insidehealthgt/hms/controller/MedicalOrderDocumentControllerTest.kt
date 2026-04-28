@@ -40,10 +40,12 @@ class MedicalOrderDocumentControllerTest : AbstractIntegrationTest() {
         val (_, staffTkn) = createAdminStaffUser()
         adminStaffToken = staffTkn
 
-        // Create admission and lab order for tests
+        // Create admission and lab order for tests. Documents can only be attached after the
+        // order is authorized, so most tests start with an AUTORIZADO order.
         val patientId = createPatient(adminToken)
         admissionId = createAdmission(adminToken, patientId, doctorUser.id!!)
         orderId = createLabOrder()
+        authorizeOrder(orderId)
     }
 
     private fun basePath(): String = "/api/v1/admissions/$admissionId/medical-orders/$orderId/documents"
@@ -396,7 +398,156 @@ class MedicalOrderDocumentControllerTest : AbstractIntegrationTest() {
             .andExpect(jsonPath("$.data.orders.LABORATORIOS[0].documentCount").value(2))
     }
 
+    // ============ AUTO-RESULTS-RECEIVED ON UPLOAD ============
+
+    @Test
+    fun `uploading a document to an order in EN_PROCESO auto-transitions to RESULTADOS_RECIBIDOS`() {
+        // Order is already AUTORIZADO from setUp; transition it to EN_PROCESO
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/mark-in-progress")
+                .header("Authorization", "Bearer $doctorToken"),
+        ).andExpect(status().isOk)
+
+        // Upload a result document
+        uploadDocument("results.pdf", "Lab Results")
+
+        // Verify the order is now RESULTADOS_RECIBIDOS
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/medical-orders/$orderId")
+                .header("Authorization", "Bearer $doctorToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("RESULTADOS_RECIBIDOS"))
+            .andExpect(jsonPath("$.data.resultsReceivedAt").exists())
+            .andExpect(jsonPath("$.data.resultsReceivedBy.firstName").exists())
+    }
+
+    @Test
+    fun `uploading a document directly to an AUTORIZADO order auto-transitions to RESULTADOS_RECIBIDOS`() {
+        // Order is already AUTORIZADO from setUp — upload without going through EN_PROCESO
+        uploadDocument("results.pdf", "Lab Results")
+
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/medical-orders/$orderId")
+                .header("Authorization", "Bearer $doctorToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("RESULTADOS_RECIBIDOS"))
+            .andExpect(jsonPath("$.data.resultsReceivedAt").exists())
+    }
+
+    // ============ STATE & CATEGORY GATING ============
+
+    @Test
+    fun `upload fails when order is still SOLICITADO`() {
+        val unauthorizedOrderId = createLabOrder()
+        // Note: not authorized, so the order is in SOLICITADO
+
+        val mockFile = MockMultipartFile(
+            "file",
+            "premature.pdf",
+            MediaType.APPLICATION_PDF_VALUE,
+            "content".toByteArray(),
+        )
+
+        mockMvc.perform(
+            multipart("/api/v1/admissions/$admissionId/medical-orders/$unauthorizedOrderId/documents")
+                .file(mockFile)
+                .header("Authorization", "Bearer $doctorToken"),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `upload fails when order is NO_AUTORIZADO`() {
+        val rejectedOrderId = createLabOrder()
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$rejectedOrderId/reject")
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"reason":"not needed"}"""),
+        ).andExpect(status().isOk)
+
+        val mockFile = MockMultipartFile(
+            "file",
+            "rejected.pdf",
+            MediaType.APPLICATION_PDF_VALUE,
+            "content".toByteArray(),
+        )
+
+        mockMvc.perform(
+            multipart("/api/v1/admissions/$admissionId/medical-orders/$rejectedOrderId/documents")
+                .file(mockFile)
+                .header("Authorization", "Bearer $doctorToken"),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `upload fails when order is DESCONTINUADO`() {
+        // orderId is already AUTORIZADO from setUp; discontinue it
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/discontinue")
+                .header("Authorization", "Bearer $doctorToken"),
+        ).andExpect(status().isOk)
+
+        val mockFile = MockMultipartFile(
+            "file",
+            "stale.pdf",
+            MediaType.APPLICATION_PDF_VALUE,
+            "content".toByteArray(),
+        )
+
+        mockMvc.perform(
+            multipart(basePath())
+                .file(mockFile)
+                .header("Authorization", "Bearer $doctorToken"),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `upload fails for a non-results-bearing category`() {
+        // DIETA does not produce result documents
+        val request = CreateMedicalOrderRequest(
+            category = MedicalOrderCategory.DIETA,
+            startDate = LocalDate.now(),
+            observations = "Soft diet",
+        )
+        val createResult = mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders")
+                .header("Authorization", "Bearer $doctorToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        ).andReturn()
+        val dietOrderId = objectMapper.readTree(createResult.response.contentAsString)
+            .get("data").get("id").asLong()
+        // DIETA is a directive category — it's created in ACTIVA and cannot be authorized.
+        // Document upload should still be rejected because the category isn't results-bearing.
+
+        val mockFile = MockMultipartFile(
+            "file",
+            "diet.pdf",
+            MediaType.APPLICATION_PDF_VALUE,
+            "content".toByteArray(),
+        )
+
+        mockMvc.perform(
+            multipart("/api/v1/admissions/$admissionId/medical-orders/$dietOrderId/documents")
+                .file(mockFile)
+                .header("Authorization", "Bearer $doctorToken"),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
     // ============ HELPERS ============
+
+    private fun authorizeOrder(targetOrderId: Long) {
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$targetOrderId/authorize")
+                .header("Authorization", "Bearer $adminToken"),
+        ).andExpect(status().isOk)
+    }
 
     private fun createLabOrder(): Long {
         val request = CreateMedicalOrderRequest(

@@ -5,6 +5,8 @@
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-02-04 | @author | Initial draft |
+| 1.1 | 2026-04-27 | @author | Add medical order workflow states (solicitado, no autorizado, autorizado, reclamar resultados, reclamado), authorize/reject/claim-results endpoints, and a cross-admission orders-by-state screen |
+| 1.2 | 2026-04-28 | @author | Replace single workflow with three category-driven shapes: directive (no flow), authorize-only (medications), authorize+execute+results (labs / referrals / psychometric tests). Replace manual `RECLAMAR_RESULTADOS` with explicit `EN_PROCESO` (sample taken / patient referred / test administered) milestone owned by nursing. Add emergency-authorize action for doctors. Rename `DISCONTINUED` to `DESCONTINUADO` for Spanish consistency. |
 
 ---
 
@@ -58,9 +60,14 @@ This feature provides a comprehensive medical/psychiatric record system for hosp
 
 | Action | Required Role(s) | Permission | Notes |
 |--------|------------------|------------|-------|
-| View | DOCTOR, NURSE, ADMIN | `medical-order:read` | All medical staff can view |
-| Create | DOCTOR, ADMIN | `medical-order:create` | Only doctors prescribe |
+| View | DOCTOR, NURSE, CHIEF_NURSE, ADMIN | `medical-order:read` | All medical staff can view |
+| Create | DOCTOR, ADMIN | `medical-order:create` | Initial state depends on category (see below) |
 | Update | ADMIN | `medical-order:update` | Append-only for doctors |
+| Discontinue | DOCTOR, ADMIN | `medical-order:discontinue` | Allowed from `ACTIVA`, `SOLICITADO`, `AUTORIZADO`. **Not** allowed from `EN_PROCESO` (sample is at the lab) or any terminal state. |
+| Authorize / Reject | ADMIN, ADMINISTRATIVE_STAFF | `medical-order:authorize` | Transitions `SOLICITADO → AUTORIZADO` or `NO_AUTORIZADO`. Only valid for auth-required categories. For results-bearing categories the order then awaits `mark-in-progress` (it does **not** auto-skip to `EN_PROCESO`). |
+| Emergency authorize | DOCTOR, ADMIN | `medical-order:emergency-authorize` | Lets a doctor self-authorize their own order when no admin staff is available (after-hours, patient in crisis, family unreachable). Requires a structured reason. Stamps `emergency_*` audit fields. Same state transition as normal authorize. |
+| Mark in progress | NURSE, DOCTOR, ADMIN | `medical-order:mark-in-progress` | Transitions `AUTORIZADO → EN_PROCESO`. Only valid for results-bearing categories (labs / referencias / pruebas psicométricas). Means "sample taken / patient referred / test administered" — after this, discontinue is no longer allowed. |
+| Upload result document | DOCTOR, NURSE, ADMIN | `medical-order:upload-document` | Allowed only on results-bearing categories and only while the order is in `AUTORIZADO`, `EN_PROCESO`, or `RESULTADOS_RECIBIDOS`. The first upload auto-transitions the order to `RESULTADOS_RECIBIDOS` (skipping `EN_PROCESO` if the order was still in `AUTORIZADO`). |
 
 ---
 
@@ -141,9 +148,128 @@ This feature provides a comprehensive medical/psychiatric record system for hosp
   8. **Observaciones** - Observations/notes (rich text, optional)
 
 - Display grouped by category
-- Each order shows: all fields, author, timestamp
+- Each order shows: all fields, author, timestamp, current workflow state
 - Doctors can create; only admins can edit existing orders
-- Option to mark orders as discontinued (soft status, not delete)
+- Option to mark orders as discontinued (soft status, not delete) from any non-terminal state
+
+#### Workflow States
+
+Every medical order has a workflow state, and the **shape of that workflow depends on the category**. The underlying principle: *authorization gates things the family pays extra for*. Internal directives are part of the bed cost — the doctor's word is enough. Medications and external services need explicit consent before they hit the bill.
+
+Three category shapes:
+
+| Shape | Categories | Why |
+|-------|------------|-----|
+| **Directive** (no flow) | `DIETA`, `CUIDADOS_ESPECIALES`, `ACTIVIDAD_FISICA`, `RESTRICCIONES_MOVILIDAD`, `PERMISOS_VISITA`, `ORDENES_MEDICAS`, `OTRAS` | Internal clinical instructions. No external cost, no consent step, no results to wait for. |
+| **Authorize-only** | `MEDICAMENTOS` | Costs money (medication is line-itemed on the bill) but is administered internally; nothing to wait for after authorization. |
+| **Authorize + execute + results** | `LABORATORIOS`, `REFERENCIAS_MEDICAS`, `PRUEBAS_PSICOMETRICAS` | Costs money AND involves an external service (lab, specialist, psychometrist) that produces a result document. |
+
+States:
+
+| State | Spanish label | Used by | Terminal? | Description |
+|-------|---------------|---------|-----------|-------------|
+| `ACTIVA` | Activa | Directive | No | Initial + only state for directive orders. |
+| `SOLICITADO` | Solicitado | Auth-required | No | Initial state for authorize-only and results-bearing orders. Awaiting authorization. |
+| `NO_AUTORIZADO` | No autorizado | Auth-required | Yes | Authorization rejected. |
+| `AUTORIZADO` | Autorizado | Auth-required | Terminal for `MEDICAMENTOS`; intermediate for results-bearing | Authorization granted. For meds: nurses can administer. For results-bearing: nursing's worklist — sample needs to be taken / patient referred / test administered. |
+| `EN_PROCESO` | En proceso | Results-bearing only | No | Sample has been taken / patient has been referred / psychometric test has been administered. Now waiting on the external party for the result document. **Discontinue is no longer allowed once an order reaches this state — the action has already been initiated externally.** |
+| `RESULTADOS_RECIBIDOS` | Resultados recibidos | Results-bearing only | Yes | A result document has been uploaded. Reached automatically by the document-upload endpoint. |
+| `DESCONTINUADO` | Descontinuado | All | Yes | Order was cancelled. Only allowed from `ACTIVA`, `SOLICITADO`, or `AUTORIZADO`. |
+
+Transitions (only the listed transitions are allowed; any other request returns 400):
+
+```
+Directive (DIETA, CUIDADOS_ESPECIALES, ACTIVIDAD_FISICA, RESTRICCIONES_MOVILIDAD,
+           PERMISOS_VISITA, ORDENES_MEDICAS, OTRAS):
+
+  ┌─────────┐  discontinue   ┌──────────────────┐
+  │ ACTIVA  │ ─────────────► │  DESCONTINUADO   │ (terminal)
+  └─────────┘                └──────────────────┘
+
+
+Authorize-only (MEDICAMENTOS):
+
+  ┌────────────┐  authorize  ┌─────────────┐  discontinue  ┌──────────────────┐
+  │ SOLICITADO │ ──────────► │ AUTORIZADO  │ ────────────► │  DESCONTINUADO   │
+  └─────┬──────┘             └─────────────┘               └──────────────────┘
+        │ reject
+        ▼
+  ┌────────────────┐
+  │ NO_AUTORIZADO  │ (terminal)
+  └────────────────┘
+
+
+Authorize + execute + results (LABORATORIOS, REFERENCIAS_MEDICAS, PRUEBAS_PSICOMETRICAS):
+
+  ┌────────────┐  authorize  ┌─────────────┐  mark-in-progress  ┌──────────────┐  upload doc  ┌──────────────────────┐
+  │ SOLICITADO │ ──────────► │ AUTORIZADO  │ ─────────────────► │  EN_PROCESO  │ ───────────► │ RESULTADOS_RECIBIDOS │ (terminal)
+  └─────┬──────┘             └──────┬──────┘                    └──────────────┘              └──────────────────────┘
+        │ reject                    │ discontinue       (upload from AUTORIZADO is also allowed
+        ▼                           ▼                    and skips straight to RESULTADOS_RECIBIDOS)
+  ┌────────────────┐         ┌──────────────────┐
+  │ NO_AUTORIZADO  │         │  DESCONTINUADO   │ (terminal — only reachable before EN_PROCESO)
+  └────────────────┘         └──────────────────┘
+```
+
+Rules:
+
+- **Initial state is category-driven.** Directive orders are created in `ACTIVA`. Auth-required orders (medications, labs, referrals, psychometric tests) are created in `SOLICITADO`.
+- **The authorize endpoint is rejected for directive categories.** They have no authorization step. Calling `POST /authorize` on a directive returns 400.
+- **`mark-in-progress` is results-bearing-only.** It transitions `AUTORIZADO → EN_PROCESO`. The endpoint returns 400 for medications or directive orders. The UI label is category-specific: "Muestra tomada" for labs, "Paciente referido" for referrals, "Prueba administrada" for psychometric tests.
+- **Discontinue is allowed from `ACTIVA`, `SOLICITADO`, and `AUTORIZADO` only.** It is **not** allowed from `EN_PROCESO`: once the sample is at the lab (or the patient has gone to the specialist), the work has been initiated externally and the order can no longer be cancelled. Trying to discontinue from `EN_PROCESO` or any terminal state returns 400.
+- **`RESULTADOS_RECIBIDOS` cannot be set manually.** It is reached only by uploading a result document. The upload endpoint transitions the order in the same transaction.
+- **The upload-document endpoint** allows uploads on results-bearing categories whose state is `AUTORIZADO`, `EN_PROCESO`, or `RESULTADOS_RECIBIDOS`. Uploads from `SOLICITADO`, `NO_AUTORIZADO`, or `DESCONTINUADO`, or against non-results categories, are rejected. Uploading from `AUTORIZADO` skips `EN_PROCESO` — this handles the case where results arrive without anyone formally clicking "mark in progress" (e.g., family brings a PDF from a private lab).
+- **Audit columns:**
+  - `authorized_at` / `authorized_by` — set by the authorize and emergency-authorize endpoints.
+  - `in_progress_at` / `in_progress_by` — set by mark-in-progress.
+  - `results_received_at` / `results_received_by` — set when the first document is uploaded (replaces v1.1's `results_claimed_*`).
+  - `discontinued_at` / `discontinued_by` — unchanged.
+  - `rejection_reason` — unchanged.
+  - Emergency authorization fields (see below).
+
+#### Emergency authorization
+
+In a psychiatric hospital, a patient in crisis may need a stat sedative at 2am — when no admin staff is on duty to record family consent. The doctor needs to authorize the order themselves, with audit. Same applies to a stat blood gas or any other auth-required order.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `emergency_authorized` | bool | True when emergency-authorize was used; false for normal authorize. |
+| `emergency_reason` | enum | `PATIENT_IN_CRISIS`, `AFTER_HOURS_NO_ADMIN`, `FAMILY_UNREACHABLE`, `OTHER`. |
+| `emergency_reason_note` | text? | Required when reason is `OTHER`; optional otherwise. |
+| `emergency_at` | timestamp | When emergency-authorize fired. |
+| `emergency_by` | bigint (user) | Doctor who pressed the button. |
+
+Behavior:
+
+- New endpoint `POST /api/v1/admissions/{id}/medical-orders/{orderId}/emergency-authorize`, gated by `medical-order:emergency-authorize` (granted to `DOCTOR` and `ADMIN`).
+- Same state transition as normal authorize. For meds: `SOLICITADO → AUTORIZADO`. For results-bearing: `SOLICITADO → AUTORIZADO` (still requires the nurse to mark-in-progress separately).
+- Billing fires the same as normal authorize. The family is billed, but the audit trail clearly shows the doctor pressed the override and why.
+- Returns 400 if the category is directive (no authorization step at all) or if the order is not in `SOLICITADO`.
+- The cross-admission dashboard surfaces emergency-authorized orders distinctly so admin staff can review them the next day and confirm family was informed. (No additional approval step is required — this is post-hoc reconciliation, not gating.)
+- Free-text `emergency_reason_note` is *optional* unless reason is `OTHER`. The structured reason enum is what reports query against.
+
+#### Billing integration
+
+Billing charges are created when a **results-bearing** order (`LABORATORIOS`, `REFERENCIAS_MEDICAS`, `PRUEBAS_PSICOMETRICAS`) with a linked inventory item transitions to `AUTORIZADO` — both via the normal authorize endpoint and via emergency-authorize. This avoids billing rejected (`NO_AUTORIZADO`) orders. The `MedicalOrderAuthorizedEvent` is published from both authorize paths.
+
+`MEDICAMENTOS` is intentionally **excluded** from this path even though it is auth-required and may carry an inventory item: medications bill per-administration via `InventoryDispensedEvent` from the medication administration flow, so authorizing a medication order on its own does not create a charge. Directive orders never produce charges via this path either (their billing, if any, is handled by other mechanisms — e.g., daily diet charges through the scheduler).
+
+#### Orders by State (cross-admission view)
+
+A new top-level screen lists medical orders across all admissions, grouped/filterable by workflow state. It is intended for:
+
+- Administrative staff to authorize or reject pending requests
+- Nursing/admin staff to chase pending external results
+- Doctors to see their own orders' status at a glance
+
+| Element | Behavior |
+|---------|----------|
+| Route | `/medical-orders` |
+| Sidebar entry | Visible to roles that hold `medical-order:read` |
+| Default filter | `SOLICITADO`, `AUTORIZADO`, `EN_PROCESO` (the action-needed buckets) |
+| Other filters | Status (multi-select), category (multi-select) |
+| Columns | Patient, category, summary (medication / observations), state badge, requested by, requested at, document count |
+| Row actions | Authorize, reject, emergency-authorize, mark in progress (`EN_PROCESO`), upload result document, discontinue, open admission detail (visibility gated by permission and current state) |
 
 ### General Requirements
 
@@ -194,6 +320,22 @@ This feature provides a comprehensive medical/psychiatric record system for hosp
 - When creating an order without required fields (category, fecha de inicio), return 400 Bad Request.
 - When an order has a start date in the past, allow it (backdating for documentation purposes).
 
+### Medical Orders - State Transitions
+
+- A newly created order's initial state is **category-driven**: `ACTIVA` for directive categories (DIETA, CUIDADOS_ESPECIALES, ACTIVIDAD_FISICA, RESTRICCIONES_MOVILIDAD, PERMISOS_VISITA, ORDENES_MEDICAS, OTRAS); `SOLICITADO` for auth-required categories (MEDICAMENTOS, LABORATORIOS, REFERENCIAS_MEDICAS, PRUEBAS_PSICOMETRICAS).
+- When admin staff authorizes a `SOLICITADO` order, state becomes `AUTORIZADO` and `authorized_at` / `authorized_by` are stamped.
+- When admin staff rejects a `SOLICITADO` order, state becomes `NO_AUTORIZADO` (terminal).
+- A doctor can emergency-authorize a `SOLICITADO` order. State becomes `AUTORIZADO`, `authorized_at`/`authorized_by` are stamped, and `emergency_authorized=true` plus `emergency_reason`/`emergency_at`/`emergency_by` (and optional `emergency_reason_note`) are recorded.
+- A nurse / doctor / admin can mark an `AUTORIZADO` order as `EN_PROCESO` only when the category is `LABORATORIOS`, `REFERENCIAS_MEDICAS`, or `PRUEBAS_PSICOMETRICAS`. Other categories return 400. `in_progress_at` / `in_progress_by` are stamped.
+- When the first document is uploaded against an order in `AUTORIZADO` or `EN_PROCESO`, the order transitions to `RESULTADOS_RECIBIDOS` in the same transaction; `results_received_at` / `results_received_by` are stamped from the uploader.
+- Trying to authorize/reject/emergency-authorize a directive order, or any order not in `SOLICITADO`, returns 400.
+- Trying to mark in-progress on a non-results category, or on an order not in `AUTORIZADO`, returns 400.
+- Trying to manually set state `RESULTADOS_RECIBIDOS` (without an uploaded document) returns 400 — the only path is via document upload.
+- Trying to discontinue an order in `EN_PROCESO` returns 400 ("sample is at the lab — cannot cancel"). Discontinue is allowed only from `ACTIVA`, `SOLICITADO`, or `AUTORIZADO`.
+- Trying to discontinue an order in a terminal state (`NO_AUTORIZADO`, `RESULTADOS_RECIBIDOS`, `DESCONTINUADO`) returns 400.
+- Billing charge for a results-bearing order (`LABORATORIOS`, `REFERENCIAS_MEDICAS`, `PRUEBAS_PSICOMETRICAS`) with a linked inventory item is created on `AUTORIZADO` (both via normal authorize and emergency-authorize). `MEDICAMENTOS` does not produce a charge on `AUTORIZADO` (it bills per-administration via `InventoryDispensedEvent`). Rejected orders never produce a charge.
+- Emergency-authorize requires reason `PATIENT_IN_CRISIS`, `AFTER_HOURS_NO_ADMIN`, `FAMILY_UNREACHABLE`, or `OTHER`. When `OTHER`, a `reasonNote` is required; for the other three, the note is optional.
+
 ### Audit Trail
 
 - All create/edit operations record the user ID and timestamp.
@@ -239,11 +381,16 @@ This feature provides a comprehensive medical/psychiatric record system for hosp
 
 | Method | Endpoint | Request DTO | Response DTO | Auth | Description |
 |--------|----------|-------------|--------------|------|-------------|
-| GET | `/api/v1/admissions/{admissionId}/medical-orders` | - | `List<MedicalOrderResponse>` | Yes | List all medical orders (grouped by category) |
+| GET | `/api/v1/admissions/{admissionId}/medical-orders` | - | `List<MedicalOrderResponse>` | Yes | List all medical orders for an admission (grouped by category) |
 | GET | `/api/v1/admissions/{admissionId}/medical-orders/{id}` | - | `MedicalOrderResponse` | Yes | Get single medical order |
-| POST | `/api/v1/admissions/{admissionId}/medical-orders` | `CreateMedicalOrderRequest` | `MedicalOrderResponse` | Yes | Create medical order |
+| POST | `/api/v1/admissions/{admissionId}/medical-orders` | `CreateMedicalOrderRequest` | `MedicalOrderResponse` | Yes | Create medical order. Initial state is `ACTIVA` for directive categories, `SOLICITADO` otherwise. |
 | PUT | `/api/v1/admissions/{admissionId}/medical-orders/{id}` | `UpdateMedicalOrderRequest` | `MedicalOrderResponse` | Yes | Update medical order (admin only) |
-| POST | `/api/v1/admissions/{admissionId}/medical-orders/{id}/discontinue` | - | `MedicalOrderResponse` | Yes | Mark order as discontinued |
+| POST | `/api/v1/admissions/{admissionId}/medical-orders/{id}/discontinue` | - | `MedicalOrderResponse` | Yes | Mark order as discontinued. Allowed from `ACTIVA`, `SOLICITADO`, `AUTORIZADO`. Returns 400 from `EN_PROCESO` or any terminal state. |
+| POST | `/api/v1/admissions/{admissionId}/medical-orders/{id}/authorize` | - | `MedicalOrderResponse` | Yes | Transition `SOLICITADO → AUTORIZADO`. Returns 400 for directive categories. Triggers billing charge for billable categories with linked inventory. |
+| POST | `/api/v1/admissions/{admissionId}/medical-orders/{id}/reject` | `RejectMedicalOrderRequest` (optional reason) | `MedicalOrderResponse` | Yes | Transition `SOLICITADO → NO_AUTORIZADO`. Returns 400 for directive categories. |
+| POST | `/api/v1/admissions/{admissionId}/medical-orders/{id}/emergency-authorize` | `EmergencyAuthorizeRequest` (reason enum + optional note) | `MedicalOrderResponse` | Yes | Doctor self-authorization for crisis / after-hours / family-unreachable cases. Same state transition as authorize. Stamps `emergency_*` audit fields. Returns 400 for directive categories or when reason is `OTHER` without a note. |
+| POST | `/api/v1/admissions/{admissionId}/medical-orders/{id}/mark-in-progress` | - | `MedicalOrderResponse` | Yes | Transition `AUTORIZADO → EN_PROCESO` for results-bearing categories only (sample taken / patient referred / test administered). Returns 400 for non-results categories or when not in `AUTORIZADO`. |
+| GET | `/api/v1/medical-orders` | query: `status` (repeated), `category` (repeated), `page`, `size` | `PagedResponse<MedicalOrderListItemResponse>` | Yes | Cross-admission listing for the orders-by-state screen. `status` and `category` may be specified multiple times for multi-select. Includes patient + admission summary fields. |
 
 ### Request/Response Examples
 
@@ -348,7 +495,19 @@ This feature provides a comprehensive medical/psychiatric record system for hosp
   "frequency": "Once daily",
   "schedule": "Morning with breakfast",
   "observations": "<p>Monitor for side effects...</p>",
-  "status": "ACTIVE",
+  "status": "SOLICITADO",
+  "authorizedAt": null,
+  "authorizedBy": null,
+  "inProgressAt": null,
+  "inProgressBy": null,
+  "resultsReceivedAt": null,
+  "resultsReceivedBy": null,
+  "rejectionReason": null,
+  "emergencyAuthorized": false,
+  "emergencyReason": null,
+  "emergencyReasonNote": null,
+  "emergencyAt": null,
+  "emergencyBy": null,
   "discontinuedAt": null,
   "discontinuedBy": null,
   "createdAt": "2026-02-04T10:35:00",
@@ -360,6 +519,47 @@ This feature provides a comprehensive medical/psychiatric record system for hosp
   },
   "updatedAt": "2026-02-04T10:35:00",
   "updatedBy": null
+}
+
+// POST /api/v1/admissions/{admissionId}/medical-orders/{id}/authorize - no request body
+// Response: MedicalOrderResponse with status="AUTORIZADO" and authorizedAt/authorizedBy populated.
+// Returns 400 if order is not in SOLICITADO, or if category is directive.
+
+// POST /api/v1/admissions/{admissionId}/medical-orders/{id}/reject - Request
+{
+  "reason": "Pendiente de cobertura del seguro"   // optional
+}
+
+// POST /api/v1/admissions/{admissionId}/medical-orders/{id}/emergency-authorize - Request
+{
+  "reason": "AFTER_HOURS_NO_ADMIN",                    // required; enum value
+  "reasonNote": "Patient agitated, no admin on call"   // optional; required when reason = "OTHER"
+}
+// Response: MedicalOrderResponse with status="AUTORIZADO", emergencyAuthorized=true,
+// emergencyReason populated, emergencyAt/emergencyBy stamped.
+
+// POST /api/v1/admissions/{admissionId}/medical-orders/{id}/mark-in-progress - no request body
+// Response: MedicalOrderResponse with status="EN_PROCESO" and inProgressAt/inProgressBy populated.
+// Returns 400 if category is not results-bearing or order is not in AUTORIZADO.
+
+// GET /api/v1/medical-orders?status=SOLICITADO&status=AUTORIZADO&page=0&size=20 - Response (paged, cross-admission)
+{
+  "content": [
+    {
+      "id": 12,
+      "admissionId": 45,
+      "patient": { "id": 9, "firstName": "Juan", "lastName": "Pérez" },
+      "category": "LABORATORIOS",
+      "status": "SOLICITADO",
+      "summary": "Hemograma completo",
+      "createdBy": { "id": 5, "firstName": "Maria", "lastName": "Garcia" },
+      "createdAt": "2026-04-27T08:15:00"
+    }
+  ],
+  "totalElements": 17,
+  "totalPages": 1,
+  "page": 0,
+  "size": 20
 }
 
 // GET /api/v1/admissions/{admissionId}/medical-orders - Response (grouped)
@@ -397,6 +597,8 @@ This feature provides a comprehensive medical/psychiatric record system for hosp
 | `V030__create_progress_notes_table.sql` | Creates progress_notes table |
 | `V031__create_medical_orders_table.sql` | Creates medical_orders table with category enum |
 | `V032__add_medical_record_permissions.sql` | Adds permissions for clinical-history, progress-note, medical-order resources |
+| `V092__expand_medical_order_workflow_states.sql` | Migrates `medical_orders.status` to the category-driven state machine: `ACTIVA`, `SOLICITADO`, `NO_AUTORIZADO`, `AUTORIZADO`, `EN_PROCESO`, `RESULTADOS_RECIBIDOS`, `DESCONTINUADO`. Adds workflow audit columns (`authorized_at/by`, `in_progress_at/by`, `results_received_at/by`, `rejection_reason`) and emergency-authorization columns (`emergency_authorized`, `emergency_reason`, `emergency_reason_note`, `emergency_at`, `emergency_by`). Backfills existing `ACTIVE` rows: directive categories → `ACTIVA`, all others → `AUTORIZADO`. Renames `DISCONTINUED` → `DESCONTINUADO` for Spanish consistency. Default for new rows is set application-side based on category. |
+| `V093__add_medical_order_workflow_permissions.sql` | Adds `medical-order:authorize` (ADMIN, ADMINISTRATIVE_STAFF), `medical-order:emergency-authorize` (ADMIN, DOCTOR), and `medical-order:mark-in-progress` (ADMIN, DOCTOR, NURSE) permissions and role grants. |
 
 ### Schema
 
@@ -508,6 +710,11 @@ CREATE TYPE medical_order_category AS ENUM (
     'OTRAS'
 );
 
+-- Note: V092 migrates this enum to the v1.2 category-driven state machine:
+--   'ACTIVA', 'SOLICITADO', 'NO_AUTORIZADO', 'AUTORIZADO', 'EN_PROCESO',
+--   'RESULTADOS_RECIBIDOS', 'DESCONTINUADO'
+-- Existing 'ACTIVE' rows are backfilled per category: directive categories → 'ACTIVA',
+-- others → 'AUTORIZADO'. The default is set application-side based on category.
 CREATE TYPE medical_order_status AS ENUM (
     'ACTIVE',
     'DISCONTINUED'
@@ -538,7 +745,7 @@ CREATE TABLE medical_orders (
     schedule VARCHAR(255),
     observations TEXT,
 
-    status medical_order_status NOT NULL DEFAULT 'ACTIVE',
+    status medical_order_status NOT NULL DEFAULT 'ACTIVE',  -- V092 changes default to 'SOLICITADO'
     discontinued_at TIMESTAMP,
     discontinued_by BIGINT REFERENCES users(id),
 
@@ -555,6 +762,68 @@ CREATE INDEX idx_medical_orders_admission_id ON medical_orders(admission_id);
 CREATE INDEX idx_medical_orders_category ON medical_orders(category);
 CREATE INDEX idx_medical_orders_status ON medical_orders(status);
 CREATE INDEX idx_medical_orders_start_date ON medical_orders(start_date);
+
+-- V092__expand_medical_order_workflow_states.sql
+-- Migrates medical_orders.status to the category-driven state machine and adds
+-- audit columns for the new transitions plus emergency-authorization tracking.
+ALTER TABLE medical_orders
+    ADD COLUMN authorized_at TIMESTAMP,
+    ADD COLUMN authorized_by BIGINT REFERENCES users(id),
+    ADD COLUMN in_progress_at TIMESTAMP,
+    ADD COLUMN in_progress_by BIGINT REFERENCES users(id),
+    ADD COLUMN results_received_at TIMESTAMP,
+    ADD COLUMN results_received_by BIGINT REFERENCES users(id),
+    ADD COLUMN rejection_reason TEXT,
+    ADD COLUMN emergency_authorized BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN emergency_reason VARCHAR(40),
+    ADD COLUMN emergency_reason_note TEXT,
+    ADD COLUMN emergency_at TIMESTAMP,
+    ADD COLUMN emergency_by BIGINT REFERENCES users(id);
+
+-- Drop and recreate the status check constraint with the new allowed values.
+ALTER TABLE medical_orders DROP CONSTRAINT IF EXISTS medical_orders_status_check;
+ALTER TABLE medical_orders ADD CONSTRAINT medical_orders_status_check
+    CHECK (status IN (
+        'ACTIVA','SOLICITADO','NO_AUTORIZADO','AUTORIZADO',
+        'EN_PROCESO','RESULTADOS_RECIBIDOS','DESCONTINUADO'
+    ));
+
+-- Backfill existing ACTIVE rows per category. Directive categories → ACTIVA;
+-- everything else → AUTORIZADO (closest semantic — they were already in effect).
+UPDATE medical_orders SET status = 'ACTIVA'
+    WHERE status = 'ACTIVE' AND category IN (
+        'DIETA','CUIDADOS_ESPECIALES','ACTIVIDAD_FISICA',
+        'RESTRICCIONES_MOVILIDAD','PERMISOS_VISITA','ORDENES_MEDICAS','OTRAS'
+    );
+UPDATE medical_orders SET status = 'AUTORIZADO' WHERE status = 'ACTIVE';
+
+-- Rename existing DISCONTINUED rows to DESCONTINUADO for Spanish consistency.
+UPDATE medical_orders SET status = 'DESCONTINUADO' WHERE status = 'DISCONTINUED';
+
+-- Constrain emergency_reason to its enum domain.
+ALTER TABLE medical_orders ADD CONSTRAINT medical_orders_emergency_reason_check
+    CHECK (emergency_reason IS NULL OR emergency_reason IN (
+        'PATIENT_IN_CRISIS','AFTER_HOURS_NO_ADMIN','FAMILY_UNREACHABLE','OTHER'
+    ));
+
+-- The default for new rows is set application-side based on category.
+ALTER TABLE medical_orders ALTER COLUMN status DROP DEFAULT;
+
+CREATE INDEX idx_medical_orders_emergency ON medical_orders(emergency_authorized)
+    WHERE emergency_authorized = TRUE;
+
+-- V093__add_medical_order_workflow_permissions.sql
+INSERT INTO permissions (code, name, description, resource, action, created_at, updated_at) VALUES
+('medical-order:authorize',           'Authorize Medical Order',           'Approve or reject medical orders',                                'medical-order', 'authorize',           CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('medical-order:emergency-authorize', 'Emergency Authorize Medical Order', 'Doctor self-authorization for crisis or after-hours scenarios',   'medical-order', 'emergency-authorize', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('medical-order:mark-in-progress',    'Mark Medical Order In Progress',    'Mark a results-bearing order as executed (sample taken / referred / administered)', 'medical-order', 'mark-in-progress', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- ADMIN gets all three via the standard role-permission grant.
+-- ADMINISTRATIVE_STAFF gets authorize + read (so the dashboard renders).
+-- DOCTOR gets emergency-authorize + mark-in-progress (in addition to existing create/read/discontinue).
+-- NURSE gets mark-in-progress (sample-taking worklist owner).
+-- See V093 in api/src/main/resources/db/migration/V093__add_medical_order_workflow_permissions.sql
+-- for the canonical SQL.
 
 -- V032__add_medical_record_permissions.sql
 -- Clinical History permissions
@@ -608,8 +877,9 @@ WHERE r.code = 'NURSE' AND p.code IN (
 - [x] `admission_id` - FK lookup for all medical record queries
 - [x] `created_at` on progress_notes - Sorting by date
 - [x] `category` on medical_orders - Grouping by category
-- [x] `status` on medical_orders - Filter active/discontinued
+- [x] `status` on medical_orders - Filter by workflow state (powers the orders-by-state screen)
 - [x] `start_date` on medical_orders - Date filtering
+- [ ] `(status, created_at DESC)` composite on medical_orders - Cross-admission sort by status (V092)
 
 ---
 
@@ -627,7 +897,10 @@ WHERE r.code = 'NURSE' AND p.code IN (
 | `ProgressNoteCard.vue` | `src/components/medical-record/` | Single progress note display card |
 | `MedicalOrderList.vue` | `src/components/medical-record/` | List of medical orders grouped by category |
 | `MedicalOrderForm.vue` | `src/components/medical-record/` | Create medical order form |
-| `MedicalOrderCard.vue` | `src/components/medical-record/` | Single medical order display card |
+| `MedicalOrderCard.vue` | `src/components/medical-record/` | Single medical order display card. Shows the workflow state badge and exposes the contextual transition buttons gated by permission, category shape, and current state: Authorize / Reject / Emergency authorize (auth-required only) / Mark in progress (results-bearing in `AUTORIZADO` only, label varies by category) / Upload result document / Discontinue. Discontinue is hidden for `EN_PROCESO`. |
+| `MedicalOrderStateBadge.vue` | `src/components/medical-record/` | Shared status pill with color mapping per state (green activa, gray solicitado, red no_autorizado, green autorizado, amber en_proceso, blue resultados_recibidos, secondary descontinuado). Used by the card and the dashboard. |
+| `MedicalOrderEmergencyAuthorizeDialog.vue` | `src/components/medical-record/` | Modal that prompts for the emergency-authorization reason (radio group of structured reasons + optional note). Required note when reason = `OTHER`. Posts to the emergency-authorize endpoint. |
+| `MedicalOrdersByStateView.vue` | `src/views/medical-orders/` | Cross-admission dashboard at `/medical-orders`. Filters by status (multi-select) and category (multi-select). Default filter selects the action-needed buckets: `SOLICITADO`, `AUTORIZADO`, `EN_PROCESO`. |
 | `RichTextEditor.vue` | `src/components/common/` | Reusable rich text editor wrapper (PrimeVue Editor or TipTap) |
 
 ### Pinia Stores
@@ -640,7 +913,10 @@ WHERE r.code = 'NURSE' AND p.code IN (
 
 ### Routes
 
-No new routes needed - all sections are displayed within the existing admission detail view (`/admissions/:id`) as tabs.
+| Route | Component | Notes |
+|-------|-----------|-------|
+| `/admissions/:id` | existing admission detail | Clinical history, progress notes, and per-admission medical orders remain here as tabs |
+| `/medical-orders` | `MedicalOrdersByStateView.vue` | New top-level page. Sidebar entry visible to roles holding `medical-order:read`. Default filter is `SOLICITADO`. |
 
 ### Validation (Zod Schemas)
 
@@ -717,6 +993,35 @@ export const medicalOrderSchema = z.object({
   schedule: z.string().max(255).optional(),
   observations: z.string().optional(),
 })
+
+export const medicalOrderStatusEnum = z.enum([
+  'ACTIVA',
+  'SOLICITADO',
+  'NO_AUTORIZADO',
+  'AUTORIZADO',
+  'EN_PROCESO',
+  'RESULTADOS_RECIBIDOS',
+  'DESCONTINUADO',
+])
+
+export const rejectMedicalOrderSchema = z.object({
+  reason: z.string().max(500).optional(),
+})
+
+export const emergencyAuthorizationReasonEnum = z.enum([
+  'PATIENT_IN_CRISIS',
+  'AFTER_HOURS_NO_ADMIN',
+  'FAMILY_UNREACHABLE',
+  'OTHER',
+])
+
+export const emergencyAuthorizeMedicalOrderSchema = z.object({
+  reason: emergencyAuthorizationReasonEnum,
+  reasonNote: z.string().max(500).optional(),
+}).refine(
+  (data) => data.reason !== 'OTHER' || (data.reasonNote != null && data.reasonNote.trim() !== ''),
+  { message: 'reasonNote is required when reason is OTHER', path: ['reasonNote'] },
+)
 ```
 
 ---
@@ -745,7 +1050,15 @@ export const medicalOrderSchema = z.object({
 - [ ] Clinical history: one per admission constraint enforced
 - [ ] Progress notes: append-only for non-admins
 - [ ] Medical orders: append-only for non-admins
-- [ ] Medical orders: discontinue endpoint works
+- [ ] Medical orders: directive categories created in `ACTIVA`, auth-required in `SOLICITADO`
+- [ ] Medical orders: authorize endpoint rejects directive categories with 400
+- [ ] Medical orders: discontinue allowed from `ACTIVA`/`SOLICITADO`/`AUTORIZADO`, blocked from `EN_PROCESO` and terminal states
+- [ ] Medical orders: authorize / reject endpoints enforce `SOLICITADO` precondition
+- [ ] Medical orders: emergency-authorize endpoint stamps `emergency_*` fields, requires `reasonNote` when reason is `OTHER`, transitions `SOLICITADO → AUTORIZADO`
+- [ ] Medical orders: mark-in-progress endpoint enforces `AUTORIZADO` + results-bearing category, stamps `in_progress_at/by`
+- [ ] Medical orders: uploading a document on `AUTORIZADO` or `EN_PROCESO` auto-transitions to `RESULTADOS_RECIBIDOS` (in same transaction, with `results_received_at/by` stamped)
+- [ ] Medical orders: billing charge fires on `AUTORIZADO` for results-bearing categories with linked inventory only — `MEDICAMENTOS` is excluded (bills via `InventoryDispensedEvent`); both normal authorize and emergency-authorize trigger the charge, not on creation
+- [ ] Cross-admission `GET /api/v1/medical-orders` paged endpoint with status/category/date filters
 - [ ] Audit trail (createdBy, updatedBy) properly tracked
 - [ ] Permission checks on all endpoints
 - [ ] Unit tests written and passing
@@ -761,6 +1074,11 @@ export const medicalOrderSchema = z.object({
 - [ ] Progress note form with rich text editors
 - [ ] Medical orders grouped by category
 - [ ] Medical order form with category dropdown
+- [ ] Medical order card shows current state badge with the right color per state
+- [ ] State transition buttons appear/disappear based on current state and permission
+- [ ] Orders-by-state screen at `/medical-orders` with status and category filters
+- [ ] Sidebar entry for orders-by-state visible only to roles with `medical-order:read`
+- [ ] Uploading a result document from the orders-by-state screen also flips status to `RESULTADOS_RECIBIDOS`
 - [ ] Rich text editor component working
 - [ ] Audit info displayed on all entries
 - [ ] Create buttons hidden for unauthorized users
@@ -787,6 +1105,20 @@ export const medicalOrderSchema = z.object({
 - [ ] Doctor/nurse cannot edit medical orders
 - [ ] Admin edits medical order
 - [ ] Medical order discontinue flow
+- [ ] Admin staff authorizes a `SOLICITADO` order
+- [ ] Admin staff rejects a `SOLICITADO` order with reason
+- [ ] Doctor emergency-authorizes a `SOLICITADO` order (with reason); audit fields stamped
+- [ ] Emergency-authorize with reason `OTHER` and no `reasonNote` is denied (400)
+- [ ] Authorize on a directive order (e.g. DIETA) is denied (400)
+- [ ] Nurse marks an `AUTORIZADO` lab order as `EN_PROCESO`
+- [ ] Marking in-progress on a non-results category is denied
+- [ ] Marking in-progress on a `SOLICITADO` order is denied
+- [ ] Discontinue from `EN_PROCESO` is denied (sample at the lab)
+- [ ] Doctor uploads a result document on an `EN_PROCESO` order and it auto-transitions to `RESULTADOS_RECIBIDOS`
+- [ ] Doctor uploads a result document directly on an `AUTORIZADO` order (skips `EN_PROCESO`) and it auto-transitions to `RESULTADOS_RECIBIDOS`
+- [ ] Authorizing an order that is not `SOLICITADO` is denied
+- [ ] Orders-by-state screen lists orders across admissions and links back to admission detail
+- [ ] Emergency-authorized orders are visually distinguishable in the dashboard
 - [ ] Permission denied scenarios displayed correctly
 - [ ] Rich text formatting preserved
 
@@ -804,7 +1136,13 @@ export const medicalOrderSchema = z.object({
 
 - [ ] **[CLAUDE.md](../../CLAUDE.md)**
   - Add Medical/Psychiatric Record to "Implemented Features" section
-  - Update migration count (V029-V032)
+  - Update migration count (V029-V032, V092-V093)
+  - Add bullet for "Medical Order Workflow (three category-driven shapes: directive, authorize-only, authorize+execute+results) with emergency-authorize override for doctors and cross-admission orders-by-state dashboard"
+
+- [ ] **[docs/roles-functionality-matrix.md](../roles-functionality-matrix.md)** and **[.es.md](../roles-functionality-matrix.es.md)**
+  - Add `medical-order:authorize`, `medical-order:emergency-authorize`, and `medical-order:mark-in-progress` to the matrix
+  - Note that ADMINISTRATIVE_STAFF gains visibility into medical orders for the authorization workflow
+  - Note that NURSE gains `mark-in-progress` for the sample-taking worklist
 
 ### Review for Consistency
 
