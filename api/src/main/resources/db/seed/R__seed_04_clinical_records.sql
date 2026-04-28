@@ -2,6 +2,7 @@
 -- SEED FILE 04: Clínical Histories, Progress Notes, Medical Orders
 -- ============================================================================
 -- Last updated: 2026-03-03 (force re-run after seed_01 checksum change)
+-- SEED-BUNDLE-VERSION: 2026-04-27a (see R__seed_01 header for the rule)
 
 SET session_replication_role = replica;
 

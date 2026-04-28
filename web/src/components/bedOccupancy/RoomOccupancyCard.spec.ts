@@ -100,7 +100,7 @@ describe('RoomOccupancyCard', () => {
     const free = wrapper.findAll('.bed-slot--free')
     expect(occupied).toHaveLength(1)
     expect(free).toHaveLength(2)
-    expect(occupied[0].text()).toContain('Carlos Pérez')
+    expect(occupied[0]!.text()).toContain('Carlos Pérez')
   })
 
   it('shows the available/capacity count in the header', () => {
@@ -147,6 +147,6 @@ describe('RoomOccupancyCard', () => {
     })
     const highlighted = wrapper.findAll('.bed-slot--highlighted')
     expect(highlighted).toHaveLength(1)
-    expect(highlighted[0].text()).toContain('María González')
+    expect(highlighted[0]!.text()).toContain('María González')
   })
 })

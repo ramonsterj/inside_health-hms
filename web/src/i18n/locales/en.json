@@ -1207,10 +1207,6 @@
       "loadFailed": "Could not load bed occupancy.",
       "stale": "Last updated {time} — could not refresh.",
       "retry": "Retry"
-    },
-    "relativeTime": {
-      "justNow": "just now",
-      "minutesAgo": "{count} min ago | {count} min ago"
     }
   },
   "admission": {

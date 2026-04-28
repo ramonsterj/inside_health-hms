@@ -14,7 +14,6 @@ import RoomOccupancyCard from '@/components/bedOccupancy/RoomOccupancyCard.vue'
 import { RoomGender, RoomType, type RoomOccupancyItem } from '@/types/room'
 
 const REFRESH_INTERVAL_MS = 30_000
-const SECONDS_PER_MINUTE = 60
 
 const { t, locale } = useI18n()
 const store = useBedOccupancyStore()
@@ -60,14 +59,6 @@ const groupedByGender = computed(() => {
 const showInitialLoading = computed(() => store.loading && !store.hasLoadedOnce)
 const showInitialError = computed(() => !!store.error && !store.hasLoadedOnce)
 const showStaleBanner = computed(() => !!store.error && store.hasLoadedOnce)
-
-const lastFetchedRelative = computed(() => {
-  if (!store.lastFetchedAt) return ''
-  const diffSec = Math.round((Date.now() - store.lastFetchedAt.getTime()) / 1000)
-  if (diffSec < SECONDS_PER_MINUTE) return t('bedOccupancy.relativeTime.justNow')
-  const diffMin = Math.round(diffSec / SECONDS_PER_MINUTE)
-  return t('bedOccupancy.relativeTime.minutesAgo', diffMin, { count: diffMin })
-})
 
 const lastFetchedAbsolute = computed(() => {
   if (!store.lastFetchedAt) return ''

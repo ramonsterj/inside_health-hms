@@ -1207,10 +1207,6 @@
       "loadFailed": "No se pudo cargar la ocupación de camas.",
       "stale": "Última actualización {time} — no se pudo actualizar.",
       "retry": "Reintentar"
-    },
-    "relativeTime": {
-      "justNow": "hace un momento",
-      "minutesAgo": "hace {count} min | hace {count} min"
     }
   },
   "admission": {
