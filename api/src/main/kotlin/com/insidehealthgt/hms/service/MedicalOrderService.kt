@@ -282,8 +282,8 @@ class MedicalOrderService(
         val currentUserId = currentUserProvider.currentUserIdOrThrow()
 
         order.status = MedicalOrderStatus.NO_AUTORIZADO
-        order.authorizedAt = LocalDateTime.now()
-        order.authorizedBy = currentUserId
+        order.rejectedAt = LocalDateTime.now()
+        order.rejectedBy = currentUserId
         order.rejectionReason = request.reason
 
         val saved = medicalOrderRepository.save(order)
@@ -357,6 +357,7 @@ class MedicalOrderService(
             updatedByUser = order.updatedBy?.let { users[it] },
             discontinuedByUser = order.discontinuedBy?.let { users[it] },
             authorizedByUser = order.authorizedBy?.let { users[it] },
+            rejectedByUser = order.rejectedBy?.let { users[it] },
             inProgressByUser = order.inProgressBy?.let { users[it] },
             resultsReceivedByUser = order.resultsReceivedBy?.let { users[it] },
             emergencyByUser = order.emergencyBy?.let { users[it] },
@@ -370,6 +371,7 @@ class MedicalOrderService(
                 it.updatedBy,
                 it.discontinuedBy,
                 it.authorizedBy,
+                it.rejectedBy,
                 it.inProgressBy,
                 it.resultsReceivedBy,
                 it.emergencyBy,

@@ -76,6 +76,12 @@ class MedicalOrder(
     @Column(name = "rejection_reason", columnDefinition = "TEXT")
     var rejectionReason: String? = null,
 
+    @Column(name = "rejected_at")
+    var rejectedAt: LocalDateTime? = null,
+
+    @Column(name = "rejected_by")
+    var rejectedBy: Long? = null,
+
     @Column(name = "emergency_authorized", nullable = false)
     var emergencyAuthorized: Boolean = false,
 
