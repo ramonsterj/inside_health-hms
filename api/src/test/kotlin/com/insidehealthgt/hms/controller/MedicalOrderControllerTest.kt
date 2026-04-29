@@ -461,7 +461,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
 
     @Test
     fun `admin staff can reject a SOLICITADO order with reason`() {
-        val (_, staffToken) = createAdminStaffUser()
+        val (staffUser, staffToken) = createAdminStaffUser()
         val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Test")
 
         val rejectBody = """{"reason":"Pendiente de cobertura del seguro"}"""
@@ -475,11 +475,16 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.data.status").value("NO_AUTORIZADO"))
             .andExpect(jsonPath("$.data.rejectionReason").value("Pendiente de cobertura del seguro"))
+            // Rejection populates dedicated audit fields (issue #56) — not authorized_*.
+            .andExpect(jsonPath("$.data.rejectedAt").exists())
+            .andExpect(jsonPath("$.data.rejectedBy.id").value(staffUser.id))
+            .andExpect(jsonPath("$.data.authorizedAt").doesNotExist())
+            .andExpect(jsonPath("$.data.authorizedBy").doesNotExist())
     }
 
     @Test
     fun `reject with no body is allowed`() {
-        val (_, staffToken) = createAdminStaffUser()
+        val (staffUser, staffToken) = createAdminStaffUser()
         val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Test")
 
         mockMvc.perform(
@@ -488,6 +493,10 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.data.status").value("NO_AUTORIZADO"))
+            .andExpect(jsonPath("$.data.rejectedAt").exists())
+            .andExpect(jsonPath("$.data.rejectedBy.id").value(staffUser.id))
+            .andExpect(jsonPath("$.data.authorizedAt").doesNotExist())
+            .andExpect(jsonPath("$.data.authorizedBy").doesNotExist())
     }
 
     @Test

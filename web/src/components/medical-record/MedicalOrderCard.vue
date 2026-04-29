@@ -148,6 +148,7 @@ function staffDisplayName(staff: MedicalOrderResponse['discontinuedBy']): string
 
 const discontinuedByName = computed(() => staffDisplayName(props.order.discontinuedBy))
 const authorizedByName = computed(() => staffDisplayName(props.order.authorizedBy))
+const rejectedByName = computed(() => staffDisplayName(props.order.rejectedBy))
 const inProgressByName = computed(() => staffDisplayName(props.order.inProgressBy))
 const resultsReceivedByName = computed(() => staffDisplayName(props.order.resultsReceivedBy))
 const emergencyByName = computed(() => staffDisplayName(props.order.emergencyBy))
@@ -355,7 +356,7 @@ async function deleteDocument(doc: MedicalOrderDocument) {
         </div>
 
         <!-- Authorized Info -->
-        <div v-if="order.authorizedAt && order.status !== MedicalOrderStatus.NO_AUTORIZADO" class="meta-row">
+        <div v-if="order.authorizedAt" class="meta-row">
           <i class="pi pi-check-circle" style="color: var(--p-green-600); margin-right: 0.25rem"></i>
           {{ t('medicalRecord.medicalOrder.authorizedBy') }}: {{ authorizedByName }}
           <span class="date-small">({{ formatDateTime(order.authorizedAt) }})</span>
@@ -384,7 +385,7 @@ async function deleteDocument(doc: MedicalOrderDocument) {
           {{ t('medicalRecord.medicalOrder.rejectionReason') }}:
           {{ order.rejectionReason || '—' }}
           <div class="date-small">
-            {{ authorizedByName }} ({{ formatDateTime(order.authorizedAt) }})
+            {{ rejectedByName }} ({{ formatDateTime(order.rejectedAt) }})
           </div>
         </div>
 

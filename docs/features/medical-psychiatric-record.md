@@ -221,6 +221,7 @@ Rules:
 - **The upload-document endpoint** allows uploads on results-bearing categories whose state is `AUTORIZADO`, `EN_PROCESO`, or `RESULTADOS_RECIBIDOS`. Uploads from `SOLICITADO`, `NO_AUTORIZADO`, or `DESCONTINUADO`, or against non-results categories, are rejected. Uploading from `AUTORIZADO` skips `EN_PROCESO` — this handles the case where results arrive without anyone formally clicking "mark in progress" (e.g., family brings a PDF from a private lab).
 - **Audit columns:**
   - `authorized_at` / `authorized_by` — set by the authorize and emergency-authorize endpoints.
+  - `rejected_at` / `rejected_by` — set by the reject endpoint. Distinct from `authorized_*` so reports filtering "orders authorized by X" do not double-count rejections (V094, issue #56).
   - `in_progress_at` / `in_progress_by` — set by mark-in-progress.
   - `results_received_at` / `results_received_by` — set when the first document is uploaded (replaces v1.1's `results_claimed_*`).
   - `discontinued_at` / `discontinued_by` — unchanged.
@@ -599,6 +600,7 @@ A new top-level screen lists medical orders across all admissions, grouped/filte
 | `V032__add_medical_record_permissions.sql` | Adds permissions for clinical-history, progress-note, medical-order resources |
 | `V092__expand_medical_order_workflow_states.sql` | Migrates `medical_orders.status` to the category-driven state machine: `ACTIVA`, `SOLICITADO`, `NO_AUTORIZADO`, `AUTORIZADO`, `EN_PROCESO`, `RESULTADOS_RECIBIDOS`, `DESCONTINUADO`. Adds workflow audit columns (`authorized_at/by`, `in_progress_at/by`, `results_received_at/by`, `rejection_reason`) and emergency-authorization columns (`emergency_authorized`, `emergency_reason`, `emergency_reason_note`, `emergency_at`, `emergency_by`). Backfills existing `ACTIVE` rows: directive categories → `ACTIVA`, all others → `AUTORIZADO`. Renames `DISCONTINUED` → `DESCONTINUADO` for Spanish consistency. Default for new rows is set application-side based on category. |
 | `V093__add_medical_order_workflow_permissions.sql` | Adds `medical-order:authorize` (ADMIN, ADMINISTRATIVE_STAFF), `medical-order:emergency-authorize` (ADMIN, DOCTOR), and `medical-order:mark-in-progress` (ADMIN, DOCTOR, NURSE) permissions and role grants. |
+| `V094__add_medical_order_rejection_audit.sql` | Adds dedicated `rejected_at` / `rejected_by` columns so the reject endpoint no longer overloads `authorized_at` / `authorized_by`. Backfills existing `NO_AUTORIZADO` rows by moving the timestamp/user from the authorize fields into the rejection fields and clearing the authorize fields (issue #56). |
 
 ### Schema
 
@@ -817,6 +819,19 @@ INSERT INTO permissions (code, name, description, resource, action, created_at, 
 ('medical-order:authorize',           'Authorize Medical Order',           'Approve or reject medical orders',                                'medical-order', 'authorize',           CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('medical-order:emergency-authorize', 'Emergency Authorize Medical Order', 'Doctor self-authorization for crisis or after-hours scenarios',   'medical-order', 'emergency-authorize', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('medical-order:mark-in-progress',    'Mark Medical Order In Progress',    'Mark a results-bearing order as executed (sample taken / referred / administered)', 'medical-order', 'mark-in-progress', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- V094__add_medical_order_rejection_audit.sql
+-- Splits rejection audit out of authorized_at/by; backfills existing NO_AUTORIZADO rows.
+ALTER TABLE medical_orders
+    ADD COLUMN rejected_at TIMESTAMP,
+    ADD COLUMN rejected_by BIGINT REFERENCES users(id);
+
+UPDATE medical_orders
+   SET rejected_at   = authorized_at,
+       rejected_by   = authorized_by,
+       authorized_at = NULL,
+       authorized_by = NULL
+ WHERE status = 'NO_AUTORIZADO';
 
 -- ADMIN gets all three via the standard role-permission grant.
 -- ADMINISTRATIVE_STAFF gets authorize + read (so the dashboard renders).

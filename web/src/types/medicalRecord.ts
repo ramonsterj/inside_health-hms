@@ -245,6 +245,8 @@ export interface MedicalOrderResponse {
   inProgressBy: MedicalStaffResponse | null
   resultsReceivedAt: string | null
   resultsReceivedBy: MedicalStaffResponse | null
+  rejectedAt: string | null
+  rejectedBy: MedicalStaffResponse | null
   rejectionReason: string | null
   emergencyAuthorized: boolean
   emergencyReason: EmergencyAuthorizationReason | null
@@ -278,6 +280,7 @@ export interface MedicalOrderListItemResponse {
   createdAt: string | null
   createdBy: MedicalStaffResponse | null
   authorizedAt: string | null
+  rejectedAt: string | null
   inProgressAt: string | null
   resultsReceivedAt: string | null
   discontinuedAt: string | null
