@@ -9,8 +9,7 @@ import com.insidehealthgt.hms.exception.ResourceNotFoundException
 import com.insidehealthgt.hms.repository.MedicalOrderDocumentRepository
 import com.insidehealthgt.hms.repository.MedicalOrderRepository
 import com.insidehealthgt.hms.repository.UserRepository
-import com.insidehealthgt.hms.security.CustomUserDetails
-import org.springframework.security.core.context.SecurityContextHolder
+import com.insidehealthgt.hms.security.CurrentUserProvider
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -27,6 +26,7 @@ class MedicalOrderDocumentService(
     private val fileStorageService: FileStorageService,
     private val thumbnailService: ThumbnailService,
     private val messageService: MessageService,
+    private val currentUserProvider: CurrentUserProvider,
 ) {
 
     @Transactional
@@ -65,19 +65,9 @@ class MedicalOrderDocumentService(
         // Auto-transition: if the order was awaiting results (AUTORIZADO or EN_PROCESO),
         // this upload satisfies that and transitions it to RESULTADOS_RECIBIDOS in the
         // same transaction.
-        medicalOrderService.markResultsReceivedFromDocumentUpload(order, getCurrentUserId())
+        medicalOrderService.markResultsReceivedFromDocumentUpload(order, currentUserProvider.currentUserIdOrThrow())
 
         return buildResponse(savedDocument, admissionId)
-    }
-
-    private fun getCurrentUserId(): Long {
-        val auth = SecurityContextHolder.getContext().authentication
-        val principal = auth?.principal
-        return if (principal is CustomUserDetails) {
-            principal.id
-        } else {
-            throw IllegalStateException("Unable to get current user ID")
-        }
     }
 
     @Transactional(readOnly = true)

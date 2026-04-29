@@ -13,13 +13,11 @@ import com.insidehealthgt.hms.entity.UserStatus
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ConflictException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
-import com.insidehealthgt.hms.exception.UnauthorizedException
 import com.insidehealthgt.hms.repository.RoleRepository
 import com.insidehealthgt.hms.repository.UserRepository
-import com.insidehealthgt.hms.security.CustomUserDetails
+import com.insidehealthgt.hms.security.CurrentUserProvider
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -33,6 +31,7 @@ class UserService(
     private val roleRepository: RoleRepository,
     private val passwordEncoder: PasswordEncoder,
     private val messageService: MessageService,
+    private val currentUserProvider: CurrentUserProvider,
 ) {
 
     @Transactional(readOnly = true)
@@ -58,7 +57,7 @@ class UserService(
 
     @Transactional(readOnly = true)
     fun getCurrentUser(): UserResponse {
-        val userDetails = getCurrentUserDetails()
+        val userDetails = currentUserProvider.currentUserDetailsOrThrow()
         val user = findByIdWithRoles(userDetails.id)
         return UserResponse.from(user)
     }
@@ -85,7 +84,7 @@ class UserService(
 
     @Transactional
     fun updateProfile(request: UpdateUserRequest): UserResponse {
-        val userDetails = getCurrentUserDetails()
+        val userDetails = currentUserProvider.currentUserDetailsOrThrow()
         val user = findByIdWithRoles(userDetails.id)
 
         request.firstName?.let { user.firstName = it }
@@ -97,7 +96,7 @@ class UserService(
 
     @Transactional
     fun changePassword(request: ChangePasswordRequest) {
-        val userDetails = getCurrentUserDetails()
+        val userDetails = currentUserProvider.currentUserDetailsOrThrow()
         val user = findById(userDetails.id)
 
         if (!passwordEncoder.matches(request.currentPassword, user.passwordHash)) {
@@ -118,7 +117,7 @@ class UserService(
             )
         }
 
-        val userDetails = getCurrentUserDetails()
+        val userDetails = currentUserProvider.currentUserDetailsOrThrow()
         val user = findById(userDetails.id)
         user.localePreference = locale
         userRepository.save(user)
@@ -236,12 +235,6 @@ class UserService(
 
         val savedUser = userRepository.save(user)
         return UserResponse.from(savedUser)
-    }
-
-    private fun getCurrentUserDetails(): CustomUserDetails {
-        val authentication = SecurityContextHolder.getContext().authentication
-            ?: throw UnauthorizedException("Not authenticated")
-        return authentication.principal as CustomUserDetails
     }
 
     private fun validateRoleCodes(requested: List<String>, found: List<String>) {

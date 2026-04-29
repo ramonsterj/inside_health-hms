@@ -9,6 +9,7 @@ import com.insidehealthgt.hms.exception.AccountDisabledException
 import com.insidehealthgt.hms.exception.InvalidCredentialsException
 import com.insidehealthgt.hms.repository.RoleRepository
 import com.insidehealthgt.hms.repository.UserRepository
+import com.insidehealthgt.hms.security.CurrentUserProvider
 import com.insidehealthgt.hms.security.CustomUserDetails
 import com.insidehealthgt.hms.security.JwtTokenProvider
 import org.junit.jupiter.api.BeforeEach
@@ -62,6 +63,7 @@ class AuthServiceTest {
             jwtTokenProvider,
             refreshTokenService,
             messageService,
+            CurrentUserProvider(messageService),
         )
 
         activeUser = User(
@@ -220,6 +222,7 @@ class AuthServiceTest {
         val userDetails = CustomUserDetails(activeUser)
 
         whenever(securityContext.authentication).thenReturn(authentication)
+        whenever(authentication.isAuthenticated).thenReturn(true)
         whenever(authentication.principal).thenReturn(userDetails)
         SecurityContextHolder.setContext(securityContext)
 

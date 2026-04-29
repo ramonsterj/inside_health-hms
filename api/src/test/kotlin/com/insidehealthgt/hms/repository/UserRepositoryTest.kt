@@ -6,6 +6,8 @@ import com.insidehealthgt.hms.entity.PhoneType
 import com.insidehealthgt.hms.entity.User
 import com.insidehealthgt.hms.entity.UserPhoneNumber
 import com.insidehealthgt.hms.entity.UserStatus
+import com.insidehealthgt.hms.security.CurrentUserProvider
+import com.insidehealthgt.hms.service.MessageService
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -22,7 +24,12 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @DataJpaTest
-@Import(TestcontainersConfiguration::class, JpaConfig::class)
+@Import(
+    TestcontainersConfiguration::class,
+    JpaConfig::class,
+    MessageService::class,
+    CurrentUserProvider::class,
+)
 class UserRepositoryTest {
 
     @Autowired

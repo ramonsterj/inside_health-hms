@@ -9,16 +9,15 @@ import com.insidehealthgt.hms.entity.VitalSign
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ForbiddenException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
-import com.insidehealthgt.hms.exception.UnauthorizedException
 import com.insidehealthgt.hms.repository.AdmissionRepository
 import com.insidehealthgt.hms.repository.UserRepository
 import com.insidehealthgt.hms.repository.VitalSignRepository
+import com.insidehealthgt.hms.security.CurrentUserProvider
 import com.insidehealthgt.hms.security.CustomUserDetails
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -31,6 +30,7 @@ class VitalSignService(
     private val admissionRepository: AdmissionRepository,
     private val userRepository: UserRepository,
     private val messageService: MessageService,
+    private val currentUserProvider: CurrentUserProvider,
 ) {
     companion object {
         private const val EDIT_WINDOW_HOURS = 24L
@@ -45,7 +45,7 @@ class VitalSignService(
         pageable: Pageable,
     ): Page<VitalSignResponse> {
         val admission = getAdmissionOrThrow(admissionId)
-        val currentUser = getCurrentUserDetails()
+        val currentUser = currentUserProvider.currentUserDetailsOrThrow()
 
         val vitalSigns = vitalSignRepository.findByAdmissionIdWithFilters(admissionId, fromDate, toDate, pageable)
 
@@ -70,7 +70,7 @@ class VitalSignService(
     @Transactional(readOnly = true)
     fun listVitalSignsForChart(admissionId: Long, fromDate: LocalDate?, toDate: LocalDate?): List<VitalSignResponse> {
         val admission = getAdmissionOrThrow(admissionId)
-        val currentUser = getCurrentUserDetails()
+        val currentUser = currentUserProvider.currentUserDetailsOrThrow()
 
         val chartPageable = PageRequest.of(0, CHART_MAX_RECORDS, Sort.by(Sort.Direction.ASC, "recordedAt"))
         val vitalSigns = vitalSignRepository.findByAdmissionIdWithFilters(
@@ -101,7 +101,7 @@ class VitalSignService(
     @Transactional(readOnly = true)
     fun getVitalSign(admissionId: Long, vitalSignId: Long): VitalSignResponse {
         val admission = getAdmissionOrThrow(admissionId)
-        val currentUser = getCurrentUserDetails()
+        val currentUser = currentUserProvider.currentUserDetailsOrThrow()
 
         val vitalSign = vitalSignRepository.findByIdAndAdmissionId(vitalSignId, admissionId)
             ?: throw ResourceNotFoundException(
@@ -122,7 +122,7 @@ class VitalSignService(
         val recordedAt = request.recordedAt ?: LocalDateTime.now()
         validateRecordedAt(recordedAt, admission)
 
-        val currentUser = getCurrentUserDetails()
+        val currentUser = currentUserProvider.currentUserDetailsOrThrow()
 
         val vitalSign = VitalSign(
             admission = admission,
@@ -152,7 +152,7 @@ class VitalSignService(
                 messageService.errorVitalSignNotFound(vitalSignId, admissionId),
             )
 
-        val currentUser = getCurrentUserDetails()
+        val currentUser = currentUserProvider.currentUserDetailsOrThrow()
         validateEditPermission(vitalSign, currentUser)
 
         val recordedAt = request.recordedAt ?: vitalSign.recordedAt
@@ -220,12 +220,6 @@ class VitalSignService(
         if (entity.createdBy != currentUser.id) return false
         val createdAt = entity.createdAt ?: return false
         return createdAt.plusHours(EDIT_WINDOW_HOURS).isAfter(LocalDateTime.now())
-    }
-
-    private fun getCurrentUserDetails(): CustomUserDetails {
-        val auth = SecurityContextHolder.getContext().authentication
-            ?: throw UnauthorizedException(messageService.errorNotAuthenticated())
-        return auth.principal as CustomUserDetails
     }
 
     private fun buildResponse(

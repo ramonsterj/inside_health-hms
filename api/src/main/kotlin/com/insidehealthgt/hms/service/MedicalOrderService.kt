@@ -19,12 +19,11 @@ import com.insidehealthgt.hms.repository.InventoryItemRepository
 import com.insidehealthgt.hms.repository.MedicalOrderDocumentRepository
 import com.insidehealthgt.hms.repository.MedicalOrderRepository
 import com.insidehealthgt.hms.repository.UserRepository
-import com.insidehealthgt.hms.security.CustomUserDetails
+import com.insidehealthgt.hms.security.CurrentUserProvider
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -38,6 +37,7 @@ class MedicalOrderService(
     private val inventoryItemRepository: InventoryItemRepository,
     private val userRepository: UserRepository,
     private val eventPublisher: ApplicationEventPublisher,
+    private val currentUserProvider: CurrentUserProvider,
 ) {
 
     private val log = LoggerFactory.getLogger(MedicalOrderService::class.java)
@@ -167,7 +167,7 @@ class MedicalOrderService(
             )
         }
 
-        val currentUserId = getCurrentUserId()
+        val currentUserId = currentUserProvider.currentUserIdOrThrow()
 
         order.status = MedicalOrderStatus.DESCONTINUADO
         order.discontinuedAt = LocalDateTime.now()
@@ -181,7 +181,7 @@ class MedicalOrderService(
     fun authorize(admissionId: Long, orderId: Long): MedicalOrderResponse {
         val order = loadAuthorizableOrder(admissionId, orderId)
 
-        val currentUserId = getCurrentUserId()
+        val currentUserId = currentUserProvider.currentUserIdOrThrow()
         order.status = MedicalOrderStatus.AUTORIZADO
         order.authorizedAt = LocalDateTime.now()
         order.authorizedBy = currentUserId
@@ -206,7 +206,7 @@ class MedicalOrderService(
 
         val order = loadAuthorizableOrder(admissionId, orderId)
 
-        val currentUserId = getCurrentUserId()
+        val currentUserId = currentUserProvider.currentUserIdOrThrow()
         val now = LocalDateTime.now()
 
         order.status = MedicalOrderStatus.AUTORIZADO
@@ -279,7 +279,7 @@ class MedicalOrderService(
     fun reject(admissionId: Long, orderId: Long, request: RejectMedicalOrderRequest): MedicalOrderResponse {
         val order = loadAuthorizableOrder(admissionId, orderId)
 
-        val currentUserId = getCurrentUserId()
+        val currentUserId = currentUserProvider.currentUserIdOrThrow()
 
         order.status = MedicalOrderStatus.NO_AUTORIZADO
         order.authorizedAt = LocalDateTime.now()
@@ -299,7 +299,7 @@ class MedicalOrderService(
 
         requireResultsBearingAndAuthorized(order)
 
-        val currentUserId = getCurrentUserId()
+        val currentUserId = currentUserProvider.currentUserIdOrThrow()
         order.status = MedicalOrderStatus.EN_PROCESO
         order.inProgressAt = LocalDateTime.now()
         order.inProgressBy = currentUserId
@@ -344,16 +344,6 @@ class MedicalOrderService(
     private fun verifyAdmissionExists(admissionId: Long) {
         if (!admissionRepository.existsById(admissionId)) {
             throw ResourceNotFoundException("Admission not found with id: $admissionId")
-        }
-    }
-
-    private fun getCurrentUserId(): Long {
-        val auth = SecurityContextHolder.getContext().authentication
-        val principal = auth?.principal
-        return if (principal is CustomUserDetails) {
-            principal.id
-        } else {
-            throw IllegalStateException("Unable to get current user ID")
         }
     }
 

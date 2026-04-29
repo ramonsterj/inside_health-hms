@@ -10,9 +10,8 @@ import com.insidehealthgt.hms.exception.AccountDisabledException
 import com.insidehealthgt.hms.exception.InvalidCredentialsException
 import com.insidehealthgt.hms.repository.RoleRepository
 import com.insidehealthgt.hms.repository.UserRepository
-import com.insidehealthgt.hms.security.CustomUserDetails
+import com.insidehealthgt.hms.security.CurrentUserProvider
 import com.insidehealthgt.hms.security.JwtTokenProvider
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -25,6 +24,7 @@ class AuthService(
     private val jwtTokenProvider: JwtTokenProvider,
     private val refreshTokenService: RefreshTokenService,
     private val messageService: MessageService,
+    private val currentUserProvider: CurrentUserProvider,
 ) {
 
     @Transactional
@@ -78,12 +78,7 @@ class AuthService(
 
     @Transactional
     fun logout() {
-        val authentication = SecurityContextHolder.getContext().authentication
-        if (authentication != null && authentication.principal is CustomUserDetails) {
-            val userDetails = authentication.principal as CustomUserDetails
-            val user = userDetails.getUser()
-            refreshTokenService.revokeUserTokens(user)
-        }
+        currentUserProvider.currentUserDetails()?.getUser()?.let { refreshTokenService.revokeUserTokens(it) }
     }
 
     private fun generateAuthResponse(user: User): AuthResponse {
