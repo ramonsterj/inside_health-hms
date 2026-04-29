@@ -8,14 +8,12 @@ import com.insidehealthgt.hms.event.PsychotherapyActivityCreatedEvent
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ForbiddenException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
-import com.insidehealthgt.hms.exception.UnauthorizedException
 import com.insidehealthgt.hms.repository.AdmissionRepository
 import com.insidehealthgt.hms.repository.PsychotherapyActivityRepository
 import com.insidehealthgt.hms.repository.PsychotherapyCategoryRepository
 import com.insidehealthgt.hms.repository.UserRepository
-import com.insidehealthgt.hms.security.CustomUserDetails
+import com.insidehealthgt.hms.security.CurrentUserProvider
 import org.springframework.context.ApplicationEventPublisher
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -29,6 +27,7 @@ class PsychotherapyActivityService(
     private val userRepository: UserRepository,
     private val eventPublisher: ApplicationEventPublisher,
     private val messageService: MessageService,
+    private val currentUserProvider: CurrentUserProvider,
 ) {
 
     @Transactional(readOnly = true)
@@ -73,7 +72,7 @@ class PsychotherapyActivityService(
     @Transactional
     fun createActivity(admissionId: Long, request: CreatePsychotherapyActivityRequest): PsychotherapyActivityResponse {
         // Verify PSYCHOLOGIST role
-        val currentUser = getCurrentUserDetails()
+        val currentUser = currentUserProvider.currentUserDetailsOrThrow()
         if (!currentUser.hasRole("PSYCHOLOGIST")) {
             throw ForbiddenException(messageService.errorPsychotherapyActivityOnlyPsychologist())
         }
@@ -132,12 +131,6 @@ class PsychotherapyActivityService(
         if (!admissionRepository.existsById(admissionId)) {
             throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
         }
-    }
-
-    private fun getCurrentUserDetails(): CustomUserDetails {
-        val auth = SecurityContextHolder.getContext().authentication
-            ?: throw UnauthorizedException(messageService.errorNotAuthenticated())
-        return auth.principal as CustomUserDetails
     }
 
     private fun buildResponse(activity: PsychotherapyActivity): PsychotherapyActivityResponse {

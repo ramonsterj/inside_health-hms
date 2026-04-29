@@ -9,14 +9,13 @@ import com.insidehealthgt.hms.entity.NursingNote
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ForbiddenException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
-import com.insidehealthgt.hms.exception.UnauthorizedException
 import com.insidehealthgt.hms.repository.AdmissionRepository
 import com.insidehealthgt.hms.repository.NursingNoteRepository
 import com.insidehealthgt.hms.repository.UserRepository
+import com.insidehealthgt.hms.security.CurrentUserProvider
 import com.insidehealthgt.hms.security.CustomUserDetails
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -27,6 +26,7 @@ class NursingNoteService(
     private val admissionRepository: AdmissionRepository,
     private val userRepository: UserRepository,
     private val messageService: MessageService,
+    private val currentUserProvider: CurrentUserProvider,
 ) {
     companion object {
         private const val EDIT_WINDOW_HOURS = 24L
@@ -35,7 +35,7 @@ class NursingNoteService(
     @Transactional(readOnly = true)
     fun listNursingNotes(admissionId: Long, pageable: Pageable): Page<NursingNoteResponse> {
         val admission = getAdmissionOrThrow(admissionId)
-        val currentUser = getCurrentUserDetails()
+        val currentUser = currentUserProvider.currentUserDetailsOrThrow()
 
         val notes = nursingNoteRepository.findByAdmissionIdWithRelations(admissionId, pageable)
 
@@ -60,7 +60,7 @@ class NursingNoteService(
     @Transactional(readOnly = true)
     fun getNursingNote(admissionId: Long, noteId: Long): NursingNoteResponse {
         val admission = getAdmissionOrThrow(admissionId)
-        val currentUser = getCurrentUserDetails()
+        val currentUser = currentUserProvider.currentUserDetailsOrThrow()
 
         val note = nursingNoteRepository.findByIdAndAdmissionId(noteId, admissionId)
             ?: throw ResourceNotFoundException(messageService.errorNursingNoteNotFound(noteId, admissionId))
@@ -74,7 +74,7 @@ class NursingNoteService(
             ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
 
         validateAdmissionActive(admission)
-        val currentUser = getCurrentUserDetails()
+        val currentUser = currentUserProvider.currentUserDetailsOrThrow()
 
         val note = NursingNote(
             admission = admission,
@@ -93,7 +93,7 @@ class NursingNoteService(
         val note = nursingNoteRepository.findByIdAndAdmissionId(noteId, admissionId)
             ?: throw ResourceNotFoundException(messageService.errorNursingNoteNotFound(noteId, admissionId))
 
-        val currentUser = getCurrentUserDetails()
+        val currentUser = currentUserProvider.currentUserDetailsOrThrow()
         validateEditPermission(note, currentUser)
 
         note.description = request.description
@@ -135,12 +135,6 @@ class NursingNoteService(
         if (entity.createdBy != currentUser.id) return false
         val createdAt = entity.createdAt ?: return false
         return createdAt.plusHours(EDIT_WINDOW_HOURS).isAfter(LocalDateTime.now())
-    }
-
-    private fun getCurrentUserDetails(): CustomUserDetails {
-        val auth = SecurityContextHolder.getContext().authentication
-            ?: throw UnauthorizedException(messageService.errorNotAuthenticated())
-        return auth.principal as CustomUserDetails
     }
 
     private fun buildResponse(

@@ -13,6 +13,7 @@ import com.insidehealthgt.hms.exception.ConflictException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
 import com.insidehealthgt.hms.repository.RoleRepository
 import com.insidehealthgt.hms.repository.UserRepository
+import com.insidehealthgt.hms.security.CurrentUserProvider
 import com.insidehealthgt.hms.security.CustomUserDetails
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -55,6 +56,7 @@ class UserServiceTest {
             roleRepository,
             passwordEncoder,
             messageService,
+            CurrentUserProvider(messageService),
         )
 
         adminRole = Role(
@@ -79,6 +81,7 @@ class UserServiceTest {
         val authentication: Authentication = mock()
         val userDetails = CustomUserDetails(user)
         whenever(securityContext.authentication).thenReturn(authentication)
+        whenever(authentication.isAuthenticated).thenReturn(true)
         whenever(authentication.principal).thenReturn(userDetails)
         SecurityContextHolder.setContext(securityContext)
     }

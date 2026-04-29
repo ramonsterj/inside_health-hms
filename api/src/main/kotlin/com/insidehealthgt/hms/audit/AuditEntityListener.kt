@@ -8,7 +8,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.insidehealthgt.hms.entity.AuditAction
 import com.insidehealthgt.hms.entity.AuditLog
 import com.insidehealthgt.hms.entity.BaseEntity
-import com.insidehealthgt.hms.security.CustomUserDetails
+import com.insidehealthgt.hms.security.CurrentUserProvider
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PostPersist
 import jakarta.persistence.PostRemove
@@ -17,7 +17,6 @@ import jakarta.persistence.PreUpdate
 import org.hibernate.engine.spi.SessionImplementor
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
-import org.springframework.security.core.context.SecurityContextHolder
 import java.time.LocalDateTime
 
 /**
@@ -36,6 +35,9 @@ class AuditEntityListener {
 
     private val entityManager: EntityManager?
         get() = SpringContext.getBeanOrNull(EntityManager::class.java)
+
+    private val currentUserProvider: CurrentUserProvider?
+        get() = SpringContext.getBeanOrNull(CurrentUserProvider::class.java)
 
     /**
      * Holds the pre-update snapshot: old values JSON and list of changed field names.
@@ -246,16 +248,8 @@ class AuditEntityListener {
     }
 
     private fun getCurrentUser(): Pair<Long?, String?> {
-        val authentication = SecurityContextHolder.getContext().authentication
-        val principal = authentication?.principal
-        val isValidAuth = authentication != null &&
-            authentication.isAuthenticated &&
-            principal != "anonymousUser"
-        return if (isValidAuth && principal is CustomUserDetails) {
-            Pair(principal.id, principal.username)
-        } else {
-            Pair(null, null)
-        }
+        val details = currentUserProvider?.currentUserDetails() ?: return Pair(null, null)
+        return Pair(details.id, details.username)
     }
 
     private fun serializeEntity(entity: Any): String {

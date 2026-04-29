@@ -4,6 +4,8 @@ import com.insidehealthgt.hms.TestcontainersConfiguration
 import com.insidehealthgt.hms.config.JpaConfig
 import com.insidehealthgt.hms.entity.PasswordResetToken
 import com.insidehealthgt.hms.entity.User
+import com.insidehealthgt.hms.security.CurrentUserProvider
+import com.insidehealthgt.hms.service.MessageService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -16,7 +18,12 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 @DataJpaTest
-@Import(TestcontainersConfiguration::class, JpaConfig::class)
+@Import(
+    TestcontainersConfiguration::class,
+    JpaConfig::class,
+    MessageService::class,
+    CurrentUserProvider::class,
+)
 class PasswordResetTokenRepositoryTest {
 
     @Autowired
