@@ -13,7 +13,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Message from 'primevue/message'
 import GenerateInvoiceDialog from '@/components/billing/GenerateInvoiceDialog.vue'
-import { formatCurrency } from '@/utils/format'
+import { formatCurrency, formatDateTime } from '@/utils/format'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -126,11 +126,7 @@ async function handleInvoiceGenerated() {
             </div>
             <div class="detail-row">
               <span class="detail-label">{{ t('billing.generatedAt') }}</span>
-              <span>{{
-                billingStore.invoice.generatedAt
-                  ? new Date(billingStore.invoice.generatedAt).toLocaleString()
-                  : '-'
-              }}</span>
+              <span>{{ formatDateTime(billingStore.invoice.generatedAt) }}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">{{ t('billing.generatedBy') }}</span>

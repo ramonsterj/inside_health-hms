@@ -5,6 +5,7 @@ import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import type { ProgressNoteResponse } from '@/types/medicalRecord'
+import { formatDateTime } from '@/utils/format'
 
 const props = defineProps<{
   note: ProgressNoteResponse
@@ -32,10 +33,7 @@ const authorRoles = computed(() => {
   return props.note.createdBy.roles || []
 })
 
-const createdAtFormatted = computed(() => {
-  if (!props.note.createdAt) return '-'
-  return new Date(props.note.createdAt).toLocaleString()
-})
+const createdAtFormatted = computed(() => formatDateTime(props.note.createdAt))
 
 const wasEdited = computed(() => {
   return props.note.updatedAt && props.note.updatedAt !== props.note.createdAt

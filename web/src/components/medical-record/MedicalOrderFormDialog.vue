@@ -14,6 +14,7 @@ import { useMedicalOrderStore } from '@/stores/medicalOrder'
 import { useInventoryItemStore } from '@/stores/inventoryItem'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useFormDateField } from '@/composables/useFormDateField'
+import { toApiDate } from '@/utils/format'
 import { MedicalOrderCategory, AdministrationRoute } from '@/types/medicalRecord'
 import type { MedicalOrderResponse } from '@/types/medicalRecord'
 import RichTextEditor from '@/components/common/RichTextEditor.vue'
@@ -78,7 +79,7 @@ const { defineField, handleSubmit, errors, values, setValues, resetForm } =
     validationSchema: toTypedSchema(medicalOrderSchema),
     initialValues: {
       category: MedicalOrderCategory.ORDENES_MEDICAS,
-      startDate: new Date().toISOString().split('T')[0],
+      startDate: toApiDate(new Date()),
       endDate: '',
       medication: '',
       dosage: '',
@@ -222,7 +223,6 @@ function closeDialog() {
           <DatePicker
             id="startDate"
             v-model="startDatePicker"
-            dateFormat="yy-mm-dd"
             :class="{ 'p-invalid': errors.startDate }"
             class="w-full"
           />
@@ -235,7 +235,6 @@ function closeDialog() {
           <DatePicker
             id="endDate"
             v-model="endDatePicker"
-            dateFormat="yy-mm-dd"
             :minDate="startDatePicker || undefined"
             class="w-full"
           />

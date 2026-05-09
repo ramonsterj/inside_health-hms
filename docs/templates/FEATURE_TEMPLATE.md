@@ -57,6 +57,18 @@ Summarize one or more user stories or concrete use cases for this feature.
 
 ---
 
+## Date / Time Conformance
+
+Confirm the feature follows the platform-wide date/time standard documented in `CLAUDE.md` § "Date / Time Formatting" and `docs/architecture/ARCHITECTURE.md` § "Date and Time Handling".
+
+- [ ] Backend date-only fields use `LocalDate` + `DATE`; event timestamps use `LocalDateTime` + `TIMESTAMP`. No `String`-stored dates, no `TIMESTAMPTZ`.
+- [ ] All frontend date/time rendering goes through `formatDate` / `formatTime` / `formatDateTime` from `@/utils/format`. No `toLocaleString` / `toLocaleDateString` / `toLocaleTimeString` and no vue-i18n `d(date, …)` calls.
+- [ ] All `<DatePicker>` instances rely on the global `dd/mm/yy` default; any datetime picker carries `hourFormat="24"`.
+- [ ] All `Date → API string` conversions use `toApiDate(...)`. No inline `.toISOString().substring(0, 10)` or `.split('T')[0]`.
+- [ ] Relative time strings use `getRelativeTime` from `@/composables/useRelativeTime`.
+
+---
+
 ## API Contract
 
 | Method | Endpoint | Request DTO | Response DTO | Auth | Description |

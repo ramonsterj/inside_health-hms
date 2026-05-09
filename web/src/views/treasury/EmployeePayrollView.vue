@@ -20,7 +20,7 @@ import { useBankAccountStore } from '@/stores/bankAccount'
 import { useAuthStore } from '@/stores/auth'
 import { EmployeeType, EmployeePaymentType, PayrollStatus } from '@/types/treasury'
 import type { PayrollEntry, SalaryHistory } from '@/types/treasury'
-import { formatCurrency } from '@/utils/format'
+import { formatCurrency, toApiDate } from '@/utils/format'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@/validation/zodI18n'
 import { updateSalarySchema, type UpdateSalaryFormData } from '@/validation/treasury'
@@ -155,7 +155,7 @@ async function submitContractorPayment() {
   try {
     await employeeStore.recordContractorPayment(employeeId.value, {
       amount: contractorAmount.value,
-      paymentDate: contractorDate.value.toISOString().substring(0, 10),
+      paymentDate: toApiDate(contractorDate.value),
       invoiceNumber: contractorInvoice.value,
       notes: contractorNotes.value || null
     })
@@ -470,11 +470,8 @@ function goBack() {
           <label>{{ t('treasury.employee.effectiveFrom') }} *</label>
           <DatePicker
             v-model="localSalaryDate"
-            date-format="yy-mm-dd"
             :class="{ 'p-invalid': errors.effectiveFrom }"
-            @update:model-value="
-              val => (effectiveFrom = val ? (val as Date).toISOString().substring(0, 10) : '')
-            "
+            @update:model-value="val => (effectiveFrom = val ? toApiDate(val as Date) : '')"
           />
           <Message v-if="errors.effectiveFrom" severity="error" :closable="false">
             {{ errors.effectiveFrom }}
@@ -515,7 +512,7 @@ function goBack() {
         </div>
         <div class="form-field">
           <label>{{ t('treasury.expense.expenseDate') }} *</label>
-          <DatePicker v-model="contractorDate" date-format="yy-mm-dd" />
+          <DatePicker v-model="contractorDate" />
         </div>
         <div class="form-field">
           <label>{{ t('treasury.income.notes') }}</label>

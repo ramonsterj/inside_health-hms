@@ -245,11 +245,11 @@ function canRecordPayment(expense: Expense): boolean {
           </div>
           <div class="filter-field">
             <label>{{ t('common.from') }}</label>
-            <DatePicker v-model="filterFrom" date-format="yy-mm-dd" />
+            <DatePicker v-model="filterFrom" />
           </div>
           <div class="filter-field">
             <label>{{ t('common.to') }}</label>
-            <DatePicker v-model="filterTo" date-format="yy-mm-dd" />
+            <DatePicker v-model="filterTo" />
           </div>
           <div class="filter-field filter-search">
             <label>{{ t('common.search') }}</label>

@@ -14,13 +14,14 @@ import VitalSignDateFilter from './VitalSignDateFilter.vue'
 import VitalSignFormDialog from './VitalSignFormDialog.vue'
 import type { VitalSignResponse, VitalSignDateRange } from '@/types/nursing'
 import type { AdmissionStatus } from '@/types/admission'
+import { formatDateTime } from '@/utils/format'
 
 const props = defineProps<{
   admissionId: number
   admissionStatus: AdmissionStatus
 }>()
 
-const { t, d } = useI18n()
+const { t } = useI18n()
 const vitalSignStore = useVitalSignStore()
 const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
@@ -182,7 +183,7 @@ onMounted(loadVitalSigns)
       >
         <Column field="recordedAt" :header="t('nursing.vitalSigns.fields.recordedAt')">
           <template #body="{ data }">
-            {{ d(new Date(data.recordedAt), 'long') }}
+            {{ formatDateTime(data.recordedAt) }}
           </template>
         </Column>
         <Column :header="t('nursing.vitalSigns.fields.bloodPressure')">

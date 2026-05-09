@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import type { KardexVitalSignSummary } from '@/types'
-import { formatShortDateTime } from '@/utils/format'
+import { formatDateTime } from '@/utils/format'
 import { useVitalsFreshness } from '@/composables/useVitalsFreshness'
 
 const props = defineProps<{
   vitalSigns: KardexVitalSignSummary | null
 }>()
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 
 const { freshnessClass, freshnessLabel } = useVitalsFreshness(
   () => props.vitalSigns?.recordedAt ?? null
@@ -60,7 +60,7 @@ const { freshnessClass, freshnessLabel } = useVitalsFreshness(
       <span :class="['freshness', freshnessClass]">{{ freshnessLabel }}</span>
       <span class="vitals-separator">·</span>
       <span class="vitals-meta">
-        {{ formatShortDateTime(props.vitalSigns.recordedAt, locale) }}
+        {{ formatDateTime(props.vitalSigns.recordedAt) }}
       </span>
       <span v-if="props.vitalSigns.recordedByName" class="vitals-separator">·</span>
       <span v-if="props.vitalSigns.recordedByName" class="vitals-meta">

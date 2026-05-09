@@ -20,6 +20,7 @@ import { useRoleStore } from '@/stores/role'
 import { useUsernameAvailability } from '@/composables/useUsernameAvailability'
 import { usePhoneNumberList } from '@/composables/usePhoneNumberList'
 import { extractApiErrorMessage } from '@/utils/errorUtils'
+import { formatDate } from '@/utils/format'
 import PhoneNumberInput from '@/components/users/PhoneNumberInput.vue'
 import type { User, CreateUserRequest, AdminUpdateUserRequest, PhoneNumberRequest } from '@/types'
 import { UserStatus, Salutation, PhoneType } from '@/types'
@@ -274,11 +275,6 @@ function getStatusSeverity(status: UserStatus): 'success' | 'warn' | 'danger' {
     default:
       return 'warn'
   }
-}
-
-function formatDate(dateString: string | null): string {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleDateString()
 }
 
 function openAddUserDialog() {

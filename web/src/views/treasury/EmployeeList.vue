@@ -20,7 +20,7 @@ import { useTreasuryEmployeeStore } from '@/stores/treasuryEmployee'
 import { useAuthStore } from '@/stores/auth'
 import { EmployeeType } from '@/types/treasury'
 import type { TreasuryEmployee } from '@/types/treasury'
-import { formatCurrency } from '@/utils/format'
+import { formatCurrency, toApiDate } from '@/utils/format'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -109,7 +109,7 @@ async function submitTerminate() {
   terminateLoading.value = true
   try {
     await employeeStore.terminateEmployee(terminatingEmployee.value.id, {
-      terminationDate: terminationDate.value.toISOString().substring(0, 10),
+      terminationDate: toApiDate(terminationDate.value),
       terminationReason: terminationReason.value || null,
       cancelPendingPayroll: cancelPendingPayroll.value
     })
@@ -316,7 +316,7 @@ function compensationDisplay(employee: TreasuryEmployee): string {
 
         <div class="form-field">
           <label>{{ t('treasury.employee.terminationDate') }} *</label>
-          <DatePicker v-model="terminationDate" date-format="yy-mm-dd" />
+          <DatePicker v-model="terminationDate" />
         </div>
 
         <div class="form-field">

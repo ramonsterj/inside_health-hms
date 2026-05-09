@@ -16,7 +16,7 @@ import { useAdmissionsTableGrouping } from '@/composables/useAdmissionsTableGrou
 import { useAdmissionStore } from '@/stores/admission'
 import { useAdmissionsListPreferencesStore } from '@/stores/admissionsListPreferences'
 import { AdmissionStatus, AdmissionType, type AdmissionListItem } from '@/types/admission'
-import { formatShortDateTime, getContrastColor, getFullName } from '@/utils/format'
+import { formatDateTime, getContrastColor, getFullName } from '@/utils/format'
 
 const props = withDefaults(
   defineProps<{
@@ -34,7 +34,7 @@ const props = withDefaults(
   }
 )
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const router = useRouter()
 const { showError } = useErrorHandler()
 const { getRelativeTime } = useRelativeTime()
@@ -195,7 +195,7 @@ defineExpose({
     <Column :header="t('admission.admissionDate')" style="width: 180px">
       <template #body="{ data }">
         <div class="admission-date">
-          <span class="date-time">{{ formatShortDateTime(data.admissionDate, locale) }}</span>
+          <span class="date-time">{{ formatDateTime(data.admissionDate) }}</span>
           <span class="relative-time">{{ getRelativeTime(data.admissionDate) }}</span>
         </div>
       </template>

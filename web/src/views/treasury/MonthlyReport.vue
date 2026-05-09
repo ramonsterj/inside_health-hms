@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTreasuryReportStore } from '@/stores/treasuryReport'
-import { formatCurrency } from '@/utils/format'
+import { formatCurrency, toApiDate } from '@/utils/format'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Card from 'primevue/card'
@@ -16,10 +16,8 @@ const now = new Date()
 const fromDate = ref(new Date(now.getFullYear(), now.getMonth(), 1))
 const toDate = ref(new Date())
 
-const formatDate = (d: Date) => d.toISOString().substring(0, 10)
-
 async function loadReport() {
-  await store.fetchMonthlyReport(formatDate(fromDate.value), formatDate(toDate.value))
+  await store.fetchMonthlyReport(toApiDate(fromDate.value), toApiDate(toDate.value))
 }
 
 onMounted(() => {
@@ -39,11 +37,11 @@ onMounted(() => {
         <div class="filters">
           <div class="filter-field">
             <label>{{ t('treasury.report.common.from') }}</label>
-            <DatePicker v-model="fromDate" dateFormat="yy-mm-dd" />
+            <DatePicker v-model="fromDate" />
           </div>
           <div class="filter-field">
             <label>{{ t('treasury.report.common.to') }}</label>
-            <DatePicker v-model="toDate" dateFormat="yy-mm-dd" />
+            <DatePicker v-model="toDate" />
           </div>
           <Button :label="t('treasury.report.common.filter')" icon="pi pi-search" @click="loadReport" class="filter-btn" />
         </div>

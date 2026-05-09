@@ -63,7 +63,7 @@ const { defineField, handleSubmit, errors, resetForm, setValues } = useForm<Reco
 const [amount] = defineField('amount')
 const [paymentDate] = defineField('paymentDate')
 watch(localPaymentDate, val => {
-  paymentDate.value = val ? val.toISOString().substring(0, 10) : ''
+  paymentDate.value = val ? toApiDate(val) : ''
 })
 const [bankAccountId] = defineField('bankAccountId')
 const [reference] = defineField('reference')
@@ -148,7 +148,6 @@ function onHide() {
         <DatePicker
           id="pay-date"
           v-model="localPaymentDate"
-          date-format="yy-mm-dd"
           :class="{ 'p-invalid': errors.paymentDate }"
         />
         <Message v-if="errors.paymentDate" severity="error" :closable="false">

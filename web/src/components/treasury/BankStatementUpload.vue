@@ -68,7 +68,7 @@ function close() {
     <div class="upload-form">
       <div class="form-field">
         <label>{{ t('treasury.reconciliation.statementDate') }}</label>
-        <DatePicker v-model="statementDate" date-format="yy-mm-dd" class="w-full" />
+        <DatePicker v-model="statementDate" class="w-full" />
       </div>
       <div class="form-field">
         <label>{{ t('treasury.reconciliation.file') }}</label>

@@ -5,6 +5,7 @@ import DatePicker from 'primevue/datepicker'
 import Button from 'primevue/button'
 import SelectButton from 'primevue/selectbutton'
 import type { VitalSignDateRange } from '@/types/nursing'
+import { toApiDate } from '@/utils/format'
 
 const props = defineProps<{
   modelValue: VitalSignDateRange
@@ -55,7 +56,7 @@ function applyPreset(preset: PresetValue | null) {
 
 function formatDateForApi(date: Date | null): string | null {
   if (!date) return null
-  return date.toISOString().split('T')[0] ?? null
+  return toApiDate(date) ?? null
 }
 
 function onManualDateChange() {
@@ -111,7 +112,6 @@ watch(
           <DatePicker
             v-model="fromDate"
             :placeholder="t('nursing.vitalSigns.filter.from')"
-            dateFormat="yy-mm-dd"
             showIcon
             :maxDate="toDate || undefined"
             @date-select="onManualDateChange"
@@ -122,7 +122,6 @@ watch(
           <DatePicker
             v-model="toDate"
             :placeholder="t('nursing.vitalSigns.filter.to')"
-            dateFormat="yy-mm-dd"
             showIcon
             :minDate="fromDate || undefined"
             @date-select="onManualDateChange"

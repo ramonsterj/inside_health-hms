@@ -549,7 +549,7 @@ async function refreshStatement() {
           </div>
           <div class="form-field">
             <label>{{ t('treasury.expense.expenseDate') }}</label>
-            <DatePicker v-model="expenseForm.expenseDate" date-format="yy-mm-dd" class="w-full" />
+            <DatePicker v-model="expenseForm.expenseDate" class="w-full" />
           </div>
         </div>
         <div class="form-field">
@@ -611,7 +611,7 @@ async function refreshStatement() {
           </div>
           <div class="form-field">
             <label>{{ t('treasury.income.incomeDate') }}</label>
-            <DatePicker v-model="incomeForm.incomeDate" date-format="yy-mm-dd" class="w-full" />
+            <DatePicker v-model="incomeForm.incomeDate" class="w-full" />
           </div>
         </div>
         <div class="form-field">

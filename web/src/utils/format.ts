@@ -1,19 +1,48 @@
-export function formatDateTime(dateString: string | null): string {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleString()
+// Guatemala hospital display formats:
+//   date: dd/MM/yyyy
+//   time: HH:mm (24h)
+//   datetime: dd/MM/yyyy - HH:mm
+// Intentionally locale-independent so output never depends on the browser locale.
+
+function pad2(n: number): string {
+  return n < 10 ? `0${n}` : String(n)
 }
 
-export function formatDate(dateString: string | null): string {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleDateString()
+// Date-only ISO strings (yyyy-MM-dd) are parsed as local midnight to avoid the
+// UTC-shift trap where `new Date("2026-05-09")` would render as 2026-05-08 in
+// timezones west of UTC (Guatemala is UTC-6).
+const DATE_ONLY_RE = /^(\d{4})-(\d{2})-(\d{2})$/
+
+function parseDate(value: string | Date | null | undefined): Date | null {
+  if (value == null || value === '') return null
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value
+  }
+  const dateOnly = DATE_ONLY_RE.exec(value)
+  if (dateOnly) {
+    const [, y, m, d] = dateOnly
+    return new Date(Number(y), Number(m) - 1, Number(d))
+  }
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? null : d
 }
 
-export function formatTime(dateString: string | null): string {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+export function formatDate(value: string | Date | null | undefined): string {
+  const d = parseDate(value)
+  if (!d) return '-'
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`
+}
+
+export function formatTime(value: string | Date | null | undefined): string {
+  const d = parseDate(value)
+  if (!d) return '-'
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`
+}
+
+export function formatDateTime(value: string | Date | null | undefined): string {
+  const d = parseDate(value)
+  if (!d) return '-'
+  return `${formatDate(d)} - ${formatTime(d)}`
 }
 
 export function formatStaffName(
@@ -38,15 +67,6 @@ export function getFullName(firstName: string | null, lastName: string | null): 
   return `${firstName || ''} ${lastName || ''}`.trim()
 }
 
-export function formatShortDateTime(dateString: string, locale: string): string {
-  return new Date(dateString).toLocaleDateString(locale, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
 export function formatPrice(value: number | null | undefined): string {
   if (value == null) return '-'
   return `Q${value.toFixed(2)}`
@@ -57,8 +77,12 @@ export function formatCurrency(value: number | null | undefined): string {
   return new Intl.NumberFormat('es-GT', { style: 'currency', currency: 'GTQ' }).format(value)
 }
 
+export function toApiDate(value: Date): string
+export function toApiDate(value: Date | string | null | undefined): string | null
 export function toApiDate(value: Date | string | null | undefined): string | null {
   if (!value) return null
-  if (value instanceof Date) return value.toISOString().substring(0, 10)
+  if (value instanceof Date) {
+    return `${value.getFullYear()}-${pad2(value.getMonth() + 1)}-${pad2(value.getDate())}`
+  }
   return value
 }

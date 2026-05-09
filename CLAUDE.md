@@ -169,6 +169,63 @@ class User(...)
 
 **Why**: JPA requires mutable entities with proper equals/hashCode based on ID.
 
+### 9. Date / Time Formatting (Guatemala Hospital)
+
+The platform targets a hospital in Guatemala. All dates and times must follow a single, locale-independent standard. Full rationale and audit in [`.context/datetime-audit.md`](.context/datetime-audit.md).
+
+**Display formats (frontend, what the user sees):**
+
+| Kind | Format | Example |
+| ---- | ------ | ------- |
+| Date | `dd/MM/yyyy` | `09/05/2026` |
+| Time | `HH:mm` (24-hour) | `14:30` |
+| Date + time | `dd/MM/yyyy - HH:mm` | `09/05/2026 - 14:30` |
+| Relative | i18n keys in `common.time.*` (`justNow`, `minutesAgo`, …) | `2h ago` |
+
+**Wire formats (API JSON):**
+
+- Date-only: `yyyy-MM-dd` (ISO).
+- Datetime: ISO 8601 (`yyyy-MM-ddTHH:mm:ss`). Jackson is configured with `JavaTimeModule` and `WRITE_DATES_AS_TIMESTAMPS` disabled — leave it alone.
+
+**Backend storage rules:**
+
+- "Effective on a day" → `LocalDate` + `DATE` column (e.g. `chargeDate`, `expenseDate`, `effectiveFrom`).
+- Event timestamp → `LocalDateTime` + `TIMESTAMP` column (e.g. `admissionDate`, `administeredAt`, all `BaseEntity` audit fields).
+- Never store dates as `String`. Never use `java.util.Date` in new code (legacy JJWT internals are the only exception).
+- Never use `TIMESTAMPTZ` or `TIME`-only columns.
+
+**Frontend display rules:**
+
+- Always import the helpers from `@/utils/format`: `formatDate`, `formatTime`, `formatDateTime`.
+- Never call `toLocaleString` / `toLocaleDateString` / `toLocaleTimeString` directly.
+- Never call vue-i18n's `d(date, …)` formatter. There is no `datetimeFormats` config — `d()` will fall back to browser locale and break the standard.
+- Use `getRelativeTime` from `@/composables/useRelativeTime` for "ago"-style strings.
+
+**Frontend form / picker rules:**
+
+- Every `<DatePicker>` inherits `dd/mm/yy` from the global PrimeVue locale set in `web/src/main.ts`. Do not pass `dateFormat="yy-mm-dd"` per-component.
+- Every `<DatePicker showTime>` must also have `hourFormat="24"`.
+- Convert `Date` → API string with `toApiDate(value)` from `@/utils/format`. Never inline `.toISOString().substring(0, 10)` or `.split('T')[0]` — these have a UTC-shift bug in Guatemala (UTC-6). For round-tripping form fields, use the `useFormDateField` composable.
+
+```ts
+// ✅ CORRECT
+import { formatDate, formatDateTime, formatTime, toApiDate } from '@/utils/format'
+
+formatDate(admission.admissionDate)        // "09/05/2026"
+formatDateTime(admission.admissionDate)    // "09/05/2026 - 14:30"
+formatTime(vitalSigns.recordedAt)          // "14:30"
+toApiDate(datePickerValue)                 // "2026-05-09" (or null)
+
+// ❌ WRONG
+new Date(value).toLocaleString()           // browser-locale-dependent
+d(new Date(value), 'long')                 // no datetimeFormats config — browser fallback
+date.toISOString().substring(0, 10)        // UTC-shift bug for local dates
+<DatePicker dateFormat="yy-mm-dd" />       // overrides the global standard
+<DatePicker showTime />                    // missing hourFormat="24"
+```
+
+ESLint blocks the wrong patterns — if lint fails, use the helpers above. Treat any drift as a bug.
+
 ---
 
 ## 🔒 SECURITY RULES

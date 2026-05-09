@@ -10,6 +10,7 @@ import Message from 'primevue/message'
 import { useAdmissionStore } from '@/stores/admission'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import type { Doctor } from '@/types/admission'
+import { toApiDate } from '@/utils/format'
 
 const props = defineProps<{
   visible: boolean
@@ -83,7 +84,7 @@ async function handleSubmit() {
     await admissionStore.addConsultingPhysician(props.admissionId, {
       physicianId: selectedPhysicianId.value!,
       reason: reason.value || null,
-      requestedDate: requestedDate.value ? requestedDate.value.toISOString().split('T')[0] : null
+      requestedDate: requestedDate.value ? toApiDate(requestedDate.value) : null
     })
     emit('added')
     closeDialog()
@@ -167,7 +168,6 @@ function closeDialog() {
           id="requestedDate"
           v-model="requestedDate"
           :disabled="loading"
-          dateFormat="yy-mm-dd"
           showIcon
           class="w-full"
         />

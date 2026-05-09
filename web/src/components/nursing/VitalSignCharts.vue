@@ -7,12 +7,13 @@ import { useVitalSignStore } from '@/stores/vitalSign'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import VitalSignDateFilter from './VitalSignDateFilter.vue'
 import type { VitalSignDateRange } from '@/types/nursing'
+import { formatDateTime } from '@/utils/format'
 
 const props = defineProps<{
   admissionId: number
 }>()
 
-const { t, d } = useI18n()
+const { t } = useI18n()
 const vitalSignStore = useVitalSignStore()
 const { showError } = useErrorHandler()
 
@@ -41,21 +42,13 @@ function onFilterChange() {
   loadChartData()
 }
 
-// Format date for chart labels
-function formatChartDate(dateStr: string): string {
-  const date = new Date(dateStr)
-  return d(date, 'short')
-}
-
-// Sort data chronologically (oldest first for chart)
 const sortedData = computed(() => {
   return [...chartData.value].sort(
     (a, b) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime()
   )
 })
 
-// Chart labels (timestamps)
-const labels = computed(() => sortedData.value.map(vs => formatChartDate(vs.recordedAt)))
+const labels = computed(() => sortedData.value.map(vs => formatDateTime(vs.recordedAt)))
 
 // Chart options (shared base)
 const baseChartOptions = {
