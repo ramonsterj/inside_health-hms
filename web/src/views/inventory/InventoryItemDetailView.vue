@@ -11,7 +11,7 @@ import Column from 'primevue/column'
 import { useInventoryItemStore } from '@/stores/inventoryItem'
 import { useAuthStore } from '@/stores/auth'
 import InventoryMovementForm from '@/components/inventory/InventoryMovementForm.vue'
-import { formatPrice } from '@/utils/format'
+import { formatPrice, formatDateTime } from '@/utils/format'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -50,11 +50,6 @@ async function loadMovements() {
 async function onMovementCreated() {
   await loadItem()
   await loadMovements()
-}
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleString()
 }
 
 function formatUser(user: { firstName?: string; lastName?: string } | null): string {
@@ -204,7 +199,7 @@ function goBack() {
 
           <Column :header="t('inventory.movement.registeredAt')" style="width: 180px">
             <template #body="{ data }">
-              {{ formatDate(data.createdAt) }}
+              {{ formatDateTime(data.createdAt) }}
             </template>
           </Column>
         </DataTable>

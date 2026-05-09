@@ -14,7 +14,7 @@ import { settleDoctorFeeSchema, type SettleDoctorFeeFormData } from '@/validatio
 import { useDoctorFeeStore } from '@/stores/doctorFee'
 import { useBankAccountStore } from '@/stores/bankAccount'
 import type { DoctorFee } from '@/types/treasury'
-import { formatCurrency } from '@/utils/format'
+import { formatCurrency, toApiDate } from '@/utils/format'
 
 const props = defineProps<{
   visible: boolean
@@ -38,7 +38,7 @@ const { defineField, handleSubmit, errors, resetForm } = useForm<SettleDoctorFee
   validationSchema: toTypedSchema(settleDoctorFeeSchema),
   initialValues: {
     bankAccountId: undefined as unknown as number,
-    paymentDate: new Date().toISOString().substring(0, 10),
+    paymentDate: toApiDate(new Date()),
     notes: ''
   }
 })
@@ -55,14 +55,14 @@ const bankAccountOptions = computed(() =>
 )
 
 watch(localPaymentDate, val => {
-  paymentDate.value = val ? (val as Date).toISOString().substring(0, 10) : ''
+  paymentDate.value = val ? toApiDate(val as Date) : ''
 })
 
 function onShow() {
   resetForm({
     values: {
       bankAccountId: undefined as unknown as number,
-      paymentDate: new Date().toISOString().substring(0, 10),
+      paymentDate: toApiDate(new Date()),
       notes: ''
     }
   })
@@ -136,11 +136,7 @@ const submitForm = handleSubmit(async formValues => {
 
         <div class="form-field">
           <label>{{ t('treasury.payment.paymentDate') }} *</label>
-          <DatePicker
-            v-model="localPaymentDate"
-            date-format="yy-mm-dd"
-            :class="{ 'p-invalid': errors.paymentDate }"
-          />
+          <DatePicker v-model="localPaymentDate" :class="{ 'p-invalid': errors.paymentDate }" />
           <Message v-if="errors.paymentDate" severity="error" :closable="false">
             {{ errors.paymentDate }}
           </Message>

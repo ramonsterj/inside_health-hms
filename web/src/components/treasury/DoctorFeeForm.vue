@@ -16,7 +16,7 @@ import { createDoctorFeeSchema, type CreateDoctorFeeFormData } from '@/validatio
 import { useDoctorFeeStore } from '@/stores/doctorFee'
 import { DoctorFeeBillingType } from '@/types/treasury'
 import type { TreasuryEmployee } from '@/types/treasury'
-import { formatCurrency } from '@/utils/format'
+import { formatCurrency, toApiDate } from '@/utils/format'
 
 const props = defineProps<{
   visible: boolean
@@ -41,7 +41,7 @@ const { defineField, handleSubmit, errors, resetForm } =
       billingType: undefined as unknown as DoctorFeeBillingType,
       grossAmount: undefined as unknown as number,
       commissionPct: props.employee.hospitalCommissionPct,
-      feeDate: new Date().toISOString().substring(0, 10),
+      feeDate: toApiDate(new Date()),
       patientChargeId: null,
       description: '',
       notes: ''
@@ -71,7 +71,7 @@ const computedNetAmount = computed(() => {
 })
 
 watch(localFeeDate, val => {
-  feeDate.value = val ? (val as Date).toISOString().substring(0, 10) : ''
+  feeDate.value = val ? toApiDate(val as Date) : ''
 })
 
 function onShow() {
@@ -80,7 +80,7 @@ function onShow() {
       billingType: undefined as unknown as DoctorFeeBillingType,
       grossAmount: undefined as unknown as number,
       commissionPct: props.employee.hospitalCommissionPct,
-      feeDate: new Date().toISOString().substring(0, 10),
+      feeDate: toApiDate(new Date()),
       patientChargeId: null,
       description: '',
       notes: ''
@@ -144,7 +144,6 @@ const submitForm = handleSubmit(async formValues => {
           <label>{{ t('treasury.doctorFee.feeDate') }} *</label>
           <DatePicker
             v-model="localFeeDate"
-            date-format="yy-mm-dd"
             :class="{ 'p-invalid': errors.feeDate }"
           />
           <Message v-if="errors.feeDate" severity="error" :closable="false">

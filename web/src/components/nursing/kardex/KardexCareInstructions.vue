@@ -3,12 +3,13 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Tag from 'primevue/tag'
 import type { KardexCareInstruction } from '@/types'
+import { formatDate } from '@/utils/format'
 
 const props = defineProps<{
   careInstructions: KardexCareInstruction[]
 }>()
 
-const { t, d } = useI18n()
+const { t } = useI18n()
 
 const CATEGORY_ORDER = [
   'DIETA',
@@ -56,7 +57,7 @@ const groupedInstructions = computed(() => {
           <span class="care-observations">{{ item.observations || '-' }}</span>
           <span class="care-since">
             {{ t('kardex.careInstructions.since') }}
-            {{ d(new Date(item.startDate + 'T00:00:00'), 'short') }}
+            {{ formatDate(item.startDate) }}
           </span>
         </div>
       </div>

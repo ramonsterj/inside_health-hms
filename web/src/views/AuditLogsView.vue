@@ -11,6 +11,7 @@ import Select from 'primevue/select'
 import DatePicker from 'primevue/datepicker'
 import { useAuditStore } from '@/stores/audit'
 import { AuditAction, type AuditLog } from '@/types/audit'
+import { formatDateTime } from '@/utils/format'
 
 const { t } = useI18n()
 const { showError } = useErrorHandler()
@@ -106,7 +107,7 @@ function getActionSeverity(action: AuditAction): 'success' | 'info' | 'danger' {
 }
 
 function formatTimestamp(timestamp: string): string {
-  return new Date(timestamp).toLocaleString()
+  return formatDateTime(timestamp)
 }
 
 function formatJson(jsonString: string | null): string {

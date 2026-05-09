@@ -17,7 +17,7 @@ import {
   recordPayrollPaymentSchema,
   type RecordPayrollPaymentFormData
 } from '@/validation/treasury'
-import { formatCurrency } from '@/utils/format'
+import { formatCurrency, toApiDate } from '@/utils/format'
 
 const props = defineProps<{
   visible: boolean
@@ -64,7 +64,7 @@ onMounted(async () => {
 })
 
 watch(localPaymentDate, val => {
-  paymentDate.value = val ? val.toISOString().substring(0, 10) : ''
+  paymentDate.value = val ? toApiDate(val) : ''
 })
 
 watch(
@@ -131,7 +131,6 @@ function onHide() {
         <DatePicker
           id="pp-date"
           v-model="localPaymentDate"
-          date-format="yy-mm-dd"
           :class="{ 'p-invalid': errors.paymentDate }"
         />
         <Message v-if="errors.paymentDate" severity="error" :closable="false">

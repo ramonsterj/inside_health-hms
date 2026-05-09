@@ -5,6 +5,7 @@ import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import type { PsychotherapyActivity } from '@/types/psychotherapy'
+import { formatDateTime } from '@/utils/format'
 
 const props = defineProps<{
   activity: PsychotherapyActivity
@@ -30,10 +31,7 @@ const authorRoles = computed(() => {
   return props.activity.createdBy.roles || []
 })
 
-const createdAtFormatted = computed(() => {
-  if (!props.activity.createdAt) return '-'
-  return new Date(props.activity.createdAt).toLocaleString()
-})
+const createdAtFormatted = computed(() => formatDateTime(props.activity.createdAt))
 </script>
 
 <template>

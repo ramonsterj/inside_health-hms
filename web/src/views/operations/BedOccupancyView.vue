@@ -12,10 +12,11 @@ import BedOccupancyFilters, {
 } from '@/components/bedOccupancy/BedOccupancyFilters.vue'
 import RoomOccupancyCard from '@/components/bedOccupancy/RoomOccupancyCard.vue'
 import { RoomGender, RoomType, type RoomOccupancyItem } from '@/types/room'
+import { formatTime } from '@/utils/format'
 
 const REFRESH_INTERVAL_MS = 30_000
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const store = useBedOccupancyStore()
 
 const genderFilter = ref<RoomGender | 'ALL'>('ALL')
@@ -62,10 +63,7 @@ const showStaleBanner = computed(() => !!store.error && store.hasLoadedOnce)
 
 const lastFetchedAbsolute = computed(() => {
   if (!store.lastFetchedAt) return ''
-  return store.lastFetchedAt.toLocaleTimeString(locale.value, {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  return formatTime(store.lastFetchedAt)
 })
 
 async function refresh() {

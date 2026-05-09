@@ -1059,6 +1059,90 @@ CREATE INDEX idx_user_roles_role_id ON user_roles(role_id);
 3. **API Error Handling**: Don't expose sensitive info in errors
 4. **Input Sanitization**: Before sending to backend
 
+## Date and Time Handling
+
+The platform targets a hospital in Guatemala. To prevent the most common bug class — inconsistent date/time presentation across screens, locales, and timezones — the system enforces a single, locale-independent standard for storage, transport, and display. The full audit and refactor history are recorded in `.context/datetime-audit.md`.
+
+### Display formats (frontend, user-facing)
+
+| Kind | Format | Example |
+| ---- | ------ | ------- |
+| Date only | `dd/MM/yyyy` | `09/05/2026` |
+| Time only | `HH:mm` (24-hour) | `14:30` |
+| Date + time | `dd/MM/yyyy - HH:mm` | `09/05/2026 - 14:30` |
+| Relative | i18n keys `common.time.{justNow,minutesAgo,hoursAgo,yesterday,daysAgo}` | `2h ago` / `hace 2h` |
+
+These formats are intentionally not derived from browser locale. They are Guatemala-specific and must look identical on every machine.
+
+### Wire formats (API JSON)
+
+- **Date-only fields**: ISO `yyyy-MM-dd` (e.g. `"2026-05-09"`).
+- **Datetime fields**: ISO 8601 (e.g. `"2026-05-09T14:30:00"`).
+- Jackson is configured with `JavaTimeModule` and `WRITE_DATES_AS_TIMESTAMPS` disabled in `JacksonConfig.kt`. Do not change this — the frontend helpers depend on the ISO string shape.
+
+### Backend storage rules
+
+| Use case | Kotlin type | Postgres column | Examples |
+| -------- | ----------- | --------------- | -------- |
+| Effective on a calendar day | `LocalDate` | `DATE` | `chargeDate`, `expenseDate`, `effectiveFrom`, `requestedDate` |
+| Event timestamp | `LocalDateTime` | `TIMESTAMP` | `admissionDate`, `administeredAt`, `BaseEntity.createdAt/updatedAt/deletedAt`, all medical-order workflow timestamps |
+
+- Never store dates as `String`.
+- Never use `java.util.Date` in new code (the JJWT library forces it for token claims; that's the only exception).
+- Never use `TIMESTAMPTZ` or `TIME`-only columns. The system runs in a single timezone and stores naive local times.
+- Never set defaults via `LocalDateTime.now()` on entities — use `@CreatedDate` / `@LastModifiedDate` (JPA auditing).
+
+### Frontend helpers
+
+All formatting logic lives in `web/src/utils/format.ts`. There must be exactly one place that produces a date string. The exposed API is:
+
+```ts
+import { formatDate, formatTime, formatDateTime, toApiDate } from '@/utils/format'
+
+formatDate(value)       // "dd/MM/yyyy"  — accepts string | Date | null | undefined; returns "-" for null
+formatTime(value)       // "HH:mm"
+formatDateTime(value)   // "dd/MM/yyyy - HH:mm"
+toApiDate(date)         // "yyyy-MM-dd"  — Date → wire string, timezone-safe
+```
+
+For relative time use `getRelativeTime` from `@/composables/useRelativeTime`. For round-tripping a date-only string between a form schema and a `<DatePicker>`, use `useFormDateField`.
+
+### What is forbidden in frontend code
+
+The following patterns are blocked by ESLint and rejected in code review:
+
+- `new Date(x).toLocaleString()` / `toLocaleDateString()` / `toLocaleTimeString()` — browser-locale-dependent, output varies by user.
+- `d(date, 'long')` — vue-i18n's date formatter. There is no `datetimeFormats` config; calls fall back to browser locale.
+- `date.toISOString().substring(0, 10)` and `date.toISOString().split('T')[0]` — UTC-shift bug: in Guatemala (UTC-6) a local-midnight `Date` rounds to the previous day. Use `toApiDate` instead.
+- `<DatePicker dateFormat="yy-mm-dd" />` — overrides the global `dd/mm/yy` set in `web/src/main.ts`.
+- `<DatePicker showTime />` without `hourFormat="24"`.
+
+### PrimeVue picker configuration
+
+The PrimeVue locale is set globally in `web/src/main.ts`:
+
+```ts
+app.use(PrimeVue, {
+  locale: {
+    dateFormat: 'dd/mm/yy',          // 09/05/2026 (PrimeVue token: yy = 4-digit year)
+    firstDayOfWeek: 1,                // Monday
+    dayNames: [...spanish names...],
+    monthNames: [...spanish names...],
+    today: 'Hoy',
+    clear: 'Limpiar'
+  }
+})
+```
+
+Adding new pickers: rely on this default. Do not override `dateFormat` per-component. Datetime pickers must add `showTime` **and** `hourFormat="24"`.
+
+### Reference
+
+- Single source of helpers: `web/src/utils/format.ts`
+- Composables: `web/src/composables/useFormDateField.ts`, `web/src/composables/useRelativeTime.ts`
+- Global picker config: `web/src/main.ts`
+- Audit and refactor history: `.context/datetime-audit.md`
+
 ## Testing Strategy
 
 ### Backend Testing

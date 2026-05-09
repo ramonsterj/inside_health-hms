@@ -14,6 +14,7 @@ import DatePicker from 'primevue/datepicker'
 import Message from 'primevue/message'
 import { useTreasuryEmployeeStore } from '@/stores/treasuryEmployee'
 import { EmployeeType, DoctorFeeArrangement } from '@/types/treasury'
+import { toApiDate } from '@/utils/format'
 import type { TreasuryEmployee } from '@/types/treasury'
 import {
   createTreasuryEmployeeSchema,
@@ -91,7 +92,7 @@ const selectedType = computed(() =>
 )
 
 watch(localHireDate, val => {
-  hireDate.value = val ? val.toISOString().substring(0, 10) : ''
+  hireDate.value = val ? toApiDate(val) : ''
 })
 
 watch(
@@ -263,7 +264,7 @@ function onHide() {
       <div class="form-row">
         <div class="form-field">
           <label for="emp-hire">{{ t('treasury.employee.hireDate') }}</label>
-          <DatePicker id="emp-hire" v-model="localHireDate" date-format="yy-mm-dd" />
+          <DatePicker id="emp-hire" v-model="localHireDate" />
         </div>
       </div>
 

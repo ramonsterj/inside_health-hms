@@ -16,7 +16,7 @@ import { useIncomeStore } from '@/stores/income'
 import { useBankAccountStore } from '@/stores/bankAccount'
 import { IncomeCategory } from '@/types/treasury'
 import type { Income } from '@/types/treasury'
-import { formatCurrency } from '@/utils/format'
+import { formatCurrency, toApiDate } from '@/utils/format'
 import { createIncomeSchema, type CreateIncomeFormData } from '@/validation/treasury'
 
 const props = defineProps<{
@@ -89,7 +89,7 @@ onMounted(async () => {
 })
 
 watch(localIncomeDate, val => {
-  incomeDate.value = val ? val.toISOString().substring(0, 10) : ''
+  incomeDate.value = val ? toApiDate(val) : ''
 })
 
 watch(
@@ -232,7 +232,6 @@ function onHide() {
           <DatePicker
             id="inc-date"
             v-model="localIncomeDate"
-            date-format="yy-mm-dd"
             :class="{ 'p-invalid': errors.incomeDate }"
           />
           <Message v-if="errors.incomeDate" severity="error" :closable="false">

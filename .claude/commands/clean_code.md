@@ -140,6 +140,18 @@ For each file, systematically check for the following violations. **IMPORTANT**:
   - Same setup or assertion patterns repeated
   - *False positive check*: Would test helpers actually improve readability, or hide important test context?
 
+#### Project-Specific Conventions
+
+Reject any drift from these documented platform standards (CLAUDE.md / ARCHITECTURE.md). These are not stylistic preferences — they have caused real bugs.
+
+- **Date / time formatting**
+  - Backend: day-effective fields use `LocalDate` + `DATE`; event timestamps use `LocalDateTime` + `TIMESTAMP`. No `String`-stored dates, no `java.util.Date` (except inside JJWT internals), no `TIMESTAMPTZ`.
+  - Frontend display: must call `formatDate` / `formatTime` / `formatDateTime` from `@/utils/format`. Flag any `toLocaleString` / `toLocaleDateString` / `toLocaleTimeString` call. Flag any `d(date, …)` call (vue-i18n date formatter).
+  - Frontend `Date → API`: must call `toApiDate(...)`. Flag any inline `.toISOString().substring(0, 10)` or `.split('T')[0]`.
+  - Pickers: every `<DatePicker>` should rely on the global `dd/mm/yy` PrimeVue locale. Flag any `dateFormat="yy-mm-dd"` (or kebab-case `date-format="…"`) override. Every `<DatePicker showTime>` must also have `hourFormat="24"`.
+
+- **Soft deletes**: every entity carries `@SQLRestriction("deleted_at IS NULL")` and inherits `BaseEntity`. No hard deletes outside GDPR/compliance flows.
+
 ### Phase 3: Verification & False Positive Elimination
 
 For EACH potential issue identified:

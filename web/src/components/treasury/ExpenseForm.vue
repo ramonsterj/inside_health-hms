@@ -91,13 +91,13 @@ onMounted(async () => {
 })
 
 watch(localExpenseDate, val => {
-  expenseDate.value = val ? val.toISOString().substring(0, 10) : ''
+  expenseDate.value = val ? toApiDate(val) : ''
 })
 watch(localDueDate, val => {
-  dueDate.value = val ? val.toISOString().substring(0, 10) : ''
+  dueDate.value = val ? toApiDate(val) : ''
 })
 watch(localPaymentDate, val => {
-  paymentDate.value = val ? val.toISOString().substring(0, 10) : ''
+  paymentDate.value = val ? toApiDate(val) : ''
 })
 
 watch(
@@ -210,7 +210,6 @@ function onHide() {
           <DatePicker
             id="exp-date"
             v-model="localExpenseDate"
-            date-format="yy-mm-dd"
             :class="{ 'p-invalid': errors.expenseDate }"
           />
           <Message v-if="errors.expenseDate" severity="error" :closable="false">
@@ -262,7 +261,6 @@ function onHide() {
           <DatePicker
             id="exp-pay-date"
             v-model="localPaymentDate"
-            date-format="yy-mm-dd"
             :class="{ 'p-invalid': errors.paymentDate }"
           />
           <Message v-if="errors.paymentDate" severity="error" :closable="false">
@@ -291,7 +289,6 @@ function onHide() {
         <DatePicker
           id="exp-due-date"
           v-model="localDueDate"
-          date-format="yy-mm-dd"
           :class="{ 'p-invalid': errors.dueDate }"
         />
         <Message v-if="errors.dueDate" severity="error" :closable="false">

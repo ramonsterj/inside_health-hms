@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import MedicationAdministrationDialog from '@/components/medical-record/MedicationAdministrationDialog.vue'
-import { formatShortDateTime } from '@/utils/format'
+import { formatDateTime } from '@/utils/format'
 import { useAuthStore } from '@/stores/auth'
 import type { KardexMedicationSummary } from '@/types'
 
@@ -17,7 +17,7 @@ const emit = defineEmits<{
   actionCompleted: []
 }>()
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const authStore = useAuthStore()
 
 const adminDialogVisible = ref(false)
@@ -87,7 +87,7 @@ function getStatusSeverity(status: string): 'success' | 'danger' | 'warn' | 'inf
                 class="admin-status"
               />
               <span class="admin-time">
-                {{ formatShortDateTime(med.lastAdministration.administeredAt, locale) }}
+                {{ formatDateTime(med.lastAdministration.administeredAt) }}
               </span>
               <span v-if="med.lastAdministration.administeredByName" class="admin-by">
                 &middot; {{ med.lastAdministration.administeredByName }}

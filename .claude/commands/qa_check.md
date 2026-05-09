@@ -152,6 +152,11 @@ Example: `/qa_check docs/features/user-profile.md`
     - [ ] API follows RESTful conventions
     - [ ] Frontend uses Pinia for state management
     - [ ] Forms use VeeValidate + Zod
+    - [ ] Date / time follows the platform standard (CLAUDE.md § "Date / Time Formatting"):
+      - Backend: `LocalDate` + `DATE` for day-effective fields, `LocalDateTime` + `TIMESTAMP` for event timestamps. No `String`-stored dates, no `java.util.Date` in new code, no `TIMESTAMPTZ`.
+      - Frontend: `formatDate` / `formatTime` / `formatDateTime` from `@/utils/format` everywhere. No `toLocaleString` / `toLocaleDateString` / `toLocaleTimeString` and no `d(date, …)` calls. Verify with: `grep -rn 'toLocaleDateString\|toLocaleTimeString\|toLocaleString\|d(new Date' web/src | grep -v 'utils/format.ts'` (must return nothing).
+      - Frontend forms: `Date → API` goes through `toApiDate(...)`. No inline `.toISOString().substring(0, 10)` or `.split('T')[0]`.
+      - Pickers: every `<DatePicker>` relies on the global `dd/mm/yy` PrimeVue locale (no per-component `dateFormat="yy-mm-dd"`); every `<DatePicker showTime>` carries `hourFormat="24"`.
 
 ### Phase 9: Summary
 

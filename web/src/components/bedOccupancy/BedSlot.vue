@@ -5,6 +5,7 @@ import Button from 'primevue/button'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import type { BedOccupant } from '@/types/room'
+import { formatDate } from '@/utils/format'
 
 const props = defineProps<{
   occupant?: BedOccupant | null
@@ -13,7 +14,7 @@ const props = defineProps<{
   highlighted?: boolean
 }>()
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
 
@@ -31,14 +32,7 @@ function admitHere() {
 
 const formattedDate = computed(() => {
   if (!props.occupant) return ''
-  const [year, month, day] = props.occupant.admissionDate.split('-').map(Number)
-  const date =
-    year && month && day ? new Date(year, month - 1, day) : new Date(props.occupant.admissionDate)
-  return date.toLocaleDateString(locale.value, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
+  return formatDate(props.occupant.admissionDate)
 })
 </script>
 

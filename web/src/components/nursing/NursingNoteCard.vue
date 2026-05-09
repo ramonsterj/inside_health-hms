@@ -6,6 +6,7 @@ import Button from 'primevue/button'
 import Badge from 'primevue/badge'
 import { sanitizeHtml } from '@/utils/sanitize'
 import type { NursingNoteResponse } from '@/types/nursing'
+import { formatDateTime } from '@/utils/format'
 
 const props = defineProps<{
   note: NursingNoteResponse
@@ -16,7 +17,7 @@ const emit = defineEmits<{
   edit: [note: NursingNoteResponse]
 }>()
 
-const { t, d } = useI18n()
+const { t } = useI18n()
 
 const expanded = ref(false)
 
@@ -70,7 +71,7 @@ function handleEdit() {
         </div>
         <div class="header-right">
           <span class="timestamp">
-            {{ d(new Date(note.createdAt), 'long') }}
+            {{ formatDateTime(note.createdAt) }}
           </span>
           <Badge
             v-if="wasEdited"
@@ -97,7 +98,7 @@ function handleEdit() {
       <div class="card-footer">
         <div class="footer-info">
           <span v-if="wasEdited" class="updated-info">
-            {{ t('common.updatedAt') }}: {{ d(new Date(note.updatedAt), 'long') }}
+            {{ t('common.updatedAt') }}: {{ formatDateTime(note.updatedAt) }}
           </span>
         </div>
         <Button

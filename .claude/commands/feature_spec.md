@@ -107,6 +107,7 @@ After Phase 5:
   - DTOs for API contracts
   - Pinia stores for frontend state
   - VeeValidate + Zod for validation
+  - Date / time: `LocalDate` + `DATE` for day-effective fields, `LocalDateTime` + `TIMESTAMP` for event timestamps; frontend display goes through `formatDate` / `formatTime` / `formatDateTime` from `@/utils/format`; `Date → API` conversions go through `toApiDate`. See CLAUDE.md § "Date / Time Formatting" and ARCHITECTURE.md § "Date and Time Handling".
 - If the feature is backend-only or frontend-only, mark irrelevant sections as "N/A - [reason]"
 - Create the `docs/features/` directory if it doesn't exist
 
