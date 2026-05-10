@@ -3,7 +3,7 @@
 -- ============================================================================
 -- Last updated: 2026-03-04 (make triage_codes/rooms inserts idempotent; they are
 -- no longer truncated by seed_01 since they are reference data from versioned migrations)
--- SEED-BUNDLE-VERSION: 2026-04-28a (see R__seed_01 header for the rule)
+-- SEED-BUNDLE-VERSION: 2026-05-10a (see R__seed_01 header for the rule)
 
 SET session_replication_role = replica;
 

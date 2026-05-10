@@ -33,6 +33,31 @@ const mockAdminUser = {
   localePreference: 'en'
 }
 
+// Per spec v1.4 (medical-psychiatric-record.md), CHIEF_NURSE can create + read
+// progress notes but cannot update them. The grant for `progress-note:create`
+// for chief nurse comes from V096; the legacy `progress-note:update` seed grant
+// is revoked in the same migration.
+const mockChiefNurseUser = {
+  id: 4,
+  username: 'chiefnurse',
+  email: 'chiefnurse@example.com',
+  firstName: 'Carmen',
+  lastName: 'Flores',
+  salutation: 'SRA',
+  roles: ['CHIEF_NURSE'],
+  permissions: [
+    'admission:read',
+    'clinical-history:read',
+    'progress-note:create',
+    'progress-note:read',
+    'medical-order:read'
+  ],
+  status: 'ACTIVE',
+  emailVerified: true,
+  createdAt: '2026-01-01T00:00:00Z',
+  localePreference: 'en'
+}
+
 const mockDoctorUser = {
   id: 2,
   username: 'doctor',
@@ -104,6 +129,8 @@ const mockAdmission = {
   updatedBy: { id: 1, username: 'admin', firstName: 'Admin', lastName: 'User' }
 }
 
+// `canEdit` defaults to false (the value the server returns for any non-admin viewer).
+// Tests that act as ADMIN override it to `true` per-test via spread.
 const mockProgressNote = {
   id: 1,
   admissionId: 1,
@@ -126,7 +153,8 @@ const mockProgressNote = {
     firstName: 'Maria',
     lastName: 'Garcia',
     roles: ['DOCTOR']
-  }
+  },
+  canEdit: false
 }
 
 const mockEditedProgressNote = {
@@ -140,19 +168,17 @@ const mockEditedProgressNote = {
     firstName: 'Admin',
     lastName: 'User',
     roles: ['ADMIN']
-  }
+  },
+  canEdit: true
 }
 
 // Helper function to setup authenticated state
 async function setupAuth(page: import('@playwright/test').Page, user: typeof mockAdminUser) {
-  await page.addInitScript(
-    userData => {
-      localStorage.setItem('access_token', 'mock-access-token')
-      localStorage.setItem('refresh_token', 'mock-refresh-token')
-      localStorage.setItem('mock_user', JSON.stringify(userData))
-    },
-    user
-  )
+  await page.addInitScript(userData => {
+    localStorage.setItem('access_token', 'mock-access-token')
+    localStorage.setItem('refresh_token', 'mock-refresh-token')
+    localStorage.setItem('mock_user', JSON.stringify(userData))
+  }, user)
 }
 
 // Helper function to setup user API mock
@@ -231,7 +257,7 @@ test.describe('Medical Record - Progress Notes', () => {
     await setupUserMock(page, mockDoctorUser)
     await setupAdmissionMock(page)
 
-    const notes: typeof mockProgressNote[] = []
+    const notes: (typeof mockProgressNote)[] = []
 
     await page.route('**/api/v1/admissions/1/progress-notes*', async route => {
       const url = new URL(route.request().url())
@@ -277,13 +303,24 @@ test.describe('Medical Record - Progress Notes', () => {
     await expect(page.getByText(/SOAP/i)).toBeVisible()
 
     // Fill the SOAP fields using RichTextEditor
-    await fillRichTextEditor(page, '.progress-note-form .form-field:nth-child(2)', 'Patient feels better')
+    await fillRichTextEditor(
+      page,
+      '.progress-note-form .form-field:nth-child(2)',
+      'Patient feels better'
+    )
     await fillRichTextEditor(page, '.progress-note-form .form-field:nth-child(3)', 'Vitals normal')
     await fillRichTextEditor(page, '.progress-note-form .form-field:nth-child(4)', 'Improving')
-    await fillRichTextEditor(page, '.progress-note-form .form-field:nth-child(5)', 'Continue treatment')
+    await fillRichTextEditor(
+      page,
+      '.progress-note-form .form-field:nth-child(5)',
+      'Continue treatment'
+    )
 
     // Submit
-    await page.getByRole('dialog').getByRole('button', { name: /Save|Guardar/i }).click()
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: /Save|Guardar/i })
+      .click()
 
     // Should see success message
     await expect(page.getByText(/created successfully|creado exitosamente/i)).toBeVisible({
@@ -355,7 +392,9 @@ test.describe('Medical Record - Progress Notes', () => {
     await selectMedicalRecordTab(page, 'progressNotes')
 
     // Nurse should see add button (has progress-note:create)
-    await expect(page.getByRole('button', { name: /Add First Note|Agregar Primera Nota/i })).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: /Add First Note|Agregar Primera Nota/i })
+    ).toBeVisible()
   })
 
   test('nurse cannot edit progress notes', async ({ page }) => {
@@ -395,6 +434,9 @@ test.describe('Medical Record - Progress Notes', () => {
     await setupUserMock(page, mockAdminUser)
     await setupAdmissionMock(page)
 
+    // Server returns `canEdit: true` for the admin viewer on an active admission.
+    const adminVisibleNote = { ...mockProgressNote, canEdit: true }
+
     // Mock progress notes endpoints
     await page.route('**/api/v1/admissions/1/progress-notes**', async route => {
       const url = new URL(route.request().url())
@@ -416,7 +458,7 @@ test.describe('Medical Record - Progress Notes', () => {
           body: JSON.stringify({
             success: true,
             data: {
-              content: [mockProgressNote],
+              content: [adminVisibleNote],
               page: { totalElements: 1, totalPages: 1, size: 10, number: 0 }
             }
           })
@@ -435,7 +477,9 @@ test.describe('Medical Record - Progress Notes', () => {
     await expect(page.locator('.progress-note-card')).toBeVisible()
 
     // Admin should see edit button
-    const editButton = page.locator('.progress-note-card').getByRole('button', { name: /Edit|Editar/i })
+    const editButton = page
+      .locator('.progress-note-card')
+      .getByRole('button', { name: /Edit|Editar/i })
     await expect(editButton).toBeVisible()
 
     // Click edit
@@ -446,7 +490,10 @@ test.describe('Medical Record - Progress Notes', () => {
     await expect(page.getByText(/Edit Progress Note|Editar Nota/i)).toBeVisible()
 
     // Submit
-    await page.getByRole('dialog').getByRole('button', { name: /Save|Guardar/i }).click()
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: /Save|Guardar/i })
+      .click()
 
     // Dialog should close and success message should appear
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 10000 })
@@ -659,6 +706,149 @@ test.describe('Medical Record - Progress Notes', () => {
     await expect(page.getByText(/No progress notes recorded/i)).toBeVisible()
 
     // Should see add button in empty state
-    await expect(page.getByRole('button', { name: /Add First Note|Agregar Primera Nota/i })).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: /Add First Note|Agregar Primera Nota/i })
+    ).toBeVisible()
+  })
+
+  // ============ ADMIN-ONLY UPDATE ENFORCEMENT (spec v1.4) ============
+
+  test('chief nurse can create progress note', async ({ page }) => {
+    await setupAuth(page, mockChiefNurseUser)
+    await setupUserMock(page, mockChiefNurseUser)
+    await setupAdmissionMock(page)
+
+    await page.route('**/api/v1/admissions/1/progress-notes*', async route => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              content: [],
+              page: { totalElements: 0, totalPages: 0, size: 10, number: 0 }
+            }
+          })
+        })
+      } else if (route.request().method() === 'POST') {
+        await route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: { ...mockProgressNote, canEdit: false } })
+        })
+      }
+    })
+
+    await page.goto('/admissions/1')
+    await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'progressNotes')
+
+    // Chief nurse holds progress-note:create after V096 — Add button is visible.
+    await expect(
+      page.getByRole('button', { name: /Add First Note|Agregar Primera Nota/i })
+    ).toBeVisible()
+  })
+
+  test('chief nurse cannot edit progress notes', async ({ page }) => {
+    await setupAuth(page, mockChiefNurseUser)
+    await setupUserMock(page, mockChiefNurseUser)
+    await setupAdmissionMock(page)
+
+    await page.route('**/api/v1/admissions/1/progress-notes*', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            content: [mockProgressNote],
+            page: { totalElements: 1, totalPages: 1, size: 10, number: 0 }
+          }
+        })
+      })
+    })
+
+    await page.goto('/admissions/1')
+    await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'progressNotes')
+
+    await expect(page.locator('.progress-note-card')).toBeVisible()
+
+    // Chief nurse: progress-note:update is revoked by V096; canEdit is false; no edit button.
+    await expect(
+      page.locator('.progress-note-card').getByRole('button', { name: /Edit|Editar/i })
+    ).not.toBeVisible()
+  })
+
+  test('admin edit button is hidden for discharged admissions', async ({ page }) => {
+    await setupAuth(page, mockAdminUser)
+    await setupUserMock(page, mockAdminUser)
+
+    // Admission is DISCHARGED; server returns `canEdit: false` even for ADMIN.
+    const dischargedAdmission = {
+      ...mockAdmission,
+      status: 'DISCHARGED',
+      dischargeDate: '2026-01-24T18:00:00'
+    }
+
+    await page.route('**/api/v1/admissions/1', async route => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: dischargedAdmission })
+        })
+      }
+    })
+    await page.route('**/api/v1/admissions/1/documents', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [] })
+      })
+    })
+    await page.route('**/api/v1/admissions/1/clinical-history', async route => {
+      await route.fulfill({
+        status: 404,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: false, message: 'Not found' })
+      })
+    })
+    await page.route('**/api/v1/admissions/1/medical-orders', async route => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: { orders: {} } })
+        })
+      }
+    })
+
+    await page.route('**/api/v1/admissions/1/progress-notes*', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            // canEdit: false because admission is discharged, even though viewer is ADMIN.
+            content: [{ ...mockProgressNote, canEdit: false }],
+            page: { totalElements: 1, totalPages: 1, size: 10, number: 0 }
+          }
+        })
+      })
+    })
+
+    await page.goto('/admissions/1')
+    await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'progressNotes')
+
+    await expect(page.locator('.progress-note-card')).toBeVisible()
+
+    // Discharge protection means even admin sees no edit button.
+    await expect(
+      page.locator('.progress-note-card').getByRole('button', { name: /Edit|Editar/i })
+    ).not.toBeVisible()
   })
 })

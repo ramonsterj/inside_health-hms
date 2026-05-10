@@ -10,7 +10,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.time.LocalDateTime
 
 class NursingNoteControllerTest : AbstractIntegrationTest() {
 
@@ -120,7 +119,8 @@ class NursingNoteControllerTest : AbstractIntegrationTest() {
             .andExpect(jsonPath("$.data.createdAt").exists())
             .andExpect(jsonPath("$.data.updatedAt").exists())
             .andExpect(jsonPath("$.data.createdBy").exists())
-            .andExpect(jsonPath("$.data.canEdit").value(true))
+            // Author is the nurse, not the admin — canEdit must be false even moments after creation.
+            .andExpect(jsonPath("$.data.canEdit").value(false))
     }
 
     // ============ GET SINGLE NURSING NOTE TESTS ============
@@ -148,29 +148,10 @@ class NursingNoteControllerTest : AbstractIntegrationTest() {
             .andExpect(status().isNotFound)
     }
 
-    // ============ UPDATE NURSING NOTE TESTS ============
+    // ============ UPDATE NURSING NOTE TESTS (admin-only per spec v1.3) ============
 
     @Test
-    fun `creator can update nursing note within 24 hours`() {
-        val noteId = createNursingNoteAndGetId("Original note", nurseToken)
-
-        val updateRequest = CreateNursingNoteRequest(
-            description = "Updated note content",
-        )
-
-        mockMvc.perform(
-            put("/api/v1/admissions/$admissionId/nursing-notes/$noteId")
-                .header("Authorization", "Bearer $nurseToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateRequest)),
-        )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.data.description").value("Updated note content"))
-    }
-
-    @Test
-    fun `admin can update any nursing note`() {
+    fun `admin can update any nursing note on active admission`() {
         val noteId = createNursingNoteAndGetId("Original note", nurseToken)
 
         val updateRequest = CreateNursingNoteRequest(
@@ -186,6 +167,58 @@ class NursingNoteControllerTest : AbstractIntegrationTest() {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.data.description").value("Admin updated this note"))
+    }
+
+    @Test
+    fun `nurse cannot update own nursing note`() {
+        val noteId = createNursingNoteAndGetId("Nurse's note", nurseToken)
+
+        val updateRequest = CreateNursingNoteRequest(
+            description = "Should fail",
+        )
+
+        mockMvc.perform(
+            put("/api/v1/admissions/$admissionId/nursing-notes/$noteId")
+                .header("Authorization", "Bearer $nurseToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)),
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `doctor cannot update own nursing note`() {
+        val noteId = createNursingNoteAndGetId("Doctor's note", doctorToken)
+
+        val updateRequest = CreateNursingNoteRequest(
+            description = "Should fail",
+        )
+
+        mockMvc.perform(
+            put("/api/v1/admissions/$admissionId/nursing-notes/$noteId")
+                .header("Authorization", "Bearer $doctorToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)),
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `chief nurse cannot update nursing note`() {
+        val noteId = createNursingNoteAndGetId("Nurse's note", nurseToken)
+        val (_, chiefNurseToken) = createChiefNurseUser()
+
+        val updateRequest = CreateNursingNoteRequest(
+            description = "Should fail",
+        )
+
+        mockMvc.perform(
+            put("/api/v1/admissions/$admissionId/nursing-notes/$noteId")
+                .header("Authorization", "Bearer $chiefNurseToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)),
+        )
+            .andExpect(status().isForbidden)
     }
 
     // ============ VALIDATION TESTS ============
@@ -251,46 +284,6 @@ class NursingNoteControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `non-creator cannot update nursing note`() {
-        val noteId = createNursingNoteAndGetId("Nurse's note", nurseToken)
-
-        val updateRequest = CreateNursingNoteRequest(
-            description = "Should fail",
-        )
-
-        mockMvc.perform(
-            put("/api/v1/admissions/$admissionId/nursing-notes/$noteId")
-                .header("Authorization", "Bearer $doctorToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateRequest)),
-        )
-            .andExpect(status().isForbidden)
-    }
-
-    @Test
-    fun `edit after 24 hours denied for non-admin`() {
-        val noteId = createNursingNoteAndGetId("Old note", nurseToken)
-
-        jdbcTemplate.update(
-            "UPDATE nursing_notes SET created_at = ? WHERE id = ?",
-            java.sql.Timestamp.valueOf(LocalDateTime.now().minusHours(25)),
-            noteId,
-        )
-
-        val updateRequest = CreateNursingNoteRequest(
-            description = "Should fail - too late",
-        )
-
-        mockMvc.perform(
-            put("/api/v1/admissions/$admissionId/nursing-notes/$noteId")
-                .header("Authorization", "Bearer $nurseToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateRequest)),
-        )
-            .andExpect(status().isForbidden)
-    }
-
-    @Test
     fun `create nursing note fails for discharged admission`() {
         dischargeAdmission(admissionId, adminToken)
 
@@ -308,7 +301,7 @@ class NursingNoteControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `update nursing note fails for discharged admission`() {
+    fun `admin update nursing note fails for discharged admission`() {
         val noteId = createNursingNoteAndGetId("Note before discharge", nurseToken)
         dischargeAdmission(admissionId, adminToken)
 
@@ -318,7 +311,7 @@ class NursingNoteControllerTest : AbstractIntegrationTest() {
 
         mockMvc.perform(
             put("/api/v1/admissions/$admissionId/nursing-notes/$noteId")
-                .header("Authorization", "Bearer $nurseToken")
+                .header("Authorization", "Bearer $adminToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateRequest)),
         )
@@ -342,19 +335,39 @@ class NursingNoteControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `canEdit is true for creator within 24h and false otherwise`() {
-        val noteId = createNursingNoteAndGetId("Edit window test", nurseToken)
+    fun `canEdit is true for admin and false for everyone else`() {
+        val noteId = createNursingNoteAndGetId("canEdit test", nurseToken)
 
         mockMvc.perform(
             get("/api/v1/admissions/$admissionId/nursing-notes/$noteId")
                 .header("Authorization", "Bearer $nurseToken"),
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.data.canEdit").value(true))
+            .andExpect(jsonPath("$.data.canEdit").value(false))
 
         mockMvc.perform(
             get("/api/v1/admissions/$admissionId/nursing-notes/$noteId")
                 .header("Authorization", "Bearer $doctorToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.canEdit").value(false))
+
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/nursing-notes/$noteId")
+                .header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.canEdit").value(true))
+    }
+
+    @Test
+    fun `canEdit is false for admin on discharged admission`() {
+        val noteId = createNursingNoteAndGetId("discharge canEdit test", nurseToken)
+        dischargeAdmission(admissionId, adminToken)
+
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/nursing-notes/$noteId")
+                .header("Authorization", "Bearer $adminToken"),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.data.canEdit").value(false))

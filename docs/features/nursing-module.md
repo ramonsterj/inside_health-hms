@@ -7,12 +7,18 @@
 | 1.0 | 2026-02-05 | @author | Initial draft |
 | 1.1 | 2026-02-05 | @claude | Added recordedAt field, BP physiological validation, discharge checks, chart endpoint, fixed permission migration, documented canEdit logic |
 | 1.2 | 2026-04-27 | @claude | Added Glucometría (blood glucose) as an optional vital sign field — implemented end-to-end (V090 migration, entity/DTO/service, form/table/charts/kardex, EN+ES i18n, controller + store tests) |
+| 1.3 | 2026-05-09 | @author | **Nursing notes are now admin-only update.** The previous creator + 24-hour edit window pattern is removed for nursing notes to match the originally specified rule for the medical record (only admin can modify existing entries). DOCTOR, NURSE, and CHIEF_NURSE keep `nursing-note:create` and `nursing-note:read`; only ADMIN holds `nursing-note:update` after V096. Discharge protection still blocks all writes (including ADMIN). `NursingNoteResponse.canEdit` reduces to `isAdmin && admission.isActive`. **Vital signs retain the existing creator + 24h + admin override pattern** — they are intentionally not aligned because their bedside-correction use case is different. The two records now follow different edit policies. |
 
 ---
 
 ## Overview
 
-The Nursing Module allows nursing staff and doctors to document patient care during hospital stays. It includes two key components: (1) **Nursing Notes** - free-text observations and care documentation recorded multiple times daily, and (2) **Vital Signs** - structured physiological measurements (blood pressure, heart rate, respiratory rate, temperature, oxygen saturation) recorded throughout the day, displayed in both tabular and chart formats. All records are auditable and immutable after a 24-hour edit window.
+The Nursing Module allows nursing staff and doctors to document patient care during hospital stays. It includes two key components: (1) **Nursing Notes** - free-text observations and care documentation recorded multiple times daily, and (2) **Vital Signs** - structured physiological measurements (blood pressure, heart rate, respiratory rate, temperature, oxygen saturation) recorded throughout the day, displayed in both tabular and chart formats. All records are auditable.
+
+**Edit policy** (the two record types diverge intentionally — see revision 1.3):
+
+- **Nursing notes** — append-only for non-admins. Only ADMIN can update existing notes. There is no creator-edit window; doctors and nurses must request edits from an administrator. Discharge protection blocks all writes (including ADMIN).
+- **Vital signs** — creator may edit their own record within 24 hours of creation on an active admission; ADMIN may edit any record any time on an active admission. Discharge protection blocks all writes. This pattern is preserved because vital-signs are typed live at the bedside and benefit from a short self-correction window for transcription mistakes (e.g. "12/80" instead of "120/80").
 
 ---
 
@@ -21,8 +27,8 @@ The Nursing Module allows nursing staff and doctors to document patient care dur
 ### Nursing Notes
 1. As a nurse, I want to create nursing notes for a patient's admission so that I can document observations and care provided throughout their stay.
 2. As a nurse, I want to view all nursing notes for an admission in chronological order so that I can review the patient's care history.
-3. As a nurse, I want to edit my nursing notes within 24 hours so that I can correct or add information if needed.
-4. As a doctor, I want to view and create nursing notes so that I can document and understand the patient's ongoing care and condition.
+3. As an administrator, I want to modify a nursing note when an author requests a correction, so that the medical record can be kept accurate while still preventing post-hoc tampering by the author themselves.
+4. As a doctor or chief nurse, I want to view and create nursing notes so that I can document and understand the patient's ongoing care and condition. (Edits go through the administrator.)
 
 ### Vital Signs
 5. As a nurse, I want to record vital signs for a patient with a specific measurement time so that I can accurately document when vitals were taken (vs. when entered into system).
@@ -42,8 +48,7 @@ The Nursing Module allows nursing staff and doctors to document patient care dur
 |--------|------------------|------------|-------|
 | View nursing notes | NURSE, DOCTOR, CHIEF_NURSE, ADMIN | `nursing-note:read` | All with permission |
 | Create nursing note | NURSE, DOCTOR, CHIEF_NURSE, ADMIN | `nursing-note:create` | Active admissions only |
-| Edit nursing note | NURSE, DOCTOR, CHIEF_NURSE | `nursing-note:update` | Own records only, within 24h, active admissions only |
-| Edit nursing note (any) | ADMIN | `nursing-note:update` | Can edit any record, anytime, active admissions only |
+| Update nursing note | ADMIN | `nursing-note:update` | Admin-only. **No creator-edit window.** Active admissions only — discharge blocks even ADMIN. After V096, DOCTOR / NURSE / CHIEF_NURSE no longer hold this permission. |
 | View vital signs | NURSE, DOCTOR, CHIEF_NURSE, ADMIN | `vital-sign:read` | All with permission |
 | Create vital signs | NURSE, DOCTOR, CHIEF_NURSE, ADMIN | `vital-sign:create` | Active admissions only |
 | Edit vital signs | NURSE, DOCTOR, CHIEF_NURSE | `vital-sign:update` | Own records only, within 24h, active admissions only |
@@ -51,7 +56,8 @@ The Nursing Module allows nursing staff and doctors to document patient care dur
 
 **Notes:**
 - No delete operations are allowed to maintain medical record integrity.
-- All write operations (create/update) are blocked for discharged admissions.
+- All write operations (create/update) are blocked for discharged admissions, including for ADMIN.
+- Nursing notes and vital signs intentionally diverge in their edit policy (revision 1.3). Nursing notes mirror progress notes (admin-only). Vital signs keep a 24h creator window for live bedside corrections.
 
 ---
 
@@ -60,11 +66,12 @@ The Nursing Module allows nursing staff and doctors to document patient care dur
 ### Nursing Notes
 - Create nursing notes with timestamp and description (required, max 5000 characters)
 - View list of all nursing notes for an admission, sorted by creation date (newest first)
-- Edit existing nursing notes (creator only, within 24 hours; admins can edit anytime)
+- **Append-only for non-admins**: doctors, nurses, and chief nurses cannot edit any nursing note (own or others'). Once saved, only an administrator can change it.
+- Edit existing nursing notes — ADMIN only
 - Track creator (`createdBy`) and editor (`updatedBy`) for audit trail
 - Pagination support (default 20 per page)
 - No delete functionality
-- **Discharge protection**: Cannot create or edit notes for discharged admissions
+- **Discharge protection**: Nobody — including ADMIN — can create or edit notes for discharged admissions
 
 ### Vital Signs
 - Record vital signs with measurements and timestamps:
@@ -89,14 +96,24 @@ The Nursing Module allows nursing staff and doctors to document patient care dur
 - No delete functionality
 - **Discharge protection**: Cannot create or edit vital signs for discharged admissions
 
-### Edit Time Limit
-- 24-hour edit window from creation time (based on `createdAt`, not `recordedAt`)
-- After 24 hours, records become read-only (except for admins)
-- UI should display "edit window closed" message after time limit
-- All edits logged via AuditEntityListener
+### Edit Policy
+
+The two record types diverge:
+
+**Nursing Notes** — admin-only update on active admissions. There is no creator window. Doctors, nurses, and chief nurses cannot edit at all (they will get 403 from the controller; the service additionally asserts ADMIN as defense in depth). All edits logged via `AuditEntityListener`.
+
+**Vital Signs** — 24-hour edit window from creation time (`createdAt`, not `recordedAt`). Within that window, the creator can self-correct on an active admission. After 24 hours, only ADMIN can edit. UI should display "edit window closed" message after the time limit. All edits logged via `AuditEntityListener`.
 
 ### canEdit Logic
-The `canEdit` field in API responses is computed as follows:
+
+**Nursing Notes** (`NursingNoteResponse.canEdit`):
+
+```
+canEdit = currentUser.isAdmin AND admission.isActive
+```
+
+**Vital Signs** (`VitalSignResponse.canEdit`):
+
 ```
 canEdit = (
   admission.status == ACTIVE
@@ -110,24 +127,25 @@ canEdit = (
 )
 ```
 
+The frontend must always read `canEdit` from the server response and not re-derive it from role/permission state.
+
 ---
 
 ## Acceptance Criteria / Scenarios
 
 ### Nursing Notes - Happy Path
-- When a nurse creates a nursing note with valid description, the system returns 201 Created with the note data including `createdBy` info.
+- When a nurse, doctor, chief nurse, or admin creates a nursing note with valid description on an active admission, the system returns 201 Created with the note data including `createdBy` info.
 - When a user views nursing notes for an admission, the system returns a paginated list sorted by `createdAt` descending.
-- When the creator edits their note within 24 hours, the system updates the note and returns 200 OK with `updatedBy` info.
-- When an admin edits any note at any time, the system updates the note and returns 200 OK.
+- When an admin edits any note on an active admission, the system updates the note and returns 200 OK with `updatedBy` info; the original `createdBy` is preserved.
+- The `NursingNoteResponse.canEdit` field is `true` only for ADMIN on active admissions, and `false` for all other roles in all cases.
 
 ### Nursing Notes - Edge Cases
 - When creating a note with empty description, return 400 Bad Request with localized message "Description is required" / "La descripción es requerida".
 - When creating a note with description > 5000 characters, return 400 Bad Request with localized message.
-- When editing a note after 24 hours (non-admin), return 403 Forbidden with message "This record can no longer be edited (24-hour limit exceeded)" / "Este registro ya no puede ser editado (límite de 24 horas excedido)".
-- When editing a note created by another user (non-admin), return 403 Forbidden with message "You can only edit records you created" / "Solo puede editar registros que usted creó".
+- When a doctor, nurse, or chief nurse attempts to update a nursing note (own or others'), return 403 Forbidden — both because they lack `nursing-note:update` after V096 and because the service-layer guard enforces ADMIN-only.
 - When editing a non-existent note, return 404 Not Found.
 - When a user without permission attempts access, return 403 Forbidden.
-- **When creating or editing a note for a discharged admission, return 400 Bad Request with message "Cannot modify records for discharged admissions" / "No se pueden modificar registros de admisiones dadas de alta".**
+- **When any user (including ADMIN) attempts to create or edit a note for a discharged admission, return 400 Bad Request with message "Cannot modify records for discharged admissions" / "No se pueden modificar registros de admisiones dadas de alta".**
 
 ### Vital Signs - Happy Path
 - When a nurse records vital signs with all valid measurements, the system returns 201 Created with the vital signs data.
@@ -709,8 +727,26 @@ private fun validateAdmissionActive(admission: Admission) {
 ```
 
 ### Edit Permission Check Implementation
+
+**Nursing Notes** — admin-only:
+
 ```kotlin
-// In service layer
+// In NursingNoteService
+private fun assertAdmin(currentUser: CustomUserDetails) {
+    if (!currentUser.hasRole("ADMIN")) {
+        throw ForbiddenException(messageService.errorForbidden())
+    }
+}
+
+// For computing canEdit in NursingNoteResponse
+private fun canEdit(currentUser: CustomUserDetails, admissionActive: Boolean): Boolean =
+    admissionActive && currentUser.hasRole("ADMIN")
+```
+
+**Vital Signs** — creator + 24h + admin override (unchanged):
+
+```kotlin
+// In VitalSignService
 private fun validateEditPermission(entity: BaseEntity, currentUserId: Long, isAdmin: Boolean) {
     if (isAdmin) return
 
@@ -724,7 +760,7 @@ private fun validateEditPermission(entity: BaseEntity, currentUserId: Long, isAd
     }
 }
 
-// For computing canEdit in DTO
+// For computing canEdit on VitalSignResponse
 fun canEdit(entity: BaseEntity, currentUserId: Long, isAdmin: Boolean, admissionActive: Boolean): Boolean {
     if (!admissionActive) return false
     if (isAdmin) return true
@@ -790,10 +826,12 @@ private fun validateRecordedAt(recordedAt: LocalDateTime?) {
 - [ ] Blood pressure physiological validation (systolic > diastolic)
 - [ ] RecordedAt future validation
 - [ ] Glucose accepts null/omitted, accepts 20–600, rejects out-of-range
-- [ ] Edit time limit (24h) enforced
-- [ ] Creator-only edit restriction enforced
-- [ ] Admin override for edit restrictions
-- [ ] **Discharge protection enforced for create/update**
+- [ ] Nursing notes: ADMIN can update on active admissions; DOCTOR / NURSE / CHIEF_NURSE return 403 (controller + service-layer assertion)
+- [ ] Vital signs: 24h edit window enforced
+- [ ] Vital signs: creator-only edit restriction enforced
+- [ ] Vital signs: admin override for edit restrictions
+- [ ] **Discharge protection enforced for create/update on both record types** (including for ADMIN)
+- [ ] V096 migration: revokes any existing `nursing-note:update` from DOCTOR / NURSE / CHIEF_NURSE; idempotent; safe to re-run
 - [ ] Chart endpoint returns non-paginated list
 - [ ] Date range filtering works correctly
 - [ ] Unit tests written and passing
@@ -825,9 +863,13 @@ private fun validateRecordedAt(recordedAt: LocalDateTime?) {
 - [ ] Unit tests written and passing (Vitest)
 
 ### E2E Tests (Playwright)
-- [ ] Create nursing note flow
-- [ ] Edit nursing note within 24h (as creator)
+- [ ] Create nursing note flow (nurse, doctor, chief nurse, admin)
 - [ ] View nursing notes list
+- [ ] Nurse cannot edit own nursing note (403, no edit button visible)
+- [ ] Doctor cannot edit own nursing note (403, no edit button visible)
+- [ ] Chief nurse cannot edit own nursing note (403, no edit button visible)
+- [ ] Admin can edit any nursing note on active admission
+- [ ] Admin cannot edit any nursing note on discharged admission (400)
 - [ ] Record vital signs flow (with custom recordedAt)
 - [ ] Record vital signs flow (without recordedAt - defaults to now)
 - [ ] Edit vital signs within 24h (as creator)
@@ -836,11 +878,11 @@ private fun validateRecordedAt(recordedAt: LocalDateTime?) {
 - [ ] Date range filter works correctly
 - [ ] Validation error messages displayed correctly (both languages)
 - [ ] Blood pressure validation (systolic > diastolic)
-- [ ] Edit denied after 24h (non-admin)
-- [ ] Edit denied for non-creator (non-admin)
-- [ ] Admin can edit any record anytime
-- [ ] **Create denied for discharged admission**
-- [ ] **Edit denied for discharged admission**
+- [ ] Vital signs: Edit denied after 24h (non-admin)
+- [ ] Vital signs: Edit denied for non-creator (non-admin)
+- [ ] Vital signs: Admin can edit any record anytime
+- [ ] **Create denied for discharged admission (both record types)**
+- [ ] **Edit denied for discharged admission (both record types, including ADMIN)**
 
 ### General
 - [ ] API contract documented
@@ -880,7 +922,10 @@ private fun validateRecordedAt(recordedAt: LocalDateTime?) {
 In clinical settings, vital signs are often recorded at the bedside on paper or a mobile device, then entered into the system later. The `recordedAt` field captures when the measurement was actually taken, while `createdAt` (from BaseEntity) captures when it was entered into the system. This distinction is important for clinical accuracy and charting.
 
 ### Why no optimistic locking?
-The existing codebase does not use `@Version` for optimistic locking. For consistency, this feature follows the same pattern. The 24-hour edit window and creator-only restriction significantly reduce the likelihood of concurrent edit conflicts.
+The existing codebase does not use `@Version` for optimistic locking. For consistency, this feature follows the same pattern. For nursing notes (admin-only update), conflicts are rare in practice — only a single role can edit. For vital signs, the 24-hour edit window and creator-only restriction significantly reduce the likelihood of concurrent edit conflicts.
+
+### Why are nursing notes admin-only update but vital signs creator+24h?
+The two records solve different clinical problems. **Vital signs** are typed live at the bedside; a nurse who keys "12/80" instead of "120/80" needs a short self-correction window before the value is locked in. **Nursing notes** are narrative documentation that, once authored, become a legal-record statement of clinical observation. Allowing the author to edit their own note creates a tampering vector that is hard to audit (a nurse could quietly rewrite history within the window). The administrator-only path forces an explicit, traceable correction workflow for narrative entries while keeping the live-data correction affordance for measurements.
 
 ### Why database-level CHECK constraint for blood pressure?
 While the application validates systolic > diastolic, adding a database constraint provides defense-in-depth. This ensures data integrity even if validation is bypassed (e.g., direct database access, future API changes).
@@ -889,7 +934,7 @@ While the application validates systolic > diastolic, adding a database constrai
 The paginated list endpoint is optimized for table view (default 20 records). Charts need all data points to display trends accurately. A separate endpoint avoids overloading the paginated endpoint with a "fetch all" mode and makes the API contract clearer.
 
 ### Why block writes for discharged admissions?
-Medical records for discharged patients should be immutable for legal and compliance reasons. While the existing codebase doesn't consistently enforce this (Progress Notes don't check), this feature implements it correctly as a best practice.
+Medical records for discharged patients should be immutable for legal and compliance reasons. Nursing notes, vital signs, and progress notes all enforce this guard at the service layer (see [`medical-psychiatric-record.md`](./medical-psychiatric-record.md) revision 1.4). Clinical history and medical orders remain admin-only for `update`, with their own per-domain rules for state transitions.
 
 ---
 

@@ -35,12 +35,11 @@ const sortDirection = ref<'ASC' | 'DESC'>('DESC')
 const dialogVisible = ref(false)
 const noteToEdit = ref<NursingNoteResponse | null>(null)
 
-// Permission checks
+// Permission checks. Edit visibility per-note is read from `note.canEdit` returned
+// by the server (admin-only on active admissions); we do not re-derive it from role
+// or permission state on the frontend.
 const canCreate = computed(
   () => authStore.hasPermission('nursing-note:create') && props.admissionStatus === 'ACTIVE'
-)
-const canUpdate = computed(
-  () => authStore.hasPermission('nursing-note:update') && props.admissionStatus === 'ACTIVE'
 )
 
 // Sort options
@@ -163,7 +162,7 @@ onMounted(loadNotes)
           v-for="note in notes"
           :key="note.id"
           :note="note"
-          :canEdit="canUpdate"
+          :canEdit="note.canEdit"
           @edit="openEditDialog"
         />
 

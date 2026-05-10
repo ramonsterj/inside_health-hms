@@ -7,12 +7,22 @@
 | 1.0 | 2026-02-04 | @author | Initial draft |
 | 1.1 | 2026-04-27 | @author | Add medical order workflow states (solicitado, no autorizado, autorizado, reclamar resultados, reclamado), authorize/reject/claim-results endpoints, and a cross-admission orders-by-state screen |
 | 1.2 | 2026-04-28 | @author | Replace single workflow with three category-driven shapes: directive (no flow), authorize-only (medications), authorize+execute+results (labs / referrals / psychometric tests). Replace manual `RECLAMAR_RESULTADOS` with explicit `EN_PROCESO` (sample taken / patient referred / test administered) milestone owned by nursing. Add emergency-authorize action for doctors. Rename `DISCONTINUED` to `DESCONTINUADO` for Spanish consistency. |
+| 1.3 | 2026-05-09 | @author | (superseded by 1.4) Aligned progress-note edit policy with nursing notes' creator+24h+admin-override pattern. Replaced before reaching production by 1.4. |
+| 1.4 | 2026-05-09 | @author | **Strict admin-only update** for progress notes (Evoluciones). Doctors, nurses, and chief nurses can `create` and `read` only; only ADMIN can update existing notes. ADMIN updates are still blocked once the admission is discharged. The 24-hour creator-edit window from 1.3 is removed; this matches the rule originally requested for both nursing notes and progress notes. CHIEF_NURSE gains `progress-note:create` (V096); the unused `progress-note:update` grants on CHIEF_NURSE (seed) and the V095 grants to DOCTOR/NURSE are removed. `ProgressNoteResponse.canEdit` now means `isAdmin && admission.isActive`. The service-layer guard reduces to an admin role check plus discharge protection. Vital signs retain their existing 24h creator window pattern (out of scope). |
 
 ---
 
 ## Overview
 
-This feature provides a comprehensive medical/psychiatric record system for hospitalized patients. It includes three main sections: Clinical History (Historia Clínica) for initial patient assessment, Progress Notes (Evoluciones) for ongoing daily observations by nurses and doctors, and Medical Orders (Órdenes Médicas) for prescriptions, lab requests, and care instructions. This record is displayed as part of the admission details view. All entries are append-only for doctors/nurses; only admins can modify existing records. Full audit trail is maintained for all operations.
+This feature provides a comprehensive medical/psychiatric record system for hospitalized patients. It includes three main sections: Clinical History (Historia Clínica) for initial patient assessment, Progress Notes (Evoluciones) for ongoing daily observations by nurses and doctors, and Medical Orders (Órdenes Médicas) for prescriptions, lab requests, and care instructions. This record is displayed as part of the admission details view. Full audit trail is maintained for all operations.
+
+**Edit policy** (per record type):
+
+- **Clinical History** — append-only for non-admins; only ADMIN can edit existing records.
+- **Progress Notes (Evoluciones)** — append-only for non-admins. DOCTOR, NURSE, and CHIEF_NURSE can `create` and `read`. Only ADMIN can edit existing notes. ADMIN edits are blocked once the admission is discharged. There is no creator-edit window — a doctor or nurse who needs to correct their own note must request the change from an administrator. This matches the policy originally specified for the medical record (only admin can modify existing entries).
+- **Medical Orders** — append-only for non-admins; only ADMIN can free-form-edit. State transitions (authorize, mark-in-progress, discontinue, etc.) are exposed as their own permissioned endpoints, not as `update`.
+
+> **Note** — Nursing notes follow the same admin-only update rule as progress notes (see [`nursing-module.md`](./nursing-module.md) revision 1.3). Vital signs keep a separate 24-hour creator-edit window pattern; that divergence is intentional and is documented in the nursing module spec.
 
 ---
 
@@ -24,17 +34,18 @@ This feature provides a comprehensive medical/psychiatric record system for hosp
 3. As an **admin**, I want to modify a clinical history entry so that I can correct errors or update information.
 
 **Progress Notes (Evoluciones)**
-4. As a **doctor or nurse**, I want to add progress notes to an admission so that I can document the patient's daily status and observations.
-5. As a **doctor or nurse**, I want to view all progress notes for an admission (with timestamps and author) so that I can track the patient's evolution over time.
-6. As an **admin**, I want to modify a progress note so that I can correct errors if needed.
+4. As a **doctor, nurse, or chief nurse**, I want to add progress notes to an admission so that I can document the patient's daily status and observations.
+5. As a **doctor, nurse, or chief nurse**, I want to view all progress notes for an admission (with timestamps and author) so that I can track the patient's evolution over time.
+6. As an **admin**, I want to modify any progress note so that I can correct errors when the original author cannot. (No edit affordance is granted to the author themselves; they must request the change from an administrator.)
+7. As any user, I should not be able to modify progress notes for a patient that has already been discharged, so the medical record is immutable post-discharge for legal/compliance reasons.
 
 **Medical Orders (Órdenes Médicas)**
-7. As a **doctor**, I want to create medical orders (medications, labs, diet, etc.) for an admitted patient so that nurses can follow the treatment plan.
-8. As a **nurse**, I want to view all active medical orders for an admission so that I can administer the correct care.
-9. As an **admin**, I want to modify or cancel a medical order so that I can correct errors.
+8. As a **doctor**, I want to create medical orders (medications, labs, diet, etc.) for an admitted patient so that nurses can follow the treatment plan.
+9. As a **nurse**, I want to view all active medical orders for an admission so that I can administer the correct care.
+10. As an **admin**, I want to modify or cancel a medical order so that I can correct errors.
 
 **Audit**
-10. As a **user with access**, I want to see who created or modified each entry and when so that there is full accountability for medical records.
+11. As a **user with access**, I want to see who created or modified each entry and when so that there is full accountability for medical records.
 
 ---
 
@@ -52,9 +63,11 @@ This feature provides a comprehensive medical/psychiatric record system for hosp
 
 | Action | Required Role(s) | Permission | Notes |
 |--------|------------------|------------|-------|
-| View | DOCTOR, NURSE, ADMIN | `progress-note:read` | All medical staff can view |
-| Create | DOCTOR, NURSE, ADMIN | `progress-note:create` | Both can add notes |
-| Update | ADMIN | `progress-note:update` | Append-only for doctors/nurses |
+| View | DOCTOR, NURSE, CHIEF_NURSE, ADMIN | `progress-note:read` | All medical staff can view |
+| Create | DOCTOR, NURSE, CHIEF_NURSE, ADMIN | `progress-note:create` | Active admissions only. CHIEF_NURSE gains this in V096. |
+| Update | ADMIN | `progress-note:update` | Admin-only. No creator-edit window. Active admissions only — discharge blocks even ADMIN. Doctors and nurses must request edits from an administrator. |
+
+All write operations (create/update) are blocked for discharged admissions. Nursing notes follow the same admin-only update rule (see [`nursing-module.md`](./nursing-module.md)).
 
 ### Medical Orders (Órdenes Médicas)
 
@@ -119,7 +132,18 @@ This feature provides a comprehensive medical/psychiatric record system for hosp
 - Display as chronological list (newest first option, or oldest first)
 - Each entry shows: author (name + role), timestamp, all four fields
 - Filter by date range, author
-- Doctors and nurses can create; only admins can edit existing entries
+- Doctors, nurses, and chief nurses can create new entries on active admissions
+- **Append-only for non-admins**: there is no edit affordance for the author; once a note is saved, only an administrator can change it
+- Edit existing progress notes — ADMIN only
+- Track creator (`createdBy`) and editor (`updatedBy`) for audit trail
+- **Discharge protection**: nobody — including ADMIN — can create or edit progress notes for discharged admissions. This protects the medical record post-discharge.
+- **canEdit logic** (computed server-side and returned on every `ProgressNoteResponse`):
+
+  ```
+  canEdit = currentUser.isAdmin AND admission.isActive
+  ```
+
+  Doctors, nurses, and chief nurses always receive `canEdit = false`. The frontend must hide the edit button when this is false; it must not infer edit visibility from role or permission alone.
 
 ### Medical Orders (Órdenes Médicas)
 
@@ -298,15 +322,18 @@ A new top-level screen lists medical orders across all admissions, grouped/filte
 
 ### Progress Notes - Happy Path
 
-- When a doctor or nurse creates a progress note, it is saved with timestamp and author information.
+- When a doctor, nurse, or chief nurse creates a progress note on an active admission, it is saved with timestamp and author information.
 - When viewing progress notes, they are displayed in chronological order with author and timestamp visible.
 - Multiple progress notes can be created on the same day by different users.
+- When an admin edits any progress note on an active admission, the system updates the note and returns 200 OK; the original `createdBy` is preserved.
+- The `ProgressNoteResponse` includes a server-computed `canEdit` field that the frontend uses to show or hide the edit button. `canEdit` is `true` only for admins on active admissions; it is always `false` for doctors, nurses, and chief nurses.
 
 ### Progress Notes - Edge Cases
 
-- When a doctor/nurse attempts to edit their own progress note, return 403 Forbidden (append-only).
+- When a doctor, nurse, or chief nurse attempts to edit any progress note (including one they authored), return 403 Forbidden — both because they lack `progress-note:update` and because the service-layer guard enforces ADMIN-only.
+- When **any user (including admin)** attempts to create or edit a progress note on a discharged admission, return 400 Bad Request with message "Cannot modify records for discharged admissions" / "No se pueden modificar registros de admisiones dadas de alta".
+- When editing a non-existent progress note, return 404 Not Found.
 - When submitting a progress note with all empty fields, return 400 Bad Request with validation error.
-- When an admin edits a progress note, the original author is preserved but "modified by" is tracked.
 
 ### Medical Orders - Happy Path
 
@@ -352,7 +379,7 @@ A new top-level screen lists medical orders across all admissions, grouped/filte
 
 ## Non-Functional Requirements
 
-- **Security**: All entries are append-only for non-admin users; only admins can modify existing records
+- **Security**: Clinical history, progress notes, and medical orders are all append-only for non-admin users — only ADMIN can call their `update` endpoints. For progress notes the policy is enforced at two layers: (1) `progress-note:update` is granted only to ADMIN at the role-permission level, blocking the request at `@PreAuthorize`; (2) `ProgressNoteService.updateProgressNote()` independently asserts ADMIN role and throws `ForbiddenException` otherwise, so the rule continues to hold if a future migration accidentally widens the permission. Discharge protection (`BadRequestException` on discharged admissions) is enforced unconditionally at the service layer for both create and update, including for ADMIN.
 - **Audit**: Full audit trail on all entries (required for medical compliance)
 - **Performance**: Progress notes list should paginate for admissions with many entries
 - **Rich Text**: Support basic formatting (bold, italic, lists, headings) in all text fields
@@ -376,7 +403,7 @@ A new top-level screen lists medical orders across all admissions, grouped/filte
 | GET | `/api/v1/admissions/{admissionId}/progress-notes` | - | `PagedResponse<ProgressNoteResponse>` | Yes | List progress notes with pagination |
 | GET | `/api/v1/admissions/{admissionId}/progress-notes/{id}` | - | `ProgressNoteResponse` | Yes | Get single progress note |
 | POST | `/api/v1/admissions/{admissionId}/progress-notes` | `CreateProgressNoteRequest` | `ProgressNoteResponse` | Yes | Create progress note |
-| PUT | `/api/v1/admissions/{admissionId}/progress-notes/{id}` | `UpdateProgressNoteRequest` | `ProgressNoteResponse` | Yes | Update progress note (admin only) |
+| PUT | `/api/v1/admissions/{admissionId}/progress-notes/{id}` | `UpdateProgressNoteRequest` | `ProgressNoteResponse` | Yes | Update progress note. Allowed only for ADMIN on an active admission. Returns 403 for any non-admin role (including the original author). Returns 400 if the admission is discharged (even for ADMIN). |
 
 ### Medical Orders Endpoints
 
@@ -469,7 +496,8 @@ A new top-level screen lists medical orders across all admissions, grouped/filte
     "role": "NURSE"
   },
   "updatedAt": "2026-02-04T14:00:00",
-  "updatedBy": null
+  "updatedBy": null,
+  "canEdit": true
 }
 
 // POST /api/v1/admissions/{admissionId}/medical-orders - Request
@@ -884,7 +912,31 @@ WHERE r.code = 'NURSE' AND p.code IN (
     'progress-note:create', 'progress-note:read',
     'medical-order:read'
 );
+
+-- Assign CHIEF_NURSE: read clinical-history, create/read progress-note, read medical-order
+-- NOTE: progress-note:create is added by V096; older versions of the seed file may
+-- have granted progress-note:update to CHIEF_NURSE — V096 also revokes that grant.
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
+SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM roles r CROSS JOIN permissions p
+WHERE r.code = 'CHIEF_NURSE' AND p.code IN (
+    'clinical-history:read',
+    'progress-note:create', 'progress-note:read',
+    'medical-order:read'
+);
 ```
+
+> **Note** — Only ADMIN holds `progress-note:update`. The controller-level `@PreAuthorize` blocks every other role, and the service layer additionally asserts `ADMIN` so the rule continues to hold if the permission is later widened. ADMIN updates are still subject to discharge protection.
+
+### Migrations Required
+
+| Version | Filename | Purpose |
+|---------|----------|---------|
+| V029-V031 | (existing) | Create `clinical_histories`, `progress_notes`, `medical_orders` tables |
+| V032 / V038 | `add_medical_record_permissions.sql` | Define `clinical-history:*`, `progress-note:*`, `medical-order:*` permissions and assign to roles (`progress-note:update` for ADMIN only — final state) |
+| V092 / V093 / V094 | (existing) | Medical order workflow states + workflow permissions + rejection audit columns |
+| ~~V095~~ | ~~`add_progress_note_update_to_doctor_nurse.sql`~~ | **Removed before merge.** Briefly granted `progress-note:update` to DOCTOR and NURSE under the v1.3 spec; superseded by v1.4 which keeps update strictly with ADMIN. The migration file is deleted from the working tree. |
+| **V096** | **`lock_progress_note_update_to_admin_only.sql`** | **(1)** Grant `progress-note:create` to CHIEF_NURSE so they can author notes. **(2)** Revoke any existing `progress-note:update` grant from CHIEF_NURSE (legacy seed grant). **(3)** Revoke any existing `nursing-note:update` grants from DOCTOR, NURSE, and CHIEF_NURSE so nursing notes match progress notes (admin-only update). All revocations are idempotent (`DELETE … WHERE …`). |
 
 ### Index Requirements
 
@@ -1045,7 +1097,7 @@ export const emergencyAuthorizeMedicalOrderSchema = z.object({
 
 - **Rich Text Editor**: Use PrimeVue's `Editor` component (Quill-based) for rich text fields. Alternatively, consider TipTap for more control.
 - **Tab Structure**: Add a `MedicalRecordTabs` component to the existing `AdmissionDetail.vue` that contains three tabs: Clinical History, Progress Notes, Medical Orders.
-- **Append-Only Pattern**: Services should check user role before allowing updates. Only users with ADMIN role can call update endpoints.
+- **Append-Only Pattern (Clinical History, Progress Notes, Medical Orders)**: Services check user role before allowing updates. Only users with ADMIN role can call update endpoints for these record types. For progress notes specifically, `ProgressNoteService.updateProgressNote()` must call an `assertAdmin()` helper that throws `ForbiddenException` when `!currentUser.hasRole("ADMIN")`, independently of the controller's `@PreAuthorize`. Independently, the service must throw `BadRequestException` if the admission is discharged — even for ADMIN. `ProgressNoteResponse.canEdit` is computed as `currentUser.isAdmin && admission.isActive` so the frontend can hide the edit button without re-deriving the rule. **Do not** rely on `@PreAuthorize` alone — these are domain rules, not just role rules.
 - **Audit Display**: Show `createdBy`, `createdAt`, `updatedBy`, `updatedAt` on all entries using a reusable `AuditInfo` component.
 - **Grouping Medical Orders**: The API returns medical orders grouped by category. Frontend can use PrimeVue's `Accordion` or `TabView` to display categories.
 - **PostgreSQL Enums**: Use `CREATE TYPE ... AS ENUM` for category and route fields. In Kotlin, map with `@Enumerated(EnumType.STRING)` and `@Column(columnDefinition = "...")`.
@@ -1063,7 +1115,13 @@ export const emergencyAuthorizeMedicalOrderSchema = z.object({
 - [ ] DTOs used in controllers (no entity exposure)
 - [ ] Input validation in place
 - [ ] Clinical history: one per admission constraint enforced
-- [ ] Progress notes: append-only for non-admins
+- [ ] Progress notes: doctor / nurse / chief nurse can create on active admission
+- [ ] Progress notes: doctor / nurse / chief nurse update returns 403 (every role except ADMIN)
+- [ ] Progress notes: ADMIN can update any note on active admission
+- [ ] Progress notes: create denied on discharged admission for every role (400)
+- [ ] Progress notes: update denied on discharged admission for every role including ADMIN (400)
+- [ ] Progress notes: `canEdit` returned on every `ProgressNoteResponse` and equals `isAdmin && admissionActive`
+- [ ] Progress notes: service-layer admin assertion holds even when `progress-note:update` is granted to a non-admin role (defense-in-depth test)
 - [ ] Medical orders: append-only for non-admins
 - [ ] Medical orders: directive categories created in `ACTIVA`, auth-required in `SOLICITADO`
 - [ ] Medical orders: authorize endpoint rejects directive categories with 400
@@ -1097,7 +1155,8 @@ export const emergencyAuthorizeMedicalOrderSchema = z.object({
 - [ ] Rich text editor component working
 - [ ] Audit info displayed on all entries
 - [ ] Create buttons hidden for unauthorized users
-- [ ] Edit buttons shown only for admins
+- [ ] Clinical-history, progress-note, and medical-order edit buttons shown only for ADMIN
+- [ ] Progress-note edit button reads `canEdit` from the server response (true only for ADMIN on active admissions); always hidden for doctors / nurses / chief nurses
 - [ ] Pinia stores implemented
 - [ ] Form validation with VeeValidate + Zod
 - [ ] Error handling implemented
@@ -1113,8 +1172,14 @@ export const emergencyAuthorizeMedicalOrderSchema = z.object({
 - [ ] Doctor/nurse cannot edit clinical history
 - [ ] Doctor creates progress note
 - [ ] Nurse creates progress note
-- [ ] Doctor/nurse cannot edit progress notes
-- [ ] Admin edits progress note
+- [ ] Chief nurse creates progress note (V096 grant)
+- [ ] Doctor cannot edit any progress note (own or others') — 403
+- [ ] Nurse cannot edit any progress note (own or others') — 403
+- [ ] Chief nurse cannot edit any progress note — 403
+- [ ] Admin edits any progress note on an active admission — 200
+- [ ] Create progress note denied on discharged admission for every role — 400
+- [ ] Update progress note denied on discharged admission for ADMIN — 400
+- [ ] Edit button hidden in the UI for non-admins; visible for admin on active admissions; hidden for admin on discharged admissions
 - [ ] Doctor creates medical order
 - [ ] Nurse cannot create medical order
 - [ ] Doctor/nurse cannot edit medical orders
@@ -1169,7 +1234,7 @@ export const emergencyAuthorizeMedicalOrderSchema = z.object({
 - [ ] **`ClinicalHistory.kt`** - Document one-per-admission constraint
 - [ ] **`ProgressNote.kt`** - Document SOAP structure
 - [ ] **`MedicalOrder.kt`** - Document categories and discontinue flow
-- [ ] **`*Service.kt`** - Document append-only behavior for non-admins
+- [ ] **`ClinicalHistoryService.kt` / `ProgressNoteService.kt` / `MedicalOrderService.kt`** - Document admin-only update behavior and discharge protection. `ProgressNoteService` should call out the `canEdit = isAdmin && admissionActive` rule and that the service-layer admin assertion is intentional defense-in-depth on top of `@PreAuthorize`.
 
 ---
 
@@ -1177,4 +1242,5 @@ export const emergencyAuthorizeMedicalOrderSchema = z.object({
 
 - Related feature: [Patient Admission](./patient-admission.md)
 - Related entity: `Admission` (parent entity for all medical records)
-- Related pattern: Append-only with admin override (similar to audit log patterns)
+- Related pattern: Append-only with admin override (used by Clinical History, Progress Notes, Medical Orders, and Nursing Notes — see [`nursing-module.md`](./nursing-module.md) revision 1.3 for nursing notes; similar to audit log patterns)
+- Related divergence: Vital Signs retain a creator + 24-hour edit window pattern with admin override (different rule from progress / nursing notes — see [`nursing-module.md`](./nursing-module.md) §"Edit Time Limit" and §"canEdit Logic" for the vital-signs-only spec)

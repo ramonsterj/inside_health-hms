@@ -167,17 +167,17 @@ class ProgressNoteControllerTest : AbstractIntegrationTest() {
             .andExpect(status().isNotFound)
     }
 
-    // ============ UPDATE PROGRESS NOTE TESTS ============
+    // ============ UPDATE PROGRESS NOTE TESTS (admin-only per spec v1.4) ============
 
     @Test
-    fun `admin can update progress note`() {
-        val noteId = createProgressNoteAndGetId("Original note")
+    fun `admin can update any progress note on active admission`() {
+        val noteId = createProgressNoteAndGetId("Original note", doctorToken)
 
         val updateRequest = UpdateProgressNoteRequest(
-            subjectiveData = "Updated subjective data",
-            objectiveData = "Updated objective data",
-            analysis = "Updated analysis",
-            actionPlans = "Updated action plans",
+            subjectiveData = "Admin updated subjective",
+            objectiveData = "Admin updated objective",
+            analysis = "Admin updated analysis",
+            actionPlans = "Admin updated plans",
         )
 
         mockMvc.perform(
@@ -188,12 +188,12 @@ class ProgressNoteControllerTest : AbstractIntegrationTest() {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.data.subjectiveData").value("Updated subjective data"))
+            .andExpect(jsonPath("$.data.subjectiveData").value("Admin updated subjective"))
     }
 
     @Test
-    fun `doctor cannot update progress note`() {
-        val noteId = createProgressNoteAndGetId("Original note")
+    fun `doctor cannot update own progress note`() {
+        val noteId = createProgressNoteAndGetId("Doctor's note", doctorToken)
 
         val updateRequest = UpdateProgressNoteRequest(
             subjectiveData = "Should fail",
@@ -213,7 +213,7 @@ class ProgressNoteControllerTest : AbstractIntegrationTest() {
 
     @Test
     fun `nurse cannot update progress note`() {
-        val noteId = createProgressNoteAndGetId("Original note")
+        val noteId = createProgressNoteAndGetId("Doctor's note", doctorToken)
 
         val updateRequest = UpdateProgressNoteRequest(
             subjectiveData = "Should fail",
@@ -229,6 +229,88 @@ class ProgressNoteControllerTest : AbstractIntegrationTest() {
                 .content(objectMapper.writeValueAsString(updateRequest)),
         )
             .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `chief nurse can create progress note`() {
+        val (_, chiefNurseToken) = createChiefNurseUser()
+
+        val request = CreateProgressNoteRequest(
+            subjectiveData = "Chief nurse observation",
+            objectiveData = null,
+            analysis = null,
+            actionPlans = null,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/progress-notes")
+                .header("Authorization", "Bearer $chiefNurseToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isCreated)
+    }
+
+    @Test
+    fun `chief nurse cannot update progress note`() {
+        val noteId = createProgressNoteAndGetId("Doctor's note", doctorToken)
+        val (_, chiefNurseToken) = createChiefNurseUser()
+
+        val updateRequest = UpdateProgressNoteRequest(
+            subjectiveData = "Should fail",
+            objectiveData = null,
+            analysis = null,
+            actionPlans = null,
+        )
+
+        mockMvc.perform(
+            put("/api/v1/admissions/$admissionId/progress-notes/$noteId")
+                .header("Authorization", "Bearer $chiefNurseToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)),
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `create progress note fails for discharged admission`() {
+        dischargeAdmission(admissionId, adminToken)
+
+        val request = CreateProgressNoteRequest(
+            subjectiveData = "Should fail - discharged",
+            objectiveData = null,
+            analysis = null,
+            actionPlans = null,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/progress-notes")
+                .header("Authorization", "Bearer $doctorToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `admin update progress note fails for discharged admission`() {
+        val noteId = createProgressNoteAndGetId("Note before discharge", doctorToken)
+        dischargeAdmission(admissionId, adminToken)
+
+        val updateRequest = UpdateProgressNoteRequest(
+            subjectiveData = "Should fail - discharged",
+            objectiveData = null,
+            analysis = null,
+            actionPlans = null,
+        )
+
+        mockMvc.perform(
+            put("/api/v1/admissions/$admissionId/progress-notes/$noteId")
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)),
+        )
+            .andExpect(status().isBadRequest)
     }
 
     // ============ UNAUTHENTICATED / NON-EXISTENT ADMISSION TESTS ============
@@ -289,7 +371,7 @@ class ProgressNoteControllerTest : AbstractIntegrationTest() {
 
     @Test
     fun `progress note includes audit fields`() {
-        val noteId = createProgressNoteAndGetId("Audit test")
+        val noteId = createProgressNoteAndGetId("Audit test", doctorToken)
 
         mockMvc.perform(
             get("/api/v1/admissions/$admissionId/progress-notes/$noteId")
@@ -301,7 +383,46 @@ class ProgressNoteControllerTest : AbstractIntegrationTest() {
             .andExpect(jsonPath("$.data.createdBy.firstName").value("Dr. Maria"))
     }
 
-    private fun createProgressNote(subjectiveData: String) {
+    @Test
+    fun `canEdit is true for admin and false for everyone else`() {
+        val noteId = createProgressNoteAndGetId("canEdit test", doctorToken)
+
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/progress-notes/$noteId")
+                .header("Authorization", "Bearer $doctorToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.canEdit").value(false))
+
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/progress-notes/$noteId")
+                .header("Authorization", "Bearer $nurseToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.canEdit").value(false))
+
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/progress-notes/$noteId")
+                .header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.canEdit").value(true))
+    }
+
+    @Test
+    fun `canEdit is false for admin on discharged admission`() {
+        val noteId = createProgressNoteAndGetId("discharge canEdit test", doctorToken)
+        dischargeAdmission(admissionId, adminToken)
+
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/progress-notes/$noteId")
+                .header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.canEdit").value(false))
+    }
+
+    private fun createProgressNote(subjectiveData: String, token: String = doctorToken) {
         val request = CreateProgressNoteRequest(
             subjectiveData = subjectiveData,
             objectiveData = "Vital signs stable",
@@ -311,13 +432,13 @@ class ProgressNoteControllerTest : AbstractIntegrationTest() {
 
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/progress-notes")
-                .header("Authorization", "Bearer $doctorToken")
+                .header("Authorization", "Bearer $token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)),
         ).andExpect(status().isCreated)
     }
 
-    private fun createProgressNoteAndGetId(subjectiveData: String): Long {
+    private fun createProgressNoteAndGetId(subjectiveData: String, token: String = doctorToken): Long {
         val request = CreateProgressNoteRequest(
             subjectiveData = subjectiveData,
             objectiveData = "Vital signs stable",
@@ -327,7 +448,7 @@ class ProgressNoteControllerTest : AbstractIntegrationTest() {
 
         val result = mockMvc.perform(
             post("/api/v1/admissions/$admissionId/progress-notes")
-                .header("Authorization", "Bearer $doctorToken")
+                .header("Authorization", "Bearer $token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)),
         ).andReturn()

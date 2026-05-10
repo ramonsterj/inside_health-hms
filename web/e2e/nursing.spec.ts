@@ -1,10 +1,11 @@
 import { test, expect } from '@playwright/test'
-import {
-  waitForMedicalRecordTabs,
-  selectMedicalRecordTab
-} from './utils/test-helpers'
+import { waitForMedicalRecordTabs, selectMedicalRecordTab } from './utils/test-helpers'
 
 // Mock user data
+//
+// Per spec v1.3 (nursing-module.md), only ADMIN holds `nursing-note:update` after V096.
+// Vital-sign update keeps the creator+24h+admin-override pattern, so DOCTOR/NURSE/CHIEF_NURSE
+// retain `vital-sign:update`.
 const mockNurseUser = {
   id: 4,
   username: 'nurse',
@@ -17,12 +18,81 @@ const mockNurseUser = {
     'admission:read',
     'nursing-note:read',
     'nursing-note:create',
-    'nursing-note:update',
     'vital-sign:read',
     'vital-sign:create',
     'vital-sign:update',
     'clinical-history:read',
     'psychotherapy-activity:read'
+  ],
+  status: 'ACTIVE',
+  emailVerified: true,
+  createdAt: '2026-01-01T00:00:00Z',
+  localePreference: 'en'
+}
+
+const mockAdminUser = {
+  id: 1,
+  username: 'admin',
+  email: 'admin@example.com',
+  firstName: 'Admin',
+  lastName: 'User',
+  roles: ['ADMIN'],
+  permissions: [
+    'admission:read',
+    'nursing-note:read',
+    'nursing-note:create',
+    'nursing-note:update',
+    'vital-sign:read',
+    'vital-sign:create',
+    'vital-sign:update',
+    'clinical-history:read',
+    'clinical-history:update'
+  ],
+  status: 'ACTIVE',
+  emailVerified: true,
+  createdAt: '2026-01-01T00:00:00Z',
+  localePreference: 'en'
+}
+
+const mockDoctorUser = {
+  id: 2,
+  username: 'doctor',
+  email: 'doctor@example.com',
+  firstName: 'Maria',
+  lastName: 'Garcia',
+  salutation: 'DRA',
+  roles: ['DOCTOR'],
+  permissions: [
+    'admission:read',
+    'nursing-note:read',
+    'nursing-note:create',
+    'vital-sign:read',
+    'vital-sign:create',
+    'vital-sign:update',
+    'clinical-history:read'
+  ],
+  status: 'ACTIVE',
+  emailVerified: true,
+  createdAt: '2026-01-01T00:00:00Z',
+  localePreference: 'en'
+}
+
+const mockChiefNurseUser = {
+  id: 5,
+  username: 'chiefnurse',
+  email: 'chiefnurse@example.com',
+  firstName: 'Carmen',
+  lastName: 'Flores',
+  salutation: 'SRA',
+  roles: ['CHIEF_NURSE'],
+  permissions: [
+    'admission:read',
+    'nursing-note:read',
+    'nursing-note:create',
+    'vital-sign:read',
+    'vital-sign:create',
+    'vital-sign:update',
+    'clinical-history:read'
   ],
   status: 'ACTIVE',
   emailVerified: true,
@@ -60,6 +130,8 @@ const mockDischargedAdmission = {
   dischargeDate: '2026-02-05T16:00:00Z'
 }
 
+// Default `canEdit: false` reflects what a non-admin viewer sees under the
+// admin-only update policy (spec v1.3). Admin tests override this per-test.
 const mockNursingNotes = [
   {
     id: 2,
@@ -75,7 +147,7 @@ const mockNursingNotes = [
       roles: ['NURSE']
     },
     updatedBy: null,
-    canEdit: true
+    canEdit: false
   },
   {
     id: 1,
@@ -91,7 +163,7 @@ const mockNursingNotes = [
       roles: ['NURSE']
     },
     updatedBy: null,
-    canEdit: true
+    canEdit: false
   }
 ]
 
@@ -147,10 +219,7 @@ const mockVitalSigns = [
 ]
 
 // Helper function to setup authenticated state
-async function setupAuth(
-  page: import('@playwright/test').Page,
-  user: typeof mockNurseUser
-) {
+async function setupAuth(page: import('@playwright/test').Page, user: typeof mockNurseUser) {
   await page.addInitScript(userData => {
     localStorage.setItem('access_token', 'mock-access-token')
     localStorage.setItem('refresh_token', 'mock-refresh-token')
@@ -158,10 +227,7 @@ async function setupAuth(
   }, user)
 }
 
-async function setupCommonMocks(
-  page: import('@playwright/test').Page,
-  user: typeof mockNurseUser
-) {
+async function setupCommonMocks(page: import('@playwright/test').Page, user: typeof mockNurseUser) {
   await page.route('**/api/users/me', async route => {
     await route.fulfill({
       status: 200,
@@ -284,7 +350,9 @@ test.describe('Nursing Module', () => {
       await waitForMedicalRecordTabs(page)
       await selectMedicalRecordTab(page, 'nursingNotes')
 
-      await expect(page.getByText('Afternoon check: Medication administered as prescribed.')).toBeVisible()
+      await expect(
+        page.getByText('Afternoon check: Medication administered as prescribed.')
+      ).toBeVisible()
       await expect(page.getByText('Patient resting comfortably. Vital signs stable.')).toBeVisible()
     })
 
@@ -336,7 +404,60 @@ test.describe('Nursing Module', () => {
       await expect(page.getByRole('button', { name: /Cancel/i })).toBeVisible()
     })
 
-    test('can open edit nursing note dialog with existing content', async ({ page }) => {
+    test('admin can open edit nursing note dialog with existing content', async ({ page }) => {
+      // Per spec v1.3, only ADMIN can edit nursing notes — so the edit-flow test
+      // runs as ADMIN. The server returns `canEdit: true` only for ADMIN viewers.
+      await setupAuth(page, mockAdminUser)
+      await setupCommonMocks(page, mockAdminUser)
+
+      const adminVisibleNotes = mockNursingNotes.map(n => ({ ...n, canEdit: true }))
+
+      await page.route('**/api/v1/admissions/100', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: mockActiveAdmission })
+        })
+      })
+
+      await page.route('**/api/v1/admissions/100/nursing-notes*', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              content: adminVisibleNotes,
+              page: { totalElements: 2, totalPages: 1, size: 20, number: 0 }
+            }
+          })
+        })
+      })
+
+      await page.route('**/api/v1/admissions/100/clinical-history', async route => {
+        await route.fulfill({
+          status: 404,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: false, message: 'Not found' })
+        })
+      })
+
+      await page.goto('/admissions/100')
+      await waitForMedicalRecordTabs(page)
+      await selectMedicalRecordTab(page, 'nursingNotes')
+
+      // Admin clicks Edit on the first nursing note (canEdit is true for admin)
+      await page.locator('.nursing-note-card').first().getByRole('button', { name: /Edit/i }).click()
+
+      // Dialog should open with Edit Note title and pre-populated content
+      await expect(page.getByText(/Edit Note/i).first()).toBeVisible()
+      await expect(page.locator('.ql-editor')).toBeVisible()
+      await expect(page.locator('.ql-editor')).toContainText('Afternoon check')
+    })
+
+    test('nurse cannot edit own nursing notes (no edit button)', async ({ page }) => {
+      // Even though the nurse authored the notes, the spec v1.3 rule is admin-only update.
+      // The server returns `canEdit: false` for the nurse on every note.
       await setupAuth(page, mockNurseUser)
       await setupCommonMocks(page, mockNurseUser)
 
@@ -374,13 +495,147 @@ test.describe('Nursing Module', () => {
       await waitForMedicalRecordTabs(page)
       await selectMedicalRecordTab(page, 'nursingNotes')
 
-      // Click Edit on first note (canEdit is true)
-      await page.getByRole('button', { name: /Edit/i }).first().click()
+      await expect(
+        page.getByText('Afternoon check: Medication administered as prescribed.')
+      ).toBeVisible()
+      // No edit button on any nursing-note card for the nurse
+      await expect(
+        page.locator('.nursing-note-card').getByRole('button', { name: /Edit/i })
+      ).toHaveCount(0)
+    })
 
-      // Dialog should open with Edit Note title and pre-populated content
-      await expect(page.getByText(/Edit Note/i).first()).toBeVisible()
-      await expect(page.locator('.ql-editor')).toBeVisible()
-      await expect(page.locator('.ql-editor')).toContainText('Afternoon check')
+    test('doctor cannot edit nursing notes (no edit button)', async ({ page }) => {
+      await setupAuth(page, mockDoctorUser)
+      await setupCommonMocks(page, mockDoctorUser)
+
+      await page.route('**/api/v1/admissions/100', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: mockActiveAdmission })
+        })
+      })
+
+      await page.route('**/api/v1/admissions/100/nursing-notes*', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              content: mockNursingNotes,
+              page: { totalElements: 2, totalPages: 1, size: 20, number: 0 }
+            }
+          })
+        })
+      })
+
+      await page.route('**/api/v1/admissions/100/clinical-history', async route => {
+        await route.fulfill({
+          status: 404,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: false, message: 'Not found' })
+        })
+      })
+
+      await page.goto('/admissions/100')
+      await waitForMedicalRecordTabs(page)
+      await selectMedicalRecordTab(page, 'nursingNotes')
+
+      await expect(
+        page.locator('.nursing-note-card').getByRole('button', { name: /Edit/i })
+      ).toHaveCount(0)
+    })
+
+    test('chief nurse can create but not edit nursing notes', async ({ page }) => {
+      await setupAuth(page, mockChiefNurseUser)
+      await setupCommonMocks(page, mockChiefNurseUser)
+
+      await page.route('**/api/v1/admissions/100', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: mockActiveAdmission })
+        })
+      })
+
+      await page.route('**/api/v1/admissions/100/nursing-notes*', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              content: mockNursingNotes,
+              page: { totalElements: 2, totalPages: 1, size: 20, number: 0 }
+            }
+          })
+        })
+      })
+
+      await page.route('**/api/v1/admissions/100/clinical-history', async route => {
+        await route.fulfill({
+          status: 404,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: false, message: 'Not found' })
+        })
+      })
+
+      await page.goto('/admissions/100')
+      await waitForMedicalRecordTabs(page)
+      await selectMedicalRecordTab(page, 'nursingNotes')
+
+      // Chief nurse holds nursing-note:create — Add Note button is visible.
+      await expect(page.getByRole('button', { name: /Add Note/i })).toBeVisible()
+      // …but no edit buttons; canEdit is false.
+      await expect(
+        page.locator('.nursing-note-card').getByRole('button', { name: /Edit/i })
+      ).toHaveCount(0)
+    })
+
+    test('admin edit button is hidden for discharged admissions', async ({ page }) => {
+      // Admission discharged — server returns `canEdit: false` even for ADMIN.
+      await setupAuth(page, mockAdminUser)
+      await setupCommonMocks(page, mockAdminUser)
+
+      await page.route('**/api/v1/admissions/100', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: mockDischargedAdmission })
+        })
+      })
+
+      await page.route('**/api/v1/admissions/100/nursing-notes*', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              content: mockNursingNotes.map(n => ({ ...n, canEdit: false })),
+              page: { totalElements: 2, totalPages: 1, size: 20, number: 0 }
+            }
+          })
+        })
+      })
+
+      await page.route('**/api/v1/admissions/100/clinical-history', async route => {
+        await route.fulfill({
+          status: 404,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: false, message: 'Not found' })
+        })
+      })
+
+      await page.goto('/admissions/100')
+      await waitForMedicalRecordTabs(page)
+      await selectMedicalRecordTab(page, 'nursingNotes')
+
+      // Admin sees no edit button because the admission is discharged.
+      await expect(
+        page.locator('.nursing-note-card').getByRole('button', { name: /Edit/i })
+      ).toHaveCount(0)
     })
 
     test('hides edit button when canEdit is false', async ({ page }) => {
@@ -424,7 +679,9 @@ test.describe('Nursing Module', () => {
       await selectMedicalRecordTab(page, 'nursingNotes')
 
       // Notes should be visible but Edit buttons should not
-      await expect(page.getByText('Afternoon check: Medication administered as prescribed.')).toBeVisible()
+      await expect(
+        page.getByText('Afternoon check: Medication administered as prescribed.')
+      ).toBeVisible()
       await expect(page.getByRole('button', { name: /Edit/i })).not.toBeVisible()
     })
 
@@ -710,7 +967,10 @@ test.describe('Nursing Module', () => {
       await expect(page.getByText(/Charts/i).first()).toBeVisible()
 
       // Click Charts to switch view
-      await page.getByText(/Charts/i).first().click()
+      await page
+        .getByText(/Charts/i)
+        .first()
+        .click()
       await page.waitForTimeout(500)
 
       // Should see chart labels (e.g. Blood Pressure, Heart Rate)
@@ -766,7 +1026,10 @@ test.describe('Nursing Module', () => {
       await selectMedicalRecordTab(page, 'vitalSigns')
 
       // Switch to charts
-      await page.getByText(/Charts/i).first().click()
+      await page
+        .getByText(/Charts/i)
+        .first()
+        .click()
       await page.waitForTimeout(500)
 
       // Should show empty chart state

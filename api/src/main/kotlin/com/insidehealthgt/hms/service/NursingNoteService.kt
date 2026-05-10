@@ -4,7 +4,6 @@ import com.insidehealthgt.hms.dto.request.CreateNursingNoteRequest
 import com.insidehealthgt.hms.dto.request.UpdateNursingNoteRequest
 import com.insidehealthgt.hms.dto.response.NursingNoteResponse
 import com.insidehealthgt.hms.entity.Admission
-import com.insidehealthgt.hms.entity.BaseEntity
 import com.insidehealthgt.hms.entity.NursingNote
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ForbiddenException
@@ -18,8 +17,18 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
 
+/**
+ * Edit policy: only ADMIN can update existing nursing notes; doctors, nurses, and
+ * chief nurses are append-only. The `@PreAuthorize("hasAuthority('nursing-note:update')")`
+ * on the controller is the first gate (only ADMIN holds the permission after V096).
+ * `assertAdmin()` here is intentional defense-in-depth so the rule continues to hold
+ * if the permission is later widened. Discharge protection blocks all writes — including
+ * for ADMIN — and is enforced unconditionally.
+ *
+ * Vital signs follow a different pattern (24h creator window with admin override) — see
+ * VitalSignService.
+ */
 @Service
 class NursingNoteService(
     private val nursingNoteRepository: NursingNoteRepository,
@@ -28,9 +37,6 @@ class NursingNoteService(
     private val messageService: MessageService,
     private val currentUserProvider: CurrentUserProvider,
 ) {
-    companion object {
-        private const val EDIT_WINDOW_HOURS = 24L
-    }
 
     @Transactional(readOnly = true)
     fun listNursingNotes(admissionId: Long, pageable: Pageable): Page<NursingNoteResponse> {
@@ -39,7 +45,6 @@ class NursingNoteService(
 
         val notes = nursingNoteRepository.findByAdmissionIdWithRelations(admissionId, pageable)
 
-        // Batch fetch users to avoid N+1 queries
         val userIds = notes.content.flatMap { listOfNotNull(it.createdBy, it.updatedBy) }.distinct()
         val users = if (userIds.isNotEmpty()) {
             userRepository.findAllById(userIds).associateBy { it.id!! }
@@ -52,7 +57,7 @@ class NursingNoteService(
                 nursingNote = note,
                 createdByUser = note.createdBy?.let { users[it] },
                 updatedByUser = note.updatedBy?.let { users[it] },
-                canEdit = computeCanEdit(note, currentUser, admission.isActive()),
+                canEdit = computeCanEdit(currentUser, admission.isActive()),
             )
         }
     }
@@ -94,7 +99,7 @@ class NursingNoteService(
             ?: throw ResourceNotFoundException(messageService.errorNursingNoteNotFound(noteId, admissionId))
 
         val currentUser = currentUserProvider.currentUserDetailsOrThrow()
-        validateEditPermission(note, currentUser)
+        assertAdmin(currentUser)
 
         note.description = request.description
 
@@ -112,30 +117,14 @@ class NursingNoteService(
         }
     }
 
-    @Suppress("ThrowsCount")
-    private fun validateEditPermission(entity: BaseEntity, currentUser: CustomUserDetails) {
-        if (currentUser.hasRole("ADMIN")) return
-
-        if (entity.createdBy != currentUser.id) {
-            throw ForbiddenException(messageService.errorEditOnlyOwnRecords())
-        }
-
-        val createdAt = entity.createdAt
-            ?: throw ForbiddenException(messageService.errorEditWindowClosed())
-
-        if (!createdAt.plusHours(EDIT_WINDOW_HOURS).isAfter(LocalDateTime.now())) {
-            throw ForbiddenException(messageService.errorEditWindowClosed())
+    private fun assertAdmin(currentUser: CustomUserDetails) {
+        if (!currentUser.hasRole("ADMIN")) {
+            throw ForbiddenException(messageService.errorForbidden())
         }
     }
 
-    @Suppress("ReturnCount")
-    private fun computeCanEdit(entity: BaseEntity, currentUser: CustomUserDetails, admissionActive: Boolean): Boolean {
-        if (!admissionActive) return false
-        if (currentUser.hasRole("ADMIN")) return true
-        if (entity.createdBy != currentUser.id) return false
-        val createdAt = entity.createdAt ?: return false
-        return createdAt.plusHours(EDIT_WINDOW_HOURS).isAfter(LocalDateTime.now())
-    }
+    private fun computeCanEdit(currentUser: CustomUserDetails, admissionActive: Boolean): Boolean =
+        admissionActive && currentUser.hasRole("ADMIN")
 
     private fun buildResponse(
         note: NursingNote,
@@ -153,7 +142,7 @@ class NursingNoteService(
             nursingNote = note,
             createdByUser = note.createdBy?.let { users[it] },
             updatedByUser = note.updatedBy?.let { users[it] },
-            canEdit = computeCanEdit(note, currentUser, admissionActive),
+            canEdit = computeCanEdit(currentUser, admissionActive),
         )
     }
 }
