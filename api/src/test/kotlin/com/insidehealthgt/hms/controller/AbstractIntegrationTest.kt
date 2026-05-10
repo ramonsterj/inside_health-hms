@@ -317,6 +317,15 @@ abstract class AbstractIntegrationTest {
         lastName = "Johnson",
     )
 
+    protected fun createChiefNurseUser(): Pair<User, String> = createUserWithRole(
+        roleCode = "CHIEF_NURSE",
+        username = "chiefnurse",
+        email = "chiefnurse@example.com",
+        password = "password123",
+        firstName = "Chief",
+        lastName = "Flores",
+    )
+
     protected fun createAdminStaffUser(): Pair<User, String> = createUserWithRole(
         roleCode = "ADMINISTRATIVE_STAFF",
         username = "receptionist",

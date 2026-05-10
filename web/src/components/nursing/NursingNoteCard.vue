@@ -40,9 +40,7 @@ const wasEdited = computed(() => {
   return props.note.createdAt !== props.note.updatedAt
 })
 
-const showEditButton = computed(() => {
-  return props.canEdit && props.note.canEdit
-})
+const showEditButton = computed(() => props.canEdit)
 
 function toggleExpand() {
   expanded.value = !expanded.value

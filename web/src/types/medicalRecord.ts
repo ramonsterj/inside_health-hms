@@ -209,6 +209,7 @@ export interface ProgressNoteResponse {
   updatedAt: string | null
   createdBy: MedicalStaffResponse | null
   updatedBy: MedicalStaffResponse | null
+  canEdit: boolean
 }
 
 export interface CreateProgressNoteRequest {

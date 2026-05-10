@@ -32,7 +32,6 @@ const totalNotes = computed(() => progressNoteStore.getTotalNotes(props.admissio
 const loading = computed(() => progressNoteStore.loading)
 
 const canCreate = computed(() => authStore.hasPermission('progress-note:create'))
-const canUpdate = computed(() => authStore.hasPermission('progress-note:update'))
 
 const sortOptions = computed(() => [
   { label: t('medicalRecord.progressNote.newestFirst'), value: 'DESC' },
@@ -136,7 +135,7 @@ function handleNoteSaved() {
         v-for="note in notes"
         :key="note.id"
         :note="note"
-        :canEdit="canUpdate"
+        :canEdit="note.canEdit"
         @edit="openEditDialog(note)"
       />
 

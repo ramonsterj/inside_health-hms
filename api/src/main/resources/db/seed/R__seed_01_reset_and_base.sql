@@ -14,7 +14,7 @@
 -- repopulate it (we hit this in PR #53). Whenever any R__seed_*.sql is
 -- modified, bump the SEED-BUNDLE-VERSION line below in ALL seven files
 -- so they re-run together.
--- SEED-BUNDLE-VERSION: 2026-04-28a
+-- SEED-BUNDLE-VERSION: 2026-05-10a
 -- ============================================================================
 
 SET session_replication_role = replica;
@@ -122,7 +122,7 @@ WHERE r.code = 'DOCTOR'
     'progress-note:create', 'progress-note:read',
     'medical-order:create', 'medical-order:read', 'medical-order:discontinue',
     'medical-order:emergency-authorize', 'medical-order:mark-in-progress',
-    'nursing-note:read', 'nursing-note:create', 'nursing-note:update',
+    'nursing-note:read', 'nursing-note:create',
     'vital-sign:read', 'vital-sign:create', 'vital-sign:update',
     'psychotherapy-activity:read', 'psychotherapy-category:read',
     'billing:read',
@@ -164,7 +164,7 @@ WHERE r.code = 'NURSE'
     'clinical-history:read',
     'progress-note:create', 'progress-note:read',
     'medical-order:read', 'medical-order:mark-in-progress',
-    'nursing-note:read', 'nursing-note:create', 'nursing-note:update',
+    'nursing-note:read', 'nursing-note:create',
     'vital-sign:read', 'vital-sign:create', 'vital-sign:update',
     'psychotherapy-activity:read', 'psychotherapy-category:read',
     'billing:read',
@@ -172,8 +172,13 @@ WHERE r.code = 'NURSE'
   )
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
--- CHIEF_NURSE: same as NURSE + patient:update, admission:update, progress-note:update
--- Sources: V020, V025, V038 (extended), V042, V045, V066, V091
+-- CHIEF_NURSE: same as NURSE + patient:update, admission:update.
+-- Note: progress-note:update and nursing-note:update are intentionally NOT granted —
+-- both record types are admin-only update per medical-psychiatric-record.md v1.4 and
+-- nursing-module.md v1.3. Vital signs keep the creator+24h+admin-override pattern,
+-- so vital-sign:update is still granted.
+-- Sources: V020, V025, V038 + V096 (progress-note:create grant for chief nurse),
+--   V042, V045 + V096 (nursing-note:update revocation), V066, V091
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
@@ -186,9 +191,9 @@ WHERE r.code = 'CHIEF_NURSE'
     'admission:read', 'admission:update',
     'admission:view-consent', 'admission:view-documents', 'admission:download-documents',
     'clinical-history:read',
-    'progress-note:create', 'progress-note:read', 'progress-note:update',
+    'progress-note:create', 'progress-note:read',
     'medical-order:read', 'medical-order:mark-in-progress',
-    'nursing-note:read', 'nursing-note:create', 'nursing-note:update',
+    'nursing-note:read', 'nursing-note:create',
     'vital-sign:read', 'vital-sign:create', 'vital-sign:update',
     'psychotherapy-activity:read', 'psychotherapy-category:read',
     'billing:read',
