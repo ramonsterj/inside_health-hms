@@ -243,6 +243,7 @@ Backend DTOs (Kotlin) map directly to frontend types (TypeScript):
 - **Build Tool**: Gradle (Kotlin DSL)
 - **Authentication**: JWT access tokens + Refresh tokens
 - **Migration**: Flyway 11.20+
+- **PDF Export**: openhtmltopdf + PDFBox for request-scoped admission exports; jsoup sanitizes rich-text fields before rendering. Generated PDFs are written only to an OS temp directory, streamed once, and deleted after the response.
 
 ### Frontend
 - **Framework**: Vue 3.5+ (Composition API)

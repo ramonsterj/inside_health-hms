@@ -44,4 +44,16 @@ interface MedicationAdministrationRepository : JpaRepository<MedicationAdministr
         nativeQuery = true,
     )
     fun findLatestByMedicalOrderIds(@Param("orderIds") orderIds: List<Long>): List<MedicationAdministration>
+
+    @Query(
+        """
+        SELECT ma FROM MedicationAdministration ma
+        LEFT JOIN FETCH ma.medicalOrder
+        WHERE ma.admission.id = :admissionId
+        ORDER BY ma.administeredAt ASC
+        """,
+    )
+    fun findByAdmissionIdOrderByAdministeredAtAsc(
+        @Param("admissionId") admissionId: Long,
+    ): List<MedicationAdministration>
 }

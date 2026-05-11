@@ -5,6 +5,7 @@ build/
 !gradle-wrapper.properties
 
 # Kotlin
+.kotlin/
 *.class
 *.jar
 *.war

@@ -37,6 +37,7 @@ Custom roles can be created in the platform, so this document only covers the bu
 | Patients | Full | Work | Scoped | Scoped | Read | Work | None | Staff can create/update. Doctors are scoped to assigned patients (treating or consulting physician) on patient list/detail. Psychologists are limited to patients with active admissions on patient list/detail; psychologists also have `patient:update`. |
 | Patient ID documents | Full | Work | None | None | None | None | None | Staff can upload, view, and delete because delete reuses `patient:upload-id`. |
 | Admissions | Full | Work | Scoped | Scoped | Read | Work | None | Staff and chief nurse can update and discharge. Doctor admission lists are scoped to treating or consulting physician. Psychologist lists/search/detail are active-only. |
+| Admission PDF export | Full | Work | None | None | None | None | None | `admission:export-pdf` is granted only to ADMIN and ADMINISTRATIVE_STAFF by V099. The export is generated synchronously, streamed once, and audited with `ADMISSION_EXPORT`. |
 | Admission consent document | Full | Work | Read | Read | Read | Read | None | Download endpoint is permission-based only. |
 | Admission documents | Full | Work | Read | Read | Read | Read | None | Staff can upload; clinical roles can view/download. |
 | Clinical history | Full | None | Work | None | Read | Read | None | Only admin has default update permission. Doctors can create/read. Nurses and chief nurses are read-only. |

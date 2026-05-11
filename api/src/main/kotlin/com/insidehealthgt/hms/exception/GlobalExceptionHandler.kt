@@ -216,6 +216,21 @@ class GlobalExceptionHandler(private val messageService: MessageService) {
             )
     }
 
+    @ExceptionHandler(PayloadTooLargeException::class)
+    fun handlePayloadTooLarge(ex: PayloadTooLargeException): ResponseEntity<ErrorResponse> {
+        logger.debug("Payload too large: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.PAYLOAD_TOO_LARGE)
+            .body(
+                ErrorResponse(
+                    error = ErrorDetails(
+                        code = "PAYLOAD_TOO_LARGE",
+                        message = ex.message ?: messageService.errorFileTooLarge(),
+                    ),
+                ),
+            )
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException::class)
     fun handleHttpMessageNotReadable(ex: HttpMessageNotReadableException): ResponseEntity<ErrorResponse> {
         logger.debug("Invalid request body: {}", ex.message)

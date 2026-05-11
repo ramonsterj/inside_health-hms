@@ -1261,6 +1261,18 @@
       "ACTIVE": "Activo",
       "DISCHARGED": "De Alta"
     },
+    "export": {
+      "button": {
+        "label": "Exportar PDF",
+        "loading": "Generando PDF..."
+      },
+      "error": {
+        "forbidden": "No tiene permiso para exportar esta admisión.",
+        "notFound": "Admisión no encontrada.",
+        "tooLarge": "El expediente excede el límite de exportación de 500 MB.",
+        "generic": "No se pudo generar el expediente de la admisión."
+      }
+    },
     "type": "Tipo de Admisión",
     "selectType": "Seleccionar tipo de admisión",
     "roomOptionalHint": "La habitación es opcional para este tipo de admisión",

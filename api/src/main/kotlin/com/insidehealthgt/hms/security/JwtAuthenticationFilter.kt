@@ -28,6 +28,14 @@ class JwtAuthenticationFilter(
         filterChain.doFilter(request, response)
     }
 
+    // Re-authenticate on async and error dispatches. Required for endpoints that return
+    // StreamingResponseBody (e.g. admission PDF export): the body is written on an async
+    // dispatch, where SecurityContext would otherwise be empty and AuthorizationFilter
+    // would deny access after the response is already committed.
+    public override fun shouldNotFilterAsyncDispatch() = false
+
+    public override fun shouldNotFilterErrorDispatch() = false
+
     private fun trySetAuthentication(request: HttpServletRequest) {
         val token = extractTokenFromRequest(request) ?: return
         if (!jwtTokenProvider.validateToken(token) || !jwtTokenProvider.isAccessToken(token)) return

@@ -53,6 +53,12 @@ dependencies {
 
     // PDF rendering for thumbnail generation
     implementation("org.apache.pdfbox:pdfbox:3.0.7")
+    // HTML → PDF rendering for admission export
+    implementation("io.github.openhtmltopdf:openhtmltopdf-pdfbox:1.1.37")
+    // SVG support for admission-export logo (uses Apache Batik)
+    implementation("io.github.openhtmltopdf:openhtmltopdf-svg-support:1.1.37")
+    // Server-side HTML sanitizer for rich-text fields in admission export
+    implementation("org.jsoup:jsoup:1.18.1")
     // XLSX parsing
     implementation("org.apache.poi:poi-ooxml:5.3.0")
     // CSV parsing

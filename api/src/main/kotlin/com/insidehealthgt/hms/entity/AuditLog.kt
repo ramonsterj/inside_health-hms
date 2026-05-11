@@ -47,6 +47,13 @@ class AuditLog(
     @JdbcTypeCode(SqlTypes.JSON)
     var changedFields: String? = null,
 
+    @Column(length = 20)
+    var status: String? = null,
+
+    @Column(columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    var details: String? = null,
+
     @Column(nullable = false)
     var timestamp: LocalDateTime,
 
@@ -71,4 +78,5 @@ enum class AuditAction {
     CREATE,
     UPDATE,
     DELETE,
+    ADMISSION_EXPORT,
 }
