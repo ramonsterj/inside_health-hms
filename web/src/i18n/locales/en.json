@@ -1742,9 +1742,7 @@
       "updated": "Nursing note updated successfully.",
       "edited": "edited",
       "newestFirst": "Newest first",
-      "oldestFirst": "Oldest first",
-      "editWindowClosed": "Edit window closed (24-hour limit exceeded)",
-      "cannotEditOthers": "You can only edit records you created"
+      "oldestFirst": "Oldest first"
     },
     "vitalSigns": {
       "title": "Vital Signs",
@@ -1806,9 +1804,7 @@
         "glucose": "Blood Glucose",
         "systolic": "Systolic",
         "diastolic": "Diastolic"
-      },
-      "editWindowClosed": "Edit window closed (24-hour limit exceeded)",
-      "cannotEditOthers": "You can only edit records you created"
+      }
     }
   },
   "billing": {

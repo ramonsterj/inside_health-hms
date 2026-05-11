@@ -416,7 +416,7 @@ describe('useVitalSignStore', () => {
       mockedApi.put.mockResolvedValueOnce({
         data: {
           success: false,
-          message: 'This record can no longer be edited (24-hour limit exceeded)'
+          message: 'Failed to update vital sign'
         }
       })
 
@@ -431,7 +431,7 @@ describe('useVitalSignStore', () => {
           temperature: 36.5,
           oxygenSaturation: 98
         })
-      ).rejects.toThrow('This record can no longer be edited (24-hour limit exceeded)')
+      ).rejects.toThrow('Failed to update vital sign')
     })
   })
 

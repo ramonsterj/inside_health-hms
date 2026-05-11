@@ -19,7 +19,6 @@ class VitalSignControllerTest : AbstractIntegrationTest() {
     private lateinit var adminToken: String
     private lateinit var doctorToken: String
     private lateinit var nurseToken: String
-    private lateinit var nurseUser: User
     private lateinit var doctorUser: User
     private var admissionId: Long = 0
 
@@ -32,8 +31,7 @@ class VitalSignControllerTest : AbstractIntegrationTest() {
         doctorUser = docUsr
         doctorToken = docTkn
 
-        val (nrsUsr, nrsTkn) = createNurseUser()
-        nurseUser = nrsUsr
+        val (_, nrsTkn) = createNurseUser()
         nurseToken = nrsTkn
 
         // Create admission for tests (use past date so recordedAt backdating works)
@@ -143,7 +141,8 @@ class VitalSignControllerTest : AbstractIntegrationTest() {
             .andExpect(jsonPath("$.data.oxygenSaturation").value(96))
             .andExpect(jsonPath("$.data.other").value("Post-exercise reading"))
             .andExpect(jsonPath("$.data.recordedAt").exists())
-            .andExpect(jsonPath("$.data.canEdit").value(true))
+            // Nurses cannot edit any vital sign — only ADMIN can update.
+            .andExpect(jsonPath("$.data.canEdit").value(false))
     }
 
     @Test
@@ -211,7 +210,7 @@ class VitalSignControllerTest : AbstractIntegrationTest() {
     // ============ UPDATE VITAL SIGN TESTS ============
 
     @Test
-    fun `creator can update vital sign within 24 hours`() {
+    fun `nurse cannot update own vital sign`() {
         val vitalSignId = createVitalSignAndGetId(nurseToken)
 
         val updateRequest = CreateVitalSignRequest(
@@ -229,9 +228,22 @@ class VitalSignControllerTest : AbstractIntegrationTest() {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateRequest)),
         )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.data.systolicBp").value(125))
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `doctor cannot update own vital sign`() {
+        val vitalSignId = createVitalSignAndGetId(doctorToken)
+
+        val updateRequest = createDefaultVitalSignRequest()
+
+        mockMvc.perform(
+            put("/api/v1/admissions/$admissionId/vital-signs/$vitalSignId")
+                .header("Authorization", "Bearer $doctorToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)),
+        )
+            .andExpect(status().isForbidden)
     }
 
     @Test
@@ -648,7 +660,7 @@ class VitalSignControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `update can add glucose value to existing vital sign`() {
+    fun `admin update can add glucose value to existing vital sign`() {
         val vitalSignId = createVitalSignAndGetId(nurseToken)
 
         val updateRequest = CreateVitalSignRequest(
@@ -663,7 +675,7 @@ class VitalSignControllerTest : AbstractIntegrationTest() {
 
         mockMvc.perform(
             put("/api/v1/admissions/$admissionId/vital-signs/$vitalSignId")
-                .header("Authorization", "Bearer $nurseToken")
+                .header("Authorization", "Bearer $adminToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateRequest)),
         )
@@ -718,7 +730,7 @@ class VitalSignControllerTest : AbstractIntegrationTest() {
     // ============ AUTHORIZATION / BUSINESS RULES TESTS ============
 
     @Test
-    fun `non-creator cannot update vital sign`() {
+    fun `doctor cannot update vital sign created by another user`() {
         val vitalSignId = createVitalSignAndGetId(nurseToken)
 
         val updateRequest = createDefaultVitalSignRequest()
@@ -726,28 +738,6 @@ class VitalSignControllerTest : AbstractIntegrationTest() {
         mockMvc.perform(
             put("/api/v1/admissions/$admissionId/vital-signs/$vitalSignId")
                 .header("Authorization", "Bearer $doctorToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateRequest)),
-        )
-            .andExpect(status().isForbidden)
-    }
-
-    @Test
-    fun `edit after 24 hours denied for non-admin`() {
-        val vitalSignId = createVitalSignAndGetId(nurseToken)
-
-        // Use native SQL to bypass @Column(updatable = false) on createdAt
-        jdbcTemplate.update(
-            "UPDATE vital_signs SET created_at = ? WHERE id = ?",
-            java.sql.Timestamp.valueOf(LocalDateTime.now().minusHours(25)),
-            vitalSignId,
-        )
-
-        val updateRequest = createDefaultVitalSignRequest()
-
-        mockMvc.perform(
-            put("/api/v1/admissions/$admissionId/vital-signs/$vitalSignId")
-                .header("Authorization", "Bearer $nurseToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateRequest)),
         )
@@ -769,26 +759,10 @@ class VitalSignControllerTest : AbstractIntegrationTest() {
             .andExpect(status().isBadRequest)
     }
 
-    @Test
-    fun `update vital sign fails for discharged admission`() {
-        val vitalSignId = createVitalSignAndGetId(nurseToken)
-        dischargeAdmission(admissionId, adminToken)
-
-        val updateRequest = createDefaultVitalSignRequest()
-
-        mockMvc.perform(
-            put("/api/v1/admissions/$admissionId/vital-signs/$vitalSignId")
-                .header("Authorization", "Bearer $nurseToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateRequest)),
-        )
-            .andExpect(status().isBadRequest)
-    }
-
     // ============ AUDIT TESTS ============
 
     @Test
-    fun `vital sign includes audit fields and canEdit`() {
+    fun `vital sign includes audit fields and canEdit is false for nurse`() {
         val vitalSignId = createVitalSignAndGetId(nurseToken)
 
         mockMvc.perform(
@@ -799,7 +773,35 @@ class VitalSignControllerTest : AbstractIntegrationTest() {
             .andExpect(jsonPath("$.data.createdAt").exists())
             .andExpect(jsonPath("$.data.updatedAt").exists())
             .andExpect(jsonPath("$.data.createdBy.firstName").value("Nurse"))
+            .andExpect(jsonPath("$.data.canEdit").value(false))
+    }
+
+    @Test
+    fun `vital sign canEdit is true for admin on active admission`() {
+        val vitalSignId = createVitalSignAndGetId(nurseToken)
+
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/vital-signs/$vitalSignId")
+                .header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isOk)
             .andExpect(jsonPath("$.data.canEdit").value(true))
+    }
+
+    @Test
+    fun `admin update fails for discharged admission`() {
+        val vitalSignId = createVitalSignAndGetId(nurseToken)
+        dischargeAdmission(admissionId, adminToken)
+
+        val updateRequest = createDefaultVitalSignRequest()
+
+        mockMvc.perform(
+            put("/api/v1/admissions/$admissionId/vital-signs/$vitalSignId")
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)),
+        )
+            .andExpect(status().isBadRequest)
     }
 
     // ============ HELPER METHODS ============

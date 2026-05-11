@@ -4,7 +4,6 @@ import com.insidehealthgt.hms.dto.request.CreateVitalSignRequest
 import com.insidehealthgt.hms.dto.request.UpdateVitalSignRequest
 import com.insidehealthgt.hms.dto.response.VitalSignResponse
 import com.insidehealthgt.hms.entity.Admission
-import com.insidehealthgt.hms.entity.BaseEntity
 import com.insidehealthgt.hms.entity.VitalSign
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ForbiddenException
@@ -23,6 +22,17 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+/**
+ * Edit policy: only ADMIN can update existing vital signs; doctors, nurses, and
+ * chief nurses are append-only. The `@PreAuthorize("hasAuthority('vital-sign:update')")`
+ * on the controller is the first gate (only ADMIN holds the permission after V097).
+ * `assertAdmin()` here is intentional defense-in-depth so the rule continues to hold
+ * if the permission is later widened. Discharge protection blocks all writes — including
+ * for ADMIN — and is enforced unconditionally.
+ *
+ * This matches the policy already in place for nursing notes and progress notes — see
+ * `docs/features/nursing-module.md` revision 1.4 for the rationale.
+ */
 @Service
 @Suppress("TooManyFunctions")
 class VitalSignService(
@@ -33,7 +43,6 @@ class VitalSignService(
     private val currentUserProvider: CurrentUserProvider,
 ) {
     companion object {
-        private const val EDIT_WINDOW_HOURS = 24L
         private const val CHART_MAX_RECORDS = 500
     }
 
@@ -62,7 +71,7 @@ class VitalSignService(
                 vitalSign = vs,
                 createdByUser = vs.createdBy?.let { users[it] },
                 updatedByUser = vs.updatedBy?.let { users[it] },
-                canEdit = computeCanEdit(vs, currentUser, admission.isActive()),
+                canEdit = computeCanEdit(currentUser, admission.isActive()),
             )
         }
     }
@@ -93,7 +102,7 @@ class VitalSignService(
                 vitalSign = vs,
                 createdByUser = vs.createdBy?.let { users[it] },
                 updatedByUser = vs.updatedBy?.let { users[it] },
-                canEdit = computeCanEdit(vs, currentUser, admission.isActive()),
+                canEdit = computeCanEdit(currentUser, admission.isActive()),
             )
         }
     }
@@ -153,7 +162,7 @@ class VitalSignService(
             )
 
         val currentUser = currentUserProvider.currentUserDetailsOrThrow()
-        validateEditPermission(vitalSign, currentUser)
+        assertAdmin(currentUser)
 
         val recordedAt = request.recordedAt ?: vitalSign.recordedAt
         validateRecordedAt(recordedAt, admission)
@@ -197,30 +206,14 @@ class VitalSignService(
         }
     }
 
-    @Suppress("ThrowsCount")
-    private fun validateEditPermission(entity: BaseEntity, currentUser: CustomUserDetails) {
-        if (currentUser.hasRole("ADMIN")) return
-
-        if (entity.createdBy != currentUser.id) {
-            throw ForbiddenException(messageService.errorEditOnlyOwnRecords())
-        }
-
-        val createdAt = entity.createdAt
-            ?: throw ForbiddenException(messageService.errorEditWindowClosed())
-
-        if (!createdAt.plusHours(EDIT_WINDOW_HOURS).isAfter(LocalDateTime.now())) {
-            throw ForbiddenException(messageService.errorEditWindowClosed())
+    private fun assertAdmin(currentUser: CustomUserDetails) {
+        if (!currentUser.hasRole("ADMIN")) {
+            throw ForbiddenException(messageService.errorForbidden())
         }
     }
 
-    @Suppress("ReturnCount")
-    private fun computeCanEdit(entity: BaseEntity, currentUser: CustomUserDetails, admissionActive: Boolean): Boolean {
-        if (!admissionActive) return false
-        if (currentUser.hasRole("ADMIN")) return true
-        if (entity.createdBy != currentUser.id) return false
-        val createdAt = entity.createdAt ?: return false
-        return createdAt.plusHours(EDIT_WINDOW_HOURS).isAfter(LocalDateTime.now())
-    }
+    private fun computeCanEdit(currentUser: CustomUserDetails, admissionActive: Boolean): Boolean =
+        admissionActive && currentUser.hasRole("ADMIN")
 
     private fun buildResponse(
         vitalSign: VitalSign,
@@ -238,7 +231,7 @@ class VitalSignService(
             vitalSign = vitalSign,
             createdByUser = vitalSign.createdBy?.let { users[it] },
             updatedByUser = vitalSign.updatedBy?.let { users[it] },
-            canEdit = computeCanEdit(vitalSign, currentUser, admissionActive),
+            canEdit = computeCanEdit(currentUser, admissionActive),
         )
     }
 }

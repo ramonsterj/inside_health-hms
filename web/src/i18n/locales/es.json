@@ -1742,9 +1742,7 @@
       "updated": "Nota de enfermería actualizada éxitosamente.",
       "edited": "editada",
       "newestFirst": "Más recientes",
-      "oldestFirst": "Más antiguas",
-      "editWindowClosed": "Ventana de edición cerrada (límite de 24 horas excedido)",
-      "cannotEditOthers": "Solo puede editar registros que usted creó"
+      "oldestFirst": "Más antiguas"
     },
     "vitalSigns": {
       "title": "Signos Vitales",
@@ -1806,9 +1804,7 @@
         "glucose": "Glucometría",
         "systolic": "Sistólica",
         "diastolic": "Diastólica"
-      },
-      "editWindowClosed": "Ventana de edición cerrada (límite de 24 horas excedido)",
-      "cannotEditOthers": "Solo puede editar registros que usted creó"
+      }
     }
   },
   "billing": {

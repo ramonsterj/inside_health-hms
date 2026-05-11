@@ -123,7 +123,7 @@ WHERE r.code = 'DOCTOR'
     'medical-order:create', 'medical-order:read', 'medical-order:discontinue',
     'medical-order:emergency-authorize', 'medical-order:mark-in-progress',
     'nursing-note:read', 'nursing-note:create',
-    'vital-sign:read', 'vital-sign:create', 'vital-sign:update',
+    'vital-sign:read', 'vital-sign:create',
     'psychotherapy-activity:read', 'psychotherapy-category:read',
     'billing:read',
     'medication-administration:read'
@@ -165,7 +165,7 @@ WHERE r.code = 'NURSE'
     'progress-note:create', 'progress-note:read',
     'medical-order:read', 'medical-order:mark-in-progress',
     'nursing-note:read', 'nursing-note:create',
-    'vital-sign:read', 'vital-sign:create', 'vital-sign:update',
+    'vital-sign:read', 'vital-sign:create',
     'psychotherapy-activity:read', 'psychotherapy-category:read',
     'billing:read',
     'medication-administration:create', 'medication-administration:read'
@@ -173,12 +173,12 @@ WHERE r.code = 'NURSE'
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
 -- CHIEF_NURSE: same as NURSE + patient:update, admission:update.
--- Note: progress-note:update and nursing-note:update are intentionally NOT granted —
--- both record types are admin-only update per medical-psychiatric-record.md v1.4 and
--- nursing-module.md v1.3. Vital signs keep the creator+24h+admin-override pattern,
--- so vital-sign:update is still granted.
+-- Note: progress-note:update, nursing-note:update, and vital-sign:update are
+-- intentionally NOT granted — all three record types are admin-only update per
+-- medical-psychiatric-record.md v1.4 and nursing-module.md v1.4 (V096 + V097).
 -- Sources: V020, V025, V038 + V096 (progress-note:create grant for chief nurse),
---   V042, V045 + V096 (nursing-note:update revocation), V066, V091
+--   V042, V045 + V096 (nursing-note:update revocation) + V097 (vital-sign:update revocation),
+--   V066, V091
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
@@ -194,7 +194,7 @@ WHERE r.code = 'CHIEF_NURSE'
     'progress-note:create', 'progress-note:read',
     'medical-order:read', 'medical-order:mark-in-progress',
     'nursing-note:read', 'nursing-note:create',
-    'vital-sign:read', 'vital-sign:create', 'vital-sign:update',
+    'vital-sign:read', 'vital-sign:create',
     'psychotherapy-activity:read', 'psychotherapy-category:read',
     'billing:read',
     'medication-administration:create', 'medication-administration:read'

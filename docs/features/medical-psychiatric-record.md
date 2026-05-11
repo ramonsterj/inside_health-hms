@@ -22,7 +22,7 @@ This feature provides a comprehensive medical/psychiatric record system for hosp
 - **Progress Notes (Evoluciones)** — append-only for non-admins. DOCTOR, NURSE, and CHIEF_NURSE can `create` and `read`. Only ADMIN can edit existing notes. ADMIN edits are blocked once the admission is discharged. There is no creator-edit window — a doctor or nurse who needs to correct their own note must request the change from an administrator. This matches the policy originally specified for the medical record (only admin can modify existing entries).
 - **Medical Orders** — append-only for non-admins; only ADMIN can free-form-edit. State transitions (authorize, mark-in-progress, discontinue, etc.) are exposed as their own permissioned endpoints, not as `update`.
 
-> **Note** — Nursing notes follow the same admin-only update rule as progress notes (see [`nursing-module.md`](./nursing-module.md) revision 1.3). Vital signs keep a separate 24-hour creator-edit window pattern; that divergence is intentional and is documented in the nursing module spec.
+> **Note** — Nursing notes and vital signs follow the same admin-only update rule as progress notes (see [`nursing-module.md`](./nursing-module.md) revisions 1.3 and 1.4 — V096 + V097). Doctors, nurses, and chief nurses are append-only on all three record types and must request edits from an administrator.
 
 ---
 
@@ -1242,5 +1242,4 @@ export const emergencyAuthorizeMedicalOrderSchema = z.object({
 
 - Related feature: [Patient Admission](./patient-admission.md)
 - Related entity: `Admission` (parent entity for all medical records)
-- Related pattern: Append-only with admin override (used by Clinical History, Progress Notes, Medical Orders, and Nursing Notes — see [`nursing-module.md`](./nursing-module.md) revision 1.3 for nursing notes; similar to audit log patterns)
-- Related divergence: Vital Signs retain a creator + 24-hour edit window pattern with admin override (different rule from progress / nursing notes — see [`nursing-module.md`](./nursing-module.md) §"Edit Time Limit" and §"canEdit Logic" for the vital-signs-only spec)
+- Related pattern: Append-only with admin override (used by Clinical History, Progress Notes, Medical Orders, Nursing Notes, and Vital Signs — see [`nursing-module.md`](./nursing-module.md) revisions 1.3 and 1.4 for nursing notes and vital signs; similar to audit log patterns)
