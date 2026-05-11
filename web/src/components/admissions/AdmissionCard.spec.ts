@@ -16,6 +16,7 @@ function buildAdmission(overrides: Partial<AdmissionListItem> = {}): AdmissionLi
       id: 10,
       firstName: 'Juana',
       lastName: 'Pérez',
+      dateOfBirth: '1991-01-01',
       age: 35,
       sex: Sex.FEMALE,
       email: 'juana@example.com',

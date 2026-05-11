@@ -5,12 +5,14 @@ import com.insidehealthgt.hms.entity.MaritalStatus
 import com.insidehealthgt.hms.entity.Patient
 import com.insidehealthgt.hms.entity.Sex
 import com.insidehealthgt.hms.entity.User
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 data class PatientResponse(
     val id: Long,
     val firstName: String,
     val lastName: String,
+    val dateOfBirth: LocalDate,
     val age: Int,
     val sex: Sex,
     val gender: String,
@@ -40,6 +42,7 @@ data class PatientResponse(
             id = patient.id!!,
             firstName = patient.firstName,
             lastName = patient.lastName,
+            dateOfBirth = patient.dateOfBirth,
             age = patient.age,
             sex = patient.sex,
             gender = patient.gender,

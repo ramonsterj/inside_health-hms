@@ -45,7 +45,7 @@ class PatientControllerTest : AbstractIntegrationTest() {
     private fun createValidPatientRequest(): CreatePatientRequest = CreatePatientRequest(
         firstName = "Juan",
         lastName = "Pérez García",
-        age = 45,
+        dateOfBirth = guatemalaToday().minusYears(45),
         sex = Sex.MALE,
         gender = "Masculino",
         maritalStatus = MaritalStatus.MARRIED,
@@ -93,7 +93,7 @@ class PatientControllerTest : AbstractIntegrationTest() {
         val request = CreatePatientRequest(
             firstName = "Juan",
             lastName = "Pérez",
-            age = 45,
+            dateOfBirth = guatemalaToday().minusYears(45),
             sex = Sex.MALE,
             gender = "Masculino",
             maritalStatus = MaritalStatus.MARRIED,
@@ -147,8 +147,21 @@ class PatientControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `create patient should fail with age out of range`() {
-        val request = createValidPatientRequest().copy(age = 200)
+    fun `create patient should fail when date of birth is in the future`() {
+        val request = createValidPatientRequest().copy(dateOfBirth = guatemalaToday().plusDays(1))
+
+        mockMvc.perform(
+            post("/api/v1/patients")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `create patient should fail when date of birth implies age over 150 years`() {
+        val request = createValidPatientRequest().copy(dateOfBirth = guatemalaToday().minusYears(151))
 
         mockMvc.perform(
             post("/api/v1/patients")
@@ -171,7 +184,7 @@ class PatientControllerTest : AbstractIntegrationTest() {
                 .content(objectMapper.writeValueAsString(request)),
         ).andExpect(status().isCreated)
 
-        // Try to create duplicate (same name + age)
+        // Try to create duplicate (same name + dateOfBirth)
         val duplicateRequest = request.copy(email = "different@email.com")
         mockMvc.perform(
             post("/api/v1/patients")
@@ -383,7 +396,7 @@ class PatientControllerTest : AbstractIntegrationTest() {
         val updateRequest = UpdatePatientRequest(
             firstName = "Juan Carlos",
             lastName = "Pérez García",
-            age = 46,
+            dateOfBirth = guatemalaToday().minusYears(46),
             sex = Sex.MALE,
             gender = "Masculino",
             maritalStatus = MaritalStatus.MARRIED,
@@ -436,7 +449,7 @@ class PatientControllerTest : AbstractIntegrationTest() {
         val updateRequest = UpdatePatientRequest(
             firstName = "Juan Carlos",
             lastName = "Pérez García",
-            age = 46,
+            dateOfBirth = guatemalaToday().minusYears(46),
             sex = Sex.MALE,
             gender = "Masculino",
             maritalStatus = MaritalStatus.MARRIED,
@@ -468,7 +481,7 @@ class PatientControllerTest : AbstractIntegrationTest() {
         val updateRequest = UpdatePatientRequest(
             firstName = "Test",
             lastName = "User",
-            age = 30,
+            dateOfBirth = guatemalaToday().minusYears(30),
             sex = Sex.MALE,
             gender = "Male",
             maritalStatus = MaritalStatus.SINGLE,

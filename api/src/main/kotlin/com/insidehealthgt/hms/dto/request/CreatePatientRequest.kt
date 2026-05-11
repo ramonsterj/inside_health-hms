@@ -5,12 +5,12 @@ import com.insidehealthgt.hms.entity.MaritalStatus
 import com.insidehealthgt.hms.entity.Sex
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Email
-import jakarta.validation.constraints.Max
-import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Past
 import jakarta.validation.constraints.Size
+import java.time.LocalDate
 
 data class CreatePatientRequest(
     @field:NotBlank(message = "{validation.patient.firstName.required}")
@@ -21,10 +21,9 @@ data class CreatePatientRequest(
     @field:Size(max = 100, message = "{validation.patient.lastName.max}")
     val lastName: String,
 
-    @field:NotNull(message = "{validation.patient.age.required}")
-    @field:Min(value = 0, message = "{validation.patient.age.min}")
-    @field:Max(value = 150, message = "{validation.patient.age.max}")
-    val age: Int,
+    @field:NotNull(message = "{validation.patient.dateOfBirth.required}")
+    @field:Past(message = "{validation.patient.dateOfBirth.past}")
+    val dateOfBirth: LocalDate,
 
     @field:NotNull(message = "{validation.patient.sex.required}")
     val sex: Sex,

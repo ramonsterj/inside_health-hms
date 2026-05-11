@@ -61,7 +61,9 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
@@ -350,7 +352,7 @@ abstract class AbstractIntegrationTest {
         val request = CreatePatientRequest(
             firstName = "Juan",
             lastName = "Perez",
-            age = 45,
+            dateOfBirth = guatemalaToday().minusYears(45),
             sex = Sex.MALE,
             gender = "Masculino",
             maritalStatus = MaritalStatus.MARRIED,
@@ -414,7 +416,7 @@ abstract class AbstractIntegrationTest {
         val request = CreatePatientRequest(
             firstName = "Maria",
             lastName = "Lopez",
-            age = 35,
+            dateOfBirth = guatemalaToday().minusYears(35),
             sex = Sex.FEMALE,
             gender = "Femenino",
             maritalStatus = MaritalStatus.SINGLE,
@@ -448,7 +450,7 @@ abstract class AbstractIntegrationTest {
         val request = CreatePatientRequest(
             firstName = "Carlos",
             lastName = "Ramirez",
-            age = 50,
+            dateOfBirth = guatemalaToday().minusYears(50),
             sex = Sex.MALE,
             gender = "Masculino",
             maritalStatus = MaritalStatus.MARRIED,
@@ -494,5 +496,11 @@ abstract class AbstractIntegrationTest {
             ),
         )
         return account.id!!
+    }
+
+    protected fun guatemalaToday(): LocalDate = LocalDate.now(GUATEMALA_ZONE)
+
+    companion object {
+        private val GUATEMALA_ZONE: ZoneId = ZoneId.of("America/Guatemala")
     }
 }

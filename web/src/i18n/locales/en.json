@@ -470,6 +470,7 @@
     "firstName": "First Name",
     "lastName": "Last Name",
     "fullName": "Full Name",
+    "dateOfBirth": "Date of Birth",
     "age": "Age",
     "sex": "Sex",
     "gender": "Gender",
@@ -616,11 +617,9 @@
         "required": "Last name is required",
         "max": "Last name must be at most 100 characters"
       },
-      "age": {
-        "required": "Age is required",
-        "invalid": "Age must be a number",
-        "min": "Age must be at least 0",
-        "max": "Age must be at most 150"
+      "dateOfBirth": {
+        "required": "Date of birth is required",
+        "invalid": "Date of birth must be a valid past date within the last 150 years"
       },
       "sex": {
         "required": "Sex is required"

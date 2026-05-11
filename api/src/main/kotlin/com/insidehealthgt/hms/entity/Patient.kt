@@ -9,7 +9,11 @@ import jakarta.persistence.FetchType
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import jakarta.persistence.Transient
 import org.hibernate.annotations.SQLRestriction
+import java.time.LocalDate
+import java.time.Period
+import java.time.ZoneId
 
 @Entity
 @Table(name = "patients")
@@ -22,8 +26,8 @@ class Patient(
     @Column(name = "last_name", nullable = false, length = 100)
     var lastName: String,
 
-    @Column(nullable = false)
-    var age: Int,
+    @Column(name = "date_of_birth", nullable = false)
+    var dateOfBirth: LocalDate,
 
     @Column(nullable = false, length = 10)
     @Enumerated(EnumType.STRING)
@@ -66,6 +70,14 @@ class Patient(
 
 ) : BaseEntity() {
 
+    /**
+     * Age in full years, derived from [dateOfBirth] in America/Guatemala.
+     * Never persisted, never accepted as input — see new-patient-intake.md.
+     */
+    @get:Transient
+    val age: Int
+        get() = Period.between(dateOfBirth, LocalDate.now(GUATEMALA_ZONE)).years
+
     fun hasIdDocument(): Boolean = idDocument != null
 
     fun addEmergencyContact(contact: EmergencyContact) {
@@ -76,6 +88,10 @@ class Patient(
     fun removeEmergencyContact(contact: EmergencyContact) {
         emergencyContacts.remove(contact)
         contact.patient = null
+    }
+
+    companion object {
+        private val GUATEMALA_ZONE = ZoneId.of("America/Guatemala")
     }
 }
 

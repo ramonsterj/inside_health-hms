@@ -39,6 +39,9 @@ export interface Patient {
   id: number
   firstName: string
   lastName: string
+  /** ISO date (yyyy-MM-dd). Source of truth for `age`. */
+  dateOfBirth: string
+  /** Read-only: derived server-side from `dateOfBirth`. */
   age: number
   sex: Sex
   gender: string
@@ -63,6 +66,9 @@ export interface PatientSummary {
   id: number
   firstName: string
   lastName: string
+  /** ISO date (yyyy-MM-dd). */
+  dateOfBirth: string
+  /** Read-only: derived server-side from `dateOfBirth`. */
   age: number
   sex: Sex
   email: string
@@ -74,7 +80,8 @@ export interface PatientSummary {
 export interface CreatePatientRequest {
   firstName: string
   lastName: string
-  age: number
+  /** ISO date (yyyy-MM-dd). Age is computed server-side and must not be sent. */
+  dateOfBirth: string
   sex: Sex
   gender: string
   maritalStatus: MaritalStatus
@@ -91,7 +98,8 @@ export interface CreatePatientRequest {
 export interface UpdatePatientRequest {
   firstName: string
   lastName: string
-  age: number
+  /** ISO date (yyyy-MM-dd). Age is computed server-side and must not be sent. */
+  dateOfBirth: string
   sex: Sex
   gender: string
   maritalStatus: MaritalStatus

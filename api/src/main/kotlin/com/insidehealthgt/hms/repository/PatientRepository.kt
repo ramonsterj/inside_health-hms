@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 
 @Repository
 interface PatientRepository : JpaRepository<Patient, Long> {
@@ -39,13 +40,14 @@ interface PatientRepository : JpaRepository<Patient, Long> {
 
     @Query(
         "SELECT p FROM Patient p WHERE " +
-            "(LOWER(p.firstName) = LOWER(:firstName) AND LOWER(p.lastName) = LOWER(:lastName) AND p.age = :age) OR " +
+            "(LOWER(p.firstName) = LOWER(:firstName) AND LOWER(p.lastName) = LOWER(:lastName) " +
+            "AND p.dateOfBirth = :dateOfBirth) OR " +
             "(p.idDocumentNumber IS NOT NULL AND p.idDocumentNumber = :idDocumentNumber)",
     )
     fun findPotentialDuplicates(
         @Param("firstName") firstName: String,
         @Param("lastName") lastName: String,
-        @Param("age") age: Int,
+        @Param("dateOfBirth") dateOfBirth: LocalDate,
         @Param("idDocumentNumber") idDocumentNumber: String?,
     ): List<Patient>
 

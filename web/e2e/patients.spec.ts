@@ -39,6 +39,7 @@ const mockPatient = {
   id: 1,
   firstName: 'Juan',
   lastName: 'Pérez García',
+  dateOfBirth: '1981-01-01',
   age: 45,
   sex: 'MALE',
   gender: 'Masculino',
@@ -67,6 +68,7 @@ const mockPatientsPage = {
       id: 1,
       firstName: 'Juan',
       lastName: 'Pérez García',
+      dateOfBirth: '1981-01-01',
       age: 45,
       idDocumentNumber: '1234567890101',
       hasIdDocument: false,
@@ -122,7 +124,8 @@ async function fillPatientForm(
   patientData: {
     firstName: string
     lastName: string
-    age: number
+    /** dd/MM/yyyy as the global DatePicker locale expects */
+    dateOfBirth: string
     gender: string
     religion: string
     occupation: string
@@ -134,10 +137,10 @@ async function fillPatientForm(
   await page.getByLabel(/First Name|Nombres/i).fill(patientData.firstName)
   await page.getByLabel(/Last Name|Apellidos/i).fill(patientData.lastName)
 
-  // Fill age using InputNumber - need to clear first and type
-  const ageInput = page.locator('#age input')
-  await ageInput.clear()
-  await ageInput.fill(patientData.age.toString())
+  // Fill date of birth via the DatePicker input (global locale: dd/mm/yy)
+  const dobInput = page.locator('#dateOfBirth')
+  await dobInput.fill(patientData.dateOfBirth)
+  await page.keyboard.press('Escape')
 
   await page.getByLabel(/Gender|Género/i).fill(patientData.gender)
   await page.getByLabel(/Religion|Religión/i).fill(patientData.religion)
@@ -349,7 +352,7 @@ test.describe('Patients - Administrative Staff', () => {
     const newPatientData = {
       firstName: 'María',
       lastName: 'López Hernández',
-      age: 32,
+      dateOfBirth: '01/01/1994',
       gender: 'Femenino',
       religion: 'Evangélica',
       occupation: 'Maestra',
@@ -361,6 +364,9 @@ test.describe('Patients - Administrative Staff', () => {
     const createdPatient = {
       id: 2,
       ...newPatientData,
+      // API serves ISO dates; override the display-format value used by fillPatientForm
+      dateOfBirth: '1994-01-01',
+      age: 32,
       sex: 'FEMALE',
       maritalStatus: 'SINGLE',
       educationLevel: 'UNIVERSITY',

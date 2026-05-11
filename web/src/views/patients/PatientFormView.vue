@@ -8,7 +8,7 @@ import { toTypedSchema } from '@/validation/zodI18n'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
-import InputNumber from 'primevue/inputnumber'
+import DatePicker from 'primevue/datepicker'
 import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
 import Dialog from 'primevue/dialog'
@@ -22,6 +22,8 @@ import {
   MAX_ID_DOCUMENT_SIZE,
   ACCEPTED_ID_DOCUMENT_TYPES
 } from '@/validation/patient'
+import { useFormDateField } from '@/composables/useFormDateField'
+import { formatDate } from '@/utils/format'
 import type { EmergencyContact, PatientSummary } from '@/types'
 import { Sex, MaritalStatus, EducationLevel } from '@/types'
 
@@ -62,7 +64,7 @@ const { defineField, handleSubmit, errors, setValues, setErrors } = useForm<Pati
   initialValues: {
     firstName: '',
     lastName: '',
-    age: 0,
+    dateOfBirth: '',
     sex: 'MALE',
     gender: '',
     maritalStatus: 'SINGLE',
@@ -79,7 +81,38 @@ const { defineField, handleSubmit, errors, setValues, setErrors } = useForm<Pati
 
 const [firstName] = defineField('firstName')
 const [lastName] = defineField('lastName')
-const [age] = defineField('age')
+const [dateOfBirth] = defineField('dateOfBirth')
+const dateOfBirthPickerValue = useFormDateField(dateOfBirth)
+const maxDateOfBirth = new Date()
+maxDateOfBirth.setDate(maxDateOfBirth.getDate() - 1)
+maxDateOfBirth.setHours(0, 0, 0, 0)
+
+// Live age preview — mirrors the server's full-years calculation so staff sees
+// the same value the API will return after save. Display-only; never submitted.
+const computedAge = computed<number | null>(() => {
+  const value = dateOfBirth.value
+  if (!value) return null
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (!match) return null
+  const [, y, m, d] = match
+  const dob = new Date(Number(y), Number(m) - 1, Number(d))
+  if (
+    Number.isNaN(dob.getTime()) ||
+    dob.getFullYear() !== Number(y) ||
+    dob.getMonth() !== Number(m) - 1 ||
+    dob.getDate() !== Number(d)
+  ) {
+    return null
+  }
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  if (dob > today) return null
+  let years = today.getFullYear() - dob.getFullYear()
+  const birthdayThisYear = new Date(today.getFullYear(), dob.getMonth(), dob.getDate())
+  if (today < birthdayThisYear) years -= 1
+  if (years < 0 || years > 150) return null
+  return years
+})
 const [sex] = defineField('sex')
 const [gender] = defineField('gender')
 const [maritalStatus] = defineField('maritalStatus')
@@ -139,7 +172,7 @@ async function loadPatient() {
     setValues({
       firstName: patient.firstName,
       lastName: patient.lastName,
-      age: patient.age,
+      dateOfBirth: patient.dateOfBirth,
       sex: patient.sex,
       gender: patient.gender,
       maritalStatus: patient.maritalStatus,
@@ -178,7 +211,7 @@ const onSubmit = handleSubmit(async values => {
     const data = {
       firstName: values.firstName,
       lastName: values.lastName,
-      age: values.age,
+      dateOfBirth: values.dateOfBirth,
       sex: values.sex as Sex,
       gender: values.gender,
       maritalStatus: values.maritalStatus as MaritalStatus,
@@ -341,16 +374,20 @@ function closeIdDocumentDialog() {
 
             <div class="form-row">
               <div class="form-field">
-                <label for="age">{{ t('patient.age') }} *</label>
-                <InputNumber
-                  id="age"
-                  v-model="age"
-                  :min="0"
-                  :max="150"
-                  :class="{ 'p-invalid': errors.age }"
+                <label for="dateOfBirth">{{ t('patient.dateOfBirth') }} *</label>
+                <DatePicker
+                  id="dateOfBirth"
+                  v-model="dateOfBirthPickerValue"
+                  :maxDate="maxDateOfBirth"
+                  :class="{ 'p-invalid': errors.dateOfBirth }"
                   class="w-full"
+                  showIcon
+                  iconDisplay="input"
                 />
-                <small v-if="errors.age" class="p-error">{{ errors.age }}</small>
+                <small v-if="errors.dateOfBirth" class="p-error">{{ errors.dateOfBirth }}</small>
+                <small v-else-if="computedAge !== null" class="age-hint" data-testid="age-preview">
+                  {{ t('patient.age') }}: {{ computedAge }}
+                </small>
               </div>
               <div class="form-field">
                 <label for="sex">{{ t('patient.sex') }} *</label>
@@ -646,7 +683,11 @@ function closeIdDocumentDialog() {
         <div v-for="dup in duplicates" :key="dup.id" class="duplicate-item">
           <div class="duplicate-info">
             <strong>{{ dup.firstName }} {{ dup.lastName }}</strong>
-            <span>{{ t('patient.age') }}: {{ dup.age }}</span>
+            <span>
+              {{ t('patient.dateOfBirth') }}: {{ formatDate(dup.dateOfBirth) }} ({{
+                t('patient.age')
+              }}: {{ dup.age }})
+            </span>
             <span v-if="dup.idDocumentNumber">
               {{ t('patient.idDocumentNumber') }}: {{ dup.idDocumentNumber }}
             </span>
@@ -729,6 +770,10 @@ function closeIdDocumentDialog() {
 .form-field label {
   font-weight: 500;
   font-size: 0.875rem;
+}
+
+.age-hint {
+  color: var(--text-color-secondary);
 }
 
 .w-full {
