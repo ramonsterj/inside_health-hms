@@ -35,6 +35,9 @@ class DuplicatePatientException(message: String, val potentialDuplicates: List<D
 @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 class FileStorageException(message: String) : RuntimeException(message)
 
+@ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
+class PayloadTooLargeException(message: String) : RuntimeException(message)
+
 data class DuplicatePatientInfo(
     val id: Long,
     val firstName: String,

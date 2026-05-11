@@ -1261,6 +1261,18 @@
       "ACTIVE": "Active",
       "DISCHARGED": "Discharged"
     },
+    "export": {
+      "button": {
+        "label": "Export PDF",
+        "loading": "Generating PDF..."
+      },
+      "error": {
+        "forbidden": "You do not have permission to export this admission.",
+        "notFound": "Admission not found.",
+        "tooLarge": "The admission record exceeds the 500 MB export limit.",
+        "generic": "The admission record could not be generated."
+      }
+    },
     "type": "Admission Type",
     "selectType": "Select admission type",
     "roomOptionalHint": "Room is optional for this admission type",

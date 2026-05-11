@@ -13,6 +13,7 @@ import { useAdmissionStore } from '@/stores/admission'
 import { useAuthStore } from '@/stores/auth'
 import { AdmissionStatus } from '@/types/admission'
 import AddConsultingPhysicianDialog from '@/components/admissions/AddConsultingPhysicianDialog.vue'
+import AdmissionExportButton from '@/components/admissions/AdmissionExportButton.vue'
 import AdmissionTypeBadge from '@/components/admissions/AdmissionTypeBadge.vue'
 import DocumentUploadDialog from '@/components/documents/DocumentUploadDialog.vue'
 import DocumentViewer from '@/components/documents/DocumentViewer.vue'
@@ -194,6 +195,7 @@ function handleDocumentUploaded() {
           severity="warning"
           @click="confirmDischarge"
         />
+        <AdmissionExportButton :admission-id="admissionId" />
         <Button
           v-if="canDelete"
           icon="pi pi-trash"

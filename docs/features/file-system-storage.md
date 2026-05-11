@@ -404,3 +404,4 @@ N/A - Existing validation unchanged.
 - Related entities: `PatientIdDocument`, `AdmissionConsentDocument`
 - Related services: `PatientService`, `AdmissionService`
 - Related migrations: `V013__create_patient_id_documents_table.sql`, `V024__create_admission_consent_documents_table.sql`
+- Related feature: [Admission PDF Export](./admission-export.md) - Export reads existing stored files into a request-scoped temp directory and never writes generated PDFs under `app.file-storage.base-path`.

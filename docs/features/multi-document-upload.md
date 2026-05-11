@@ -815,5 +815,6 @@ Alternative: Use `pdfjs-dist` directly for more control.
 
 - Related feature: [File System Storage](./file-system-storage.md) - Storage pattern
 - Related feature: [Patient Admission](./patient-admission.md) - Admission context
+- Related feature: [Admission PDF Export](./admission-export.md) - Admission documents are indexed with checksum/page metadata and embedded in the PDF appendix when possible.
 - Related entity: `AdmissionConsentDocument` (to be migrated/deprecated)
 - Related migration: `V024__create_admission_consent_documents_table.sql` (legacy)

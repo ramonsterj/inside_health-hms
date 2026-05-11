@@ -1281,5 +1281,6 @@ export const emergencyAuthorizeMedicalOrderSchema = z.object({
 ## Related Docs/Commits/Issues
 
 - Related feature: [Patient Admission](./patient-admission.md)
+- Related feature: [Admission PDF Export](./admission-export.md) - Server-side export sanitizes stored rich text again at render time before writing the PDF.
 - Related entity: `Admission` (parent entity for all medical records)
 - Related pattern: Append-only with admin override (used by Clinical History, Progress Notes, Medical Orders, Nursing Notes, and Vital Signs — see [`nursing-module.md`](./nursing-module.md) revisions 1.3 and 1.4 for nursing notes and vital signs; similar to audit log patterns)
