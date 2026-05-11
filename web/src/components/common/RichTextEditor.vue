@@ -2,9 +2,74 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Editor from 'primevue/editor'
-import { sanitizeHtml } from '@/utils/sanitize'
+import { sanitizeHtml, sanitizeRichText } from '@/utils/sanitize'
 
 const { t } = useI18n()
+
+// Quill instance type — PrimeVue's `EditorLoadEvent.instance` is typed as `any`.
+// We treat it as a minimal interface (the only methods we call).
+interface QuillLike {
+  root: HTMLElement
+  clipboard: { convert(input: { html: string } | string): unknown }
+  getSelection(focus?: boolean): { index: number; length: number } | null
+  updateContents(delta: unknown, source?: string): unknown
+  deleteText(index: number, length: number, source?: string): unknown
+  setSelection(index: number, length?: number, source?: string): void
+  insertText(index: number, text: string, source?: string): unknown
+}
+
+/**
+ * Intercept paste so the editor only ever ingests sanitized HTML:
+ *  - strips inline `style` / `class` attributes (kills the
+ *    `style="background-color: transparent; color: rgb(0,0,0);"` noise
+ *    customers reported pasting in from Word / Google Docs / Chrome).
+ *  - unwraps any tag outside the supported toolbar set (`<span>`, `<div>`,
+ *    MS-Office `<o:p>` / `<w:*>`, headings, links, images, etc.).
+ *  - falls back to the plain-text payload when no HTML is on the clipboard.
+ *
+ * Done at paste time so the editor shows the cleaned content immediately —
+ * what the user pastes equals what gets stored.
+ */
+function onEditorLoad(event: { instance: QuillLike }) {
+  const quill = event.instance
+  // Capture phase + stopImmediatePropagation so Quill's built-in clipboard
+  // listener (registered on the same node) never runs — otherwise it
+  // converts the unsanitized HTML first, then our handler appends a second
+  // (cleaned) copy below it.
+  quill.root.addEventListener(
+    'paste',
+    e => {
+      const clipboard = (e as ClipboardEvent).clipboardData
+      if (!clipboard) return
+      const html = clipboard.getData('text/html')
+      const text = clipboard.getData('text/plain')
+      if (!html && !text) return
+
+      e.preventDefault()
+      e.stopImmediatePropagation()
+
+      const range = quill.getSelection(true) ?? { index: 0, length: 0 }
+
+      if (html) {
+        const cleaned = sanitizeRichText(html)
+        // Quill 2.x accepts an object form; 1.x accepts a string. Both work.
+        const delta = quill.clipboard.convert({ html: cleaned })
+        if (range.length > 0) quill.deleteText(range.index, range.length, 'user')
+        quill.updateContents(
+          { ops: [{ retain: range.index }, ...(delta as { ops: unknown[] }).ops] },
+          'user'
+        )
+        const insertedLen = (delta as { length?: () => number }).length?.() ?? 0
+        quill.setSelection(range.index + insertedLen, 0, 'silent')
+      } else {
+        if (range.length > 0) quill.deleteText(range.index, range.length, 'user')
+        quill.insertText(range.index, text, 'user')
+        quill.setSelection(range.index + text.length, 0, 'silent')
+      }
+    },
+    { capture: true }
+  )
+}
 
 const props = withDefaults(
   defineProps<{
@@ -58,6 +123,7 @@ const sanitizedContent = computed(() => sanitizeHtml(internalValue.value))
       :placeholder="placeholder"
       :class="{ 'p-invalid': invalid }"
       :style="editorStyle"
+      @load="onEditorLoad"
     >
       <template #toolbar>
         <span class="ql-formats">

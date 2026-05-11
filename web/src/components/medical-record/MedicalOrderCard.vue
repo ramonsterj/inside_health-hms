@@ -6,6 +6,7 @@ import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Badge from 'primevue/badge'
 import { formatDateTime, formatDate } from '@/utils/format'
+import { sanitizeHtml } from '@/utils/sanitize'
 import {
   MedicalOrderStatus,
   MedicalOrderCategory,
@@ -59,6 +60,8 @@ const attachmentsLoaded = ref(false)
 const showRejectDialog = ref(false)
 const showEmergencyDialog = ref(false)
 const historyRef = ref<InstanceType<typeof MedicationAdministrationHistory> | null>(null)
+
+const sanitizedObservations = computed(() => sanitizeHtml(props.order.observations))
 
 const isAuthorized = computed(() => props.order.status === MedicalOrderStatus.AUTORIZADO)
 const isTerminal = computed(() => isTerminalStatus(props.order.status))
@@ -332,7 +335,8 @@ async function deleteDocument(doc: MedicalOrderDocument) {
         <!-- Observations -->
         <div v-if="order.observations" class="observations">
           <label>{{ t('medicalRecord.medicalOrder.fields.observations') }}:</label>
-          <span>{{ order.observations }}</span>
+          <!-- eslint-disable-next-line vue/no-v-html -- content is sanitized via DOMPurify -->
+          <div class="observations-content" v-html="sanitizedObservations"></div>
         </div>
 
         <!-- Dates Row -->
@@ -652,6 +656,26 @@ async function deleteDocument(doc: MedicalOrderDocument) {
 .observations label {
   font-weight: 500;
   margin-right: 0.25rem;
+}
+
+.observations-content {
+  display: inline-block;
+  vertical-align: top;
+  word-wrap: break-word;
+}
+
+.observations-content:deep(p) {
+  margin: 0 0 0.5rem 0;
+}
+
+.observations-content:deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.observations-content:deep(ul),
+.observations-content:deep(ol) {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
 }
 
 .dates-row {

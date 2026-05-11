@@ -1570,7 +1570,7 @@
         "frequency": "Frequency",
         "schedule": "Schedule",
         "observations": "Observations",
-        "inventoryItem": "Linked Service/Item"
+        "inventoryItem": "Billable supply / service"
       },
       "placeholders": {
         "medication": "Medication name",

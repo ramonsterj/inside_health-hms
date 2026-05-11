@@ -262,6 +262,41 @@ Three sub-modules for medical documentation within admissions:
 
 ---
 
+### PN-10: Progress note - rich-text formatting preserved on display (spec v1.5)
+**Role**: DOCTOR
+**Precondition**: Logged in as doctor1, active admission exists
+**Steps**:
+1. Open active admission, navigate to Progress Notes
+2. Click "New Progress Note"
+3. In the Subjective field, type a paragraph, then press Enter twice and type a second paragraph
+4. Select part of the first paragraph and click the **Bold** toolbar button
+5. Click the **Bullet list** toolbar button and add 2-3 list items
+6. Save the note
+7. Reload the page and re-open the Progress Notes tab
+8. Expand the note card
+**Expected Result**: The rendered card shows the formatting visually (bold text is bold, list items appear as separate bullets, paragraphs are visually separated). The DOM contains the actual `<strong>`, `<ul><li>`, and `<p>` elements — they must **not** appear as literal `<p>` / `<ul>` text on a single running line.
+**Type**: Happy Path
+
+---
+
+### PN-11: Progress note - paste sanitization (spec v1.5)
+**Role**: DOCTOR
+**Precondition**: Logged in as doctor1, active admission
+**Steps**:
+1. Open "New Progress Note"
+2. Copy this HTML to the clipboard (e.g. from a developer tools snippet or by copying styled text from Google Docs / Word):
+   ```html
+   <p><span style="background-color: transparent; color: rgb(0, 0, 0);">Patient is stable.</span></p>
+   <ul><li style="color: red;">Item one</li><li>Item two</li></ul>
+   ```
+3. Paste it into the Subjective field
+4. Inspect the editor content (devtools or the `Tab` to next field then back)
+5. Save the note and inspect the request payload sent to `POST /progress-notes`
+**Expected Result**: The pasted text content ("Patient is stable.", "Item one", "Item two") is preserved. The `<span>` wrappers and inline `style="..."` attributes are stripped from both the editor content **and** the saved payload. The bullet list structure (`<ul><li>`) is preserved.
+**Type**: Happy Path
+
+---
+
 ## Medical Orders Test Cases
 
 ### MO-01: Create medical order - general
@@ -570,6 +605,56 @@ Three sub-modules for medical documentation within admissions:
 2. Try to navigate directly to `/medical-orders`
 **Expected Result**: Sidebar does not show the `Medical Orders` entry. Direct navigation returns 403 / redirects to forbidden page.
 **Type**: Negative
+
+---
+
+### MO-24: Medical order observations - rich-text formatting preserved on display (spec v1.5)
+**Role**: DOCTOR
+**Precondition**: Logged in as doctor1, active admission
+**Steps**:
+1. Open active admission, navigate to Medical Orders
+2. Click "New Order"
+3. Pick any category that exposes the observations field
+4. In the **Observations** rich-text editor, type a paragraph, press Enter, add a bullet list with 2 items, and bold a word in the first paragraph
+5. Save the order
+6. Reload the page and re-open the Medical Orders tab
+7. Locate the new order card; expand its observations if needed
+8. Also navigate to `/medical-orders` (cross-admission view) and find the same order — open the order detail
+**Expected Result**: Both the admission-detail card and the orders-by-state detail render the observations with real formatting: bold characters bold, bullet items separated as a list, paragraphs visually separated. The DOM contains `<strong>`, `<ul><li>`, `<p>` elements — no literal `<p>` / `<ul>` text on a single running line.
+**Type**: Happy Path
+
+---
+
+### MO-25: Medical order observations - paste sanitization (spec v1.5)
+**Role**: DOCTOR
+**Precondition**: Logged in as doctor1, active admission
+**Steps**:
+1. Open "New Order" with any category that exposes observations
+2. Paste this HTML into Observations (copy from Google Docs / Word, or use a clipboard tool):
+   ```html
+   <p><span style="background-color: transparent; color: rgb(0, 0, 0);">Administer with food.</span></p>
+   <ul><li style="font-family: Arial;">Watch for nausea</li><li>Watch for dizziness</li></ul>
+   ```
+3. Inspect the editor content — it should contain the text and a bullet list, without inline styles or `<span>` wrappers
+4. Save the order and inspect the `POST /medical-orders` payload
+**Expected Result**: Visible text content ("Administer with food.", "Watch for nausea", "Watch for dizziness") preserved. The persisted `observations` HTML must not contain `style="..."` attributes, `<span>` wrappers, or `class="..."` attributes. The bullet structure is preserved as `<ul><li>...</li></ul>`.
+**Type**: Happy Path
+
+---
+
+### MO-26: Medical order form - inventory link label (spec v1.5)
+**Role**: DOCTOR
+**Precondition**: Logged in as doctor1, locale = `es`
+**Steps**:
+1. Open "New Order" for a billable category (MEDICAMENTOS, LABORATORIOS, CUIDADOS_ESPECIALES, REFERENCIAS_MEDICAS, PRUEBAS_PSICOMETRICAS, or ACTIVIDAD_FISICA)
+2. Inspect the inventory-item dropdown's label and placeholder
+3. Switch locale to `en`, repeat
+**Expected Result**:
+- **es** locale: label reads **"Insumo/servicio a facturar"** (renamed from "Servicio/Artículo vinculado")
+- **en** locale: label reads **"Billable supply / service"** (renamed from "Linked Service/Item")
+- Placeholder text remains the existing explanatory string in both locales
+- The field still drives billing the same way (no API change)
+**Type**: Happy Path
 
 ---
 

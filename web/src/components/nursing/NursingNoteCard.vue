@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
@@ -20,8 +20,41 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const expanded = ref(false)
+const isOverflowing = ref(false)
+const descriptionRef = useTemplateRef<HTMLDivElement>('descriptionRef')
+let resizeObserver: ResizeObserver | null = null
 
 const sanitizedDescription = computed(() => sanitizeHtml(props.note.description))
+
+function checkOverflow() {
+  const el = descriptionRef.value
+  if (!el) return
+  // Once expanded, max-height is lifted so scrollHeight == clientHeight —
+  // we can't re-measure overflow, so keep the toggle visible.
+  if (expanded.value) {
+    isOverflowing.value = true
+    return
+  }
+  isOverflowing.value = el.scrollHeight > el.clientHeight + 1
+}
+
+onMounted(() => {
+  nextTick(checkOverflow)
+  if (typeof ResizeObserver !== 'undefined' && descriptionRef.value) {
+    resizeObserver = new ResizeObserver(() => checkOverflow())
+    resizeObserver.observe(descriptionRef.value)
+  }
+})
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+  resizeObserver = null
+})
+
+watch(sanitizedDescription, () => {
+  expanded.value = false
+  nextTick(checkOverflow)
+})
 
 const authorName = computed(() => {
   const author = props.note.createdBy
@@ -82,9 +115,16 @@ function handleEdit() {
     </template>
     <template #content>
       <div class="note-content">
-        <!-- eslint-disable-next-line vue/no-v-html -- content is sanitized via DOMPurify before binding -->
-        <div class="description" :class="{ expanded }" v-html="sanitizedDescription"></div>
+        <!-- eslint-disable vue/no-v-html -- content is sanitized via DOMPurify before binding -->
+        <div
+          ref="descriptionRef"
+          class="description"
+          :class="{ expanded, overflowing: isOverflowing }"
+          v-html="sanitizedDescription"
+        ></div>
+        <!-- eslint-enable vue/no-v-html -->
         <Button
+          v-if="isOverflowing"
           :label="expanded ? t('common.collapse') : t('common.expand')"
           text
           size="small"
@@ -179,7 +219,7 @@ function handleEdit() {
   overflow: visible;
 }
 
-.description:not(.expanded)::after {
+.description.overflowing:not(.expanded)::after {
   content: '';
   position: absolute;
   bottom: 0;
