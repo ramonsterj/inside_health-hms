@@ -38,13 +38,37 @@ export const patientSchema = z.object({
     .string()
     .min(1, 'validation.patient.lastName.required')
     .max(100, 'validation.patient.lastName.max'),
-  age: z
-    .number({
-      required_error: 'validation.patient.age.required',
-      invalid_type_error: 'validation.patient.age.invalid'
-    })
-    .min(0, 'validation.patient.age.min')
-    .max(150, 'validation.patient.age.max'),
+  // `dateOfBirth` is the entered value. `age` is derived server-side and never
+  // part of the form payload — see new-patient-intake.md.
+  dateOfBirth: z
+    .string({ required_error: 'validation.patient.dateOfBirth.required' })
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'validation.patient.dateOfBirth.invalid')
+    .refine(
+      value => {
+        const parts = value.split('-').map(Number)
+        if (parts.length !== 3 || parts.some(n => Number.isNaN(n))) return false
+        const [y, m, d] = parts as [number, number, number]
+        const dob = new Date(y, m - 1, d)
+        if (
+          Number.isNaN(dob.getTime()) ||
+          dob.getFullYear() !== y ||
+          dob.getMonth() !== m - 1 ||
+          dob.getDate() !== d
+        ) {
+          return false
+        }
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        if (dob > today) return false
+        let ageYears = today.getFullYear() - dob.getFullYear()
+        const birthdayThisYear = new Date(today.getFullYear(), dob.getMonth(), dob.getDate())
+        if (today < birthdayThisYear) {
+          ageYears -= 1
+        }
+        return ageYears <= 150
+      },
+      { message: 'validation.patient.dateOfBirth.invalid' }
+    ),
   sex: z.enum(['MALE', 'FEMALE'], { required_error: 'validation.patient.sex.required' }),
   gender: z
     .string()

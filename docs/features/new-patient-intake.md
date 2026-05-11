@@ -6,6 +6,8 @@
 |---------|------|--------|---------|
 | 1.0 | 2026-01-21 | @author | Initial draft |
 | 1.1 | 2026-01-24 | @author | Added "Admit" action to patient list (integration with admission flow) |
+| 1.2 | 2026-05-11 | @author | Replaced manually-entered `age` with `dateOfBirth`; age is now automatically computed by the platform |
+| 1.3 | 2026-05-11 | @author | Patient create/edit form shows a live, read-only age preview as soon as `dateOfBirth` is entered (no save required) |
 
 ---
 
@@ -68,7 +70,7 @@ This feature allows administrative staff to register new patients by capturing t
 |-------|---------------|------|-------------|
 | `firstName` | Nombres | String | max 100 chars |
 | `lastName` | Apellidos | String | max 100 chars |
-| `age` | Edad | Integer | 0-150 |
+| `dateOfBirth` | Fecha de Nacimiento | Date (`yyyy-MM-dd` on the wire, `dd/MM/yyyy` in the UI) | Must be a valid past date; resulting age must be between 0 and 150 years |
 | `sex` | Sexo | Enum | MALE, FEMALE |
 | `gender` | Género | String | max 50 chars |
 | `maritalStatus` | Estado Civil | Enum | SINGLE, MARRIED, DIVORCED, WIDOWED, SEPARATED, OTHER |
@@ -79,6 +81,10 @@ This feature allows administrative staff to register new patients by capturing t
 | `email` | Email | String | valid email format, max 255 chars |
 | `notes` | Anotaciones | Text | optional, free-form text |
 | `idDocumentNumber` | Número de Documento | String | max 50 chars, for duplicate detection |
+
+> **Note on age**: `age` is **not** a stored or user-entered field. It is automatically computed by the platform from `dateOfBirth` (full years between `dateOfBirth` and the current date, in the hospital's local time zone — America/Guatemala). Age is exposed as a read-only derived value in API responses and UI views; it must never be writable from any form or API request.
+>
+> **UI behavior**: The patient create/edit form must render a live, read-only age preview next to the `dateOfBirth` field as soon as a valid past date is entered, using the same full-years calculation as the server. The preview is purely informational — it is never submitted to the API.
 
 ### Emergency Contact Fields
 
@@ -97,7 +103,9 @@ This feature allows administrative staff to register new patients by capturing t
 - FR5: Search patients by name, ID document number
 - FR6: Display audit trail (created by, created at, updated by, updated at)
 - FR7: Patient records are **never deleted** (no soft delete for patients)
-- FR8: Detect potential duplicate patients (same name + age or same ID document number)
+- FR8: Detect potential duplicate patients (same name + `dateOfBirth`, or same ID document number)
+- FR9: Compute `age` automatically from `dateOfBirth` on every read; never persist or accept `age` as input
+- FR10: Patient create/edit form shows a live, read-only age preview as soon as a valid `dateOfBirth` is entered — staff sees the computed age before saving
 
 ---
 
@@ -108,6 +116,7 @@ This feature allows administrative staff to register new patients by capturing t
 - ✅ When administrative staff submits a valid patient form with all required fields and at least one emergency contact, the patient is created and 201 Created is returned.
 - ✅ When creating a patient, multiple emergency contacts can be added with name, relationship, and phone number.
 - ✅ When a patient is created, the system records who created it and when (audit trail).
+- ✅ When administrative staff enters a valid `dateOfBirth` in the create/edit form, the computed age is shown next to the field immediately (before saving) and updates whenever the date changes.
 
 ### Happy Path - Upload ID Document
 
@@ -136,7 +145,8 @@ This feature allows administrative staff to register new patients by capturing t
 - ❌ When no emergency contact is provided, return 400 with "At least one emergency contact required" error.
 - ❌ When email format is invalid, return 400 with validation error.
 - ❌ When phone number format is invalid, return 400 with validation error.
-- ❌ When age is out of range (0-150), return 400 with validation error.
+- ❌ When `dateOfBirth` is missing, malformed, in the future, or implies an age outside 0-150 years, return 400 with a validation error.
+- ❌ When a request includes an explicit `age` field, ignore it (do not persist) — `age` is always derived from `dateOfBirth`.
 
 ### Edge Cases - File Upload
 
@@ -156,7 +166,7 @@ This feature allows administrative staff to register new patients by capturing t
 
 ### Edge Cases - Duplicate Prevention
 
-- ⚠️ When creating a patient that may already exist (matching firstName + lastName + age, or matching ID document number), return 409 Conflict with a warning and reference to existing patient(s).
+- ⚠️ When creating a patient that may already exist (matching firstName + lastName + `dateOfBirth`, or matching ID document number), return 409 Conflict with a warning and reference to existing patient(s).
 
 ---
 
@@ -196,7 +206,7 @@ This feature allows administrative staff to register new patients by capturing t
 {
   "firstName": "Juan",
   "lastName": "Pérez García",
-  "age": 45,
+  "dateOfBirth": "1980-09-15",
   "sex": "MALE",
   "gender": "Masculino",
   "maritalStatus": "MARRIED",
@@ -222,12 +232,14 @@ This feature allows administrative staff to register new patients by capturing t
 }
 
 // Response - 201 Created
+// Note: `age` is a read-only field derived from `dateOfBirth` on the server. It is never accepted as input.
 {
   "success": true,
   "data": {
     "id": 1,
     "firstName": "Juan",
     "lastName": "Pérez García",
+    "dateOfBirth": "1980-09-15",
     "age": 45,
     "sex": "MALE",
     "gender": "Masculino",
@@ -281,6 +293,7 @@ This feature allows administrative staff to register new patients by capturing t
         "id": 42,
         "firstName": "Juan",
         "lastName": "Pérez García",
+        "dateOfBirth": "1980-09-15",
         "age": 45,
         "idDocumentNumber": "1234567890101"
       }
@@ -319,7 +332,11 @@ CREATE TABLE patients (
     id BIGSERIAL PRIMARY KEY,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    age INTEGER NOT NULL CHECK (age >= 0 AND age <= 150),
+    date_of_birth DATE NOT NULL CHECK (
+        date_of_birth <= CURRENT_DATE
+        AND date_of_birth > CURRENT_DATE - INTERVAL '151 years'
+    ),
+    -- Note: `age` is NOT stored. It is computed at read time from `date_of_birth`.
     sex VARCHAR(10) NOT NULL,
     gender VARCHAR(50) NOT NULL,
     marital_status VARCHAR(20) NOT NULL,
@@ -340,6 +357,7 @@ CREATE TABLE patients (
 
 CREATE INDEX idx_patients_last_name ON patients(last_name);
 CREATE INDEX idx_patients_first_name ON patients(first_name);
+CREATE INDEX idx_patients_date_of_birth ON patients(date_of_birth);
 CREATE INDEX idx_patients_id_document_number ON patients(id_document_number);
 CREATE INDEX idx_patients_deleted_at ON patients(deleted_at);
 
@@ -419,6 +437,7 @@ WHERE r.code IN ('DOCTOR', 'NURSE', 'CHIEF_NURSE') AND p.code = 'patient:read';
 - [x] `deleted_at` - Required for soft delete queries (though not used for patients)
 - [x] `patient_id` - Foreign key on emergency_contacts and patient_id_documents
 - [x] `first_name`, `last_name` - For search functionality
+- [x] `date_of_birth` - For duplicate detection (firstName + lastName + dateOfBirth)
 - [x] `id_document_number` - For search and duplicate detection
 
 ---
@@ -465,7 +484,20 @@ export const emergencyContactSchema = z.object({
 export const patientSchema = z.object({
   firstName: z.string().min(1, 'patient.firstName.required').max(100),
   lastName: z.string().min(1, 'patient.lastName.required').max(100),
-  age: z.number().min(0).max(150, 'patient.age.invalid'),
+  // `dateOfBirth` is the entered value. `age` is derived server-side and is NOT part of the form schema.
+  dateOfBirth: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'patient.dateOfBirth.invalid')
+    .refine((value) => {
+      const dob = new Date(`${value}T00:00:00`)
+      if (Number.isNaN(dob.getTime())) return false
+      const today = new Date()
+      if (dob > today) return false
+      let ageYears = today.getFullYear() - dob.getFullYear()
+      const birthdayThisYear = new Date(today.getFullYear(), dob.getMonth(), dob.getDate())
+      if (today < birthdayThisYear) ageYears -= 1
+      return ageYears >= 0 && ageYears <= 150
+    }, 'patient.dateOfBirth.invalid'),
   sex: z.enum(['MALE', 'FEMALE']),
   gender: z.string().min(1, 'patient.gender.required').max(50),
   maritalStatus: z.enum(['SINGLE', 'MARRIED', 'DIVORCED', 'WIDOWED', 'SEPARATED', 'OTHER']),
@@ -496,6 +528,7 @@ export type EmergencyContactFormData = z.infer<typeof emergencyContactSchema>
     "generalInfo": "General Information",
     "firstName": "First Name",
     "lastName": "Last Name",
+    "dateOfBirth": "Date of Birth",
     "age": "Age",
     "sex": "Sex",
     "gender": "Gender",
@@ -555,6 +588,7 @@ export type EmergencyContactFormData = z.infer<typeof emergencyContactSchema>
     "generalInfo": "Datos Generales",
     "firstName": "Nombres",
     "lastName": "Apellidos",
+    "dateOfBirth": "Fecha de Nacimiento",
     "age": "Edad",
     "sex": "Sexo",
     "gender": "Género",
@@ -609,6 +643,7 @@ export type EmergencyContactFormData = z.infer<typeof emergencyContactSchema>
 
 ## Implementation Notes
 
+- **Date of Birth vs Age**: The intake form captures `dateOfBirth` only — there is no age input on any create/edit form. The backend persists `date_of_birth` (a `LocalDate` mapped to a `DATE` column, per the project's date/time standard) and exposes a derived `age` field on every patient response, computed as the full years elapsed between `dateOfBirth` and the current date in America/Guatemala. The frontend must display `dateOfBirth` using `formatDate` from `@/utils/format` (yielding `dd/MM/yyyy`) and render `age` as a read-only value. Any pre-existing patients that were registered with a manually-entered age must be migrated by back-filling `date_of_birth` (e.g. via a data-migration step that asks staff to enter the missing birth date, or by approximating from `age` only as a temporary fallback flagged for correction).
 - **Admission Integration**: PatientList includes an "Admit" action icon that navigates to `/admissions/new?patientId={id}`. This action should be visible only to users with `admission:create` permission and hidden if the patient already has an ACTIVE admission. See [Patient Admission](./patient-admission.md) for admission flow details.
 - **Entity Pattern**: Follow existing `User` entity pattern - extend `BaseEntity`, use `@SQLRestriction("deleted_at IS NULL")` (even though patients won't be deleted)
 - **File Storage**: ID documents stored as BYTEA in PostgreSQL for simplicity. Consider moving to object storage (S3/MinIO) if file sizes become an issue

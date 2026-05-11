@@ -2,6 +2,7 @@ package com.insidehealthgt.hms.exception
 
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.ResponseStatus
+import java.time.LocalDate
 
 @ResponseStatus(HttpStatus.NOT_FOUND)
 class ResourceNotFoundException(message: String) : RuntimeException(message)
@@ -38,6 +39,7 @@ data class DuplicatePatientInfo(
     val id: Long,
     val firstName: String,
     val lastName: String,
+    val dateOfBirth: LocalDate,
     val age: Int,
     val idDocumentNumber: String?,
 )

@@ -25,6 +25,7 @@ const mockPatient: Patient = {
   id: 1,
   firstName: 'Juan',
   lastName: 'Pérez García',
+  dateOfBirth: '1981-01-01',
   age: 45,
   sex: Sex.MALE,
   gender: 'Masculino',
@@ -51,6 +52,7 @@ const mockPatientSummary: PatientSummary = {
   id: 1,
   firstName: 'Juan',
   lastName: 'Pérez García',
+  dateOfBirth: '1981-01-01',
   age: 45,
   sex: Sex.MALE,
   email: 'juan.perez@example.com',
@@ -181,7 +183,7 @@ describe('usePatientStore', () => {
       const createData = {
         firstName: 'Juan',
         lastName: 'Pérez García',
-        age: 45,
+        dateOfBirth: '1981-01-01',
         sex: Sex.MALE,
         gender: 'Masculino',
         maritalStatus: MaritalStatus.MARRIED,
@@ -220,7 +222,7 @@ describe('usePatientStore', () => {
       const createData = {
         firstName: 'Juan',
         lastName: 'Pérez García',
-        age: 45,
+        dateOfBirth: '1981-01-01',
         sex: Sex.MALE,
         gender: 'Masculino',
         maritalStatus: MaritalStatus.MARRIED,
@@ -246,7 +248,12 @@ describe('usePatientStore', () => {
 
   describe('updatePatient', () => {
     it('should update patient and update current state', async () => {
-      const updatedPatient = { ...mockPatient, firstName: 'Juan Carlos', age: 46 }
+      const updatedPatient = {
+        ...mockPatient,
+        firstName: 'Juan Carlos',
+        dateOfBirth: '1980-01-01',
+        age: 46
+      }
       mockedApi.put.mockResolvedValueOnce({
         data: { success: true, data: updatedPatient }
       })
@@ -255,7 +262,7 @@ describe('usePatientStore', () => {
       const updateData = {
         firstName: 'Juan Carlos',
         lastName: 'Pérez García',
-        age: 46,
+        dateOfBirth: '1980-01-01',
         sex: Sex.MALE,
         gender: 'Masculino',
         maritalStatus: MaritalStatus.MARRIED,
@@ -296,7 +303,7 @@ describe('usePatientStore', () => {
       const updateData = {
         firstName: 'Juan',
         lastName: 'Pérez García',
-        age: 45,
+        dateOfBirth: '1981-01-01',
         sex: Sex.MALE,
         gender: 'Masculino',
         maritalStatus: MaritalStatus.MARRIED,

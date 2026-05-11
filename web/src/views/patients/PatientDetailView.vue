@@ -10,6 +10,7 @@ import ProgressSpinner from 'primevue/progressspinner'
 import { usePatientStore } from '@/stores/patient'
 import { useAuthStore } from '@/stores/auth'
 import AuditInfo from '@/components/common/AuditInfo.vue'
+import { formatDate } from '@/utils/format'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -147,6 +148,10 @@ function formatUserName(
               <div class="info-item">
                 <label>{{ t('patient.lastName') }}</label>
                 <span>{{ patient.lastName }}</span>
+              </div>
+              <div class="info-item">
+                <label>{{ t('patient.dateOfBirth') }}</label>
+                <span>{{ formatDate(patient.dateOfBirth) }}</span>
               </div>
               <div class="info-item">
                 <label>{{ t('patient.age') }}</label>

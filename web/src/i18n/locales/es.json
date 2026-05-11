@@ -470,6 +470,7 @@
     "firstName": "Nombres",
     "lastName": "Apellidos",
     "fullName": "Nombre Completo",
+    "dateOfBirth": "Fecha de Nacimiento",
     "age": "Edad",
     "sex": "Sexo",
     "gender": "Género",
@@ -616,11 +617,9 @@
         "required": "El apellido es requerido",
         "max": "El apellido debe tener como máximo 100 caracteres"
       },
-      "age": {
-        "required": "La edad es requerida",
-        "invalid": "La edad debe ser un número",
-        "min": "La edad debe ser al menos 0",
-        "max": "La edad debe ser como máximo 150"
+      "dateOfBirth": {
+        "required": "La fecha de nacimiento es requerida",
+        "invalid": "La fecha de nacimiento debe ser una fecha pasada válida dentro de los últimos 150 años"
       },
       "sex": {
         "required": "El sexo es requerido"

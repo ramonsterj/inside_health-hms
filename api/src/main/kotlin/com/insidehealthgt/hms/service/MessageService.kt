@@ -144,6 +144,7 @@ class MessageService(private val messageSource: MessageSource) {
     fun errorPatientFileSize() = getMessage("error.patient.file.size")
     fun errorPatientFileType() = getMessage("error.patient.file.type")
     fun errorPatientAccessDenied() = getMessage("error.patient.access.denied")
+    fun errorPatientDateOfBirthTooOld(maxYears: Int) = getMessage("error.patient.dateOfBirth.tooOld", maxYears)
 
     // === Vital Sign Error Messages ===
 

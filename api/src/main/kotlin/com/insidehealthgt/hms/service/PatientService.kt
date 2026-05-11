@@ -21,7 +21,10 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.Period
+import java.time.ZoneId
 
 @Service
 @Suppress("TooManyFunctions")
@@ -105,11 +108,13 @@ class PatientService(
 
     @Transactional
     fun createPatient(request: CreatePatientRequest): PatientResponse {
+        validateDateOfBirth(request.dateOfBirth)
+
         // Check for potential duplicates
         val duplicates = patientRepository.findPotentialDuplicates(
             firstName = request.firstName,
             lastName = request.lastName,
-            age = request.age,
+            dateOfBirth = request.dateOfBirth,
             idDocumentNumber = request.idDocumentNumber,
         )
 
@@ -121,6 +126,7 @@ class PatientService(
                         id = p.id!!,
                         firstName = p.firstName,
                         lastName = p.lastName,
+                        dateOfBirth = p.dateOfBirth,
                         age = p.age,
                         idDocumentNumber = p.idDocumentNumber,
                     )
@@ -131,7 +137,7 @@ class PatientService(
         val patient = Patient(
             firstName = request.firstName,
             lastName = request.lastName,
-            age = request.age,
+            dateOfBirth = request.dateOfBirth,
             sex = request.sex,
             gender = request.gender,
             maritalStatus = request.maritalStatus,
@@ -160,13 +166,15 @@ class PatientService(
 
     @Transactional
     fun updatePatient(id: Long, request: UpdatePatientRequest): PatientResponse {
+        validateDateOfBirth(request.dateOfBirth)
+
         val patient = findByIdWithContacts(id)
 
         // Check for duplicates (excluding the current patient)
         val duplicates = patientRepository.findPotentialDuplicates(
             firstName = request.firstName,
             lastName = request.lastName,
-            age = request.age,
+            dateOfBirth = request.dateOfBirth,
             idDocumentNumber = request.idDocumentNumber,
         ).filter { it.id != id }
 
@@ -178,6 +186,7 @@ class PatientService(
                         id = p.id!!,
                         firstName = p.firstName,
                         lastName = p.lastName,
+                        dateOfBirth = p.dateOfBirth,
                         age = p.age,
                         idDocumentNumber = p.idDocumentNumber,
                     )
@@ -188,7 +197,7 @@ class PatientService(
         // Update basic fields
         patient.firstName = request.firstName
         patient.lastName = request.lastName
-        patient.age = request.age
+        patient.dateOfBirth = request.dateOfBirth
         patient.sex = request.sex
         patient.gender = request.gender
         patient.maritalStatus = request.maritalStatus
@@ -268,6 +277,13 @@ class PatientService(
         return buildPatientResponse(savedPatient)
     }
 
+    private fun validateDateOfBirth(dateOfBirth: LocalDate) {
+        val age = Period.between(dateOfBirth, LocalDate.now(GUATEMALA_ZONE)).years
+        if (age > MAX_AGE_YEARS) {
+            throw BadRequestException(messageService.errorPatientDateOfBirthTooOld(MAX_AGE_YEARS))
+        }
+    }
+
     private fun validateFile(file: MultipartFile) {
         val error = when {
             file.isEmpty -> messageService.errorPatientFileEmpty()
@@ -332,5 +348,10 @@ class PatientService(
         val createdByUser = patient.createdBy?.let { userRepository.findById(it).orElse(null) }
         val updatedByUser = patient.updatedBy?.let { userRepository.findById(it).orElse(null) }
         return PatientResponse.from(patient, createdByUser, updatedByUser, hasActiveAdmission)
+    }
+
+    companion object {
+        private const val MAX_AGE_YEARS = 150
+        private val GUATEMALA_ZONE = ZoneId.of("America/Guatemala")
     }
 }
