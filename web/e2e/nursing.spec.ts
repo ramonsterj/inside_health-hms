@@ -3,9 +3,9 @@ import { waitForMedicalRecordTabs, selectMedicalRecordTab } from './utils/test-h
 
 // Mock user data
 //
-// Per spec v1.3 (nursing-module.md), only ADMIN holds `nursing-note:update` after V096.
-// Vital-sign update keeps the creator+24h+admin-override pattern, so DOCTOR/NURSE/CHIEF_NURSE
-// retain `vital-sign:update`.
+// Per spec v1.3 + v1.4 (nursing-module.md), only ADMIN holds `nursing-note:update`
+// (after V096) and `vital-sign:update` (after V097). DOCTOR / NURSE / CHIEF_NURSE
+// can create and read both record types but cannot edit.
 const mockNurseUser = {
   id: 4,
   username: 'nurse',
@@ -20,7 +20,6 @@ const mockNurseUser = {
     'nursing-note:create',
     'vital-sign:read',
     'vital-sign:create',
-    'vital-sign:update',
     'clinical-history:read',
     'psychotherapy-activity:read'
   ],
@@ -68,7 +67,6 @@ const mockDoctorUser = {
     'nursing-note:create',
     'vital-sign:read',
     'vital-sign:create',
-    'vital-sign:update',
     'clinical-history:read'
   ],
   status: 'ACTIVE',
@@ -91,7 +89,6 @@ const mockChiefNurseUser = {
     'nursing-note:create',
     'vital-sign:read',
     'vital-sign:create',
-    'vital-sign:update',
     'clinical-history:read'
   ],
   status: 'ACTIVE',
@@ -167,6 +164,8 @@ const mockNursingNotes = [
   }
 ]
 
+// Default `canEdit: false` reflects what a non-admin viewer sees under the
+// admin-only update policy (spec v1.4, V097). Admin tests override this per-test.
 const mockVitalSigns = [
   {
     id: 2,
@@ -190,7 +189,7 @@ const mockVitalSigns = [
       roles: ['NURSE']
     },
     updatedBy: null,
-    canEdit: true
+    canEdit: false
   },
   {
     id: 1,
@@ -214,7 +213,7 @@ const mockVitalSigns = [
       roles: ['NURSE']
     },
     updatedBy: null,
-    canEdit: true
+    canEdit: false
   }
 ]
 
@@ -910,6 +909,153 @@ test.describe('Nursing Module', () => {
       await expect(page.locator('#oxygenSaturation')).toBeVisible()
       await expect(page.locator('#glucose')).toBeVisible()
       await expect(page.getByRole('button', { name: /Save/i })).toBeVisible()
+    })
+  })
+
+  // Per spec v1.4 (nursing-module.md, V097), only ADMIN can update vital signs.
+  // Doctors, nurses, and chief nurses are append-only — they can record new
+  // readings but cannot edit existing ones. The frontend gates the pencil
+  // edit button on `vital-sign:update` permission AND the server-side `canEdit`
+  // flag (which is `isAdmin && admission.isActive`).
+  test.describe('Vital Signs - Edit Permissions (admin-only)', () => {
+    async function setupVitalSignsView(
+      page: import('@playwright/test').Page,
+      user: typeof mockNurseUser,
+      options: { admission?: typeof mockActiveAdmission; canEdit?: boolean } = {}
+    ) {
+      const admission = options.admission ?? mockActiveAdmission
+      const canEdit = options.canEdit ?? false
+      const vitalSigns = mockVitalSigns.map(vs => ({ ...vs, canEdit }))
+
+      await setupAuth(page, user)
+      await setupCommonMocks(page, user)
+
+      await page.route('**/api/v1/admissions/100', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: admission })
+        })
+      })
+
+      await page.route('**/api/v1/admissions/100/vital-signs/chart*', async route => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: vitalSigns })
+        })
+      })
+
+      await page.route('**/api/v1/admissions/100/vital-signs*', async route => {
+        if (!route.request().url().includes('/chart')) {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              success: true,
+              data: {
+                content: vitalSigns,
+                page: { totalElements: 2, totalPages: 1, size: 20, number: 0 }
+              }
+            })
+          })
+        }
+      })
+
+      await page.route('**/api/v1/admissions/100/clinical-history', async route => {
+        await route.fulfill({
+          status: 404,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: false, message: 'Not found' })
+        })
+      })
+    }
+
+    test('nurse cannot edit own vital signs (no edit button)', async ({ page }) => {
+      // Nurse authored the readings, but the spec v1.4 rule is admin-only update.
+      // The server returns canEdit=false for the nurse on every record.
+      await setupVitalSignsView(page, mockNurseUser, { canEdit: false })
+
+      await page.goto('/admissions/100')
+      await waitForMedicalRecordTabs(page)
+      await selectMedicalRecordTab(page, 'vitalSigns')
+
+      // Vital signs render…
+      await expect(page.getByText('120/80')).toBeVisible()
+      // …but the pencil edit button is hidden on every row.
+      await expect(
+        page.locator('.vital-sign-table .p-datatable-tbody button.p-button-icon-only')
+      ).toHaveCount(0)
+    })
+
+    test('doctor cannot edit vital signs (no edit button)', async ({ page }) => {
+      await setupVitalSignsView(page, mockDoctorUser, { canEdit: false })
+
+      await page.goto('/admissions/100')
+      await waitForMedicalRecordTabs(page)
+      await selectMedicalRecordTab(page, 'vitalSigns')
+
+      await expect(page.getByText('120/80')).toBeVisible()
+      await expect(
+        page.locator('.vital-sign-table .p-datatable-tbody button.p-button-icon-only')
+      ).toHaveCount(0)
+    })
+
+    test('chief nurse can record but not edit vital signs', async ({ page }) => {
+      await setupVitalSignsView(page, mockChiefNurseUser, { canEdit: false })
+
+      await page.goto('/admissions/100')
+      await waitForMedicalRecordTabs(page)
+      await selectMedicalRecordTab(page, 'vitalSigns')
+
+      // Chief nurse holds vital-sign:create — Record button is visible.
+      await expect(page.getByRole('button', { name: 'Record Vital Signs' })).toBeVisible()
+      // …but no edit pencil; canEdit is false.
+      await expect(
+        page.locator('.vital-sign-table .p-datatable-tbody button.p-button-icon-only')
+      ).toHaveCount(0)
+    })
+
+    test('admin can open edit dialog for vital signs on active admission', async ({ page }) => {
+      // Server returns canEdit=true only for ADMIN viewers on active admissions.
+      await setupVitalSignsView(page, mockAdminUser, { canEdit: true })
+
+      await page.goto('/admissions/100')
+      await waitForMedicalRecordTabs(page)
+      await selectMedicalRecordTab(page, 'vitalSigns')
+
+      // Edit pencil is rendered on each data row.
+      const editButtons = page.locator(
+        '.vital-sign-table .p-datatable-tbody button.p-button-icon-only'
+      )
+      await expect(editButtons.first()).toBeVisible()
+      await editButtons.first().click()
+
+      // The form dialog opens in edit mode and is pre-populated from the row.
+      // PrimeVue InputNumber wraps the actual <input> inside a span, so target
+      // the inner input element rather than the wrapper.
+      await expect(page.getByText(/Edit Vital Signs/i).first()).toBeVisible()
+      await expect(page.locator('#systolicBp input')).toHaveValue('125')
+      await expect(page.locator('#diastolicBp input')).toHaveValue('82')
+    })
+
+    test('admin edit button is hidden for discharged admissions', async ({ page }) => {
+      // Discharge protection blocks all writes — server returns canEdit=false even for ADMIN.
+      await setupVitalSignsView(page, mockAdminUser, {
+        admission: mockDischargedAdmission,
+        canEdit: false
+      })
+
+      await page.goto('/admissions/100')
+      await waitForMedicalRecordTabs(page)
+      await selectMedicalRecordTab(page, 'vitalSigns')
+
+      await expect(page.getByText('120/80')).toBeVisible()
+      await expect(
+        page.locator('.vital-sign-table .p-datatable-tbody button.p-button-icon-only')
+      ).toHaveCount(0)
+      // Record button is also hidden for discharged admissions.
+      await expect(page.getByRole('button', { name: 'Record Vital Signs' })).not.toBeVisible()
     })
   })
 

@@ -209,8 +209,6 @@ class MessageService(private val messageSource: MessageSource) {
 
     fun errorNotAuthenticated() = getMessage("error.not.authenticated")
     fun errorAdmissionDischargedRecords() = getMessage("error.admission.discharged.records")
-    fun errorEditOnlyOwnRecords() = getMessage("error.edit.only.own.records")
-    fun errorEditWindowClosed() = getMessage("error.edit.window.closed")
 
     // === Auth Error Messages ===
 

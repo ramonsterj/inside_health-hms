@@ -10,15 +10,15 @@
 
 Three nursing sub-modules:
 1. **Nursing Notes** - Free-text observations per admission
-2. **Vital Signs** - BP, heart rate, temperature, O2 sat with **24-hour edit window**
+2. **Vital Signs** - BP, heart rate, temperature, O2 sat — **admin-only update** (append-only for non-admins)
 3. **Medication Administration Record (MAR)** - Records medication given/missed/refused/held, triggers inventory and billing
 
 **Key rules**:
-- Vital signs can only be edited within 24 hours of creation
-- Vital signs cannot be edited on discharge date
+- Nursing notes and vital signs can only be updated by ADMIN (V096 + V097). Doctors, nurses, and chief nurses are append-only and must request edits from an administrator.
+- Discharge protection blocks all writes (including for ADMIN) on both record types.
 - MAR records are immutable (no edits after creation)
 - GIVEN MAR status triggers inventory EXIT + billing MEDICATION charge
-- NURSE, CHIEF_NURSE, DOCTOR, and ADMIN can create/edit nursing notes and vital signs (V045)
+- NURSE, CHIEF_NURSE, DOCTOR, and ADMIN can create nursing notes and vital signs (V045)
 - Only NURSE, CHIEF_NURSE, and ADMIN can administer medications (MAR)
 
 ---
@@ -158,38 +158,38 @@ Three nursing sub-modules:
 
 ---
 
-### VS-03: Edit vital signs - within 24 hours
-**Role**: NURSE
-**Precondition**: Logged in as nurse1, vital signs created less than 24h ago
+### VS-03: Edit vital signs - admin can update on active admission
+**Role**: ADMIN
+**Precondition**: Logged in as admin, vital signs exist on an active admission
 **Steps**:
-1. Open a recently created vital signs entry
+1. Open a vital signs entry
 2. Click Edit
 3. Change a value (e.g., heart rate from 72 to 75)
 4. Save
-**Expected Result**: Edit succeeds. Updated value saved.
+**Expected Result**: Edit succeeds. Updated value saved with `updatedBy = admin`.
 **Type**: Happy Path
 
 ---
 
-### VS-04: Edit vital signs - after 24 hours (denied)
-**Role**: NURSE
-**Precondition**: Vital signs created more than 24 hours ago (use seed data or wait)
+### VS-04: Edit vital signs - non-admin denied
+**Role**: NURSE / DOCTOR / CHIEF_NURSE
+**Precondition**: Logged in as nurse1 (or doctor1, or chiefnurse1), vital signs exist
 **Steps**:
-1. Open a vital signs entry from >24h ago
-2. Try to edit
+1. Open any vital signs entry (own or others')
+2. Try to edit (button should be hidden — `canEdit = false`)
 3. Try API: `PUT /api/v1/admissions/{id}/vital-signs/{vsId}`
-**Expected Result**: Edit button disabled/hidden. API returns error (24-hour window exceeded).
-**Type**: Negative
+**Expected Result**: Edit button hidden. API returns 403 Forbidden — only ADMIN holds `vital-sign:update` after V097.
+**Type**: Permission
 
 ---
 
-### VS-05: Edit vital signs - discharge date protection
-**Role**: NURSE
-**Precondition**: Admission discharged today, vital signs exist
+### VS-05: Edit vital signs - admin denied for discharged admission
+**Role**: ADMIN
+**Precondition**: Admission discharged, vital signs exist
 **Steps**:
-1. Open discharged admission (discharged today)
-2. Try to edit a vital signs entry from today
-**Expected Result**: Cannot edit vital signs on discharge date even if within 24h window.
+1. Open discharged admission
+2. Try to edit a vital signs entry
+**Expected Result**: Cannot edit vital signs once admission is discharged, even as ADMIN. API returns 400.
 **Type**: Negative
 
 ---
@@ -221,14 +221,14 @@ Three nursing sub-modules:
 
 ---
 
-### VS-08: Vital signs - chief nurse can create/edit
+### VS-08: Vital signs - chief nurse can create but cannot edit
 **Role**: CHIEF_NURSE
 **Precondition**: Logged in as chiefnurse1
 **Steps**:
 1. Create vital signs for an admission
-2. Edit them within 24h
-**Expected Result**: Both operations succeed.
-**Type**: Happy Path
+2. Try to edit them
+**Expected Result**: Create succeeds. Edit button hidden — chief nurse no longer holds `vital-sign:update` after V097. API returns 403 if called directly.
+**Type**: Permission
 
 ---
 
@@ -421,10 +421,10 @@ Three nursing sub-modules:
 |--------|-------|-------|--------|-------|-------|-------------|------|
 | Create nursing note | G | D | G | D | G | G | D |
 | Read nursing notes | G | D | G | D | G | G | D |
-| Update nursing note | G | D | G | D | G | G | D |
+| Update nursing note (admin-only after V096) | G | D | D | D | D | D | D |
 | Create vital signs | G | D | G | D | G | G | D |
 | Read vital signs | G | D | G | D | G | G | D |
-| Update vital signs (<24h) | G | D | G | D | G | G | D |
+| Update vital signs (admin-only after V097) | G | D | D | D | D | D | D |
 | Create MAR | G | D | D | D | G | G | D |
 | Read MAR | G | D | G | D | G | G | D |
 
