@@ -9,6 +9,7 @@
 | 1.2 | 2026-04-28 | @author | Replace single workflow with three category-driven shapes: directive (no flow), authorize-only (medications), authorize+execute+results (labs / referrals / psychometric tests). Replace manual `RECLAMAR_RESULTADOS` with explicit `EN_PROCESO` (sample taken / patient referred / test administered) milestone owned by nursing. Add emergency-authorize action for doctors. Rename `DISCONTINUED` to `DESCONTINUADO` for Spanish consistency. |
 | 1.3 | 2026-05-09 | @author | (superseded by 1.4) Aligned progress-note edit policy with nursing notes' creator+24h+admin-override pattern. Replaced before reaching production by 1.4. |
 | 1.4 | 2026-05-09 | @author | **Strict admin-only update** for progress notes (Evoluciones). Doctors, nurses, and chief nurses can `create` and `read` only; only ADMIN can update existing notes. ADMIN updates are still blocked once the admission is discharged. The 24-hour creator-edit window from 1.3 is removed; this matches the rule originally requested for both nursing notes and progress notes. CHIEF_NURSE gains `progress-note:create` (V096); the unused `progress-note:update` grants on CHIEF_NURSE (seed) and the V095 grants to DOCTOR/NURSE are removed. `ProgressNoteResponse.canEdit` now means `isAdmin && admission.isActive`. The service-layer guard reduces to an admin role check plus discharge protection. Vital signs retain their existing 24h creator window pattern (out of scope). |
+| 1.5 | 2026-05-11 | @author | **Rich-text rendering fix** for Progress Note SOAP fields and Medical Order observations. Both surfaces previously rendered the saved HTML via plain `{{ text }}` interpolation, so any formatting from the rich-text editor (paragraphs, bullet lists, bold) appeared as literal tags on a single running line. Display must use sanitized `v-html` (DOMPurify), matching the existing pattern in `ClinicalHistoryView.vue` and `NursingNoteCard.vue`. The `RichTextEditor` (PrimeVue Editor / Quill) must additionally sanitize pasted content to strip inline `style` attributes and tags outside the supported toolbar set (`p`, `br`, `strong`/`b`, `em`/`i`, `u`, `ul`, `ol`, `li`) — eliminating the `<span style="background-color: transparent; color: rgb(0, 0, 0);">` and similar fragments customers were seeing from Word/Chrome/Google Docs pastes. The i18n label for the medical-order inventory link is also renamed from "Servicio/Artículo vinculado" → "**Insumo/servicio a facturar**" (es) and "Linked Service/Item" → "**Billable supply / service**" (en) to make it clear the field drives billing. No data model or API changes. |
 
 ---
 
@@ -303,6 +304,23 @@ A new top-level screen lists medical orders across all admissions, grouped/filte
 - Full audit trail: created_by, created_at, updated_by, updated_at visible on all entries
 - Print-friendly view for medical records
 
+#### Rich-text rendering and paste sanitization (spec v1.5)
+
+All rich-text fields — Clinical History (16+ fields), Progress Note SOAP fields (`subjectiveData`, `objectiveData`, `analysis`, `actionPlans`), and Medical Order `observations` — are authored via the shared `RichTextEditor` component and stored as HTML on the backend. They have two strict rules:
+
+1. **Display side — sanitized `v-html`, never plain interpolation.** Components that render saved content must pass it through `sanitizeHtml` from `@/utils/sanitize` (DOMPurify) and bind via `v-html`. Plain `{{ text }}` interpolation is forbidden for these fields: it shows the HTML tags as literal characters and collapses paragraphs/lists into a single line, which is what customers report as "texto corrido en una misma línea". The reference implementations are `ClinicalHistoryView.vue` and `NursingNoteCard.vue`. `ProgressNoteCard.vue` and `MedicalOrderCard.vue` must be brought in line with them.
+
+2. **Editor side — sanitize on paste.** `RichTextEditor` must register a Quill clipboard matcher that, on every paste, strips:
+   - All inline `style` attributes (the source of `style="background-color: transparent; color: rgb(0,0,0);"` noise from Word/Chrome/Google Docs).
+   - Any tag outside the supported toolbar set: `p`, `br`, `strong`/`b`, `em`/`i`, `u`, `ul`, `ol`, `li`. Disallowed tags are unwrapped (kept text, dropped tag) rather than removed (no silent content loss).
+   - `class` attributes and Word/Google-specific wrappers (`<o:p>`, `<w:*>`, MS-Office namespaced tags).
+
+   Sanitization runs at paste time, not just on save, so the user sees clean formatting in the editor while typing — this is what the customer means by "mantener el mismo formato de edición": what they paste and edit must equal what gets displayed.
+
+3. **Allowed tag inventory must match the toolbar.** If a new formatting button is added to the toolbar, the allow-list in both the paste matcher and `sanitizeHtml` must be updated together. Mismatch means content the user can author gets stripped on display.
+
+The two rules are inseparable: display-side sanitization without paste-side sanitization still stores junk HTML (slower queries, larger payloads, eventually visible in any consumer that doesn't sanitize — e.g. PDF export, future search index). Paste-side sanitization without display-side `v-html` still shows literal `<p>` tags. Both must ship together.
+
 ---
 
 ## Acceptance Criteria / Scenarios
@@ -328,6 +346,12 @@ A new top-level screen lists medical orders across all admissions, grouped/filte
 - When an admin edits any progress note on an active admission, the system updates the note and returns 200 OK; the original `createdBy` is preserved.
 - The `ProgressNoteResponse` includes a server-computed `canEdit` field that the frontend uses to show or hide the edit button. `canEdit` is `true` only for admins on active admissions; it is always `false` for doctors, nurses, and chief nurses.
 
+### Progress Notes - Rich-Text Formatting (spec v1.5)
+
+- When a user types **bold text**, a **bullet list**, and **multiple paragraphs** into any SOAP field and saves, reloads the admission, and re-opens the progress notes tab, the rendered card shows the same visual structure (bold characters bold, list items as bullets on separate lines, paragraphs separated). The displayed HTML must include `<strong>`, `<ul><li>`, `<p>` etc. as **rendered DOM**, never as visible literal text.
+- When a user **pastes** content from Word, Google Docs, or Chrome that contains inline `style="..."` attributes, `<span>` wrappers, or unsupported tags into a SOAP field and saves, the persisted value must not contain those `style` attributes, `<span>` wrappers, or unsupported tags. The visible text content is preserved.
+- The collapsed (truncated) view of a long progress note may use a plain-text projection for the preview, but the **expanded** view must render the HTML.
+
 ### Progress Notes - Edge Cases
 
 - When a doctor, nurse, or chief nurse attempts to edit any progress note (including one they authored), return 403 Forbidden — both because they lack `progress-note:update` and because the service-layer guard enforces ADMIN-only.
@@ -347,6 +371,16 @@ A new top-level screen lists medical orders across all admissions, grouped/filte
 - When a doctor/nurse attempts to edit a medical order, return 403 Forbidden.
 - When creating an order without required fields (category, fecha de inicio), return 400 Bad Request.
 - When an order has a start date in the past, allow it (backdating for documentation purposes).
+
+### Medical Orders - Rich-Text Observations (spec v1.5)
+
+- When a doctor creates a medical order whose `observations` field contains bold text, a bullet list, and multiple paragraphs, the order card on the admission detail and on the cross-admission orders-by-state screen renders the same visual structure (rendered DOM, not literal tags).
+- When a doctor pastes formatted content from Word / Google Docs / Chrome into `observations`, the saved value must not contain inline `style` attributes or unsupported tags; the visible text content is preserved.
+- The `observations` summary shown in the orders-by-state list column may project to plain text for the table cell (to keep rows compact), but the order detail / card view must render HTML.
+
+### Medical Order Inventory Link Label (spec v1.5)
+
+- The form field that links a medical order to an inventory item is labelled **"Insumo/servicio a facturar"** (es) and **"Billable supply / service"** (en) in the form dialog. The placeholder remains the existing explanatory text. This is a pure i18n change; the field name in the API contract is unchanged (`inventoryItemId`).
 
 ### Medical Orders - State Transitions
 
@@ -1153,6 +1187,10 @@ export const emergencyAuthorizeMedicalOrderSchema = z.object({
 - [ ] Sidebar entry for orders-by-state visible only to roles with `medical-order:read`
 - [ ] Uploading a result document from the orders-by-state screen also flips status to `RESULTADOS_RECIBIDOS`
 - [ ] Rich text editor component working
+- [ ] `RichTextEditor` strips inline `style` attributes, `class` attributes, MS-Office namespaced tags, and any tag outside the supported toolbar set on paste (Quill clipboard matcher)
+- [ ] `ProgressNoteCard.vue` renders SOAP fields with sanitized `v-html` (no `{{ text }}` interpolation for rich-text fields)
+- [ ] `MedicalOrderCard.vue` renders `observations` with sanitized `v-html` (no `{{ text }}` interpolation)
+- [ ] i18n label `medicalRecord.medicalOrder.fields.inventoryItem` reads "Insumo/servicio a facturar" (es) / "Billable supply / service" (en)
 - [ ] Audit info displayed on all entries
 - [ ] Create buttons hidden for unauthorized users
 - [ ] Clinical-history, progress-note, and medical-order edit buttons shown only for ADMIN
@@ -1200,7 +1238,9 @@ export const emergencyAuthorizeMedicalOrderSchema = z.object({
 - [ ] Orders-by-state screen lists orders across admissions and links back to admission detail
 - [ ] Emergency-authorized orders are visually distinguishable in the dashboard
 - [ ] Permission denied scenarios displayed correctly
-- [ ] Rich text formatting preserved
+- [ ] Rich text formatting preserved end-to-end: type bold + bullet list + paragraphs into a progress note SOAP field, save, reload, and assert the rendered DOM contains `<strong>`, `<ul><li>`, `<p>` (not literal tags as text)
+- [ ] Rich text formatting preserved end-to-end: same assertion for a medical order `observations` field on the admission detail card and on the cross-admission orders-by-state screen
+- [ ] Paste sanitization: pasting HTML with inline `style` attributes and unsupported tags into a progress note or medical-order observations field strips the inline styles and unsupported tags from both the editor view and the saved payload
 
 ### General
 - [ ] API contract documented

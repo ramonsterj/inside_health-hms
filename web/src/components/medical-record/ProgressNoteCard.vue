@@ -6,6 +6,7 @@ import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import type { ProgressNoteResponse } from '@/types/medicalRecord'
 import { formatDateTime } from '@/utils/format'
+import { sanitizeHtml } from '@/utils/sanitize'
 
 const props = defineProps<{
   note: ProgressNoteResponse
@@ -39,14 +40,9 @@ const wasEdited = computed(() => {
   return props.note.updatedAt && props.note.updatedAt !== props.note.createdAt
 })
 
-function truncateText(text: string | null, maxLength = 150): string {
-  if (!text) return '-'
-  if (text.length <= maxLength) return text
-  return text.substring(0, maxLength) + '...'
-}
-
-function displayText(text: string | null): string {
-  return text || '-'
+function renderedHtml(html: string | null): string {
+  if (!html) return '-'
+  return sanitizeHtml(html)
 }
 </script>
 
@@ -76,6 +72,7 @@ function displayText(text: string | null): string {
     </template>
 
     <template #content>
+      <!-- eslint-disable vue/no-v-html -- SOAP content is sanitized via DOMPurify before binding -->
       <div class="note-content" :class="{ expanded }">
         <!-- Subjective -->
         <div class="soap-section">
@@ -83,9 +80,11 @@ function displayText(text: string | null): string {
             <span class="soap-letter">S</span>
             {{ t('medicalRecord.progressNote.fields.subjectiveData') }}
           </h5>
-          <div class="soap-content">
-            {{ expanded ? displayText(note.subjectiveData) : truncateText(note.subjectiveData) }}
-          </div>
+          <div
+            class="soap-content"
+            :class="{ truncated: !expanded }"
+            v-html="renderedHtml(note.subjectiveData)"
+          ></div>
         </div>
 
         <!-- Objective -->
@@ -94,9 +93,11 @@ function displayText(text: string | null): string {
             <span class="soap-letter">O</span>
             {{ t('medicalRecord.progressNote.fields.objectiveData') }}
           </h5>
-          <div class="soap-content">
-            {{ expanded ? displayText(note.objectiveData) : truncateText(note.objectiveData) }}
-          </div>
+          <div
+            class="soap-content"
+            :class="{ truncated: !expanded }"
+            v-html="renderedHtml(note.objectiveData)"
+          ></div>
         </div>
 
         <!-- Assessment/Analysis -->
@@ -105,9 +106,11 @@ function displayText(text: string | null): string {
             <span class="soap-letter">A</span>
             {{ t('medicalRecord.progressNote.fields.analysis') }}
           </h5>
-          <div class="soap-content">
-            {{ expanded ? displayText(note.analysis) : truncateText(note.analysis) }}
-          </div>
+          <div
+            class="soap-content"
+            :class="{ truncated: !expanded }"
+            v-html="renderedHtml(note.analysis)"
+          ></div>
         </div>
 
         <!-- Plan -->
@@ -116,11 +119,14 @@ function displayText(text: string | null): string {
             <span class="soap-letter">P</span>
             {{ t('medicalRecord.progressNote.fields.actionPlans') }}
           </h5>
-          <div class="soap-content">
-            {{ expanded ? displayText(note.actionPlans) : truncateText(note.actionPlans) }}
-          </div>
+          <div
+            class="soap-content"
+            :class="{ truncated: !expanded }"
+            v-html="renderedHtml(note.actionPlans)"
+          ></div>
         </div>
       </div>
+      <!-- eslint-enable vue/no-v-html -->
     </template>
 
     <template #footer>
@@ -238,9 +244,38 @@ function displayText(text: string | null): string {
   padding: 0.5rem;
   background: var(--p-surface-ground);
   border-radius: var(--p-border-radius);
-  white-space: pre-wrap;
   word-wrap: break-word;
   font-size: 0.875rem;
+}
+
+.soap-content.truncated {
+  max-height: 3.5em;
+  overflow: hidden;
+  position: relative;
+}
+
+.soap-content.truncated::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1.5em;
+  background: linear-gradient(transparent, var(--p-surface-ground));
+}
+
+.soap-content:deep(p) {
+  margin: 0 0 0.5rem 0;
+}
+
+.soap-content:deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.soap-content:deep(ul),
+.soap-content:deep(ol) {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
 }
 
 .note-footer {
