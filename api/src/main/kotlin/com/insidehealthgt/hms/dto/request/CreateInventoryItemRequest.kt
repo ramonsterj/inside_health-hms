@@ -1,5 +1,6 @@
 package com.insidehealthgt.hms.dto.request
 
+import com.insidehealthgt.hms.entity.InventoryKind
 import com.insidehealthgt.hms.entity.PricingType
 import com.insidehealthgt.hms.entity.TimeUnit
 import jakarta.validation.constraints.DecimalMin
@@ -41,4 +42,11 @@ data class CreateInventoryItemRequest(
     val timeInterval: Int? = null,
 
     val active: Boolean = true,
+
+    val kind: InventoryKind = InventoryKind.SUPPLY,
+
+    @field:Size(max = 20, message = "SKU must not exceed 20 characters")
+    val sku: String? = null,
+
+    val lotTrackingEnabled: Boolean = false,
 )

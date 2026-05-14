@@ -9,22 +9,27 @@ import com.insidehealthgt.hms.entity.MedicalOrderStatus
 import com.insidehealthgt.hms.entity.MedicationAdministration
 import com.insidehealthgt.hms.entity.MovementType
 import com.insidehealthgt.hms.exception.BadRequestException
+import com.insidehealthgt.hms.exception.ForbiddenException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
+import com.insidehealthgt.hms.repository.InventoryLotRepository
 import com.insidehealthgt.hms.repository.MedicalOrderRepository
 import com.insidehealthgt.hms.repository.MedicationAdministrationRepository
 import com.insidehealthgt.hms.repository.UserRepository
+import com.insidehealthgt.hms.security.CurrentUserProvider
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-@Suppress("ThrowsCount")
+@Suppress("ThrowsCount", "LongParameterList")
 class MedicationAdministrationService(
     private val administrationRepository: MedicationAdministrationRepository,
     private val medicalOrderRepository: MedicalOrderRepository,
     private val inventoryItemService: InventoryItemService,
+    private val lotRepository: InventoryLotRepository,
     private val userRepository: UserRepository,
+    private val currentUserProvider: CurrentUserProvider,
     private val messageService: MessageService,
 ) {
 
@@ -88,33 +93,51 @@ class MedicationAdministrationService(
             throw BadRequestException(messageService.errorMedicationOrderDiscontinued())
         }
 
+        // Admin-only override: nurses sending lotId receive 403.
+        if (request.lotId != null) {
+            val ud = currentUserProvider.currentUserDetails()
+            val isAdmin = ud?.hasRole("ADMIN") == true || ud?.hasPermission("inventory-lot:update") == true
+            if (!isAdmin) {
+                throw ForbiddenException(messageService.errorMedicationLotOverrideForbidden())
+            }
+        }
+
         // For GIVEN status, inventory item is required and we need to create EXIT movement
-        val billable = if (request.status == AdministrationStatus.GIVEN) {
+        val (billable, lotId) = if (request.status == AdministrationStatus.GIVEN) {
             val inventoryItem = order.inventoryItem
                 ?: throw BadRequestException(
                     messageService.errorMedicationOrderNoInventory(),
                 )
 
+            if (request.quantity < 1) {
+                throw BadRequestException(messageService.errorMedicationQuantityRequired())
+            }
+
             // Create EXIT movement — this publishes InventoryDispensedEvent which creates billing charge
-            inventoryItemService.createMovement(
+            val movement = inventoryItemService.createMovement(
                 inventoryItem.id!!,
                 CreateInventoryMovementRequest(
                     type = MovementType.EXIT,
-                    quantity = 1,
+                    quantity = request.quantity,
                     notes = "Medication administered - Order #${order.id}",
                     admissionId = admissionId,
+                    lotId = request.lotId,
                 ),
             )
-            true
+            true to movement.lotId
         } else {
-            false
+            false to null
         }
+
+        val lot = lotId?.let { lotRepository.findById(it).orElse(null) }
 
         val administration = MedicationAdministration(
             medicalOrder = order,
             admission = order.admission,
             status = request.status,
             notes = request.notes,
+            lot = lot,
+            quantity = if (request.status == AdministrationStatus.GIVEN) request.quantity else 0,
         )
 
         val saved = administrationRepository.save(administration)

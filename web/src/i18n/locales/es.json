@@ -72,6 +72,9 @@
     "inventoryItems": "Artículos de Inventario",
     "inventoryCategories": "Categorías de Inventario",
     "lowStockReport": "Reporte de Stock Bajo",
+    "pharmacy": "Farmacia",
+    "pharmacyMedications": "Medicamentos",
+    "pharmacyExpiryReport": "Vencimientos",
     "auditLogs": "Registros de Auditoria",
     "profile": "Perfil",
     "logout": "Cerrar Sesión",
@@ -540,6 +543,18 @@
     "minLength": "{field} debe tener al menos {min} caracteres",
     "maxLength": "{field} debe tener como máximo {max} caracteres",
     "passwordMatch": "Las contraseñas no coinciden",
+    "medication": {
+      "name": { "required": "El nombre es requerido" },
+      "category": { "required": "La categoría es requerida" },
+      "price": { "required": "El precio es requerido" },
+      "cost": { "required": "El costo es requerido" },
+      "genericName": { "required": "El nombre genérico es requerido" }
+    },
+    "lot": {
+      "expirationDate": { "required": "La fecha de vencimiento es requerida" },
+      "quantity": { "required": "La cantidad es requerida" },
+      "receivedAt": { "required": "La fecha de recepción es requerida" }
+    },
     "admission": {
       "patientId": {
         "required": "Paciente es requerido"
@@ -1673,7 +1688,11 @@
       "created": "Categoría creada éxitosamente.",
       "updated": "Categoría actualizada éxitosamente.",
       "deleted": "Categoría eliminada éxitosamente.",
-      "confirmDelete": "¿Está seguro que desea eliminar esta categoría?"
+      "confirmDelete": "¿Está seguro que desea eliminar esta categoría?",
+      "defaultForKind": "Predeterminada para",
+      "defaultForKindTooltip": "Esta categoría es la predeterminada del sistema para los artículos de este tipo. Los artículos creados desde el formulario correspondiente se asignan aquí automáticamente.",
+      "defaultForKindHint": "Esta categoría es la predeterminada del sistema para su tipo y no puede desactivarse.",
+      "defaultLockedTooltip": "No se puede eliminar ni desactivar una categoría predeterminada del sistema."
     },
     "item": {
       "title": "Inventario",
@@ -1701,6 +1720,18 @@
       "perTimeLabel": "por {interval} {unit}",
       "active": "Activo",
       "allCategories": "Todas las Categorías",
+      "allKinds": "Todos los Tipos",
+      "kind": "Tipo",
+      "kinds": {
+        "DRUG": "Medicamento",
+        "SUPPLY": "Insumo",
+        "EQUIPMENT": "Equipo",
+        "SERVICE": "Servicio",
+        "PERSONNEL": "Personal",
+        "FOOD": "Alimentos"
+      },
+      "sku": "SKU",
+      "lotTrackingEnabled": "Lotes Activos",
       "searchPlaceholder": "Buscar por nombre...",
       "empty": "No se encontraron artículos de inventario.",
       "created": "Artículo creado éxitosamente.",
@@ -2394,6 +2425,104 @@
         "lastReconciliation": "Última Conciliación",
         "empty": "No se encontraron datos de conciliación"
       }
+    }
+  },
+  "pharmacy": {
+    "title": "Farmacia",
+    "medication": {
+      "title": "Medicamentos",
+      "new": "Nuevo Medicamento",
+      "edit": "Editar Medicamento",
+      "name": "Nombre",
+      "description": "Descripción",
+      "category": "Categoría",
+      "sku": "SKU",
+      "price": "Precio",
+      "cost": "Costo",
+      "quantity": "Existencia",
+      "genericName": "Nombre Genérico",
+      "commercialName": "Nombre Comercial",
+      "strength": "Concentración",
+      "dosageForm": "Forma Farmacéutica",
+      "route": "Vía",
+      "controlled": "Controlado",
+      "atcCode": "Código ATC",
+      "section": "Sección",
+      "active": "Activo",
+      "reviewStatus": "Revisión",
+      "needsReview": "Requiere revisión",
+      "routeNone": "Ninguna",
+      "created": "Medicamento creado",
+      "updated": "Medicamento actualizado",
+      "empty": "No se encontraron medicamentos",
+      "searchPlaceholder": "Buscar por nombre, marca o SKU..."
+    },
+    "section": {
+      "PSIQUIATRICO": "Psiquiátrico",
+      "NO_PSIQUIATRICO": "No Psiquiátrico",
+      "JARABE_GOTAS": "Jarabes y Gotas",
+      "AMPOLLA": "Ampollas"
+    },
+    "dosageForm": {
+      "TABLET": "Tableta",
+      "CAPSULE": "Cápsula",
+      "AMPOULE": "Ampolla",
+      "SYRUP": "Jarabe",
+      "DROPS": "Gotas",
+      "CREAM": "Crema",
+      "INJECTION": "Inyectable",
+      "POWDER": "Polvo",
+      "PATCH": "Parche",
+      "OTHER": "Otro"
+    },
+    "route": {
+      "ORAL": "Oral",
+      "IV": "Intravenosa",
+      "IM": "Intramuscular",
+      "SC": "Subcutánea",
+      "TOPICAL": "Tópica",
+      "INHALATION": "Inhalación",
+      "RECTAL": "Rectal",
+      "SUBLINGUAL": "Sublingual",
+      "OTHER": "Otra"
+    },
+    "lot": {
+      "title": "Lotes",
+      "new": "Nuevo Lote",
+      "edit": "Editar Lote",
+      "lotNumber": "Número de Lote",
+      "expirationDate": "Vencimiento",
+      "quantityOnHand": "Cantidad",
+      "receivedAt": "Recibido el",
+      "supplier": "Proveedor",
+      "notes": "Notas",
+      "recalled": "Retirado",
+      "recalledReason": "Motivo de retiro",
+      "status": "Estado",
+      "empty": "No hay lotes registrados",
+      "created": "Lote creado",
+      "updated": "Lote actualizado",
+      "deleted": "Lote eliminado",
+      "confirmDelete": "¿Eliminar este lote? Solo se permite si no tiene movimientos."
+    },
+    "expiry": {
+      "dashboard": "Vencimientos",
+      "window": "Ventana (días)",
+      "urgentWindow": "Ventana urgente (días)",
+      "daysToExpiry": "Días al vencer",
+      "empty": "Sin lotes en la ventana seleccionada",
+      "status": {
+        "EXPIRED": "Vencido",
+        "RED": "Crítico",
+        "YELLOW": "Próximo",
+        "GREEN": "Vigente",
+        "NO_EXPIRY": "Sin vencimiento"
+      }
+    },
+    "fefo": {
+      "previewLabel": "Lote a despachar (FEFO)",
+      "overrideLabel": "Forzar lote (admin)",
+      "auto": "Automático (FEFO)"
     }
   }
 }

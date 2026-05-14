@@ -52,4 +52,14 @@ class InventoryItem(
     @Column(nullable = false)
     var active: Boolean = true,
 
+    @Column(nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    var kind: InventoryKind = InventoryKind.SERVICE,
+
+    @Column(length = 20)
+    var sku: String? = null,
+
+    @Column(name = "lot_tracking_enabled", nullable = false)
+    var lotTrackingEnabled: Boolean = false,
+
 ) : BaseEntity()

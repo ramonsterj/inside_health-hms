@@ -1,6 +1,7 @@
 package com.insidehealthgt.hms.dto.response
 
 import com.insidehealthgt.hms.entity.InventoryItem
+import com.insidehealthgt.hms.entity.InventoryKind
 import com.insidehealthgt.hms.entity.PricingType
 import com.insidehealthgt.hms.entity.TimeUnit
 import com.insidehealthgt.hms.entity.User
@@ -20,6 +21,9 @@ data class InventoryItemResponse(
     val timeUnit: TimeUnit?,
     val timeInterval: Int?,
     val active: Boolean,
+    val kind: InventoryKind,
+    val sku: String?,
+    val lotTrackingEnabled: Boolean,
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?,
     val createdBy: UserSummaryResponse?,
@@ -48,6 +52,9 @@ data class InventoryItemResponse(
             timeUnit = item.timeUnit,
             timeInterval = item.timeInterval,
             active = item.active,
+            kind = item.kind,
+            sku = item.sku,
+            lotTrackingEnabled = item.lotTrackingEnabled,
             createdAt = item.createdAt,
             updatedAt = item.updatedAt,
             createdBy = createdByUser?.let { UserSummaryResponse.from(it) },

@@ -185,11 +185,49 @@ class MessageService(private val messageSource: MessageSource) {
 
     fun errorInventoryItemNotFound(id: Long) = getMessage("error.inventory.item.not.found", id)
     fun errorInventoryCategoryNotFound(id: Long) = getMessage("error.inventory.category.not.found", id)
+    fun errorInventoryCategoryDefaultMissing(kind: String) = getMessage(
+        "error.inventory.category.default.missing",
+        kind,
+    )
+    fun errorInventoryCategoryDefaultLocked(kind: String) = getMessage(
+        "error.inventory.category.default.locked",
+        kind,
+    )
+    fun errorInventoryCategoryDefaultDeactivate(kind: String) = getMessage(
+        "error.inventory.category.default.deactivate",
+        kind,
+    )
+    fun errorInventoryCategoryKindMismatch(kind: String) = getMessage(
+        "error.inventory.category.kind.mismatch",
+        kind,
+    )
     fun errorInventoryInsufficientStock(currentQuantity: Int, requested: Int) =
         getMessage("error.inventory.insufficient.stock", currentQuantity, requested)
     fun errorInventoryTimeUnitRequired() = getMessage("error.inventory.time.unit.required")
     fun errorInventoryTimeIntervalRequired() = getMessage("error.inventory.time.interval.required")
     fun errorInventoryAdmissionNotFound(id: Long) = getMessage("error.inventory.admission.not.found", id)
+    fun errorInventoryLotNotFound(id: Long) = getMessage("error.inventory.lot.not.found", id)
+    fun errorInventoryLotItemMismatch() = getMessage("error.inventory.lot.item.mismatch")
+    fun errorInventoryLotRecalled() = getMessage("error.inventory.lot.recalled")
+    fun errorInventoryLotExpirationRequired() = getMessage("error.inventory.lot.expiration.required")
+    fun errorInventoryLotHasMovements() = getMessage("error.inventory.lot.has.movements")
+    fun errorInventoryLotTrackingHasLots() = getMessage("error.inventory.lot.tracking.has.lots")
+    fun errorInventoryLotTrackingNotAllowed(kind: String) = getMessage(
+        "error.inventory.lot.tracking.not.allowed",
+        kind,
+    )
+    fun errorInventoryDrugLotTrackingRequired() = getMessage("error.inventory.drug.lot.tracking.required")
+    fun errorInventoryLotItemNotLotTracked() = getMessage("error.inventory.lot.item.not.lot.tracked")
+    fun errorInventoryLotDuplicate() = getMessage("error.inventory.lot.duplicate")
+    fun errorInventorySkuExists(sku: String) = getMessage("error.inventory.sku.exists", sku)
+    fun errorMedicationDetailsRequired() = getMessage("error.medication.details.required")
+    fun errorMedicationDetailsNotDrug() = getMessage("error.medication.details.not.drug")
+    fun errorMedicationDetailsNotFound(id: Long) = getMessage("error.medication.details.not.found", id)
+    fun errorMedicationDetailsAlreadyExists(itemId: Long) =
+        getMessage("error.medication.details.already.exists", itemId)
+    fun errorMedicationFefoNoSingleLot() = getMessage("error.medication.fefo.no.single.lot")
+    fun errorMedicationLotOverrideForbidden() = getMessage("error.medication.lot.override.forbidden")
+    fun errorMedicationQuantityRequired() = getMessage("error.medication.quantity.required")
 
     // === Billing Error Messages ===
 

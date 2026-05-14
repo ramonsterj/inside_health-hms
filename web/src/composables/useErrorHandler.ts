@@ -146,13 +146,14 @@ export function useErrorHandler() {
   /**
    * Shows a success toast notification.
    * @param messageKey - i18n key for the success message
+   * @param params - Optional interpolation params forwarded to t()
    * @param life - Toast display duration in ms (default: 3000)
    */
-  function showSuccess(messageKey: string, life = 3000): void {
+  function showSuccess(messageKey: string, params?: Record<string, unknown>, life = 3000): void {
     toast.add({
       severity: 'success',
       summary: t('common.success'),
-      detail: t(messageKey),
+      detail: t(messageKey, params ?? {}),
       life
     })
   }

@@ -137,8 +137,10 @@ async function fillPatientForm(
   await page.getByLabel(/First Name|Nombres/i).fill(patientData.firstName)
   await page.getByLabel(/Last Name|Apellidos/i).fill(patientData.lastName)
 
-  // Fill date of birth via the DatePicker input (global locale: dd/mm/yy)
-  const dobInput = page.locator('#dateOfBirth')
+  // Fill date of birth via the DatePicker input (global locale: dd/mm/yy).
+  // The PrimeVue DatePicker root with id="dateOfBirth" is a wrapper span;
+  // target the inner input to fill it.
+  const dobInput = page.locator('#dateOfBirth input')
   await dobInput.fill(patientData.dateOfBirth)
   await page.keyboard.press('Escape')
 
@@ -237,8 +239,8 @@ test.describe('Patients - Administrative Staff', () => {
     // associate labels properly with getByLabel (especially InputNumber, Select)
     await expect(page.getByText(/First Name|Nombres/i).first()).toBeVisible()
     await expect(page.getByText(/Last Name|Apellidos/i).first()).toBeVisible()
-    await expect(page.locator('label[for="age"]')).toBeVisible() // InputNumber label
-    await expect(page.locator('#age')).toBeVisible() // InputNumber component
+    await expect(page.locator('label[for="dateOfBirth"]')).toBeVisible() // DatePicker label
+    await expect(page.locator('#dateOfBirth')).toBeVisible() // DatePicker component
     await expect(page.getByText(/^Sex|Sexo$/i).first()).toBeVisible()
     await expect(page.getByText(/^Gender|Género$/i).first()).toBeVisible()
     await expect(page.getByText(/Marital Status|Estado Civil/i).first()).toBeVisible()
@@ -513,9 +515,9 @@ test.describe('Patients - Administrative Staff', () => {
     // Fill basic patient info
     await page.getByLabel(/First Name|Nombres/i).fill('Carlos')
     await page.getByLabel(/Last Name|Apellidos/i).fill('Ramírez')
-    const ageInput = page.locator('#age input')
-    await ageInput.clear()
-    await ageInput.fill('55')
+    const dobInput = page.locator('#dateOfBirth input')
+    await dobInput.fill('01/01/1971')
+    await page.keyboard.press('Escape')
     await page.getByLabel(/Gender|Género/i).fill('Masculino')
     await page.getByLabel(/Religion|Religión/i).fill('Católica')
     await page.getByLabel(/Occupation|Ocupación/i).fill('Comerciante')
@@ -858,10 +860,10 @@ test.describe('Patients - Duplicate Detection', () => {
     await page.getByLabel(/First Name|Nombres/i).fill('Juan')
     await page.getByLabel(/Last Name|Apellidos/i).fill('Pérez García')
 
-    // Fill age using InputNumber - need to clear first and type
-    const ageInput = page.locator('#age input')
-    await ageInput.clear()
-    await ageInput.fill('45')
+    // Fill date of birth via the DatePicker input (global locale: dd/mm/yy).
+    const dobInput = page.locator('#dateOfBirth input')
+    await dobInput.fill('01/01/1981')
+    await page.keyboard.press('Escape')
 
     await page.getByLabel(/Gender|Género/i).fill('Masculino')
     await page.getByLabel(/Religion|Religión/i).fill('Católica')

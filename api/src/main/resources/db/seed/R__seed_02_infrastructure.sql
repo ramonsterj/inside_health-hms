@@ -1,9 +1,9 @@
 -- ============================================================================
 -- SEED FILE 02: Triage Codes, Rooms, Inventory
 -- ============================================================================
--- Last updated: 2026-03-04 (make triage_codes/rooms inserts idempotent; they are
--- no longer truncated by seed_01 since they are reference data from versioned migrations)
--- SEED-BUNDLE-VERSION: 2026-05-10a (see R__seed_01 header for the rule)
+-- Last updated: 2026-05-13 (Medicamentos + supply rows moved to R__seed_02b
+-- so dev/acceptance loads the workbook catalog the same way prod does)
+-- SEED-BUNDLE-VERSION: 2026-05-13a (see R__seed_01 header for the rule)
 
 SET session_replication_role = replica;
 
@@ -57,87 +57,31 @@ ON CONFLICT (number) DO NOTHING;
 -- Categories are wiped by TRUNCATE users CASCADE (via created_by/updated_by FKs)
 -- so we must re-insert them along with all inventory items.
 
-INSERT INTO inventory_categories (name, description, display_order, active, created_at, updated_at) VALUES
-('Medicamentos', 'Medication and pharmaceutical supplies', 1, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Material y Equipo', 'Materials and equipment', 2, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Laboratorios', 'Laboratory services and supplies', 3, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Servicios', 'Hospital services', 4, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Personal Especial', 'Specialized personnel services', 5, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Ingredientes de Cocina', 'Kitchen ingredients', 6, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Alimentación', 'Food served to patients', 7, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+-- Medicamentos carries `default_for_kind = 'DRUG'` so the backend routes
+-- medication creation here and the general inventory form hides it from
+-- the create/edit category select (pharmacy-and-inventory-evolution.md FR-9).
+-- V113 backfilled this once, but TRUNCATE above wipes the row and we must
+-- re-set the flag on reseed.
+INSERT INTO inventory_categories (name, description, display_order, active, default_for_kind, created_at, updated_at) VALUES
+('Medicamentos', 'Medication and pharmaceutical supplies', 1, true, 'DRUG', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('Material y Equipo', 'Materials and equipment', 2, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('Laboratorios', 'Laboratory services and supplies', 3, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('Servicios', 'Hospital services', 4, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('Personal Especial', 'Specialized personnel services', 5, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('Ingredientes de Cocina', 'Kitchen ingredients', 6, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('Alimentación', 'Food served to patients', 7, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
--- Medicamentos (category: Medicamentos)
-INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, created_at, updated_at)
-SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-FROM inventory_categories c,
-(VALUES
--- Antipsychotics
-('TABLETA DE QUTIAPINA (QUETIOXAL 300 MG)', 'TABLETA DE QUETIOXAL 300 MG', 47.50, 15.83, 25, 10, 'FLAT', NULL::VARCHAR, NULL::INT, true),
-('AMPOLLA DE OLANZAPINA (ZYPREXA IM 10 MG)', 'AMPOLLA DE OLANZAPINA (ZYPREXA IM 10 MG)', 525.00, 175.00, 12, 3, 'FLAT', NULL, NULL, true),
-('CAJA DE OLANZAPINA (ZYPREXA 5 MG X 14 TABLETAS)', 'CAJA DE ZYPREXA 5 MG X 14 TABLETAS', 1907.80, 635.96, 3, 1, 'FLAT', NULL, NULL, true),
-('TABLETA INDIVIDUAL OLANZAPINA (ZYPREXA 5 MG)', 'TABLETA INDIVIDUAL OLANZAPINA (ZYPREXA 5 MG)', 136.27, 45.43, 9, 5, 'FLAT', NULL, NULL, true),
-('TABLETA DE SEROQUEL (QUETIAPINA 100 MG)', 'TABLETA DE SEROQUEL (QUETIAPINA 100 MG)', 72.03, 24.01, 30, 10, 'FLAT', NULL, NULL, true),
-('TABLETA INDIVIDUAL ROYALINE 5 MG', 'TABLETA INDIVIDUAL ROYALINE TABLETAS 5 MG ROYALINE 5 MG', 7.56, 2.52, 16, 5, 'FLAT', NULL, NULL, true),
-('CAJA DE ARIPIPRAZOL (PRI PAX 5 MG X 30 COMPRIMIDOS)', 'CAJA DE ARIPIPRAZOL (PRI PAX 5 MG X 30 COMPRIMIDOS)', 485.76, 161.92, 1, 1, 'FLAT', NULL, NULL, true),
-('1 FRASCO DE ARIPIPRAZOL DE 150 ML', '1 FRASCO DE ARIPIPRAZOL DE 150 ML', 819.00, 273.00, 0, 1, 'FLAT', NULL, NULL, true),
--- Benzodiazepines and sedatives
-('AMPOLLA MIDAZOLAM (DORMICUM 15MG/3ML)', 'AMPOLLA MIDAZOLAM (DORMICUM 15MG/3ML)', 196.47, 65.49, 14, 5, 'FLAT', NULL, NULL, true),
-('TABLETA INDIVIDUAL MIDAZOLAM DORMICUM 15 MG', 'TABLETA INDIVIDUAL MIDAZOLAM DORMICUM 15 MG', 22.29, 7.43, 30, 10, 'FLAT', NULL, NULL, true),
-('CAJA MIDAZOLAM (DORMICUM 15 MG X 30 TABLETAS)', 'CAJA MIDAZOLAM (DORMICUM 15 MG X 30 TABLETAS)', 668.31, 222.77, 1, 1, 'FLAT', NULL, NULL, true),
-('TABLETA INDIVIDUAL CLONAZEPAM (RIVOTRIL 2 MG)', 'TABLETA INDIVIDUAL CLONAZEPAM (RIVOTRIL 2 MG)', 17.32, 4.33, 28, 10, 'FLAT', NULL, NULL, true),
-('TABLETA INDIVIDUAL CLONAZEPAM (RIVOTRIL 2 MG) II', 'TABLETA INDIVIDUAL CLONAZEPAM (RIVOTRIL 2 MG)', 12.99, 4.33, 27, 10, 'FLAT', NULL, NULL, true),
-('AMPOLLA DE DIAZEPAM DORMICUM 10 MG', 'AMPOLLA DE DIAZEPAM DORMICUM 10 MG', 10.62, 3.54, 2, 2, 'FLAT', NULL, NULL, true),
-('TABLETA INDIVIDUAL BIPERIDENO HC (BIPARK 2 MG)', 'TABLETA INDIVIDUAL BIPERIDENO HC (BIPARK 2 MG)', 13.50, 4.50, 45, 10, 'FLAT', NULL, NULL, true),
--- Pregabalin
-('TABLETA PREGABALINA (MARTESIA 75 MG)', 'TABLETA PREGABALINA (MARTESIA 75 MG)', 46.48, 11.62, 18, 5, 'FLAT', NULL, NULL, true),
-('TABLETA PREGABALINA (ASTIK 75 MG)', 'TABLETA PREGABALINA (ASTIK 75 MG)', 29.49, 9.83, 4, 3, 'FLAT', NULL, NULL, true),
--- Antidepressants (SSRIs)
-('TABLETA INDIVIDUAL DE SEROLUX (SERTRALINA 50 MG)', 'TABLETA INDIVIDUAL DE SEROLUX (SERTRALINA 50 MG)', 37.78, 12.59, 25, 10, 'FLAT', NULL, NULL, true),
-('TABLETA INDIVIDUAL ALTRULINE (SERTRALINA) 50 MG', 'TABLETA INDIVIDUAL ALTRULINE (SERTRALINA) 50 MG', 87.78, 29.26, 27, 10, 'FLAT', NULL, NULL, true),
--- IV solutions
-('SOLUCIÓN SALINA DE 100 ML', 'SOLUCIÓN SALINA 100 ML', 30.00, 10.00, 18, 5, 'FLAT', NULL, NULL, true),
-('SOLUCIÓN SALINA DE 250 ML', 'SOLUCIÓN SALINA DE 250 ML', 24.84, 8.28, 11, 5, 'FLAT', NULL, NULL, true),
-('SOLUCIÓN SALINA DE 500 ML', 'SOLUCIÓN SALINA DE 500 ML', 28.98, 9.66, 0, 5, 'FLAT', NULL, NULL, true),
-('SOLUCIÓN MIXTA DE 500 ML', 'SOLUCIÓN MIXTA DE 500 ML', 43.20, 14.40, 1, 2, 'FLAT', NULL, NULL, true),
-('SOLUCIÓN HARTMAN 1000 ML', 'SOLUCIÓN HARTMAN 1000 ML', 48.00, 16.00, 4, 2, 'FLAT', NULL, NULL, true),
-('SOLUCIÓN DEXTROSA AL 5% 500 ML', 'SOLUCIÓN DEXTROSA AL 5% 500 ML', 33.60, 11.20, 5, 2, 'FLAT', NULL, NULL, true),
-('AGUA ESTÉRIL PARA INYECCIÓN 100 ML', 'AGUA ESTÉRIL PARA INYECCIÓN 100 ML', 33.60, 11.20, 2, 2, 'FLAT', NULL, NULL, true),
-('AGUA ESTÉRIL INYECTABLE 500 ML', 'AGUA ESTÉRIL INYECTABLE 500 ML', 78.00, 26.00, 1, 2, 'FLAT', NULL, NULL, true),
--- Anesthetics
-('LIDOCAINA CON EPINEFRINA 10 ML', 'LIDOCAINA CON EPINEFRINA 10 ML', 27.00, 9.00, 4, 2, 'FLAT', NULL, NULL, true),
-('AMPOLLA PROPOFOL-LIPURO 1%', 'AMPOLLA PROPOFOL-LIPURO 1%', 81.00, 27.00, 5, 2, 'FLAT', NULL, NULL, true),
--- Corticosteroids
-('TABLETA INDIVIDUAL DEXAMETASONA 0.5 MG', 'DEXAMETASONA 0.5 MG', 5.44, 1.36, 36, 10, 'FLAT', NULL, NULL, true),
-('DEXAMETASONA, AMPOLLA 8 MG/2 ML', 'DEXAMETASONA, AMPOLLA 8 MG/2 ML', 126.45, 42.15, 1, 2, 'FLAT', NULL, NULL, true),
-('DEXAMETASONA AMPOLLA 4MG', 'DEXAMETASONA AMPOLLA 4MG', 75.81, 25.27, 5, 2, 'FLAT', NULL, NULL, true),
--- Antihistamines and tópicals
-('CALADRYL CLEAR LOCIÓN 100 ML', 'CALADRYL CLEAR LOCIÓN 100 ML', 246.21, 82.07, 0, 1, 'FLAT', NULL, NULL, true),
-('TABLETA INDIVIDUAL DE CLORHIDRATO DE DIFENHIDRAMINA 25 MG', 'TABLETA INDIVIDUAL DE CLORHIDRATO DE DIFENHIDRAMINA 25 MG', 8.31, 2.77, 5, 3, 'FLAT', NULL, NULL, true),
-('HISTAPRIN AMPOLLA 10 MG', 'HISTAPRIN AMPOLLA 10 MG', 130.53, 43.51, 1, 1, 'FLAT', NULL, NULL, true),
--- Analgesics and anti-inflammatories
-('TABLETA INDIVIDUAL DE DICLOFENACO 50 MG', 'TABLETA INDIVIDUAL DE DICLOFENACO 50 MG', 3.60, 1.20, 7, 5, 'FLAT', NULL, NULL, true),
-('TABLETA INDIVIDUAL DE ACETAMINOFÉN 50 MG', 'TABLETA INDIVIDUAL DE ACETAMINOFÉN 50 MG', 2.10, 0.70, 8, 5, 'FLAT', NULL, NULL, true),
--- Electrolytes and emergency medications
-('AMPOLLA CLORURO DE POTASIO 5 ML (200 MG/ML)', 'AMPOLLA DE CLORURO DE POTASIO 5 ML (200 MG/ML)', 11.40, 3.80, 1, 2, 'FLAT', NULL, NULL, true),
-('AMPOLLA DE CLORURO DE POTASIO 20MEQ/10 ML', 'AMPOLLA DE CLORURO DE POTASIO 20 MEQ/10 ML', 10.50, 3.50, 25, 5, 'FLAT', NULL, NULL, true),
-('AMPOLLA DE CLORURO DE SODIO 20% (200MG/10ML)', 'AMPOLLA DE CLORURO DE SODIO 20% (200MG/10ML)', 12.00, 4.00, 14, 5, 'FLAT', NULL, NULL, true),
-('AMPOLLA DE BICARBONATO DE SODIO 7%', 'AMPOLLA DE BICARBONATO DE SODIO 7%', 76.50, 25.50, 5, 2, 'FLAT', NULL, NULL, true),
-('AMPOLLA DE SULFATO DE MAGNESIO 50%', 'AMPOLLA DE SULFATO DE MAGNESIO 50%', 14.40, 4.80, 5, 2, 'FLAT', NULL, NULL, true),
-('AMPOLLA DE AMINOFILINA 250MG/5ML', 'AMPOLLA DE AMINOFILINA 250MG/5ML', 15.60, 5.20, 5, 2, 'FLAT', NULL, NULL, true),
-('AMPOLLA DE SULFATO DE ATROPINA 0.5MG/1ML', 'AMPOLLA DE SULFATO DE ATROPINA 0.5MG/1ML', 11.40, 3.80, 5, 2, 'FLAT', NULL, NULL, true),
-('AMPOLLA DE EPINEFRINA 1 MG/1 ML (ADRENALINA)', 'AMPOLLA DE EPINEFRINA 1 MG/1 ML (ADRENALINA)', 11.70, 3.90, 5, 2, 'FLAT', NULL, NULL, true),
-('AMPOLLA DE NALOXONA 0.4MG/1ML', 'AMPOLLA DE NALOXONA 0.4MG/1ML', 35.25, 11.75, 5, 2, 'FLAT', NULL, NULL, true),
-('AMPOLLA DE FUROSEMIDA 20MG/2ML', 'AMPOLLA DE FUROSEMIDA 20MG/2ML', 7.50, 2.50, 5, 2, 'FLAT', NULL, NULL, true),
-('AMPOLLA DE FLUMAZENIL 0.1MG/ML', 'AMPOLLA DE FLUMAZENIL 0.1MG/ML', 390.00, 130.00, 2, 1, 'FLAT', NULL, NULL, true),
-('AMPOLLA DE INOTROPISA 5 ML (DOPAMINA)', 'AMPOLLA DE INOTROPISA 5 ML (DOPAMINA)', 255.00, 85.00, 5, 2, 'FLAT', NULL, NULL, true),
--- GI
-('1 SOBRE DE CONTUMAX POLVO 17G', '1 SOBRE DE CONTUMAX POLVO 17G', 56.77, 18.92, 15, 5, 'FLAT', NULL, NULL, true)
-) AS v(name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active)
-WHERE c.name = 'Medicamentos';
+-- Medicamentos: workbook-sourced catalog loaded by
+-- R__seed_02b_pharmacy_from_workbook.sql (mirrors V111). The legacy V052
+-- drug rows that used to live here were dropped along with the bulk importer.
 
--- Material y Equipo
-INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, created_at, updated_at)
-SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+-- Material y Equipo: equipment rows only. Supply rows (syringes, sondas,
+-- gloves, gasas, etc.) come from workbook section E via R__seed_02b.
+-- Kind follows V100 backfill rule for this category: TIME_BASED -> EQUIPMENT, FLAT -> SUPPLY.
+INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
+SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active,
+       CASE WHEN v.pricing_type = 'TIME_BASED' THEN 'EQUIPMENT' ELSE 'SUPPLY' END,
+       CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM inventory_categories c,
 (VALUES
 -- Time-based equipment usage
@@ -147,83 +91,13 @@ FROM inventory_categories c,
 -- Flat-priced equipment and services
 ('EKG', 'EKG', 265.00, 265.00, 0, 0, 'FLAT', NULL, NULL, true),
 ('USO DE DESFIBRILADOR', 'USO DE DESFIBRILADOR', 3000.00, 0.00, 0, 0, 'FLAT', NULL, NULL, true),
-('USO DE GLUCÓMETRO', 'USO DE GLUCÓMETRO', 49.98, 12.09, 50, 5, 'FLAT', NULL, NULL, true),
--- Syringes
-('JERINGAS DESCARTABLES 3 CC', 'JERINGAS DESCARTABLES 3 CC 21 G', 2.25, 0.56, 83, 10, 'FLAT', NULL, NULL, true),
-('JERINGAS DESCARTABLES DE 5 CC', 'JERINGAS DESCARTABLES DE 5 CC 21 G', 2.35, 0.58, 62, 10, 'FLAT', NULL, NULL, true),
-('JERINGAS DESCARTABLES 10 CC', 'JERINGAS DESCARTABLES 10 CC 21 G', 3.60, 0.90, 72, 10, 'FLAT', NULL, NULL, true),
-('JERINGA DE INSULINA DE 1 CC', 'JERINGA DE INSULINA DE 1 CC', 3.40, 0.85, 97, 10, 'FLAT', NULL, NULL, true),
--- Aspiration probes
-('SONDA DE ASPIRACIÓN NO. 12', 'SONDA DE ASPIRACIÓN NO. 12 OPERSON', 9.00, 2.25, 3, 2, 'FLAT', NULL, NULL, true),
-('SONDA DE ASPIRACIÓN NO. 14', 'SONDA DE ASPIRACIÓN NO. 14 OPERSON', 9.00, 2.25, 3, 2, 'FLAT', NULL, NULL, true),
-('SONDA DE ASPIRACIÓN NO. 16', 'SONDA DE ASPIRACIÓN NO. 16 OPERSON', 9.00, 2.25, 3, 2, 'FLAT', NULL, NULL, true),
-('SONDA DE ASPIRACIÓN NO. 18', 'SONDA DE ASPIRACIÓN NO. 18 OPERSON', 9.00, 2.25, 3, 2, 'FLAT', NULL, NULL, true),
--- IV catheters
-('CATÉTER INTRAVENOSO NO. 18', 'CATÉTER INTRAVENOSO NO. 18 (ANGIOCATH) NIPRO', 17.00, 4.25, 29, 5, 'FLAT', NULL, NULL, true),
-('CATÉTER INTRAVENOSO NO. 20', 'CATÉTER INTRAVENOSO NO. 20 (ANGIOCATH) NIPRO', 17.00, 4.25, 18, 5, 'FLAT', NULL, NULL, true),
-('CATÉTER INTRAVENOSO NO. 22', 'CATÉTER INTRAVENOSO NO. 22 (ANGIOCATH) NIPRO', 17.00, 4.50, 25, 5, 'FLAT', NULL, NULL, true),
-('CATÉTER INTRAVENOSO NO. 24', 'CATÉTER INTRAVENOSO NO. 24 (ANGIOCATH) NIPRO', 17.00, 4.50, 22, 5, 'FLAT', NULL, NULL, true),
--- IV supplies
-('SELLOS DE HEPARINA', 'SELLOS DE HEPARINA - TAPON IN LUER-LOK BARAUN', 7.20, 1.80, 17, 5, 'FLAT', NULL, NULL, true),
-('VENOSETH', 'VENOSETH (EQUIPO DE SUERO) PARKINGTON', 10.40, 2.60, 4, 2, 'FLAT', NULL, NULL, true),
--- Endotracheal tubes
-('TUBOS ENDOTRAQUEALES #7', 'TUBOS ENDOTRAQUEALES #7, OPERSON', 45.00, 11.25, 3, 2, 'FLAT', NULL, NULL, true),
-('TUBOS ENDOTRAQUEALES #7.5', 'TUBOS ENDOTRAQUEALES #7.5, OPERSON', 45.00, 11.25, 3, 2, 'FLAT', NULL, NULL, true),
-('TUBOS ENDOTRAQUEALES NO. 8', 'TUBOS ENDOTRAQUEALES NO. 8', 88.00, 22.00, 5, 2, 'FLAT', NULL, NULL, true),
--- Sutures
-('SUTURAS NYLON # 2-0, 75 CM', 'SUTURAS NYLON # 2-0, 75 CM, ATRAMAT', 39.60, 9.99, 12, 5, 'FLAT', NULL, NULL, true),
-('SUTURAS NYLON # 3-0, 75 CM', 'SUTURAS NYLON # 3-0, 75 CM, CE-24 ATRAMAT', 39.60, 9.90, 12, 5, 'FLAT', NULL, NULL, true),
-('SUTURAS PGA # 2-0, 75 CM', 'SUTURAS # 3-0, 75 CM, G-37 AHUSADA, ATRAMAT', 63.12, 15.78, 12, 5, 'FLAT', NULL, NULL, true),
-('SUTURAS CATGUT SIMPLE # 2-0, 75 CM', 'SUTURAS CATGUT SIMPLE # 2-0, 75 CM, G-37 GRUESA ATRAMAT', 59.00, 14.75, 12, 5, 'FLAT', NULL, NULL, true),
-('SUTURAS SEDA # 2-0, 75 CM', 'SUTURAS SEDA # 2-0, 75 CM, SR-26, ATRAMAT', 39.00, 9.75, 12, 5, 'FLAT', NULL, NULL, true),
--- Respiratory supplies
-('CANULAS DE OXÍGENO BINASAL GRANDE', 'CANULAS DE OXÍGENO BINASAL GRANDE, OPERSON', 19.60, 4.90, 10, 3, 'FLAT', NULL, NULL, true),
-('MASCARILLA P/NEBULIZAR ADULTO L', 'MASCARILLA P/NEBULIZAR ADULTO L, OPERSON', 54.00, 13.50, 11, 3, 'FLAT', NULL, NULL, true),
-('MASCARILLA CON RESERVORIO', 'MASCARILLA CON RESERVORIO', 280.00, 70.00, 5, 2, 'FLAT', NULL, NULL, true),
--- PPE and masks
-('MASCARILLAS 3 PLIEGOS', 'MASCARILLAS 3 PLIEGOS ELASTICAS AMBIDEM', 1.46, 0.36, 50, 20, 'FLAT', NULL, NULL, true),
--- Gloves
-('GUANTES QUIRÚRGICOS NO. 6', 'GUANTES QUIRÚRGICOS NO. 6, AMBIDERM', 11.40, 2.85, 50, 10, 'FLAT', NULL, NULL, true),
-('GUANTES QUIRÚRGICOS NO. 7', 'GUANTES QUIRÚRGICOS NO. 7, AMBIDERM', 11.40, 2.85, 49, 10, 'FLAT', NULL, NULL, true),
-('GUANTES DESCARTABLES TALLA S', 'GUANTES DESCARTABLES TALLA S, PROTECT', 3.40, 0.85, 64, 10, 'FLAT', NULL, NULL, true),
-('GUANTES DESCARTABLES TALLA L', 'GUANTES DESCARTABLES TALLA L, PROTECT', 3.40, 0.85, 47, 10, 'FLAT', NULL, NULL, true),
--- Foley catheters
-('SONDA FOLEY NO. 14', 'SONDA FOLEY NO. 14, BALON 5-15 ML 2 VIAS, OPERSON', 30.00, 7.50, 10, 3, 'FLAT', NULL, NULL, true),
-('SONDA FOLEY NO. 16', 'SONDA FOLEY NO. 16, BALON 5-15 ML 2 VIAS, OPERSON', 30.00, 7.50, 10, 3, 'FLAT', NULL, NULL, true),
--- Nasogastric probe
-('SONDA NASOGÁSTRICA NO. 5', 'SONDA NASOGÁSTRICA NO. 5', 7.05, 2.35, 5, 2, 'FLAT', NULL, NULL, true),
--- Urine collection bags
-('BOLSA RECOLECTORA DE ORINA PIERNA', 'BOLSA RECOLECTORA DE ORINA PIERNA 750 ML, OPERSON', 22.20, 5.55, 3, 2, 'FLAT', NULL, NULL, true),
-('BOLSA RECOLECTORA DE ORINA CAMA', 'BOLSA RECOLECTORA DE ORINA CAMA 2000ML, PARKINGTON', 20.00, 5.00, 3, 2, 'FLAT', NULL, NULL, true),
--- General supplies
-('BAJALENGUAS DE MADERA', 'BAJALENGUAS DE MADERA', 0.54, 0.13, 196, 20, 'FLAT', NULL, NULL, true),
-('SONIGEL TUBO 125 GRAMOS', 'SONIGEL TUBO 125 GRAMOS DIQUIVA', 47.00, 11.75, 3, 2, 'FLAT', NULL, NULL, true),
--- Needles
-('AGUJA HIPODÉRMICA NO. 23 G', 'AGUJA HIPODÉRMICA NO. 23 G', 4.00, 1.00, 196, 20, 'FLAT', NULL, NULL, true),
-('AGUJA 18X1', 'AGUJA 18X1', 1.40, 0.35, 100, 20, 'FLAT', NULL, NULL, true),
--- Wound care and dressings
-('GASAS ESTÉRILES', 'GASAS ESTÉRILES (UNIDAD)', 3.68, 0.92, 42, 20, 'FLAT', NULL, NULL, true),
-('CURITAS CIRCULARES', 'CURITAS CIRCULARES', 0.56, 0.14, 127, 20, 'FLAT', NULL, NULL, true),
-('VENDA GASA 3X10 Y', 'ROLLO DE VENDA GASA 3 X 10 Y.', 23.28, 5.82, 3, 2, 'FLAT', NULL, NULL, true),
-('TEGADERM 3M', 'TEGADERM 3M, NEXCARE', 91.00, 22.75, 5, 2, 'FLAT', NULL, NULL, true),
-('CAMPO ESTÉRIL', 'CAMPO ESTÉRIL', 64.00, 16.00, 12, 5, 'FLAT', NULL, NULL, true),
--- Electrodes and tapes
-('ELECTRODOS', 'ELECTRODOS EKG', 4.74, 1.58, 37, 10, 'FLAT', NULL, NULL, true),
-('MICROPORE', 'MICROPORE', 15.50, 15.50, 2, 2, 'FLAT', NULL, NULL, true),
-('MICROPORE DE 1 PULGADA', 'MICROPORE DE 1 PULGADA', 34.00, 8.50, 5, 2, 'FLAT', NULL, NULL, true),
-('ESPARADRAPO', 'ESPARADRAPO', 19.60, 4.90, 0, 2, 'FLAT', NULL, NULL, true),
--- Cleaning and hygiene
-('ALCOHOL EN GEL 60 G', 'ALCOHOL EN GEL 60 G', 12.65, 12.65, 1, 2, 'FLAT', NULL, NULL, true),
-('SOLUCIÓN DE CLORHEXIDINA 5%', 'GALON SOLUCIÓN DE CLORHEXIDINA 5%', 300.00, 300.00, 1, 1, 'FLAT', NULL, NULL, true),
-('KIT DE HIGIENE', 'KIT DE HIGIENE', 125.00, 56.00, 4, 2, 'FLAT', NULL, NULL, true),
-('1 TORUNDA DE ALGODON', '1 TORUNDA DE ALGODON', 2.00, 0.20, 60, 20, 'FLAT', NULL, NULL, true),
-('10 CC ALCOHOL', 'ALCOHOL', 1.00, 0.20, 198, 20, 'FLAT', NULL, NULL, true)
+('USO DE GLUCÓMETRO', 'USO DE GLUCÓMETRO', 49.98, 12.09, 50, 5, 'FLAT', NULL, NULL, true)
 ) AS v(name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active)
 WHERE c.name = 'Material y Equipo';
 
 -- Laboratorios
-INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, created_at, updated_at)
-SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
+SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active, 'SERVICE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM inventory_categories c,
 (VALUES
 -- Chemistry panel
@@ -332,8 +206,8 @@ FROM inventory_categories c,
 WHERE c.name = 'Laboratorios';
 
 -- Servicios
-INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, created_at, updated_at)
-SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
+SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active, 'SERVICE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM inventory_categories c,
 (VALUES
 ('ATENCIÓN EMERGENCIA', 'ATENCIÓN EMERGENCIA', 900.00, 0.00, 0, 0, 'FLAT', NULL::VARCHAR, NULL::INT, true),
@@ -343,8 +217,8 @@ FROM inventory_categories c,
 WHERE c.name = 'Servicios';
 
 -- Personal Especial
-INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, created_at, updated_at)
-SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
+SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active, 'PERSONNEL', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM inventory_categories c,
 (VALUES
 ('ENFERMERA SOMBRA HOSPITAL', 'ENFERMERA SOMBRA HOSPITAL', 500.00, 300.00, 0, 0, 'FLAT', NULL::VARCHAR, NULL::INT, true),
@@ -353,8 +227,8 @@ FROM inventory_categories c,
 WHERE c.name = 'Personal Especial';
 
 -- Ingredientes de Cocina
-INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, created_at, updated_at)
-SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
+SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active, 'FOOD', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM inventory_categories c,
 (VALUES
 -- Granos y cereales
@@ -405,8 +279,8 @@ FROM inventory_categories c,
 WHERE c.name = 'Ingredientes de Cocina';
 
 -- Alimentación
-INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, created_at, updated_at)
-SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
+SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active, 'FOOD', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM inventory_categories c,
 (VALUES
 -- Tiempos de comida regulares

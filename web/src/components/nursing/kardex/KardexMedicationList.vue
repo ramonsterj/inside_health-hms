@@ -4,7 +4,9 @@ import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import MedicationAdministrationDialog from '@/components/medical-record/MedicationAdministrationDialog.vue'
+import ExpiryStatusChip from '@/components/pharmacy/ExpiryStatusChip.vue'
 import { formatDateTime } from '@/utils/format'
+import { lotExpiryStatusFromDate } from '@/utils/expiry'
 import { useAuthStore } from '@/stores/auth'
 import type { KardexMedicationSummary } from '@/types'
 
@@ -23,12 +25,14 @@ const authStore = useAuthStore()
 const adminDialogVisible = ref(false)
 const selectedOrderId = ref(0)
 const selectedMedicationName = ref<string | null>(null)
+const selectedInventoryItemId = ref<number | null>(null)
 
 const canAdminister = authStore.hasPermission('medication-administration:create')
 
 function openAdministerDialog(med: KardexMedicationSummary) {
   selectedOrderId.value = med.orderId
   selectedMedicationName.value = med.medication
+  selectedInventoryItemId.value = med.inventoryItemId
   adminDialogVisible.value = true
 }
 
@@ -77,7 +81,12 @@ function getStatusSeverity(status: string): 'success' | 'danger' | 'warn' | 'inf
             >
           </div>
           <div v-if="med.inventoryItemName" class="med-inventory">
-            {{ med.inventoryItemName }}
+            <span>{{ med.inventoryItemName }}</span>
+            <ExpiryStatusChip
+              v-if="med.nextLotExpirationDate"
+              :status="lotExpiryStatusFromDate(med.nextLotExpirationDate)"
+              class="med-expiry-chip"
+            />
           </div>
           <div class="med-last-admin">
             <template v-if="med.lastAdministration">
@@ -117,6 +126,7 @@ function getStatusSeverity(status: string): 'success' | 'danger' | 'warn' | 'inf
       :admissionId="props.admissionId"
       :orderId="selectedOrderId"
       :medicationName="selectedMedicationName"
+      :inventoryItemId="selectedInventoryItemId"
       @update:visible="adminDialogVisible = $event"
       @saved="onAdministered"
     />
@@ -177,6 +187,14 @@ function getStatusSeverity(status: string): 'success' | 'danger' | 'warn' | 'inf
 
 .med-inventory {
   font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.med-expiry-chip {
+  font-style: normal;
 }
 
 .med-last-admin {

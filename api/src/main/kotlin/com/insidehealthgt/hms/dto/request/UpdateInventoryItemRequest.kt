@@ -1,5 +1,6 @@
 package com.insidehealthgt.hms.dto.request
 
+import com.insidehealthgt.hms.entity.InventoryKind
 import com.insidehealthgt.hms.entity.PricingType
 import com.insidehealthgt.hms.entity.TimeUnit
 import jakarta.validation.constraints.DecimalMin
@@ -41,4 +42,15 @@ data class UpdateInventoryItemRequest(
     val timeInterval: Int? = null,
 
     val active: Boolean = true,
+
+    // Nullable so callers that omit these fields preserve the entity's current
+    // values instead of silently reclassifying the item to SUPPLY / clearing
+    // the SKU / disabling lot tracking. The inventory edit form historically
+    // does not submit kind/sku/lotTrackingEnabled.
+    val kind: InventoryKind? = null,
+
+    @field:Size(max = 20, message = "SKU must not exceed 20 characters")
+    val sku: String? = null,
+
+    val lotTrackingEnabled: Boolean? = null,
 )

@@ -3,6 +3,7 @@ package com.insidehealthgt.hms.dto.response
 import com.insidehealthgt.hms.entity.InventoryMovement
 import com.insidehealthgt.hms.entity.MovementType
 import com.insidehealthgt.hms.entity.User
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 data class InventoryMovementResponse(
@@ -15,6 +16,9 @@ data class InventoryMovementResponse(
     val notes: String?,
     val createdAt: LocalDateTime?,
     val createdBy: UserSummaryResponse?,
+    val lotId: Long?,
+    val lotNumber: String?,
+    val lotExpirationDate: LocalDate?,
 ) {
     companion object {
         fun from(movement: InventoryMovement, createdByUser: User? = null): InventoryMovementResponse =
@@ -28,6 +32,9 @@ data class InventoryMovementResponse(
                 notes = movement.notes,
                 createdAt = movement.createdAt,
                 createdBy = createdByUser?.let { UserSummaryResponse.from(it) },
+                lotId = movement.lot?.id,
+                lotNumber = movement.lot?.lotNumber,
+                lotExpirationDate = movement.lot?.expirationDate,
             )
     }
 }

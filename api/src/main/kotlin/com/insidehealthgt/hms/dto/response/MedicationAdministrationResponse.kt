@@ -4,6 +4,7 @@ import com.insidehealthgt.hms.entity.AdministrationRoute
 import com.insidehealthgt.hms.entity.AdministrationStatus
 import com.insidehealthgt.hms.entity.MedicationAdministration
 import com.insidehealthgt.hms.entity.User
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 data class MedicationAdministrationResponse(
@@ -19,6 +20,10 @@ data class MedicationAdministrationResponse(
     val administeredByName: String?,
     val inventoryItemName: String?,
     val billable: Boolean,
+    val quantity: Int,
+    val lotId: Long?,
+    val lotNumber: String?,
+    val lotExpirationDate: LocalDate?,
 ) {
     companion object {
         fun from(
@@ -42,6 +47,10 @@ data class MedicationAdministrationResponse(
                 },
                 inventoryItemName = order.inventoryItem?.name,
                 billable = billable,
+                quantity = administration.quantity,
+                lotId = administration.lot?.id,
+                lotNumber = administration.lot?.lotNumber,
+                lotExpirationDate = administration.lot?.expirationDate,
             )
         }
     }

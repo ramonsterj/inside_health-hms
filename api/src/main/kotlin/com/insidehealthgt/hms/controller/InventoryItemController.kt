@@ -7,6 +7,7 @@ import com.insidehealthgt.hms.dto.response.ApiResponse
 import com.insidehealthgt.hms.dto.response.InventoryItemResponse
 import com.insidehealthgt.hms.dto.response.InventoryMovementResponse
 import com.insidehealthgt.hms.dto.response.PageResponse
+import com.insidehealthgt.hms.entity.InventoryKind
 import com.insidehealthgt.hms.service.InventoryItemService
 import jakarta.validation.Valid
 import org.springframework.data.domain.Pageable
@@ -36,9 +37,10 @@ class InventoryItemController(private val itemService: InventoryItemService) {
     fun listItems(
         @PageableDefault(size = 20) pageable: Pageable,
         @RequestParam(required = false) categoryId: Long?,
+        @RequestParam(required = false) kind: InventoryKind?,
         @RequestParam(required = false) search: String?,
     ): ResponseEntity<ApiResponse<PageResponse<InventoryItemResponse>>> {
-        val items = itemService.findAll(categoryId, search, pageable)
+        val items = itemService.findAll(categoryId, kind, search, pageable)
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(items)))
     }
 
@@ -120,5 +122,16 @@ class InventoryItemController(private val itemService: InventoryItemService) {
     ): ResponseEntity<ApiResponse<InventoryMovementResponse>> {
         val movement = itemService.createMovement(itemId, request)
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(movement))
+    }
+
+    /**
+     * Manual force-recompute of the scalar quantity from active non-recalled lots.
+     * Used by ops when drift is detected.
+     */
+    @PostMapping("/{id}/reconcile-quantity")
+    @PreAuthorize("hasAuthority('inventory-item:update')")
+    fun reconcileQuantity(@PathVariable id: Long): ResponseEntity<ApiResponse<InventoryItemResponse>> {
+        val item = itemService.reconcileQuantity(id)
+        return ResponseEntity.ok(ApiResponse.success(item))
     }
 }

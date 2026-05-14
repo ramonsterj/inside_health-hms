@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi, afterEach, type Mock } from 'vite
 import { setActivePinia, createPinia } from 'pinia'
 import { useInventoryItemStore } from './inventoryItem'
 import api from '@/services/api'
-import { PricingType, MovementType } from '@/types/inventoryItem'
+import { PricingType, MovementType, InventoryKind } from '@/types/inventoryItem'
 import type { InventoryItem, InventoryMovement } from '@/types/inventoryItem'
 
 vi.mock('@/services/api', () => ({
@@ -34,6 +34,9 @@ const mockItem: InventoryItem = {
   timeUnit: null,
   timeInterval: null,
   active: true,
+  kind: InventoryKind.SUPPLY,
+  sku: null,
+  lotTrackingEnabled: false,
   createdAt: '2026-02-06T10:00:00Z',
   updatedAt: '2026-02-06T10:00:00Z',
   createdBy: null,
@@ -49,7 +52,10 @@ const mockMovement: InventoryMovement = {
   newQuantity: 50,
   notes: 'Initial stock',
   createdAt: '2026-02-06T10:00:00Z',
-  createdBy: null
+  createdBy: null,
+  lotId: null,
+  lotNumber: null,
+  lotExpirationDate: null
 }
 
 describe('useInventoryItemStore', () => {

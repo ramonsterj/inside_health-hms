@@ -15,6 +15,7 @@ import { useInventoryItemStore } from '@/stores/inventoryItem'
 import { useInventoryCategoryStore } from '@/stores/inventoryCategory'
 import { useAuthStore } from '@/stores/auth'
 import { formatPrice } from '@/utils/format'
+import { InventoryKind } from '@/types/inventoryItem'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -31,7 +32,16 @@ const canDelete = computed(() => authStore.hasPermission('inventory-item:delete'
 const first = ref(0)
 const rows = ref(20)
 const selectedCategoryId = ref<number | null>(null)
+const selectedKind = ref<InventoryKind | null>(null)
 const searchTerm = ref('')
+
+const kindOptions = computed(() => [
+  { label: t('inventory.item.allKinds'), value: null },
+  ...Object.values(InventoryKind).map(k => ({
+    label: t(`inventory.item.kinds.${k}`),
+    value: k
+  }))
+])
 
 const categoryOptions = computed(() => [
   { label: t('inventory.item.allCategories'), value: null },
@@ -50,7 +60,8 @@ async function loadItems() {
       page,
       rows.value,
       selectedCategoryId.value || undefined,
-      searchTerm.value || undefined
+      searchTerm.value || undefined,
+      selectedKind.value || undefined
     )
   } catch (error) {
     showError(error)
@@ -74,7 +85,11 @@ function viewItem(id: number) {
   router.push({ name: 'inventory-item-detail', params: { id } })
 }
 
-function editItem(id: number) {
+function editItem(id: number, kind?: InventoryKind) {
+  if (kind === InventoryKind.DRUG) {
+    router.push({ name: 'pharmacy-medication-detail', params: { id } })
+    return
+  }
   router.push({ name: 'inventory-item-edit', params: { id } })
 }
 
@@ -133,6 +148,15 @@ async function deleteItem(id: number) {
             @change="onFilterChange"
             style="width: 250px"
           />
+          <Select
+            v-model="selectedKind"
+            :options="kindOptions"
+            optionLabel="label"
+            optionValue="value"
+            :placeholder="t('inventory.item.allKinds')"
+            @change="onFilterChange"
+            style="width: 200px"
+          />
           <InputText
             v-model="searchTerm"
             :placeholder="t('inventory.item.searchPlaceholder')"
@@ -189,6 +213,17 @@ async function deleteItem(id: number) {
             style="width: 90px"
           />
 
+          <Column :header="t('inventory.item.kind')" style="width: 110px">
+            <template #body="{ data }">
+              <Tag
+                :value="t(`inventory.item.kinds.${data.kind}`)"
+                :severity="data.kind === 'DRUG' ? 'warn' : 'secondary'"
+              />
+            </template>
+          </Column>
+
+          <Column field="sku" :header="t('inventory.item.sku')" style="width: 90px" />
+
           <Column :header="t('inventory.item.pricingType')" style="width: 120px">
             <template #body="{ data }">
               <Tag
@@ -224,7 +259,7 @@ async function deleteItem(id: number) {
                   severity="secondary"
                   text
                   rounded
-                  @click="editItem(data.id)"
+                  @click="editItem(data.id, data.kind)"
                   v-tooltip.top="t('common.edit')"
                 />
                 <Button

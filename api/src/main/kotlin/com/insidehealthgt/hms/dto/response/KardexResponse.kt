@@ -54,6 +54,7 @@ data class KardexAdmissionSummary(
             latestNursingNote: NursingNote?,
             latestAdministrations: Map<Long, MedicationAdministration>,
             usersById: Map<Long, User>,
+            nextExpirationByItemId: Map<Long, LocalDate> = emptyMap(),
         ): KardexAdmissionSummary {
             val daysAdmitted = ChronoUnit.DAYS.between(
                 admission.admissionDate.toLocalDate(),
@@ -82,7 +83,12 @@ data class KardexAdmissionSummary(
                 treatingPhysicianName = physicianName,
                 activeMedicationCount = medications.size,
                 medications = medications.map {
-                    KardexMedicationSummary.from(it, latestAdministrations[it.id], usersById)
+                    KardexMedicationSummary.from(
+                        it,
+                        latestAdministrations[it.id],
+                        usersById,
+                        nextExpirationByItemId[it.inventoryItem?.id],
+                    )
                 },
                 activeCareInstructionCount = careInstructions.size,
                 careInstructions = careInstructions.map { KardexCareInstruction.from(it) },
@@ -106,12 +112,14 @@ data class KardexMedicationSummary(
     val inventoryItemName: String?,
     val observations: String?,
     val lastAdministration: KardexLastAdministration?,
+    val nextLotExpirationDate: LocalDate?,
 ) {
     companion object {
         fun from(
             order: MedicalOrder,
             lastAdmin: MedicationAdministration?,
             usersById: Map<Long, User>,
+            nextLotExpirationDate: LocalDate? = null,
         ): KardexMedicationSummary = KardexMedicationSummary(
             orderId = order.id!!,
             medication = order.medication,
@@ -123,6 +131,7 @@ data class KardexMedicationSummary(
             inventoryItemName = order.inventoryItem?.name,
             observations = order.observations,
             lastAdministration = lastAdmin?.let { KardexLastAdministration.from(it, usersById) },
+            nextLotExpirationDate = nextLotExpirationDate,
         )
     }
 }

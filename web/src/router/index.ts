@@ -281,6 +281,25 @@ const router = createRouter({
           component: () => import('@/views/inventory/InventoryItemFormView.vue'),
           meta: { requiresPermission: 'inventory-item:update' }
         },
+        // Pharmacy routes
+        {
+          path: 'pharmacy',
+          name: 'pharmacy',
+          component: () => import('@/views/pharmacy/PharmacyListView.vue'),
+          meta: { requiresPermission: 'medication:read' }
+        },
+        {
+          path: 'pharmacy/expiry-report',
+          name: 'pharmacy-expiry-report',
+          component: () => import('@/views/pharmacy/ExpiryDashboardView.vue'),
+          meta: { requiresPermission: 'medication:expiry-report' }
+        },
+        {
+          path: 'pharmacy/medications/:id',
+          name: 'pharmacy-medication-detail',
+          component: () => import('@/views/pharmacy/PharmacyDetailView.vue'),
+          meta: { requiresPermission: 'medication:read' }
+        },
         // Treasury routes
         {
           path: 'treasury/bank-accounts',
