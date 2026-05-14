@@ -1,6 +1,7 @@
 package com.insidehealthgt.hms.dto.response
 
 import com.insidehealthgt.hms.entity.InventoryCategory
+import com.insidehealthgt.hms.entity.InventoryKind
 import com.insidehealthgt.hms.entity.User
 import java.time.LocalDateTime
 
@@ -10,6 +11,7 @@ data class InventoryCategoryResponse(
     val description: String?,
     val displayOrder: Int,
     val active: Boolean,
+    val defaultForKind: InventoryKind?,
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?,
     val createdBy: UserSummaryResponse?,
@@ -23,6 +25,7 @@ data class InventoryCategoryResponse(
                 description = category.description,
                 displayOrder = category.displayOrder,
                 active = category.active,
+                defaultForKind = category.defaultForKind,
                 createdAt = category.createdAt,
                 updatedAt = category.updatedAt,
                 createdBy = createdByUser?.let { UserSummaryResponse.from(it) },
@@ -35,6 +38,7 @@ data class InventoryCategoryResponse(
             description = category.description,
             displayOrder = category.displayOrder,
             active = category.active,
+            defaultForKind = category.defaultForKind,
             createdAt = category.createdAt,
             updatedAt = category.updatedAt,
             createdBy = null,

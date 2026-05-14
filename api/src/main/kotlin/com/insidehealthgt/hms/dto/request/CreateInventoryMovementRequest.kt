@@ -4,6 +4,7 @@ import com.insidehealthgt.hms.entity.MovementType
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
+import java.time.LocalDate
 
 data class CreateInventoryMovementRequest(
     @field:NotNull(message = "Movement type is required")
@@ -17,4 +18,12 @@ data class CreateInventoryMovementRequest(
     val notes: String? = null,
 
     val admissionId: Long? = null,
+
+    /** Admin override only — explicit lot for lot-tracked items. Service rejects non-admin senders. */
+    val lotId: Long? = null,
+
+    /** ENTRY-only metadata for lot-tracked items; ignored on EXIT and on scalar items. */
+    val lotNumber: String? = null,
+    val expirationDate: LocalDate? = null,
+    val supplier: String? = null,
 )

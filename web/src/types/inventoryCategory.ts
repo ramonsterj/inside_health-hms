@@ -1,9 +1,12 @@
+import type { InventoryKind } from '@/types/inventoryItem'
+
 export interface InventoryCategory {
   id: number
   name: string
   description: string | null
   displayOrder: number
   active: boolean
+  defaultForKind: InventoryKind | null
   createdAt: string | null
   updatedAt: string | null
 }

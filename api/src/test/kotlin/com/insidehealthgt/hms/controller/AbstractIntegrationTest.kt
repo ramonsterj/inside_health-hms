@@ -214,6 +214,8 @@ abstract class AbstractIntegrationTest {
         // removed first.
         jdbcTemplate.execute("DELETE FROM medical_order_documents")
         jdbcTemplate.execute("DELETE FROM medical_orders")
+        jdbcTemplate.execute("DELETE FROM inventory_lots")
+        jdbcTemplate.execute("DELETE FROM medication_details")
         jdbcTemplate.execute("DELETE FROM inventory_items")
         jdbcTemplate.execute("DELETE FROM inventory_categories WHERE created_by IS NOT NULL")
         jdbcTemplate.execute("DELETE FROM nursing_notes")

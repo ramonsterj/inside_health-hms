@@ -2,6 +2,8 @@ package com.insidehealthgt.hms.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.Table
 import org.hibernate.annotations.SQLRestriction
 
@@ -21,5 +23,9 @@ class InventoryCategory(
 
     @Column(nullable = false)
     var active: Boolean = true,
+
+    @Column(name = "default_for_kind", length = 20)
+    @Enumerated(EnumType.STRING)
+    var defaultForKind: InventoryKind? = null,
 
 ) : BaseEntity()

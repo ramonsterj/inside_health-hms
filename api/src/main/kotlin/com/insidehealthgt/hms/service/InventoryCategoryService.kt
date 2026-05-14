@@ -16,6 +16,7 @@ import java.time.LocalDateTime
 class InventoryCategoryService(
     private val categoryRepository: InventoryCategoryRepository,
     private val userRepository: UserRepository,
+    private val messageService: MessageService,
 ) {
 
     @Transactional(readOnly = true)
@@ -62,6 +63,14 @@ class InventoryCategoryService(
             throw BadRequestException("Inventory category with name '${request.name}' already exists")
         }
 
+        // Kind-default categories cannot be deactivated — drug creation would then
+        // fail with "no default category". Rename is fine; routing is by id.
+        category.defaultForKind?.let { kind ->
+            if (!request.active) {
+                throw BadRequestException(messageService.errorInventoryCategoryDefaultDeactivate(kind.name))
+            }
+        }
+
         category.name = request.name
         category.description = request.description
         category.displayOrder = request.displayOrder
@@ -74,6 +83,10 @@ class InventoryCategoryService(
     @Transactional
     fun deleteCategory(id: Long) {
         val category = findById(id)
+
+        category.defaultForKind?.let { kind ->
+            throw BadRequestException(messageService.errorInventoryCategoryDefaultLocked(kind.name))
+        }
 
         if (categoryRepository.existsItemsByCategoryIdIncludingDeleted(id)) {
             throw BadRequestException("Cannot delete category that has inventory items")

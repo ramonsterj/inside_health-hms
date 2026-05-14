@@ -8,4 +8,5 @@ data class InventoryDispensedEvent(
     val itemName: String,
     val quantity: Int,
     val unitPrice: BigDecimal,
+    val lotId: Long? = null,
 )

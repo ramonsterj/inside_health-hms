@@ -18,9 +18,15 @@ export interface MedicationAdministrationResponse {
   administeredByName: string | null
   inventoryItemName: string | null
   billable: boolean
+  quantity: number
+  lotId: number | null
+  lotNumber: string | null
+  lotExpirationDate: string | null
 }
 
 export interface CreateMedicationAdministrationRequest {
   status: AdministrationStatus
   notes?: string
+  quantity?: number
+  lotId?: number
 }

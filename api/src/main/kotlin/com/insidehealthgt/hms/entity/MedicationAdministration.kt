@@ -34,4 +34,11 @@ class MedicationAdministration(
     @Column(name = "administered_at", nullable = false)
     var administeredAt: LocalDateTime = LocalDateTime.now(),
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lot_id")
+    var lot: InventoryLot? = null,
+
+    @Column(nullable = false)
+    var quantity: Int = 1,
+
 ) : BaseEntity()

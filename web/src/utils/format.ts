@@ -27,6 +27,12 @@ function parseDate(value: string | Date | null | undefined): Date | null {
   return Number.isNaN(d.getTime()) ? null : d
 }
 
+// Public helper for round-tripping API date strings (`yyyy-MM-dd`) into a Date
+// that a <DatePicker> can bind to without the UTC-shift trap.
+export function fromApiDate(value: string | Date | null | undefined): Date | null {
+  return parseDate(value)
+}
+
 export function formatDate(value: string | Date | null | undefined): string {
   const d = parseDate(value)
   if (!d) return '-'

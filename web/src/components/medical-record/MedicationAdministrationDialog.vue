@@ -7,6 +7,7 @@ import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
+import InputNumber from 'primevue/inputnumber'
 import Message from 'primevue/message'
 import { toTypedSchema } from '@/validation/zodI18n'
 import {
@@ -15,13 +16,25 @@ import {
 } from '@/validation/medicationAdministration'
 import { useMedicationAdministrationStore } from '@/stores/medicationAdministration'
 import { useErrorHandler } from '@/composables/useErrorHandler'
-import { AdministrationStatus } from '@/types/medicationAdministration'
+import {
+  AdministrationStatus,
+  type CreateMedicationAdministrationRequest
+} from '@/types/medicationAdministration'
+import { useAuthStore } from '@/stores/auth'
+import { usePharmacyStore } from '@/stores/pharmacy'
+import { useInventoryLotStore } from '@/stores/inventoryLot'
+import ExpiryStatusChip from '@/components/pharmacy/ExpiryStatusChip.vue'
+import { type InventoryLot } from '@/types/pharmacy'
+import { formatDate } from '@/utils/format'
+import { lotExpiryStatusFromDate } from '@/utils/expiry'
+import { computed } from 'vue'
 
 const props = defineProps<{
   visible: boolean
   admissionId: number
   orderId: number
   medicationName?: string | null
+  inventoryItemId?: number | null
 }>()
 
 const emit = defineEmits<{
@@ -33,8 +46,26 @@ const { t } = useI18n()
 const confirm = useConfirm()
 const { showError } = useErrorHandler()
 const administrationStore = useMedicationAdministrationStore()
+const authStore = useAuthStore()
+const pharmacyStore = usePharmacyStore()
+const lotStore = useInventoryLotStore()
 
 const loading = ref(false)
+const quantity = ref(1)
+const fefoLot = ref<InventoryLot | null>(null)
+const overrideLotId = ref<number | null>(null)
+
+const canOverrideLot = authStore.hasPermission('inventory-lot:update')
+
+const lotOptions = computed(() => [
+  { label: t('pharmacy.fefo.auto'), value: null },
+  ...lotStore.lots
+    .filter(l => !l.recalled && l.quantityOnHand > 0)
+    .map(l => ({
+      label: `${l.lotNumber || '—'} · ${formatDate(l.expirationDate)} · ${l.quantityOnHand}`,
+      value: l.id
+    }))
+])
 
 const statusOptions = [
   { label: t('medicationAdministration.statuses.GIVEN'), value: AdministrationStatus.GIVEN },
@@ -56,12 +87,32 @@ const [notes] = defineField('notes')
 
 watch(
   () => props.visible,
-  newValue => {
+  async newValue => {
     if (newValue) {
       resetForm()
+      quantity.value = 1
+      overrideLotId.value = null
+      fefoLot.value = null
+      await refreshFefo()
+      if (canOverrideLot && props.inventoryItemId) {
+        await lotStore.fetchByItem(props.inventoryItemId).catch(() => undefined)
+      }
     }
   }
 )
+
+async function refreshFefo() {
+  if (!props.inventoryItemId) return
+  try {
+    fefoLot.value = await pharmacyStore.fefoPreview(props.inventoryItemId, quantity.value || 1)
+  } catch {
+    fefoLot.value = null
+  }
+}
+
+function lotStatus(lot: InventoryLot) {
+  return lotExpiryStatusFromDate(lot.expirationDate)
+}
 
 const onSubmit = handleSubmit(async formValues => {
   // If status is GIVEN, show confirmation dialog
@@ -81,9 +132,15 @@ const onSubmit = handleSubmit(async formValues => {
 async function submitAdministration(formValues: MedicationAdministrationFormData) {
   loading.value = true
   try {
-    const data = {
+    const data: CreateMedicationAdministrationRequest = {
       status: formValues.status,
       notes: formValues.notes || undefined
+    }
+    if (formValues.status === AdministrationStatus.GIVEN) {
+      data.quantity = quantity.value
+      if (canOverrideLot && overrideLotId.value) {
+        data.lotId = overrideLotId.value
+      }
     }
 
     await administrationStore.createAdministration(props.admissionId, props.orderId, data)
@@ -131,6 +188,38 @@ function closeDialog() {
         <Message v-if="errors.status" severity="error" :closable="false">
           {{ errors.status }}
         </Message>
+      </div>
+
+      <!-- Quantity (GIVEN only) -->
+      <div v-if="status === AdministrationStatus.GIVEN" class="form-field">
+        <label for="quantity">{{ t('pharmacy.medication.quantity') }}</label>
+        <InputNumber id="quantity" v-model="quantity" :min="1" :max="999" @blur="refreshFefo" />
+      </div>
+
+      <!-- FEFO preview -->
+      <div v-if="status === AdministrationStatus.GIVEN && fefoLot" class="form-field">
+        <label>{{ t('pharmacy.fefo.previewLabel') }}</label>
+        <div class="fefo-row">
+          <ExpiryStatusChip :status="lotStatus(fefoLot)" />
+          <span>{{ fefoLot.lotNumber || '—' }}</span>
+          <span class="muted">{{ formatDate(fefoLot.expirationDate) }}</span>
+        </div>
+      </div>
+
+      <!-- Admin lot override (admin only) -->
+      <div
+        v-if="status === AdministrationStatus.GIVEN && canOverrideLot && inventoryItemId"
+        class="form-field"
+      >
+        <label for="overrideLot">{{ t('pharmacy.fefo.overrideLabel') }}</label>
+        <Select
+          id="overrideLot"
+          v-model="overrideLotId"
+          :options="lotOptions"
+          optionLabel="label"
+          optionValue="value"
+          class="w-full"
+        />
       </div>
 
       <!-- Notes -->
@@ -192,5 +281,16 @@ function closeDialog() {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+}
+
+.fefo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.muted {
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
 }
 </style>

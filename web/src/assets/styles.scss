@@ -1,3 +1,17 @@
 /* Global styles for the application */
 @use 'primeicons/primeicons.css';
 @use '@/assets/layout/layout.scss';
+
+.pi-mortar-pestle {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  background-color: currentColor;
+  -webkit-mask: url('./icons/mortar-pestle.svg') no-repeat center / contain;
+  mask: url('./icons/mortar-pestle.svg') no-repeat center / contain;
+}
+
+.pi-mortar-pestle::before {
+  content: '';
+}

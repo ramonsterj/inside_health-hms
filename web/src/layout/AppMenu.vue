@@ -105,6 +105,25 @@ const model = computed<MenuItem[]>(() => {
     })
   }
 
+  // Pharmacy section - visible to users with medication:read permission
+  if (authStore.hasPermission('medication:read')) {
+    const pharmacyItems: MenuItem[] = [
+      {
+        label: 'nav.pharmacyMedications',
+        icon: 'pi pi-fw pi-mortar-pestle',
+        to: '/pharmacy'
+      }
+    ]
+    if (authStore.hasPermission('medication:expiry-report')) {
+      pharmacyItems.push({
+        label: 'nav.pharmacyExpiryReport',
+        icon: 'pi pi-fw pi-calendar-clock',
+        to: '/pharmacy/expiry-report'
+      })
+    }
+    items.push({ label: 'nav.pharmacy', items: pharmacyItems })
+  }
+
   // Treasury section - visible to users with treasury permissions
   const hasTreasuryRead = authStore.hasPermission('treasury:read')
   const hasTreasuryReport = authStore.hasPermission('treasury:report')
@@ -140,7 +159,7 @@ const model = computed<MenuItem[]>(() => {
           label: 'nav.employees',
           icon: 'pi pi-fw pi-id-card',
           to: '/treasury/employees'
-        },
+        }
       )
     }
 

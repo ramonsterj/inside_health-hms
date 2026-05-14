@@ -24,6 +24,7 @@ const categoryStore = useInventoryCategoryStore()
 const loading = ref(false)
 const isEditMode = computed(() => !!route.params.id)
 const categoryId = computed(() => Number(route.params.id) || null)
+const defaultForKind = ref<string | null>(null)
 
 const { defineField, handleSubmit, errors, setValues } = useForm<InventoryCategoryFormData>({
   validationSchema: toTypedSchema(inventoryCategorySchema),
@@ -50,6 +51,7 @@ async function loadCategory() {
   loading.value = true
   try {
     const category = await categoryStore.fetchCategory(categoryId.value!)
+    defaultForKind.value = category.defaultForKind ?? null
     setValues({
       name: category.name,
       description: category.description || '',
@@ -140,9 +142,19 @@ function cancel() {
           <div class="form-field">
             <label for="active">{{ t('inventory.category.active') }}</label>
             <div class="toggle-wrapper">
-              <ToggleSwitch id="active" v-model="active" />
+              <ToggleSwitch
+                id="active"
+                v-model="active"
+                :disabled="!!defaultForKind"
+                v-tooltip.top="
+                  defaultForKind ? t('inventory.category.defaultLockedTooltip') : undefined
+                "
+              />
               <span class="toggle-label">{{ active ? t('common.yes') : t('common.no') }}</span>
             </div>
+            <Message v-if="defaultForKind" severity="info" :closable="false">
+              {{ t('inventory.category.defaultForKindHint') }}
+            </Message>
           </div>
 
           <div class="form-actions full-width">

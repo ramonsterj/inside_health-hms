@@ -258,7 +258,7 @@ class InventoryControllerTest : AbstractIntegrationTest() {
             .andExpect(jsonPath("$.data.pricingType").value("FLAT"))
             .andExpect(jsonPath("$.data.timeUnit").doesNotExist())
             .andExpect(jsonPath("$.data.timeInterval").doesNotExist())
-            .andExpect(jsonPath("$.data.category.name").value("Medicamentos"))
+            .andExpect(jsonPath("$.data.category.name").value("Material y Equipo"))
     }
 
     @Test
@@ -759,7 +759,12 @@ class InventoryControllerTest : AbstractIntegrationTest() {
     // ============ HELPERS ============
 
     private fun getSeededCategoryId(offset: Int = 0): Long {
+        // Skip categories that are flagged as the system default for a kind
+        // (e.g. "Medicamentos" → DRUG). Those are write-protected by the
+        // InventoryItemService guard introduced for FR-9, so creating a
+        // SUPPLY-by-default item under them now returns 400.
         val categories = inventoryCategoryRepository.findAllByOrderByDisplayOrderAsc()
+            .filter { it.defaultForKind == null }
         return categories[offset].id!!
     }
 

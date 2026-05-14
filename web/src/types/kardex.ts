@@ -36,6 +36,7 @@ export interface KardexMedicationSummary {
   inventoryItemName: string | null
   observations: string | null
   lastAdministration: KardexLastAdministration | null
+  nextLotExpirationDate: string | null
 }
 
 export interface KardexLastAdministration {

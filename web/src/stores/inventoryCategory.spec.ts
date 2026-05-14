@@ -26,6 +26,7 @@ const mockCategory: InventoryCategory = {
   description: 'Medication and pharmaceutical supplies',
   displayOrder: 1,
   active: true,
+  defaultForKind: null,
   createdAt: '2026-02-06T10:00:00Z',
   updatedAt: '2026-02-06T10:00:00Z'
 }
@@ -38,6 +39,7 @@ const mockCategories: InventoryCategory[] = [
     description: 'Materials and equipment',
     displayOrder: 2,
     active: true,
+    defaultForKind: null,
     createdAt: null,
     updatedAt: null
   },
@@ -47,6 +49,7 @@ const mockCategories: InventoryCategory[] = [
     description: null,
     displayOrder: 3,
     active: false,
+    defaultForKind: null,
     createdAt: null,
     updatedAt: null
   }

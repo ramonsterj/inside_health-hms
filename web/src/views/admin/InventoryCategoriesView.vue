@@ -123,6 +123,18 @@ async function deleteCategory(id: number) {
             </template>
           </Column>
 
+          <Column :header="t('inventory.category.defaultForKind')" style="width: 160px">
+            <template #body="{ data }">
+              <Tag
+                v-if="data.defaultForKind"
+                :value="t(`inventory.item.kinds.${data.defaultForKind}`)"
+                severity="info"
+                v-tooltip.top="t('inventory.category.defaultForKindTooltip')"
+              />
+              <span v-else>-</span>
+            </template>
+          </Column>
+
           <Column :header="t('common.actions')" style="width: 120px">
             <template #body="{ data }">
               <div class="action-buttons">
@@ -142,8 +154,13 @@ async function deleteCategory(id: number) {
                   severity="danger"
                   text
                   rounded
+                  :disabled="!!data.defaultForKind"
                   @click="confirmDelete(data.id)"
-                  v-tooltip.top="t('common.delete')"
+                  v-tooltip.top="
+                    data.defaultForKind
+                      ? t('inventory.category.defaultLockedTooltip')
+                      : t('common.delete')
+                  "
                   :aria-label="t('common.delete')"
                 />
               </div>

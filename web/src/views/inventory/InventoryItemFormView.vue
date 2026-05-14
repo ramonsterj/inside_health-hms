@@ -28,9 +28,20 @@ const categoryStore = useInventoryCategoryStore()
 const loading = ref(false)
 const isEditMode = computed(() => !!route.params.id)
 const itemId = computed(() => Number(route.params.id) || null)
+const currentCategoryId = ref<number | null>(null)
 
+// Hide categories that are the system default for a kind (e.g. "Medicamentos"
+// → DRUG). Those buckets are write-protected by InventoryItemService — items
+// belonging in them are created through their dedicated form (drugs via
+// /pharmacy). The list-page filter dropdown still shows every category; only
+// this write-target select is restricted.
+// In edit mode we keep the item's current category in the list so a deep-link
+// to a default-routed item still renders (the backend will reject saves whose
+// kind doesn't match the routed kind anyway).
 const categoryOptions = computed(() =>
-  categoryStore.activeCategories.map(c => ({ label: c.name, value: c.id }))
+  categoryStore.activeCategories
+    .filter(c => !c.defaultForKind || c.id === currentCategoryId.value)
+    .map(c => ({ label: c.name, value: c.id }))
 )
 
 const pricingTypeOptions = computed(() => [
@@ -90,6 +101,7 @@ async function loadItem() {
   loading.value = true
   try {
     const item = await itemStore.fetchItem(itemId.value!)
+    currentCategoryId.value = item.category.id
     setValues({
       name: item.name,
       description: item.description || '',

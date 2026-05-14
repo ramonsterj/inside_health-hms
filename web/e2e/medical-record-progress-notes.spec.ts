@@ -662,21 +662,21 @@ test.describe('Medical Record - Progress Notes', () => {
     await waitForMedicalRecordTabs(page)
     await selectMedicalRecordTab(page, 'progressNotes')
 
-    // By default, text should be truncated (contains ...)
-    await expect(page.locator('.soap-content').first()).toContainText('...')
+    // By default, content is collapsed — `.truncated` class clips height via CSS.
+    await expect(page.locator('.soap-content').first()).toHaveClass(/truncated/)
 
     // Click expand button
     await page.getByRole('button', { name: /Expand|Expandir/i }).click()
 
-    // Now should see full text without truncation
-    await expect(page.locator('.soap-content').first()).not.toContainText('...')
+    // Now the `.truncated` class is gone and the full text is visible.
+    await expect(page.locator('.soap-content').first()).not.toHaveClass(/truncated/)
     await expect(page.locator('.soap-content').first()).toContainText('headaches and fatigue')
 
     // Click collapse
     await page.getByRole('button', { name: /Collapse|Contraer/i }).click()
 
     // Should be truncated again
-    await expect(page.locator('.soap-content').first()).toContainText('...')
+    await expect(page.locator('.soap-content').first()).toHaveClass(/truncated/)
   })
 
   test('empty state shows add button', async ({ page }) => {

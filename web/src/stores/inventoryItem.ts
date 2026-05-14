@@ -4,6 +4,7 @@ import api from '@/services/api'
 import type {
   InventoryItem,
   InventoryMovement,
+  InventoryKind,
   CreateInventoryItemRequest,
   UpdateInventoryItemRequest,
   CreateInventoryMovementRequest
@@ -22,12 +23,14 @@ export const useInventoryItemStore = defineStore('inventoryItem', () => {
     page = 0,
     size = 20,
     categoryId?: number,
-    search?: string
+    search?: string,
+    kind?: InventoryKind
   ): Promise<void> {
     loading.value = true
     try {
       const params: Record<string, unknown> = { page, size }
       if (categoryId) params.categoryId = categoryId
+      if (kind) params.kind = kind
       if (search) params.search = search
 
       const response = await api.get<ApiResponse<PageResponse<InventoryItem>>>(

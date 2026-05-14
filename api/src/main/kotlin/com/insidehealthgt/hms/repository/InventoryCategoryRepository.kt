@@ -1,6 +1,7 @@
 package com.insidehealthgt.hms.repository
 
 import com.insidehealthgt.hms.entity.InventoryCategory
+import com.insidehealthgt.hms.entity.InventoryKind
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
@@ -13,6 +14,8 @@ interface InventoryCategoryRepository : JpaRepository<InventoryCategory, Long> {
     fun findAllByOrderByDisplayOrderAsc(): List<InventoryCategory>
 
     fun findAllByActiveTrueOrderByDisplayOrderAsc(): List<InventoryCategory>
+
+    fun findByDefaultForKindAndActiveTrue(defaultForKind: InventoryKind): InventoryCategory?
 
     fun existsByName(name: String): Boolean
 

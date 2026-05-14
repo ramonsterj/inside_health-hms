@@ -1,10 +1,15 @@
 package com.insidehealthgt.hms.service
 
 import com.insidehealthgt.hms.dto.response.KardexAdmissionSummary
+import com.insidehealthgt.hms.entity.Admission
 import com.insidehealthgt.hms.entity.AdmissionType
+import com.insidehealthgt.hms.entity.MedicalOrder
 import com.insidehealthgt.hms.entity.MedicalOrderCategory
+import com.insidehealthgt.hms.entity.MedicationAdministration
+import com.insidehealthgt.hms.entity.VitalSign
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
 import com.insidehealthgt.hms.repository.AdmissionRepository
+import com.insidehealthgt.hms.repository.InventoryLotRepository
 import com.insidehealthgt.hms.repository.MedicalOrderRepository
 import com.insidehealthgt.hms.repository.MedicationAdministrationRepository
 import com.insidehealthgt.hms.repository.NursingNoteRepository
@@ -15,6 +20,7 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 
 @Service
 class NursingKardexService(
@@ -24,8 +30,16 @@ class NursingKardexService(
     private val vitalSignRepository: VitalSignRepository,
     private val nursingNoteRepository: NursingNoteRepository,
     private val userRepository: UserRepository,
+    private val inventoryLotRepository: InventoryLotRepository,
     private val messageService: MessageService,
 ) {
+
+    private fun nextExpirationByItemId(orders: List<MedicalOrder>): Map<Long, LocalDate> {
+        val itemIds = orders.mapNotNull { it.inventoryItem?.id }.distinct()
+        if (itemIds.isEmpty()) return emptyMap()
+        return inventoryLotRepository.findNextExpirationByItemIds(itemIds)
+            .associate { it.itemId to it.expirationDate }
+    }
 
     companion object {
         val KARDEX_CATEGORIES = listOf(
@@ -103,12 +117,13 @@ class NursingKardexService(
             latestNursingNote = latestNote,
             latestAdministrations = latestAdministrations,
             usersById = usersById,
+            nextExpirationByItemId = nextExpirationByItemId(medications),
         )
     }
 
     @Suppress("LongMethod")
     private fun assembleKardexPage(
-        admissionsPage: Page<com.insidehealthgt.hms.entity.Admission>,
+        admissionsPage: Page<Admission>,
         admissionIds: List<Long>,
         pageable: Pageable,
     ): Page<KardexAdmissionSummary> {
@@ -152,6 +167,10 @@ class NursingKardexService(
             emptyMap()
         }
 
+        // One batch read for the FEFO next-expiration per item across the page.
+        val medicationOrdersAcrossPage = allOrders.filter { it.category == MedicalOrderCategory.MEDICAMENTOS }
+        val nextExpirationByItem = nextExpirationByItemId(medicationOrdersAcrossPage)
+
         // Assemble summaries preserving page order
         val summaries = admissionIds.mapNotNull { admissionId ->
             val admission = admissionsById[admissionId] ?: return@mapNotNull null
@@ -167,6 +186,7 @@ class NursingKardexService(
                 latestNursingNote = latestNotes[admissionId],
                 latestAdministrations = latestAdministrations,
                 usersById = usersById,
+                nextExpirationByItemId = nextExpirationByItem,
             )
         }
 
@@ -174,9 +194,9 @@ class NursingKardexService(
     }
 
     private fun collectUserIds(
-        admissionsPage: List<com.insidehealthgt.hms.entity.Admission>,
-        latestAdministrations: List<com.insidehealthgt.hms.entity.MedicationAdministration>,
-        latestVitals: List<com.insidehealthgt.hms.entity.VitalSign>,
+        admissionsPage: List<Admission>,
+        latestAdministrations: List<MedicationAdministration>,
+        latestVitals: List<VitalSign>,
     ): List<Long> = (
         admissionsPage.mapNotNull { it.treatingPhysician.id } +
             latestAdministrations.mapNotNull { it.createdBy } +

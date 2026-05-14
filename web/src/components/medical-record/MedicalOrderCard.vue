@@ -111,8 +111,7 @@ const canMarkInProgress = computed(
 )
 const canDiscontinue = computed(
   () =>
-    authStore.hasPermission('medical-order:discontinue') &&
-    canDiscontinueStatus(props.order.status)
+    authStore.hasPermission('medical-order:discontinue') && canDiscontinueStatus(props.order.status)
 )
 
 // Per-category label for the "mark in progress" button.
@@ -361,7 +360,10 @@ async function deleteDocument(doc: MedicalOrderDocument) {
 
         <!-- Authorized Info -->
         <div v-if="order.authorizedAt" class="meta-row">
-          <i class="pi pi-check-circle" style="color: var(--p-green-600); margin-right: 0.25rem"></i>
+          <i
+            class="pi pi-check-circle"
+            style="color: var(--p-green-600); margin-right: 0.25rem"
+          ></i>
           {{ t('medicalRecord.medicalOrder.authorizedBy') }}: {{ authorizedByName }}
           <span class="date-small">({{ formatDateTime(order.authorizedAt) }})</span>
         </div>
@@ -554,6 +556,7 @@ async function deleteDocument(doc: MedicalOrderDocument) {
     :admissionId="order.admissionId"
     :orderId="order.id"
     :medicationName="order.medication"
+    :inventoryItemId="order.inventoryItemId"
     @saved="onAdministrationSaved"
   />
 

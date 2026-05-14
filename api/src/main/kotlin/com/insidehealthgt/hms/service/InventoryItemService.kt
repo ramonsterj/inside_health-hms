@@ -5,19 +5,17 @@ import com.insidehealthgt.hms.dto.request.CreateInventoryMovementRequest
 import com.insidehealthgt.hms.dto.request.UpdateInventoryItemRequest
 import com.insidehealthgt.hms.dto.response.InventoryItemResponse
 import com.insidehealthgt.hms.dto.response.InventoryMovementResponse
+import com.insidehealthgt.hms.entity.InventoryCategory
 import com.insidehealthgt.hms.entity.InventoryItem
-import com.insidehealthgt.hms.entity.InventoryMovement
-import com.insidehealthgt.hms.entity.MovementType
+import com.insidehealthgt.hms.entity.InventoryKind
 import com.insidehealthgt.hms.entity.PricingType
-import com.insidehealthgt.hms.event.InventoryDispensedEvent
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
-import com.insidehealthgt.hms.repository.AdmissionRepository
 import com.insidehealthgt.hms.repository.InventoryCategoryRepository
 import com.insidehealthgt.hms.repository.InventoryItemRepository
-import com.insidehealthgt.hms.repository.InventoryMovementRepository
+import com.insidehealthgt.hms.repository.InventoryLotRepository
+import com.insidehealthgt.hms.repository.MedicationDetailsRepository
 import com.insidehealthgt.hms.repository.UserRepository
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -25,13 +23,14 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 @Service
+@Suppress("LongParameterList", "TooManyFunctions", "ThrowsCount")
 class InventoryItemService(
     private val itemRepository: InventoryItemRepository,
     private val categoryRepository: InventoryCategoryRepository,
-    private val movementRepository: InventoryMovementRepository,
+    private val lotRepository: InventoryLotRepository,
+    private val medicationDetailsRepository: MedicationDetailsRepository,
     private val userRepository: UserRepository,
-    private val admissionRepository: AdmissionRepository,
-    private val eventPublisher: ApplicationEventPublisher,
+    private val movementService: InventoryMovementService,
     private val messageService: MessageService,
 ) {
 
@@ -40,9 +39,14 @@ class InventoryItemService(
         .orElseThrow { ResourceNotFoundException(messageService.errorInventoryItemNotFound(id)) }
 
     @Transactional(readOnly = true)
-    fun findAll(categoryId: Long?, search: String?, pageable: Pageable): Page<InventoryItemResponse> =
-        itemRepository.findAllWithFilters(categoryId, search?.trim() ?: "", pageable)
-            .map { InventoryItemResponse.from(it) }
+    fun findAll(
+        categoryId: Long?,
+        kind: InventoryKind?,
+        search: String?,
+        pageable: Pageable,
+    ): Page<InventoryItemResponse> = itemRepository
+        .findAllWithFilters(categoryId, kind, search?.trim() ?: "", pageable)
+        .map { InventoryItemResponse.from(it) }
 
     @Transactional(readOnly = true)
     fun getItem(id: Long): InventoryItemResponse {
@@ -56,6 +60,10 @@ class InventoryItemService(
             .orElseThrow { BadRequestException(messageService.errorInventoryCategoryNotFound(request.categoryId)) }
 
         validateTimeBased(request.pricingType, request.timeUnit, request.timeInterval)
+        validateKindLotTracking(request.kind, request.lotTrackingEnabled)
+        validateDrugRequiresDetails(request.kind, hasDetails = false)
+        validateCategoryKindMatch(category, request.kind)
+        validateSku(request.sku, excludeItemId = null)
 
         val item = InventoryItem(
             category = category,
@@ -68,6 +76,9 @@ class InventoryItemService(
             timeUnit = if (request.pricingType == PricingType.TIME_BASED) request.timeUnit else null,
             timeInterval = if (request.pricingType == PricingType.TIME_BASED) request.timeInterval else null,
             active = request.active,
+            kind = request.kind,
+            sku = request.sku?.takeIf { it.isNotBlank() },
+            lotTrackingEnabled = request.lotTrackingEnabled || request.kind == InventoryKind.DRUG,
         )
 
         val savedItem = itemRepository.save(item)
@@ -75,13 +86,35 @@ class InventoryItemService(
     }
 
     @Transactional
+    @Suppress("CyclomaticComplexMethod")
     fun updateItem(id: Long, request: UpdateInventoryItemRequest): InventoryItemResponse {
         val item = findById(id)
+        val oldKind = item.kind
 
         val category = categoryRepository.findById(request.categoryId)
             .orElseThrow { BadRequestException(messageService.errorInventoryCategoryNotFound(request.categoryId)) }
 
+        // Preserve current entity values when caller omits these fields — the
+        // inventory edit form historically does not submit kind/sku/lotTracking,
+        // and defaulting them to SUPPLY/null/false silently reclassified items.
+        val effectiveKind = request.kind ?: item.kind
+        val effectiveLotTracking = request.lotTrackingEnabled ?: item.lotTrackingEnabled
+        val effectiveSku = when {
+            request.sku == null -> item.sku
+            request.sku.isBlank() -> null
+            else -> request.sku
+        }
+
         validateTimeBased(request.pricingType, request.timeUnit, request.timeInterval)
+        validateKindLotTracking(effectiveKind, effectiveLotTracking)
+        validateCategoryKindMatch(category, effectiveKind)
+        validateSku(effectiveSku, excludeItemId = id)
+
+        // Disabling lot tracking while non-deleted lots exist is rejected.
+        val priorLotCount = lotRepository.countByItemIdAndDeletedAtIsNull(id)
+        if (!effectiveLotTracking && effectiveKind != InventoryKind.DRUG && priorLotCount > 0) {
+            throw BadRequestException(messageService.errorInventoryLotTrackingHasLots())
+        }
 
         item.category = category
         item.name = request.name
@@ -93,6 +126,20 @@ class InventoryItemService(
         item.timeUnit = if (request.pricingType == PricingType.TIME_BASED) request.timeUnit else null
         item.timeInterval = if (request.pricingType == PricingType.TIME_BASED) request.timeInterval else null
         item.active = request.active
+        item.kind = effectiveKind
+        item.sku = effectiveSku
+        item.lotTrackingEnabled = effectiveLotTracking || effectiveKind == InventoryKind.DRUG
+
+        // Reclassification consistency
+        val details = medicationDetailsRepository.findByItemId(id)
+        if (oldKind == InventoryKind.DRUG && effectiveKind != InventoryKind.DRUG && details != null) {
+            // DRUG -> non-DRUG: soft-delete the details row in same tx
+            details.deletedAt = LocalDateTime.now()
+            medicationDetailsRepository.save(details)
+        }
+        if (effectiveKind == InventoryKind.DRUG && details == null) {
+            throw BadRequestException(messageService.errorMedicationDetailsRequired())
+        }
 
         val savedItem = itemRepository.save(item)
         return buildItemResponse(savedItem)
@@ -101,7 +148,13 @@ class InventoryItemService(
     @Transactional
     fun deleteItem(id: Long) {
         val item = findById(id)
-        item.deletedAt = LocalDateTime.now()
+        val now = LocalDateTime.now()
+        item.deletedAt = now
+        // Cascade soft-delete to MedicationDetails (1:1 invariant — never orphan).
+        medicationDetailsRepository.findByItemId(id)?.let {
+            it.deletedAt = now
+            medicationDetailsRepository.save(it)
+        }
         itemRepository.save(item)
     }
 
@@ -110,72 +163,20 @@ class InventoryItemService(
         .map { InventoryItemResponse.from(it) }
 
     @Transactional
-    fun createMovement(itemId: Long, request: CreateInventoryMovementRequest): InventoryMovementResponse {
-        val item = findById(itemId)
-
-        val delta = if (request.type == MovementType.ENTRY) request.quantity else -request.quantity
-
-        val updatedRows = itemRepository.updateQuantityAtomically(itemId, delta)
-        if (updatedRows == 0) {
-            throw BadRequestException(
-                messageService.errorInventoryInsufficientStock(item.quantity, request.quantity),
-            )
-        }
-
-        // Re-read the actual quantity after the atomic update for accurate audit trail
-        val actualNewQuantity = itemRepository.findCurrentQuantity(itemId)
-        val previousQuantity = actualNewQuantity - delta
-
-        val admission = request.admissionId?.let { admissionId ->
-            admissionRepository.findById(admissionId)
-                .orElseThrow { BadRequestException(messageService.errorInventoryAdmissionNotFound(admissionId)) }
-        }
-
-        val movement = InventoryMovement(
-            item = item,
-            movementType = request.type,
-            quantity = request.quantity,
-            previousQuantity = previousQuantity,
-            newQuantity = actualNewQuantity,
-            notes = request.notes,
-            admission = admission,
-        )
-
-        val savedMovement = movementRepository.save(movement)
-
-        // Publish event for billing when dispensing to a patient
-        if (request.type == MovementType.EXIT && admission != null) {
-            eventPublisher.publishEvent(
-                InventoryDispensedEvent(
-                    admissionId = admission.id!!,
-                    inventoryItemId = item.id!!,
-                    itemName = item.name,
-                    quantity = request.quantity,
-                    unitPrice = item.price,
-                ),
-            )
-        }
-
-        val createdByUser = savedMovement.createdBy?.let { userRepository.findById(it).orElse(null) }
-        return InventoryMovementResponse.from(savedMovement, createdByUser)
-    }
+    fun createMovement(itemId: Long, request: CreateInventoryMovementRequest): InventoryMovementResponse =
+        movementService.createMovement(itemId, request)
 
     @Transactional(readOnly = true)
-    fun getMovements(itemId: Long): List<InventoryMovementResponse> {
-        findById(itemId) // validate item exists
-        val movements = movementRepository.findByItemIdOrderByCreatedAtDesc(itemId)
+    fun getMovements(itemId: Long): List<InventoryMovementResponse> = movementService.getMovements(itemId)
 
-        val userIds = movements.mapNotNull { it.createdBy }.distinct()
-        val usersById = if (userIds.isNotEmpty()) {
-            userRepository.findAllById(userIds).associateBy { it.id }
-        } else {
-            emptyMap()
+    /** Force-recompute the scalar quantity from active non-recalled lots; for ops drift recovery. */
+    @Transactional
+    fun reconcileQuantity(id: Long): InventoryItemResponse {
+        val item = findById(id)
+        if (item.lotTrackingEnabled) {
+            itemRepository.recomputeQuantityFromLots(id)
         }
-
-        return movements.map { movement ->
-            val createdByUser = movement.createdBy?.let { usersById[it] }
-            InventoryMovementResponse.from(movement, createdByUser)
-        }
+        return getItem(id)
     }
 
     private fun validateTimeBased(
@@ -190,6 +191,47 @@ class InventoryItemService(
             if (timeInterval == null || timeInterval <= 0) {
                 throw BadRequestException(messageService.errorInventoryTimeIntervalRequired())
             }
+        }
+    }
+
+    private fun validateKindLotTracking(kind: InventoryKind, lotTrackingEnabled: Boolean) {
+        val mustBeFalse = kind == InventoryKind.EQUIPMENT ||
+            kind == InventoryKind.SERVICE ||
+            kind == InventoryKind.PERSONNEL
+        if (mustBeFalse && lotTrackingEnabled) {
+            throw BadRequestException(messageService.errorInventoryLotTrackingNotAllowed(kind.name))
+        }
+        if (kind == InventoryKind.DRUG && !lotTrackingEnabled) {
+            // Coerced upstream, but reject explicit attempts to disable.
+            throw BadRequestException(messageService.errorInventoryDrugLotTrackingRequired())
+        }
+    }
+
+    private fun validateDrugRequiresDetails(kind: InventoryKind, hasDetails: Boolean) {
+        // Items created through the inventory endpoint cannot be kind=DRUG —
+        // medications must be created through PharmacyController which atomically
+        // creates the item + details. This guards against bypass.
+        if (kind == InventoryKind.DRUG && !hasDetails) {
+            throw BadRequestException(messageService.errorMedicationDetailsRequired())
+        }
+    }
+
+    private fun validateCategoryKindMatch(category: InventoryCategory, kind: InventoryKind) {
+        // Categories flagged as the system default for a given kind are
+        // write-protected: only items of that kind may be filed there. Prevents
+        // e.g. a SUPPLY landing under "Medicamentos" because someone picked the
+        // wrong category from the general inventory form.
+        val routed = category.defaultForKind ?: return
+        if (kind != routed) {
+            throw BadRequestException(messageService.errorInventoryCategoryKindMismatch(routed.name))
+        }
+    }
+
+    private fun validateSku(sku: String?, excludeItemId: Long?) {
+        if (sku.isNullOrBlank()) return
+        val existing = itemRepository.findBySku(sku.trim())
+        if (existing != null && existing.id != excludeItemId) {
+            throw BadRequestException(messageService.errorInventorySkuExists(sku.trim()))
         }
     }
 
