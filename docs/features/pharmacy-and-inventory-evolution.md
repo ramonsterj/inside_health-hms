@@ -11,6 +11,7 @@
 | 1.4 | 2026-05-14 | Juan Ramón Paniagua | Closes the symmetric footgun on the **general inventory form**: users could previously pick the "Medicamentos" category from the supply/equipment form, producing a `kind=SUPPLY` item filed under the drug category. Frontend now filters `default_for_kind`-flagged categories out of the create/edit dropdown, and `InventoryItemService` rejects writes that target a kind-routed category with a mismatching `kind`. |
 | 1.5 | 2026-05-19 | Juan Ramón Paniagua | Dev/acceptance seed override: `R__seed_02b_pharmacy_from_workbook.sql` now seeds every DRUG row with `quantity = 50` and a matching synthetic-legacy `inventory_lots` row (`quantity_on_hand = 50`, `expiration_date = 9999-12-31`, `synthetic_legacy = TRUE`) so FEFO dispensing can be exercised end-to-end during validation. Production (`V111`) is unchanged and still ships `quantity = 0` with no initial lots. |
 | 1.6 | 2026-05-19 | Juan Ramón Paniagua | Replaced the original `V111__seed_pharmacy_from_workbook.kt` (Kotlin `BaseJavaMigration` that read `pharmacy-initial-load.csv` from the classpath) with a pure SQL migration of the same version. The CSV was never committed, so the Java loader failed on every fresh DB at startup. The workbook data has only ever lived in SQL form (`R__seed_02b`); V111 now mirrors that file directly. `MedicationExpirationParser` is no longer reachable from main code but is retained for tests and potential future lot-form server-side parsing. |
+| 1.7 | 2026-05-19 | Codex | Documented the V110 checksum recovery requirement (`flyway repair` for databases that already recorded old V110 as successful) and made `R__seed_02b_pharmacy_from_workbook.sql` idempotent when rerun independently. |
 
 ---
 
@@ -30,7 +31,7 @@ What this spec **does not** rewrite:
 
 - `InventoryItem.name`, `description`, `price`, `cost`, `restockLevel`, `pricingType`, `timeUnit`, `timeInterval`, `active` — unchanged.
 - The category model from v1 — unchanged (no breaking renames). Medication classification is layered on top via `MedicationDetails.section`, not by splitting the categories table.
-- Existing FKs to `inventory_items.id` (`medical_orders.inventory_item_id`, `patient_charges.inventory_item_id`) — **must stay intact**. `medication_administrations` does not currently point directly to `inventory_items`; it reaches the item through `medical_orders.inventory_item_id`, and this remains unchanged. `doctor_fees` has no direct FK to `inventory_items` either — it reaches inventory transitively through `patient_charge_id` — so it is unaffected by this spec.
+- Existing FKs to `inventory_items.id` (`medical_orders.inventory_item_id`, `patient_charges.inventory_item_id`) stay intact for non-legacy catalog rows. V110 is the deliberate exception: it NULLs references to superseded V052 drug rows before hard-deleting that catalog. `medication_administrations` does not point directly to `inventory_items`; it reaches the item through `medical_orders.inventory_item_id`. `doctor_fees` has no direct FK to `inventory_items` either — it reaches inventory transitively through `patient_charge_id` — so it is unaffected by this spec.
 
 The v1 spec gets a one-line entry in its Revision History pointing here.
 
@@ -330,7 +331,7 @@ Production (`V111`) is unaffected and continues to ship the catalog empty.
 ### Schema & invariants
 
 1. After V100+ migrations run, `SELECT kind FROM inventory_items` returns a non-null value for every existing row, backfilled per § Migration / Backfill.
-2. Every existing `medical_orders.inventory_item_id` and `patient_charges.inventory_item_id` reference still resolves to a valid `inventory_items` row (no FK churn). Every existing `medication_administrations.medical_order_id` still resolves, and that order still resolves to the same item it did before migration. `doctor_fees.patient_charge_id` is unchanged.
+2. Every existing `medical_orders.inventory_item_id` and `patient_charges.inventory_item_id` reference either still resolves to a valid non-legacy `inventory_items` row or is NULLed by V110 when it pointed at a superseded V052 drug. Every existing `medication_administrations.medical_order_id` still resolves; legacy `lot_id` links may be NULLed before synthetic lots are removed. `doctor_fees.patient_charge_id` is unchanged.
 3. Creating an `InventoryItem` with `kind=DRUG` without a `MedicationDetails` row returns `400 Bad Request` from `InventoryItemService`.
 4. Creating a `MedicationDetails` row for an item whose `kind != DRUG` returns `400 Bad Request`.
 5. Reclassifying an item from `DRUG` to `SUPPLY` removes the `MedicationDetails` row in the same transaction; reclassifying from `SUPPLY` to `DRUG` requires a `MedicationDetails` payload in the request.
@@ -770,7 +771,7 @@ Movement context spans both:    InventoryMovement (lot_id when applicable).
 | `controller/InventoryLotController.kt` | **New**, exposes lot endpoints |
 | `controller/InventoryItemController.kt` | Add `kind` to filters and response; existing endpoints stay backward-compatible |
 | `service/MedicationExpirationParser.kt` | Parses `MM/YY`, `MM/YYYY`, `dd/MM/yyyy` into end-of-month `LocalDate`. Reused by V111 |
-| `db/migration/V110__hard_delete_v052_drug_catalog.sql` | **New.** Hard-deletes V052 drug rows + their `medication_details` + synthetic-legacy lots (aborts if clinical refs exist) |
+| `db/migration/V110__hard_delete_v052_drug_catalog.sql` | **New.** Hard-deletes V052 drug rows + their `medication_details` + synthetic-legacy lots; severs any pre-existing clinical/billing references in-migration (NULLs `medical_orders.inventory_item_id`, `patient_charges.inventory_item_id`, and legacy `medication_administrations.lot_id`, deletes `inventory_movements` rows) so the workbook becomes the sole source of truth without losing clinical history |
 | `db/migration/V111__seed_pharmacy_from_workbook.kt` | **New** Flyway Java migration. Loads `pharmacy-initial-load.csv` into `inventory_items` + `medication_details` |
 | `db/migration/V112__remove_medication_bulk_import_permission.sql` | **New.** Drops the `medication:bulk-import` permission seeded by V104 |
 | `db/migration/data/pharmacy-initial-load.csv` | **New** committed artifact (~615 rows) — the customer workbook export read by V111 |
@@ -865,7 +866,7 @@ The parser is conservative: rows whose confidence is low still get a `Medication
 - [ ] Concurrent-dispense integration test (two threads racing on the same lot, both succeed in order, lot count is consistent)
 - [ ] Drift detection job logs `quantity` vs `SUM(lots.quantity_on_hand)` mismatches as `audit_logs.status=FAILED`
 - [ ] V111 loads the workbook CSV against a fresh database with no per-row failures
-- [ ] V110 aborts loudly if any clinical record references a V052 drug row
+- [ ] V110 self-heals any pre-existing clinical/billing references to V052 drugs (NULLs `medical_orders.inventory_item_id`, `patient_charges.inventory_item_id`, and legacy `medication_administrations.lot_id`, deletes `inventory_movements` rows) before hard-deleting the legacy catalog
 - [ ] `MedicationExpirationParser` accepts `MM/YY`, `MM/YYYY`, `dd/MM/yyyy`; rejects everything else
 - [ ] Detekt passes
 - [ ] OWASP dependency-check passes (no new third-party libs introduced for CSV-only import; XLSX remains follow-up unless dependency review approves a parser)
@@ -926,7 +927,7 @@ The parser is conservative: rows whose confidence is low still get a `Medication
 | R-PERF | **Quantity recompute cost**: every movement triggers a `SUM(lots.quantity_on_hand)` for the parent item. For an item with hundreds of historical lots this is fast (the FEFO partial index covers it), but the spec deliberately defers the trigger-based version to keep v1 simple. | Low | Low | Indexed query is cheap (≤ 5 ms for 1 000 lots in PostgreSQL 17). If profile shows otherwise, switch to a database trigger in a follow-up — explicitly deferred. |
 | R-SCOPE | **Scope creep**: expiry alerts → push notifications → cron jobs → SMS gateway. The customer's spreadsheet is read by hand today; a real notification path is a bigger feature. | High | Medium | This spec ships the dashboard + the data model. Proactive notifications are listed under § Out of Scope. Any PR adding notifications must reference a follow-up spec. |
 | R-EQUIPMENT | **`EquipmentUnit` kind is reserved but unimplemented.** Items reclassified to `EQUIPMENT` today get no satellite. | Medium | Low | The `EQUIPMENT` enum value exists so backfill is correct (cardiac monitor, infusion pump, oxygen rows from V051 land there). The `EquipmentUnit` satellite is explicitly **out of scope** here. Until it ships, equipment items behave exactly like today: scalar `quantity`, no serial tracking, time-based pricing intact. |
-| R-LEGACY | **V052 catalog superseded by workbook**: the seeded V052 medication rows are hard-deleted by V110 once the workbook is the canonical source. | High | Medium | V110 asserts no clinical record (medical order, charge, administration, movement) references a V052 drug before deletion. The system is not yet in production, so this assertion is expected to pass. Aborts loudly otherwise. |
+| R-LEGACY | **V052 catalog superseded by workbook**: the seeded V052 medication rows are hard-deleted by V110 once the workbook is the canonical source. | High | Medium | V110 severs any pre-existing clinical/billing references in the same migration (NULLs `medical_orders.inventory_item_id`, `patient_charges.inventory_item_id`, and legacy `medication_administrations.lot_id`, deletes `inventory_movements` rows) before hard-deleting the legacy catalog, then asserts no legacy DRUG row remains. `medication_administrations` are preserved (they FK to `medical_orders`, not `inventory_items`); the order's free-text description and charge amounts survive, only obsolete catalog/lot links are dropped. |
 | R-INVARIANT | **DB does not enforce DRUG ⇔ MedicationDetails**: the service layer enforces it, but a direct SQL insert could create a DRUG without details. | Low | Medium | Acceptable v1. A `CHECK` constraint requiring a `medication_details` row exists for `kind=DRUG` is hard to express portably in SQL. The nightly integrity-check job reports violations, including DRUG without details, non-DRUG with details, and invalid `lot_tracking_enabled`/`kind` combinations. |
 
 ---

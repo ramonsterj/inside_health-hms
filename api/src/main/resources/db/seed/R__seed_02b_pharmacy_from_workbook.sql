@@ -4,10 +4,25 @@
 -- Mirrors what V111 inserts in prod. R__seed_01 truncates inventory_items, so
 -- the workbook rows seeded by the versioned migration need to be re-inserted
 -- after the categories are recreated in R__seed_02.
--- SEED-BUNDLE-VERSION: 2026-05-19a
+-- SEED-BUNDLE-VERSION: 2026-05-19b
 -- ============================================================================
 
 SET session_replication_role = replica;
+
+-- This repeatable seed can rerun independently when only its checksum changes.
+-- Ensure its category prerequisites exist even if the reset/category seed did
+-- not rerun in the same Flyway pass.
+INSERT INTO inventory_categories (
+    name, description, display_order, active, default_for_kind, created_at, updated_at
+) VALUES
+('Medicamentos', 'Medication and pharmaceutical supplies', 1, TRUE, 'DRUG', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('Material y Equipo', 'Materials and equipment', 2, TRUE, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (name) WHERE deleted_at IS NULL DO UPDATE
+   SET description = EXCLUDED.description,
+       display_order = EXCLUDED.display_order,
+       active = TRUE,
+       default_for_kind = COALESCE(inventory_categories.default_for_kind, EXCLUDED.default_for_kind),
+       updated_at = CURRENT_TIMESTAMP;
 
 -- DRUG rows from workbook sections A/B/C/D.
 INSERT INTO inventory_items (
@@ -499,7 +514,21 @@ Descongestivo Nasal y Antihistamínico 518 mg'),
   ('D107', 'VITAMINA B12 VITADOCE 1000UI'),
   ('D108', 'ATLANSIL AMIODARONA CLORHIDRATO 150MG/3ML')
 ) AS v(sku, name)
-;
+ON CONFLICT (sku) WHERE sku IS NOT NULL AND deleted_at IS NULL DO UPDATE
+   SET category_id = EXCLUDED.category_id,
+       name = EXCLUDED.name,
+       description = EXCLUDED.description,
+       price = EXCLUDED.price,
+       cost = EXCLUDED.cost,
+       quantity = EXCLUDED.quantity,
+       restock_level = EXCLUDED.restock_level,
+       pricing_type = EXCLUDED.pricing_type,
+       time_unit = EXCLUDED.time_unit,
+       time_interval = EXCLUDED.time_interval,
+       active = EXCLUDED.active,
+       kind = EXCLUDED.kind,
+       lot_tracking_enabled = EXCLUDED.lot_tracking_enabled,
+       updated_at = CURRENT_TIMESTAMP;
 
 -- Medication details for every DRUG row above.
 INSERT INTO medication_details (
@@ -986,7 +1015,19 @@ Descongestivo Nasal y Antihistamínico', '518 mg', 'TABLET', 'NO_PSIQUIATRICO'),
   ('D107', 'VITAMINA B12', 'VITADOCE', '1000UI', 'AMPOULE', 'AMPOLLA'),
   ('D108', 'ATLANSIL', 'AMIODARONA CLORHIDRATO', '150MG/3ML', 'AMPOULE', 'AMPOLLA')
 ) AS v(sku, generic_name, commercial_name, strength, dosage_form, section)
-WHERE i.sku = v.sku AND i.kind = 'DRUG';
+WHERE i.sku = v.sku AND i.kind = 'DRUG'
+ON CONFLICT (item_id) WHERE deleted_at IS NULL DO UPDATE
+   SET generic_name = EXCLUDED.generic_name,
+       commercial_name = EXCLUDED.commercial_name,
+       strength = EXCLUDED.strength,
+       dosage_form = EXCLUDED.dosage_form,
+       route = EXCLUDED.route,
+       controlled = EXCLUDED.controlled,
+       atc_code = EXCLUDED.atc_code,
+       section = EXCLUDED.section,
+       review_status = EXCLUDED.review_status,
+       review_notes = EXCLUDED.review_notes,
+       updated_at = CURRENT_TIMESTAMP;
 
 -- SUPPLY rows from workbook section E.
 INSERT INTO inventory_items (
@@ -1145,7 +1186,21 @@ GLUCONATO DE CLORHEXIDINA AL 4% 1 GALÓN'),
   ('E156', 'ZAPATONES / PAR PARES'),
   ('E157', 'VASELINA')
 ) AS v(sku, name)
-;
+ON CONFLICT (sku) WHERE sku IS NOT NULL AND deleted_at IS NULL DO UPDATE
+   SET category_id = EXCLUDED.category_id,
+       name = EXCLUDED.name,
+       description = EXCLUDED.description,
+       price = EXCLUDED.price,
+       cost = EXCLUDED.cost,
+       quantity = EXCLUDED.quantity,
+       restock_level = EXCLUDED.restock_level,
+       pricing_type = EXCLUDED.pricing_type,
+       time_unit = EXCLUDED.time_unit,
+       time_interval = EXCLUDED.time_interval,
+       active = EXCLUDED.active,
+       kind = EXCLUDED.kind,
+       lot_tracking_enabled = EXCLUDED.lot_tracking_enabled,
+       updated_at = CURRENT_TIMESTAMP;
 
 -- Synthetic seed lots for every DRUG row inserted above.
 -- Dev/acceptance only — production (V111) ships no initial lots and the
@@ -1171,6 +1226,15 @@ SELECT i.id,
 FROM inventory_items i
 WHERE i.kind = 'DRUG'
   AND i.lot_tracking_enabled = TRUE
-  AND i.deleted_at IS NULL;
+  AND i.deleted_at IS NULL
+ON CONFLICT (item_id, lot_number, expiration_date) WHERE deleted_at IS NULL DO UPDATE
+   SET quantity_on_hand = EXCLUDED.quantity_on_hand,
+       received_at = EXCLUDED.received_at,
+       supplier = EXCLUDED.supplier,
+       notes = EXCLUDED.notes,
+       recalled = EXCLUDED.recalled,
+       recalled_reason = NULL,
+       synthetic_legacy = EXCLUDED.synthetic_legacy,
+       updated_at = CURRENT_TIMESTAMP;
 
 SET session_replication_role = DEFAULT;
