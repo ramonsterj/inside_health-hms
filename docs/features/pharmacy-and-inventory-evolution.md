@@ -9,6 +9,8 @@
 | 1.2 | 2026-05-13 | Juan Ramón Paniagua | Closed implementation-ready gaps: removed factually-wrong `doctor_fees.inventory_item_id` references, defined billing semantics for `quantity > 1` administrations, added `ON CONFLICT` upsert rule for ENTRY movements, defined soft-delete cascade behavior, added AC for the `NEEDS_REVIEW → CONFIRMED` workflow, added a second partial index for the SUM recompute, simplified FR-6 step 3, and recorded Q-LOTREQ as resolved |
 | 1.3 | 2026-05-14 | Juan Ramón Paniagua | Removed the category selector from medication create/edit: the drug inventory category is now resolved server-side via a new `inventory_categories.default_for_kind` column (V113). Hides a UX footgun that let pharmacists file drugs under unrelated buckets like "Ingredientes de Cocina." Adds service-layer guards preventing deletion or deactivation of a kind-default category. |
 | 1.4 | 2026-05-14 | Juan Ramón Paniagua | Closes the symmetric footgun on the **general inventory form**: users could previously pick the "Medicamentos" category from the supply/equipment form, producing a `kind=SUPPLY` item filed under the drug category. Frontend now filters `default_for_kind`-flagged categories out of the create/edit dropdown, and `InventoryItemService` rejects writes that target a kind-routed category with a mismatching `kind`. |
+| 1.5 | 2026-05-19 | Juan Ramón Paniagua | Dev/acceptance seed override: `R__seed_02b_pharmacy_from_workbook.sql` now seeds every DRUG row with `quantity = 50` and a matching synthetic-legacy `inventory_lots` row (`quantity_on_hand = 50`, `expiration_date = 9999-12-31`, `synthetic_legacy = TRUE`) so FEFO dispensing can be exercised end-to-end during validation. Production (`V111`) is unchanged and still ships `quantity = 0` with no initial lots. |
+| 1.6 | 2026-05-19 | Juan Ramón Paniagua | Replaced the original `V111__seed_pharmacy_from_workbook.kt` (Kotlin `BaseJavaMigration` that read `pharmacy-initial-load.csv` from the classpath) with a pure SQL migration of the same version. The CSV was never committed, so the Java loader failed on every fresh DB at startup. The workbook data has only ever lived in SQL form (`R__seed_02b`); V111 now mirrors that file directly. `MedicationExpirationParser` is no longer reachable from main code but is retained for tests and potential future lot-form server-side parsing. |
 
 ---
 
@@ -276,16 +278,19 @@ Frontend changes:
 ### FR-8. Initial catalog load (one-shot Flyway migration)
 
 The customer workbook (~615 SKUs, sections A/B/C/D drugs + E supplies) is
-loaded **once** by Flyway migration `V111__seed_pharmacy_from_workbook.kt`
-from the checked-in CSV at
-`api/src/main/resources/db/migration/data/pharmacy-initial-load.csv`. After
-the migration completes the catalog is maintained manually through the
-existing inventory and pharmacy UIs — there is no permanent bulk-import
-endpoint or page (the original `POST /api/v1/medications/bulk-import` was
-removed, and `medication:bulk-import` is dropped by V112).
+loaded **once** by Flyway SQL migration
+`V111__seed_pharmacy_from_workbook.sql`. After the migration completes the
+catalog is maintained manually through the existing inventory and pharmacy
+UIs — there is no permanent bulk-import endpoint or page (the original
+`POST /api/v1/medications/bulk-import` was removed, and
+`medication:bulk-import` is dropped by V112).
 
-CSV columns: `sku, genericName, commercialName, strength, expiration,
-section, dosageForm, lotNumber, quantityOnHand, receivedAt, supplier, kind`.
+> **History note (v1.6).** This was originally a Kotlin
+> `BaseJavaMigration` that read `db/migration/data/pharmacy-initial-load.csv`
+> from the classpath, but the CSV was never committed and the workbook
+> data has only ever lived in SQL form (`R__seed_02b` mirrors V111 in
+> dev/acceptance). The Java loader was replaced in-place by a pure SQL
+> migration of the same version.
 
 Load semantics:
 
@@ -302,6 +307,21 @@ Load semantics:
   scalar quantities are removed by V110 along with the V052 drug rows.
 - Malformed rows abort the migration and fail Spring startup. The fix
   loop is "edit the CSV, redeploy" — there is no per-row outcome report.
+
+**Dev / acceptance seed override.** The `dev` and `acceptance` Spring
+profiles additionally run `db/seed/R__seed_02b_pharmacy_from_workbook.sql`,
+which mirrors V111 but with two test-only differences so QA can exercise
+FEFO and billing without manually registering stock first:
+
+- Every DRUG row is inserted with `inventory_items.quantity = 50` (instead
+  of `0`).
+- A synthetic seed lot is inserted into `inventory_lots` for every DRUG:
+  `quantity_on_hand = 50`, `expiration_date = 9999-12-31`,
+  `synthetic_legacy = TRUE`, `lot_number = NULL`. This satisfies the
+  invariant that lot-tracked items must have at least one non-empty lot
+  (Q-LOTREQ) so administration debits succeed end-to-end.
+
+Production (`V111`) is unaffected and continues to ship the catalog empty.
 
 ---
 

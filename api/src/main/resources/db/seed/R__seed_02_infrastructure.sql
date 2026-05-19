@@ -3,7 +3,7 @@
 -- ============================================================================
 -- Last updated: 2026-05-13 (Medicamentos + supply rows moved to R__seed_02b
 -- so dev/acceptance loads the workbook catalog the same way prod does)
--- SEED-BUNDLE-VERSION: 2026-05-13a (see R__seed_01 header for the rule)
+-- SEED-BUNDLE-VERSION: 2026-05-19a (see R__seed_01 header for the rule)
 
 SET session_replication_role = replica;
 

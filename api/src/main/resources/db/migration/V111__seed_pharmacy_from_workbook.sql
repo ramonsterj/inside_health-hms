@@ -1,13 +1,16 @@
 -- ============================================================================
--- SEED FILE 02b: Pharmacy catalog from workbook (dev/acceptance only)
+-- V111: One-shot pharmacy catalog load from the customer workbook.
 -- ============================================================================
--- Mirrors what V111 inserts in prod. R__seed_01 truncates inventory_items, so
--- the workbook rows seeded by the versioned migration need to be re-inserted
--- after the categories are recreated in R__seed_02.
--- SEED-BUNDLE-VERSION: 2026-05-19a
+-- Loads ~615 SKUs (workbook sections A/B/C/D drugs + section E supplies) into
+-- inventory_items + medication_details. Replaces the original Kotlin/CSV
+-- loader (V111__seed_pharmacy_from_workbook.kt) — the CSV the Kotlin variant
+-- read was never committed; the workbook data has only ever existed in SQL
+-- form (R__seed_02b mirrors this file for dev/acceptance).
+--
+-- Production shape: quantity = 0, no initial lots. Pharmacists register real
+-- stock via the UI on first restock. Dev/acceptance overrides this in
+-- R__seed_02b (quantity = 50 + synthetic seed lot).
 -- ============================================================================
-
-SET session_replication_role = replica;
 
 -- DRUG rows from workbook sections A/B/C/D.
 INSERT INTO inventory_items (
@@ -15,14 +18,12 @@ INSERT INTO inventory_items (
     pricing_type, time_unit, time_interval, active, kind, sku,
     lot_tracking_enabled, created_at, updated_at
 )
--- Dev/acceptance seed: quantity = 50 (vs. production V111 which seeds 0).
--- Paired with a synthetic seed lot below so FEFO has a non-empty pool.
 SELECT (
            SELECT id FROM inventory_categories
            WHERE LOWER(name) LIKE '%medicament%' AND deleted_at IS NULL
            ORDER BY id LIMIT 1
        ),
-       v.name, NULL, 0, 0, 50, 0, 'FLAT', NULL, NULL, TRUE, 'DRUG', v.sku, TRUE,
+       v.name, NULL, 0, 0, 0, 0, 'FLAT', NULL, NULL, TRUE, 'DRUG', v.sku, TRUE,
        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM (VALUES
   ('A1', 'ARIPIPRAZOL PRIPAX 5 MG'),
@@ -1146,31 +1147,3 @@ GLUCONATO DE CLORHEXIDINA AL 4% 1 GALÓN'),
   ('E157', 'VASELINA')
 ) AS v(sku, name)
 ;
-
--- Synthetic seed lots for every DRUG row inserted above.
--- Dev/acceptance only — production (V111) ships no initial lots and the
--- pharmacist registers real stock via the UI on first restock.
--- Mirrors V106's shape: 9999-12-31 sentinel + synthetic_legacy=TRUE so the
--- expiry dashboard renders these as NO_EXPIRY and FEFO finds a non-empty
--- pool until real lots arrive.
-INSERT INTO inventory_lots (
-    item_id, lot_number, expiration_date, quantity_on_hand, received_at,
-    supplier, notes, recalled, synthetic_legacy, created_at, updated_at
-)
-SELECT i.id,
-       NULL,
-       DATE '9999-12-31',
-       50,
-       CURRENT_DATE,
-       NULL,
-       'Dev seed — replace with real lots when restocking',
-       FALSE,
-       TRUE,
-       CURRENT_TIMESTAMP,
-       CURRENT_TIMESTAMP
-FROM inventory_items i
-WHERE i.kind = 'DRUG'
-  AND i.lot_tracking_enabled = TRUE
-  AND i.deleted_at IS NULL;
-
-SET session_replication_role = DEFAULT;

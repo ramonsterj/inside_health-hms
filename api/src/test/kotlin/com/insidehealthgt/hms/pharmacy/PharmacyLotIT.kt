@@ -15,13 +15,14 @@ import com.insidehealthgt.hms.repository.InventoryLotUpsertDao
 import com.insidehealthgt.hms.repository.MedicationDetailsRepository
 import com.insidehealthgt.hms.security.CustomUserDetails
 import com.insidehealthgt.hms.service.InventoryLotService
-import db.migration.V111__seed_pharmacy_from_workbook
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.core.io.ClassPathResource
+import org.springframework.jdbc.datasource.init.ScriptUtils
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import java.math.BigDecimal
@@ -122,14 +123,32 @@ class PharmacyLotIT : AbstractIntegrationTest() {
         assertEquals(10, lotRepository.findById(firstId).orElseThrow().quantityOnHand)
     }
 
-    @Test
-    fun `V111 workbook loader populates the pharmacy catalog with confirmed drug details and no synthetic lots`() {
-        // AbstractIntegrationTest's @BeforeEach truncates inventory_items, so by
-        // the time this test method runs the V111-loaded catalog is gone. Re-run
-        // the loader against the same schema to verify the shape it produces.
-        dataSource.connection.use { conn ->
-            V111__seed_pharmacy_from_workbook().loadInto(conn)
+    /**
+     * Re-runs V111's SQL against the same schema after temporarily renaming the
+     * two target categories. The renames force the migration's LIKE-based
+     * resolver to find the seeded rows under a different label, proving it
+     * doesn't depend on the exact "Medicamentos" / "Material y Equipo" names.
+     */
+    private fun rerunV111Loader() {
+        val script = ClassPathResource("db/migration/V111__seed_pharmacy_from_workbook.sql")
+        val renames = listOf(
+            "Medicamentos" to "Catalogo medicamentario",
+            "Material y Equipo" to "Material clinico",
+        )
+        val sql = "UPDATE inventory_categories SET name = ? WHERE name = ?"
+        renames.forEach { (from, to) -> jdbcTemplate.update(sql, to, from) }
+        try {
+            dataSource.connection.use { conn -> ScriptUtils.executeSqlScript(conn, script) }
+        } finally {
+            renames.forEach { (from, to) -> jdbcTemplate.update(sql, from, to) }
         }
+    }
+
+    @Test
+    fun `V111 workbook loader populates catalog with confirmed details and no synthetic lots`() {
+        // AbstractIntegrationTest's @BeforeEach truncates inventory_items, so by
+        // the time this test method runs the V111-loaded catalog is gone.
+        rerunV111Loader()
 
         val drugCount = jdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM inventory_items WHERE kind = 'DRUG' AND sku IS NOT NULL AND deleted_at IS NULL",
