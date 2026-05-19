@@ -82,6 +82,14 @@ when the original migration has **never** successfully run anywhere — V111
 is a recent example where we replaced the file body in place because every
 prior attempt rolled back.
 
+V110 is a one-off recovery edit, not a precedent. It was rewritten because
+the demo DB hit real clinical references before the original abort-loudly
+script could succeed. Any environment that already recorded the old V110 as
+successful must run `flyway repair` once against that database after deploying
+the rewritten script so Flyway updates the stored checksum; environments with
+a failed V110 row should clear that row as described in "Recovering from a
+failed migration" and then rerun migrate.
+
 ---
 
 ## Repeatable seeds (`db/seed/R__seed_*`)

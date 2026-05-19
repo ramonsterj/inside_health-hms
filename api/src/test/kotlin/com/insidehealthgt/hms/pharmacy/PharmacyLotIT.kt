@@ -144,6 +144,11 @@ class PharmacyLotIT : AbstractIntegrationTest() {
         }
     }
 
+    private fun rerunPharmacyWorkbookSeed() {
+        val script = ClassPathResource("db/seed/R__seed_02b_pharmacy_from_workbook.sql")
+        dataSource.connection.use { conn -> ScriptUtils.executeSqlScript(conn, script) }
+    }
+
     @Test
     fun `V111 workbook loader populates catalog with confirmed details and no synthetic lots`() {
         // AbstractIntegrationTest's @BeforeEach truncates inventory_items, so by
@@ -202,6 +207,54 @@ class PharmacyLotIT : AbstractIntegrationTest() {
             Long::class.java,
         )!!
         assertEquals(0L, perms, "V112 must drop medication:bulk-import permission")
+    }
+
+    @Test
+    fun `R seed pharmacy workbook can rerun independently without duplicate catalog rows`() {
+        rerunPharmacyWorkbookSeed()
+        rerunPharmacyWorkbookSeed()
+
+        val duplicateSkus = jdbcTemplate.queryForObject(
+            """
+            SELECT COUNT(*) FROM (
+                SELECT sku
+                FROM inventory_items
+                WHERE sku IS NOT NULL AND deleted_at IS NULL
+                GROUP BY sku
+                HAVING COUNT(*) > 1
+            ) duplicates
+            """.trimIndent(),
+            Long::class.java,
+        )!!
+        assertEquals(0L, duplicateSkus, "R__seed_02b must upsert inventory_items by SKU on standalone rerun")
+
+        val duplicateDetails = jdbcTemplate.queryForObject(
+            """
+            SELECT COUNT(*) FROM (
+                SELECT item_id
+                FROM medication_details
+                WHERE deleted_at IS NULL
+                GROUP BY item_id
+                HAVING COUNT(*) > 1
+            ) duplicates
+            """.trimIndent(),
+            Long::class.java,
+        )!!
+        assertEquals(0L, duplicateDetails, "R__seed_02b must upsert medication_details by item")
+
+        val duplicateSyntheticLots = jdbcTemplate.queryForObject(
+            """
+            SELECT COUNT(*) FROM (
+                SELECT item_id, lot_number, expiration_date
+                FROM inventory_lots
+                WHERE synthetic_legacy = TRUE AND deleted_at IS NULL
+                GROUP BY item_id, lot_number, expiration_date
+                HAVING COUNT(*) > 1
+            ) duplicates
+            """.trimIndent(),
+            Long::class.java,
+        )!!
+        assertEquals(0L, duplicateSyntheticLots, "R__seed_02b must upsert synthetic seed lots on standalone rerun")
     }
 
     @Test
