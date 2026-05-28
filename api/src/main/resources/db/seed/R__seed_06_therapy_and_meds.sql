@@ -2,8 +2,8 @@
 -- SEED FILE 06: Psychotherapy Activities, Medication Administrations,
 --               Inventory Movements
 -- ============================================================================
--- Last updated: 2026-03-03 (force re-run after seed_01 checksum change)
--- SEED-BUNDLE-VERSION: 2026-05-28a (see R__seed_01 header for the rule)
+-- Last updated: 2026-05-28 (lot-aware medication movements)
+-- SEED-BUNDLE-VERSION: 2026-05-28b (see R__seed_01 header for the rule)
 
 SET session_replication_role = replica;
 
@@ -762,28 +762,130 @@ WHERE p.first_name = 'Francisco' AND p.last_name = 'Mendoza Aguilar' AND a.statu
 
 
 -- ============================================================================
--- INVENTORY MOVEMENTS (1 EXIT per GIVEN medication administration)
--- Uses window function to calculate running stock levels
+-- INVENTORY MOVEMENTS (1 EXIT per GIVEN MEDICAMENTOS administration)
+-- Lot-aware sequence mirroring the live handleLotExit path
+-- (InventoryMovementService.kt:130-178) so the seed produces the same shape
+-- as a real dispense.
+--
+-- Steps:
+--   A. Pre-credit each synthetic lot by total exits for its item, so the
+--      lot ledger stays positive while we walk the running balance.
+--   B. Insert one EXIT inventory_movements row per GIVEN admin with lot_id
+--      set and previous/new_quantity anchored to the lot baseline of 50.
+--   C. Post-debit each synthetic lot back down — net change is zero.
+--   D. Reconcile inventory_items.quantity from the lot SUM, mirroring
+--      InventoryItemRepository.recomputeQuantityFromLots.
+--   E. Backfill medication_administrations.lot_id for GIVEN rows, mirroring
+--      MedicationAdministrationService.kt:132-141.
+--
+-- Post-seed invariants: items.quantity = 50 for every lot-tracked DRUG,
+-- synthetic lot quantity_on_hand = 50, every EXIT row carries lot_id, every
+-- GIVEN admin for a lot-tracked item carries lot_id.
 -- ============================================================================
 
+-- Step A: pre-credit synthetic lots by total exits per item
+UPDATE inventory_lots l
+SET quantity_on_hand = l.quantity_on_hand + agg.total_exits,
+    updated_at       = CURRENT_TIMESTAMP
+FROM (
+    SELECT mo.inventory_item_id AS item_id, COUNT(*) AS total_exits
+    FROM medication_administrations ma
+    JOIN medical_orders mo ON ma.medical_order_id = mo.id
+    WHERE ma.status = 'GIVEN'
+      AND ma.deleted_at IS NULL
+      AND mo.deleted_at IS NULL
+      AND mo.category = 'MEDICAMENTOS'
+      AND mo.inventory_item_id IS NOT NULL
+    GROUP BY mo.inventory_item_id
+) agg
+WHERE l.item_id = agg.item_id
+  AND l.synthetic_legacy = TRUE
+  AND l.deleted_at IS NULL;
+
+-- Step B: insert EXIT movements with lot_id and lot-anchored running balance.
+-- Tie-break by ma.id so ROW_NUMBER is deterministic when two admins share
+-- administered_at (the seed contains simultaneous PRN doses).
 WITH ranked_admins AS (
-  SELECT ma.id as ma_id, ma.admission_id, ma.administered_at, ma.created_by,
-    mo.inventory_item_id, mo.medication,
-    ROW_NUMBER() OVER (PARTITION BY mo.inventory_item_id ORDER BY ma.administered_at) as rn,
-    COUNT(*) OVER (PARTITION BY mo.inventory_item_id) as total_exits
+  SELECT ma.id AS ma_id, ma.admission_id, ma.administered_at, ma.created_by,
+         mo.inventory_item_id, mo.medication,
+         ROW_NUMBER() OVER (PARTITION BY mo.inventory_item_id
+                            ORDER BY ma.administered_at, ma.id) AS rn,
+         COUNT(*)    OVER (PARTITION BY mo.inventory_item_id)    AS total_exits
   FROM medication_administrations ma
   JOIN medical_orders mo ON ma.medical_order_id = mo.id
-  WHERE ma.status = 'GIVEN' AND ma.deleted_at IS NULL AND mo.deleted_at IS NULL
-    AND mo.inventory_item_id IS NOT NULL AND mo.category = 'MEDICAMENTOS'
+  WHERE ma.status = 'GIVEN'
+    AND ma.deleted_at IS NULL
+    AND mo.deleted_at IS NULL
+    AND mo.inventory_item_id IS NOT NULL
+    AND mo.category = 'MEDICAMENTOS'
+),
+synth_lot AS (
+  SELECT item_id, id AS lot_id
+  FROM inventory_lots
+  WHERE synthetic_legacy = TRUE AND deleted_at IS NULL
 )
-INSERT INTO inventory_movements (item_id, admission_id, movement_type, quantity, previous_quantity, new_quantity, notes, created_at, updated_at, created_by)
-SELECT ra.inventory_item_id, ra.admission_id, 'EXIT', 1,
-  ii.quantity + ra.total_exits - ra.rn + 1,
-  ii.quantity + ra.total_exits - ra.rn,
-  'Administración de ' || ra.medication,
-  ra.administered_at, ra.administered_at, ra.created_by
+INSERT INTO inventory_movements (
+    item_id, admission_id, lot_id, movement_type, quantity,
+    previous_quantity, new_quantity, notes,
+    created_at, updated_at, created_by
+)
+SELECT ra.inventory_item_id, ra.admission_id, sl.lot_id,
+       'EXIT', 1,
+       50 + ra.total_exits - ra.rn + 1,
+       50 + ra.total_exits - ra.rn,
+       'Administración de ' || ra.medication,
+       ra.administered_at, ra.administered_at, ra.created_by
 FROM ranked_admins ra
-JOIN inventory_items ii ON ra.inventory_item_id = ii.id;
+JOIN synth_lot sl ON sl.item_id = ra.inventory_item_id;
+
+-- Step C: post-debit synthetic lots back to seeded baseline (50)
+UPDATE inventory_lots l
+SET quantity_on_hand = l.quantity_on_hand - agg.total_exits,
+    updated_at       = CURRENT_TIMESTAMP
+FROM (
+    SELECT mo.inventory_item_id AS item_id, COUNT(*) AS total_exits
+    FROM medication_administrations ma
+    JOIN medical_orders mo ON ma.medical_order_id = mo.id
+    WHERE ma.status = 'GIVEN'
+      AND ma.deleted_at IS NULL
+      AND mo.deleted_at IS NULL
+      AND mo.category = 'MEDICAMENTOS'
+      AND mo.inventory_item_id IS NOT NULL
+    GROUP BY mo.inventory_item_id
+) agg
+WHERE l.item_id = agg.item_id
+  AND l.synthetic_legacy = TRUE
+  AND l.deleted_at IS NULL;
+
+-- Step D: reconcile items.quantity from lot SUM
+-- (mirrors InventoryItemRepository.recomputeQuantityFromLots)
+UPDATE inventory_items i
+SET quantity = COALESCE((
+        SELECT SUM(quantity_on_hand) FROM inventory_lots
+        WHERE item_id = i.id AND deleted_at IS NULL AND recalled = FALSE
+    ), 0),
+    updated_at = CURRENT_TIMESTAMP
+WHERE i.lot_tracking_enabled = TRUE
+  AND i.kind = 'DRUG'
+  AND i.deleted_at IS NULL;
+
+-- Step E: backfill medication_administrations.lot_id for GIVEN rows.
+-- Non-GIVEN admin rows (MISSED/REFUSED/HELD) intentionally stay NULL — that
+-- matches live behavior, where only the GIVEN branch debits a lot.
+UPDATE medication_administrations ma
+SET lot_id = sl.id
+FROM medical_orders mo
+JOIN inventory_lots sl
+     ON sl.item_id = mo.inventory_item_id
+    AND sl.synthetic_legacy = TRUE
+    AND sl.deleted_at IS NULL
+WHERE ma.medical_order_id = mo.id
+  AND ma.status = 'GIVEN'
+  AND ma.deleted_at IS NULL
+  AND mo.deleted_at IS NULL
+  AND mo.category = 'MEDICAMENTOS'
+  AND mo.inventory_item_id IS NOT NULL
+  AND ma.lot_id IS NULL;
 
 
 SET session_replication_role = DEFAULT;
