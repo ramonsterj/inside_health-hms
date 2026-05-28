@@ -4,7 +4,7 @@
 -- Mirrors what V111 inserts in prod. R__seed_01 truncates inventory_items, so
 -- the workbook rows seeded by the versioned migration need to be re-inserted
 -- after the categories are recreated in R__seed_02.
--- SEED-BUNDLE-VERSION: 2026-05-28a
+-- SEED-BUNDLE-VERSION: 2026-05-28b
 -- ============================================================================
 
 SET session_replication_role = replica;
@@ -1208,6 +1208,10 @@ ON CONFLICT (sku) WHERE sku IS NOT NULL AND deleted_at IS NULL DO UPDATE
 -- Mirrors V106's shape: 9999-12-31 sentinel + synthetic_legacy=TRUE so the
 -- expiry dashboard renders these as NO_EXPIRY and FEFO finds a non-empty
 -- pool until real lots arrive.
+--
+-- R__seed_06 credits-then-debits this lot once per GIVEN MEDICAMENTOS
+-- administration to fabricate a believable inventory_movements ledger,
+-- leaving quantity_on_hand back at 50 (see seed_06 "INVENTORY MOVEMENTS").
 INSERT INTO inventory_lots (
     item_id, lot_number, expiration_date, quantity_on_hand, received_at,
     supplier, notes, recalled, synthetic_legacy, created_at, updated_at

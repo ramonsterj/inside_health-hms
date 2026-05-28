@@ -4,7 +4,7 @@
 -- This file truncates all tables and reseeds base data.
 -- WARNING: DESTRUCTIVE - DO NOT use in production!
 -- Default password for all users: admin123
--- Last updated: 2026-03-03 (fix KETAMINE_INFUSION enum typo in seed 03)
+-- Last updated: 2026-05-28 (lot-aware medication movements in seed 06)
 --
 -- !!! READ BEFORE EDITING ANY R__seed_*.sql FILE !!!
 -- This file TRUNCATEs patients/admissions/vitals/notes/meds/billing tables.
@@ -14,7 +14,7 @@
 -- repopulate it (we hit this in PR #53). Whenever any R__seed_*.sql is
 -- modified, bump the SEED-BUNDLE-VERSION line below in ALL eight files
 -- so they re-run together.
--- SEED-BUNDLE-VERSION: 2026-05-28a
+-- SEED-BUNDLE-VERSION: 2026-05-28b
 -- ============================================================================
 
 SET session_replication_role = replica;
