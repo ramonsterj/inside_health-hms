@@ -1,7 +1,7 @@
 -- ============================================================================
 -- SEED FILE 03: Staff, Psych Categories, Patient Notes, Admissions
 -- ============================================================================
--- SEED-BUNDLE-VERSION: 2026-05-19b (see R__seed_01 header for the rule)
+-- SEED-BUNDLE-VERSION: 2026-05-28a (see R__seed_01 header for the rule)
 
 SET session_replication_role = replica;
 
@@ -75,8 +75,8 @@ UPDATE patients SET notes = 'Dx: Trastorno de adaptación con ánimo depresivo. 
 -- === Active Hospitalizations (8) ===
 
 -- Juan Perez - MDD severe + suicide attempt - 14 days
-INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, admission_date, status, type, created_at, updated_at, created_by)
-SELECT p.id, tc.id, rm.id, u.id,
+INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, resident_id, admission_date, status, type, created_at, updated_at, created_by)
+SELECT p.id, tc.id, rm.id, u.id, (SELECT id FROM users WHERE username = 'resident1'),
   (CURRENT_DATE - INTERVAL '14 days') + TIME '10:30',
   'ACTIVE', 'HOSPITALIZATION',
   (CURRENT_DATE - INTERVAL '14 days') + TIME '10:30', CURRENT_TIMESTAMP, u.id
@@ -85,8 +85,8 @@ WHERE p.first_name = 'Juan' AND p.last_name = 'Pérez González'
   AND tc.code = 'B' AND rm.number = '201' AND u.username = 'doctor1';
 
 -- Maria Santos - Bipolar I manic + psychosis - 12 days
-INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, admission_date, status, type, created_at, updated_at, created_by)
-SELECT p.id, tc.id, rm.id, u.id,
+INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, resident_id, admission_date, status, type, created_at, updated_at, created_by)
+SELECT p.id, tc.id, rm.id, u.id, (SELECT id FROM users WHERE username = 'resident1'),
   (CURRENT_DATE - INTERVAL '12 days') + TIME '14:15',
   'ACTIVE', 'HOSPITALIZATION',
   (CURRENT_DATE - INTERVAL '12 days') + TIME '14:15', CURRENT_TIMESTAMP, u.id
@@ -95,8 +95,8 @@ WHERE p.first_name = 'Maria' AND p.last_name = 'Santos López'
   AND tc.code = 'A' AND rm.number = '101' AND u.username = 'doctor4';
 
 -- Pedro Garcia - Alcohol withdrawal severe - 10 days
-INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, admission_date, status, type, created_at, updated_at, created_by)
-SELECT p.id, tc.id, rm.id, u.id,
+INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, resident_id, admission_date, status, type, created_at, updated_at, created_by)
+SELECT p.id, tc.id, rm.id, u.id, (SELECT id FROM users WHERE username = 'resident1'),
   (CURRENT_DATE - INTERVAL '10 days') + TIME '22:45',
   'ACTIVE', 'HOSPITALIZATION',
   (CURRENT_DATE - INTERVAL '10 days') + TIME '22:45', CURRENT_TIMESTAMP, u.id
@@ -105,8 +105,8 @@ WHERE p.first_name = 'Pedro' AND p.last_name = 'García Hernández'
   AND tc.code = 'B' AND rm.number = '303' AND u.username = 'doctor3';
 
 -- Ana Martinez - Schizophrenia paranoid - 8 days
-INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, admission_date, status, type, created_at, updated_at, created_by)
-SELECT p.id, tc.id, rm.id, u.id,
+INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, resident_id, admission_date, status, type, created_at, updated_at, created_by)
+SELECT p.id, tc.id, rm.id, u.id, (SELECT id FROM users WHERE username = 'resident1'),
   (CURRENT_DATE - INTERVAL '8 days') + TIME '09:00',
   'ACTIVE', 'HOSPITALIZATION',
   (CURRENT_DATE - INTERVAL '8 days') + TIME '09:00', CURRENT_TIMESTAMP, u.id
@@ -115,8 +115,8 @@ WHERE p.first_name = 'Ana' AND p.last_name = 'Martínez Ruiz'
   AND tc.code = 'C' AND rm.number = '102' AND u.username = 'doctor5';
 
 -- Luis Morales - Polysubstance + psychosis - 7 days
-INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, admission_date, status, type, created_at, updated_at, created_by)
-SELECT p.id, tc.id, rm.id, u.id,
+INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, resident_id, admission_date, status, type, created_at, updated_at, created_by)
+SELECT p.id, tc.id, rm.id, u.id, (SELECT id FROM users WHERE username = 'resident1'),
   (CURRENT_DATE - INTERVAL '7 days') + TIME '03:20',
   'ACTIVE', 'HOSPITALIZATION',
   (CURRENT_DATE - INTERVAL '7 days') + TIME '03:20', CURRENT_TIMESTAMP, u.id
@@ -125,8 +125,8 @@ WHERE p.first_name = 'Luis' AND p.last_name = 'Morales Castro'
   AND tc.code = 'B' AND rm.number = '202' AND u.username = 'doctor3';
 
 -- Carmen Flores - PTSD + suicidal ideation - 5 days
-INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, admission_date, status, type, created_at, updated_at, created_by)
-SELECT p.id, tc.id, rm.id, u.id,
+INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, resident_id, admission_date, status, type, created_at, updated_at, created_by)
+SELECT p.id, tc.id, rm.id, u.id, (SELECT id FROM users WHERE username = 'resident1'),
   (CURRENT_DATE - INTERVAL '5 days') + TIME '16:00',
   'ACTIVE', 'HOSPITALIZATION',
   (CURRENT_DATE - INTERVAL '5 days') + TIME '16:00', CURRENT_TIMESTAMP, u.id
@@ -135,8 +135,8 @@ WHERE p.first_name = 'Carmen' AND p.last_name = 'Flores Mejía'
   AND tc.code = 'B' AND rm.number = '103' AND u.username = 'doctor4';
 
 -- Roberto Diaz - Bipolar II depressive - 4 days
-INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, admission_date, status, type, created_at, updated_at, created_by)
-SELECT p.id, tc.id, rm.id, u.id,
+INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, resident_id, admission_date, status, type, created_at, updated_at, created_by)
+SELECT p.id, tc.id, rm.id, u.id, (SELECT id FROM users WHERE username = 'resident1'),
   (CURRENT_DATE - INTERVAL '4 days') + TIME '11:30',
   'ACTIVE', 'HOSPITALIZATION',
   (CURRENT_DATE - INTERVAL '4 days') + TIME '11:30', CURRENT_TIMESTAMP, u.id
@@ -145,8 +145,8 @@ WHERE p.first_name = 'Roberto' AND p.last_name = 'Díaz Vargas'
   AND tc.code = 'C' AND rm.number = '203' AND u.username = 'doctor5';
 
 -- Sofia Ramirez - BPD + self-harm - 3 days
-INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, admission_date, status, type, created_at, updated_at, created_by)
-SELECT p.id, tc.id, rm.id, u.id,
+INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, resident_id, admission_date, status, type, created_at, updated_at, created_by)
+SELECT p.id, tc.id, rm.id, u.id, (SELECT id FROM users WHERE username = 'resident1'),
   (CURRENT_DATE - INTERVAL '3 days') + TIME '19:45',
   'ACTIVE', 'HOSPITALIZATION',
   (CURRENT_DATE - INTERVAL '3 days') + TIME '19:45', CURRENT_TIMESTAMP, u.id
@@ -157,8 +157,8 @@ WHERE p.first_name = 'Sofia' AND p.last_name = 'Ramírez Paz'
 -- === Discharged Hospitalizations (3) ===
 
 -- Miguel Torres - Schizophrenia - admitted 30d ago, discharged 16d ago
-INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, admission_date, discharge_date, status, type, created_at, updated_at, created_by)
-SELECT p.id, tc.id, rm.id, u.id,
+INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, resident_id, admission_date, discharge_date, status, type, created_at, updated_at, created_by)
+SELECT p.id, tc.id, rm.id, u.id, (SELECT id FROM users WHERE username = 'resident1'),
   (CURRENT_DATE - INTERVAL '30 days') + TIME '11:00',
   (CURRENT_DATE - INTERVAL '16 days') + TIME '14:00',
   'DISCHARGED', 'HOSPITALIZATION',
@@ -169,8 +169,8 @@ WHERE p.first_name = 'Miguel' AND p.last_name = 'Torres Luna'
   AND tc.code = 'B' AND rm.number = '301' AND u.username = 'doctor5';
 
 -- Elena Sanchez - GAD + Panic - admitted 25d ago, discharged 14d ago
-INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, admission_date, discharge_date, status, type, created_at, updated_at, created_by)
-SELECT p.id, tc.id, rm.id, u.id,
+INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, resident_id, admission_date, discharge_date, status, type, created_at, updated_at, created_by)
+SELECT p.id, tc.id, rm.id, u.id, (SELECT id FROM users WHERE username = 'resident1'),
   (CURRENT_DATE - INTERVAL '25 days') + TIME '08:30',
   (CURRENT_DATE - INTERVAL '14 days') + TIME '11:00',
   'DISCHARGED', 'HOSPITALIZATION',
@@ -181,8 +181,8 @@ WHERE p.first_name = 'Elena' AND p.last_name = 'Sánchez Rivas'
   AND tc.code = 'C' AND rm.number = '104' AND u.username = 'doctor4';
 
 -- Francisco Mendoza - MDD recurrent geriatric - admitted 21d ago, discharged 10d ago
-INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, admission_date, discharge_date, status, type, created_at, updated_at, created_by)
-SELECT p.id, tc.id, rm.id, u.id,
+INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, resident_id, admission_date, discharge_date, status, type, created_at, updated_at, created_by)
+SELECT p.id, tc.id, rm.id, u.id, (SELECT id FROM users WHERE username = 'resident1'),
   (CURRENT_DATE - INTERVAL '21 days') + TIME '10:00',
   (CURRENT_DATE - INTERVAL '10 days') + TIME '15:30',
   'DISCHARGED', 'HOSPITALIZATION',
@@ -195,8 +195,8 @@ WHERE p.first_name = 'Francisco' AND p.last_name = 'Mendoza Aguilar'
 -- === Non-Hospitalization Admissions (5) ===
 
 -- Isabella Cruz - AMBULATORY
-INSERT INTO admissions (patient_id, treating_physician_id, admission_date, status, type, created_at, updated_at, created_by)
-SELECT p.id, u.id,
+INSERT INTO admissions (patient_id, treating_physician_id, resident_id, admission_date, status, type, created_at, updated_at, created_by)
+SELECT p.id, u.id, (SELECT id FROM users WHERE username = 'resident1'),
   (CURRENT_DATE - INTERVAL '5 days') + TIME '08:00',
   'ACTIVE', 'AMBULATORY',
   (CURRENT_DATE - INTERVAL '5 days') + TIME '08:00', CURRENT_TIMESTAMP, u.id
@@ -204,8 +204,8 @@ FROM patients p, users u
 WHERE p.first_name = 'Isabella' AND p.last_name = 'Cruz Monzón' AND u.username = 'doctor7';
 
 -- Andres Ortiz - ELECTROSHOCK_THERAPY
-INSERT INTO admissions (patient_id, treating_physician_id, admission_date, status, type, created_at, updated_at, created_by)
-SELECT p.id, u.id,
+INSERT INTO admissions (patient_id, treating_physician_id, resident_id, admission_date, status, type, created_at, updated_at, created_by)
+SELECT p.id, u.id, (SELECT id FROM users WHERE username = 'resident1'),
   (CURRENT_DATE - INTERVAL '3 days') + TIME '07:00',
   'ACTIVE', 'ELECTROSHOCK_THERAPY',
   (CURRENT_DATE - INTERVAL '3 days') + TIME '07:00', CURRENT_TIMESTAMP, u.id
@@ -213,8 +213,8 @@ FROM patients p, users u
 WHERE p.first_name = 'Andres' AND p.last_name = 'Ortiz Barrios' AND u.username = 'doctor9';
 
 -- Gabriela Reyes - KETAMINE_INFUSION
-INSERT INTO admissions (patient_id, treating_physician_id, admission_date, status, type, created_at, updated_at, created_by)
-SELECT p.id, u.id,
+INSERT INTO admissions (patient_id, treating_physician_id, resident_id, admission_date, status, type, created_at, updated_at, created_by)
+SELECT p.id, u.id, (SELECT id FROM users WHERE username = 'resident1'),
   (CURRENT_DATE - INTERVAL '2 days') + TIME '09:00',
   'ACTIVE', 'KETAMINE_INFUSION',
   (CURRENT_DATE - INTERVAL '2 days') + TIME '09:00', CURRENT_TIMESTAMP, u.id
@@ -222,8 +222,8 @@ FROM patients p, users u
 WHERE p.first_name = 'Gabriela' AND p.last_name = 'Reyes Soto' AND u.username = 'doctor9';
 
 -- Oscar Vasquez - EMERGENCY
-INSERT INTO admissions (patient_id, treating_physician_id, admission_date, status, type, created_at, updated_at, created_by)
-SELECT p.id, u.id,
+INSERT INTO admissions (patient_id, treating_physician_id, resident_id, admission_date, status, type, created_at, updated_at, created_by)
+SELECT p.id, u.id, (SELECT id FROM users WHERE username = 'resident1'),
   (CURRENT_DATE - INTERVAL '1 day') + TIME '02:30',
   'ACTIVE', 'EMERGENCY',
   (CURRENT_DATE - INTERVAL '1 day') + TIME '02:30', CURRENT_TIMESTAMP, u.id
@@ -231,8 +231,8 @@ FROM patients p, users u
 WHERE p.first_name = 'Oscar' AND p.last_name = 'Vásquez Pineda' AND u.username = 'doctor7';
 
 -- Diego Castillo - AMBULATORY
-INSERT INTO admissions (patient_id, treating_physician_id, admission_date, status, type, created_at, updated_at, created_by)
-SELECT p.id, u.id,
+INSERT INTO admissions (patient_id, treating_physician_id, resident_id, admission_date, status, type, created_at, updated_at, created_by)
+SELECT p.id, u.id, (SELECT id FROM users WHERE username = 'resident1'),
   (CURRENT_DATE - INTERVAL '7 days') + TIME '10:00',
   'ACTIVE', 'AMBULATORY',
   (CURRENT_DATE - INTERVAL '7 days') + TIME '10:00', CURRENT_TIMESTAMP, u.id

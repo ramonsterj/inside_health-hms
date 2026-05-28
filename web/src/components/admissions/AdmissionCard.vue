@@ -39,13 +39,24 @@ const patientName = computed(() =>
   getFullName(props.admission.patient.firstName, props.admission.patient.lastName)
 )
 
-const doctorName = computed(() => {
-  const doc = props.admission.treatingPhysician
+function formatDoctorName(
+  doc:
+    | {
+        salutation: string | null
+        firstName: string | null
+        lastName: string | null
+      }
+    | null
+    | undefined
+): string | null {
+  if (!doc) return null
   const salutation = doc.salutation ? t(`user.salutations.${doc.salutation}`) : ''
-  const fullName = getFullName(doc.firstName, doc.lastName)
-  const combined = `${salutation} ${fullName}`.trim()
+  const combined = `${salutation} ${getFullName(doc.firstName, doc.lastName)}`.trim()
   return combined || null
-})
+}
+
+const doctorName = computed(() => formatDoctorName(props.admission.treatingPhysician))
+const residentName = computed(() => formatDoctorName(props.admission.resident))
 
 const statusSeverity = computed((): 'success' | 'secondary' =>
   props.admission.status === AdmissionStatus.ACTIVE ? 'success' : 'secondary'
@@ -84,6 +95,11 @@ function onActivate() {
       <template v-if="doctorName">
         <dt>{{ t('admission.listView.labels.doctor') }}</dt>
         <dd>{{ doctorName }}</dd>
+      </template>
+
+      <template v-if="residentName">
+        <dt>{{ t('admission.listView.labels.resident') }}</dt>
+        <dd>{{ residentName }}</dd>
       </template>
 
       <template v-if="admission.room">

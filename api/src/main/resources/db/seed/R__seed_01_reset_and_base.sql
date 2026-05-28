@@ -14,7 +14,7 @@
 -- repopulate it (we hit this in PR #53). Whenever any R__seed_*.sql is
 -- modified, bump the SEED-BUNDLE-VERSION line below in ALL eight files
 -- so they re-run together.
--- SEED-BUNDLE-VERSION: 2026-05-19b
+-- SEED-BUNDLE-VERSION: 2026-05-28a
 -- ============================================================================
 
 SET session_replication_role = replica;
@@ -59,6 +59,11 @@ TRUNCATE TABLE users CASCADE;
 -- Add PSYCHOLOGIST role if it doesn't exist
 INSERT INTO roles (code, name, description, is_system, created_at, updated_at)
 VALUES ('PSYCHOLOGIST', 'Psychologist', 'Mental health professionals', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (code) DO NOTHING;
+
+-- Add RESIDENT_DOCTOR role if it doesn't exist (mirrors V114)
+INSERT INTO roles (code, name, description, is_system, created_at, updated_at)
+VALUES ('RESIDENT_DOCTOR', 'Resident Doctor', 'Medical resident in charge of admissions', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
 
 -- ============================================================================
@@ -129,6 +134,26 @@ WHERE r.code = 'DOCTOR'
     'medication-administration:read'
   )
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
+
+-- RESIDENT_DOCTOR: clones DOCTOR plus admission:create (V114).
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
+SELECT
+    (SELECT id FROM roles WHERE code = 'RESIDENT_DOCTOR'),
+    rp.permission_id,
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+FROM role_permissions rp
+JOIN roles r ON r.id = rp.role_id
+WHERE r.code = 'DOCTOR';
+
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
+SELECT
+    (SELECT id FROM roles WHERE code = 'RESIDENT_DOCTOR'),
+    p.id,
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+FROM permissions p
+WHERE p.code = 'admission:create';
 
 -- PSYCHOLOGIST: psychotherapy + patient/admission read
 -- Sources: V042 + base patient/admission access
@@ -226,6 +251,11 @@ INSERT INTO users (username, email, password_hash, first_name, last_name, saluta
 ('doctor1', 'doctor1@example.com', '$2b$10$PYXULrV.BlNnIPSz8HRFJeId5axQ/qoAQNhEldlY/H7xlqIpH35YC', 'Roberto', 'Hernandez', 'DR', 'ACTIVE', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('doctor2', 'doctor2@example.com', '$2b$10$PYXULrV.BlNnIPSz8HRFJeId5axQ/qoAQNhEldlY/H7xlqIpH35YC', 'Patricia', 'Morales', 'DRA', 'ACTIVE', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
+-- RESIDENT_DOCTOR role users (2)
+INSERT INTO users (username, email, password_hash, first_name, last_name, salutation, status, email_verified, must_change_password, created_at, updated_at) VALUES
+('resident1', 'resident1@example.com', '$2b$10$PYXULrV.BlNnIPSz8HRFJeId5axQ/qoAQNhEldlY/H7xlqIpH35YC', 'Andrea', 'Pineda', 'DRA', 'ACTIVE', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('resident2', 'resident2@example.com', '$2b$10$PYXULrV.BlNnIPSz8HRFJeId5axQ/qoAQNhEldlY/H7xlqIpH35YC', 'Javier', 'Cabrera', 'DR', 'ACTIVE', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
 -- PSYCHOLOGIST role users (2)
 INSERT INTO users (username, email, password_hash, first_name, last_name, salutation, status, email_verified, must_change_password, created_at, updated_at) VALUES
 ('psych1', 'psych1@example.com', '$2b$10$PYXULrV.BlNnIPSz8HRFJeId5axQ/qoAQNhEldlY/H7xlqIpH35YC', 'Sofia', 'Ramirez', 'DRA', 'ACTIVE', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
@@ -250,6 +280,14 @@ SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users u, roles r
 WHERE u.username = 'admin' AND r.code = 'ADMIN';
 
+-- Admin also gets RESIDENT_DOCTOR so the demo admin can create admissions.
+-- (Resident is auto-bound to the authenticated user; without this grant the
+-- admin account would get a 400 when registering admissions.)
+INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
+SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM users u, roles r
+WHERE u.username = 'admin' AND r.code = 'RESIDENT_DOCTOR';
+
 -- USER role assignments
 INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
 SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
@@ -267,6 +305,12 @@ INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
 SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users u, roles r
 WHERE u.username IN ('doctor1', 'doctor2') AND r.code = 'DOCTOR';
+
+-- RESIDENT_DOCTOR role assignments
+INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
+SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM users u, roles r
+WHERE u.username IN ('resident1', 'resident2') AND r.code = 'RESIDENT_DOCTOR';
 
 -- PSYCHOLOGIST role assignments
 INSERT INTO user_roles (user_id, role_id, created_at, updated_at)

@@ -13,6 +13,7 @@ import com.insidehealthgt.hms.entity.AdmissionConsentDocument
 import com.insidehealthgt.hms.entity.AdmissionConsultingPhysician
 import com.insidehealthgt.hms.entity.AdmissionStatus
 import com.insidehealthgt.hms.entity.AdmissionType
+import com.insidehealthgt.hms.entity.User
 import com.insidehealthgt.hms.event.AdmissionCreatedEvent
 import com.insidehealthgt.hms.event.PatientDischargedEvent
 import com.insidehealthgt.hms.exception.BadRequestException
@@ -24,10 +25,12 @@ import com.insidehealthgt.hms.repository.PatientRepository
 import com.insidehealthgt.hms.repository.RoomRepository
 import com.insidehealthgt.hms.repository.TriageCodeRepository
 import com.insidehealthgt.hms.repository.UserRepository
+import com.insidehealthgt.hms.security.CustomUserDetails
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.security.access.AccessDeniedException
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -130,6 +133,9 @@ class AdmissionService(
             throw BadRequestException(messageService.errorAdmissionPhysicianRole())
         }
 
+        // Resident is always the authenticated user — they must carry RESIDENT_DOCTOR.
+        val resident = resolveAuthenticatedResident()
+
         // Validate room availability if room is provided
         room?.let {
             val activeAdmissions = roomRepository.countActiveAdmissionsByRoomId(it.id!!)
@@ -143,6 +149,7 @@ class AdmissionService(
             triageCode = triageCode,
             room = room,
             treatingPhysician = treatingPhysician,
+            resident = resident,
             admissionDate = request.admissionDate,
             inventory = request.inventory,
             status = AdmissionStatus.ACTIVE,
@@ -416,6 +423,15 @@ class AdmissionService(
         // Soft delete
         consultingPhysician.deletedAt = LocalDateTime.now()
         admissionConsultingPhysicianRepository.save(consultingPhysician)
+    }
+
+    private fun resolveAuthenticatedResident(): User {
+        val principal = SecurityContextHolder.getContext().authentication?.principal as? CustomUserDetails
+        if (principal == null || !principal.hasRole("RESIDENT_DOCTOR")) {
+            throw BadRequestException(messageService.errorAdmissionResidentRoleRequired())
+        }
+        return userRepository.findById(principal.id)
+            .orElseThrow { ResourceNotFoundException(messageService.errorAdmissionUserNotFound(principal.id)) }
     }
 
     private fun validateConsentFile(file: MultipartFile) {

@@ -23,6 +23,7 @@ interface AdmissionRepository : JpaRepository<Admission, Long> {
         LEFT JOIN FETCH a.triageCode
         LEFT JOIN FETCH a.room
         LEFT JOIN FETCH a.treatingPhysician
+        LEFT JOIN FETCH a.resident
         LEFT JOIN FETCH a.consultingPhysicians cp
         LEFT JOIN FETCH cp.physician
         WHERE a.id = :id
@@ -37,6 +38,7 @@ interface AdmissionRepository : JpaRepository<Admission, Long> {
         LEFT JOIN FETCH a.triageCode
         LEFT JOIN FETCH a.room
         LEFT JOIN FETCH a.treatingPhysician
+        LEFT JOIN FETCH a.resident
         LEFT JOIN FETCH a.consentDocument
         """,
         countQuery = "SELECT COUNT(a) FROM Admission a",
@@ -50,6 +52,7 @@ interface AdmissionRepository : JpaRepository<Admission, Long> {
         LEFT JOIN FETCH a.triageCode
         LEFT JOIN FETCH a.room
         LEFT JOIN FETCH a.treatingPhysician
+        LEFT JOIN FETCH a.resident
         LEFT JOIN FETCH a.consentDocument
         WHERE a.status = :status
         """,
@@ -64,6 +67,7 @@ interface AdmissionRepository : JpaRepository<Admission, Long> {
         LEFT JOIN FETCH a.triageCode
         LEFT JOIN FETCH a.room
         LEFT JOIN FETCH a.treatingPhysician
+        LEFT JOIN FETCH a.resident
         LEFT JOIN FETCH a.consentDocument
         WHERE a.type = :type
         """,
@@ -78,6 +82,7 @@ interface AdmissionRepository : JpaRepository<Admission, Long> {
         LEFT JOIN FETCH a.triageCode
         LEFT JOIN FETCH a.room
         LEFT JOIN FETCH a.treatingPhysician
+        LEFT JOIN FETCH a.resident
         LEFT JOIN FETCH a.consentDocument
         WHERE a.status = :status AND a.type = :type
         """,
@@ -96,6 +101,7 @@ interface AdmissionRepository : JpaRepository<Admission, Long> {
         LEFT JOIN FETCH a.triageCode
         LEFT JOIN FETCH a.room
         LEFT JOIN FETCH a.treatingPhysician
+        LEFT JOIN FETCH a.resident
         LEFT JOIN FETCH a.consentDocument
         LEFT JOIN a.consultingPhysicians cp
         WHERE (a.treatingPhysician.id = :doctorId OR cp.physician.id = :doctorId)
@@ -160,6 +166,7 @@ interface AdmissionRepository : JpaRepository<Admission, Long> {
         LEFT JOIN FETCH a.triageCode
         LEFT JOIN FETCH a.room
         LEFT JOIN FETCH a.treatingPhysician
+        LEFT JOIN FETCH a.resident
         WHERE a.id IN :ids
         """,
     )

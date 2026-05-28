@@ -10,6 +10,7 @@ import DatePicker from 'primevue/datepicker'
 import Message from 'primevue/message'
 import ProgressSpinner from 'primevue/progressspinner'
 import { useAdmissionStore } from '@/stores/admission'
+import { useAuthStore } from '@/stores/auth'
 import { useTriageCodeStore } from '@/stores/triageCode'
 import { useRoomStore } from '@/stores/room'
 import type { PatientSummary } from '@/types'
@@ -27,8 +28,16 @@ const router = useRouter()
 const route = useRoute()
 const { showError, showSuccess } = useErrorHandler()
 const admissionStore = useAdmissionStore()
+const authStore = useAuthStore()
 const triageCodeStore = useTriageCodeStore()
 const roomStore = useRoomStore()
+
+// Resident is auto-bound to the authenticated user at create time; only users
+// carrying RESIDENT_DOCTOR can register an admission, so disable the submit
+// button and surface a banner for everyone else.
+const canRegisterAdmission = computed(
+  () => authStore.user?.roles?.includes('RESIDENT_DOCTOR') ?? false
+)
 
 const loading = ref(false)
 const initializing = ref(true)
@@ -361,13 +370,20 @@ function cancel() {
             </div>
           </div>
 
+          <Message v-if="!isEditMode && !canRegisterAdmission" severity="warn" :closable="false">
+            {{ t('admission.residentRoleRequired') }}
+          </Message>
+
           <div class="form-actions">
             <Button :label="t('common.cancel')" severity="secondary" outlined @click="cancel" />
             <Button
               :label="isEditMode ? t('common.save') : t('admission.submit')"
               icon="pi pi-check"
               :loading="loading"
-              :disabled="selectedPatient.hasActiveAdmission && !isEditMode"
+              :disabled="
+                (selectedPatient.hasActiveAdmission && !isEditMode) ||
+                (!isEditMode && !canRegisterAdmission)
+              "
               @click="submitAdmission"
             />
           </div>

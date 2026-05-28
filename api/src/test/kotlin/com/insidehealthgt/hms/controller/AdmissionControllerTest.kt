@@ -248,6 +248,46 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
+    fun `create admission as resident sets resident to current user`() {
+        val (residentUser, residentToken) = createResidentUser()
+        val request = createValidAdmissionRequest()
+
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $residentToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.data.resident.id").value(residentUser.id))
+            .andExpect(jsonPath("$.data.resident.firstName").value(residentUser.firstName))
+            .andExpect(jsonPath("$.data.treatingPhysician.id").value(doctorUser.id))
+    }
+
+    @Test
+    fun `create admission as doctor without resident role returns 400`() {
+        val (_, plainStaffToken) = createUserWithRole(
+            roleCode = "ADMINISTRATIVE_STAFF",
+            username = "plainstaff",
+            email = "plainstaff@example.com",
+            password = "password123",
+        )
+        val request = createValidAdmissionRequest()
+
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $plainStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(
+                jsonPath("$.error.message")
+                    .value("Only users with the RESIDENT_DOCTOR role can register admissions"),
+            )
+    }
+
+    @Test
     fun `create admission should fail when patient already has active admission`() {
         val request = createValidAdmissionRequest()
         mockMvc.perform(
@@ -358,6 +398,29 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.data.content").isEmpty)
+    }
+
+    @Test
+    fun `list admissions for resident returns all admissions, not only their own`() {
+        // Admission seeded by admin token (admin admits it; resident_id = admin)
+        val request = createValidAdmissionRequest()
+        mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        ).andExpect(status().isCreated)
+
+        val (_, residentToken) = createResidentUser()
+
+        // Different resident sees this admission even though they didn't admit it
+        mockMvc.perform(
+            get("/api/v1/admissions")
+                .header("Authorization", "Bearer $residentToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content").isNotEmpty)
+            .andExpect(jsonPath("$.data.content[0].patient.firstName").value("Juan"))
     }
 
     @Test

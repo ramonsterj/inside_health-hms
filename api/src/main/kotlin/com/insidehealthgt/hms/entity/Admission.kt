@@ -35,6 +35,10 @@ class Admission(
     @JoinColumn(name = "treating_physician_id", nullable = false)
     var treatingPhysician: User,
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "resident_id", nullable = false)
+    var resident: User,
+
     @Column(name = "admission_date", nullable = false)
     var admissionDate: LocalDateTime,
 

@@ -1236,6 +1236,8 @@
     "triageCode": "Triage Code",
     "room": "Room",
     "treatingPhysician": "Treating Physician",
+    "resident": "Resident",
+    "residentRoleRequired": "Only resident doctors can register admissions.",
     "admissionDate": "Admission Date",
     "dischargeDate": "Discharge Date",
     "status": "Status",
@@ -1348,6 +1350,7 @@
       },
       "labels": {
         "doctor": "Doctor",
+        "resident": "Resident",
         "room": "Room",
         "triage": "Triage",
         "admitted": "Admitted",
