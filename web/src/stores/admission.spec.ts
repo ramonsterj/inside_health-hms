@@ -59,12 +59,21 @@ const mockDoctor: Doctor = {
   username: 'maria.garcia'
 }
 
+const mockResident: Doctor = {
+  id: 4,
+  firstName: 'Carlos',
+  lastName: 'López',
+  salutation: 'DR',
+  username: 'carlos.lopez'
+}
+
 const mockAdmissionDetail: AdmissionDetail = {
   id: 1,
   patient: mockPatient,
   triageCode: mockTriageCode,
   room: mockRoom,
   treatingPhysician: mockDoctor,
+  resident: mockResident,
   type: AdmissionType.HOSPITALIZATION,
   admissionDate: '2026-01-23T10:30:00',
   dischargeDate: null,
@@ -84,6 +93,7 @@ const mockAdmissionListItem: AdmissionListItem = {
   triageCode: mockTriageCode,
   room: mockRoom,
   treatingPhysician: mockDoctor,
+  resident: mockResident,
   type: AdmissionType.HOSPITALIZATION,
   admissionDate: '2026-01-23T10:30:00',
   dischargeDate: null,
