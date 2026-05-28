@@ -71,8 +71,15 @@ class PatientController(private val patientService: PatientService) {
         return ResponseEntity.ok(ApiResponse.success(patient))
     }
 
-    private fun resolveDoctorId(currentUser: CustomUserDetails): Long? =
-        if (currentUser.hasRole("DOCTOR") && !currentUser.hasRole("ADMIN")) currentUser.id else null
+    // Only the standalone DOCTOR role is scoped to own patients. A user who also
+    // carries RESIDENT_DOCTOR (or ADMIN) must see every patient, since residents
+    // run the full ward — not just the patients they personally admitted.
+    private fun resolveDoctorId(currentUser: CustomUserDetails): Long? {
+        val isStandaloneDoctor = currentUser.hasRole("DOCTOR") &&
+            !currentUser.hasRole("ADMIN") &&
+            !currentUser.hasRole("RESIDENT_DOCTOR")
+        return if (isStandaloneDoctor) currentUser.id else null
+    }
 
     private fun resolveActiveAdmissionsOnly(currentUser: CustomUserDetails): Boolean =
         currentUser.hasRole("PSYCHOLOGIST") && !currentUser.hasRole("ADMIN")

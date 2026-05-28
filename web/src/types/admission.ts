@@ -37,6 +37,7 @@ export interface AdmissionListItem {
   triageCode: TriageCodeSummary | null
   room: RoomSummary | null
   treatingPhysician: Doctor
+  resident: Doctor
   admissionDate: string
   dischargeDate: string | null
   status: AdmissionStatus
@@ -51,6 +52,7 @@ export interface AdmissionDetail {
   triageCode: TriageCodeSummary | null
   room: RoomSummary | null
   treatingPhysician: Doctor
+  resident: Doctor
   admissionDate: string
   dischargeDate: string | null
   status: AdmissionStatus

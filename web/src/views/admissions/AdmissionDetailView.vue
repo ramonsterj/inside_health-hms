@@ -263,6 +263,10 @@ function handleDocumentUploaded() {
             <span class="info-value">{{ formatDoctorName(admission.treatingPhysician) }}</span>
           </div>
           <div class="info-row">
+            <span class="info-label">{{ t('admission.resident') }}</span>
+            <span class="info-value">{{ formatDoctorName(admission.resident) }}</span>
+          </div>
+          <div class="info-row">
             <span class="info-label">{{ t('admission.admissionDate') }}</span>
             <span class="info-value">{{ formatDateTime(admission.admissionDate) }}</span>
           </div>

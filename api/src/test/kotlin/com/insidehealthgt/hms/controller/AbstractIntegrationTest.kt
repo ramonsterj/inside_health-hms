@@ -276,6 +276,7 @@ abstract class AbstractIntegrationTest {
         firstName: String? = null,
         lastName: String? = null,
         salutation: Salutation? = null,
+        extraRoleCodes: List<String> = emptyList(),
     ): Pair<User, String> {
         val role = roleRepository.findByCode(roleCode)!!
         val user = User(
@@ -288,11 +289,17 @@ abstract class AbstractIntegrationTest {
             mustChangePassword = false,
         )
         user.roles.add(role)
+        extraRoleCodes.forEach { extra ->
+            roleRepository.findByCode(extra)?.let { user.roles.add(it) }
+        }
         val savedUser = userRepository.save(user)
         val token = loginAndGetToken(email, password)
         return Pair(savedUser, token)
     }
 
+    // Admin in tests carries RESIDENT_DOCTOR as well, mirroring the seed grant
+    // (admin needs the role to create admissions because resident is auto-bound
+    // to the authenticated user).
     protected fun createAdminUser(): Pair<User, String> = createUserWithRole(
         roleCode = "ADMIN",
         username = "admin",
@@ -300,6 +307,17 @@ abstract class AbstractIntegrationTest {
         password = "admin123",
         firstName = "Admin",
         lastName = "User",
+        extraRoleCodes = listOf("RESIDENT_DOCTOR"),
+    )
+
+    protected fun createResidentUser(): Pair<User, String> = createUserWithRole(
+        roleCode = "RESIDENT_DOCTOR",
+        username = "resident",
+        email = "resident@example.com",
+        password = "password123",
+        firstName = "Dr. Andrea",
+        lastName = "Pineda",
+        salutation = Salutation.DRA,
     )
 
     protected fun createDoctorUser(): Pair<User, String> = createUserWithRole(
@@ -330,6 +348,9 @@ abstract class AbstractIntegrationTest {
         lastName = "Flores",
     )
 
+    // Administrative staff in tests carries RESIDENT_DOCTOR so existing fixtures
+    // that drive admission setup through this user keep working. Production
+    // administrative staff would need the role explicitly granted to admit.
     protected fun createAdminStaffUser(): Pair<User, String> = createUserWithRole(
         roleCode = "ADMINISTRATIVE_STAFF",
         username = "receptionist",
@@ -337,6 +358,7 @@ abstract class AbstractIntegrationTest {
         password = "password123",
         firstName = "Reception",
         lastName = "Staff",
+        extraRoleCodes = listOf("RESIDENT_DOCTOR"),
     )
 
     protected fun createPsychologistUser(): Pair<User, String> = createUserWithRole(

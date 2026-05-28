@@ -115,6 +115,17 @@ class MedicalOrderDocumentControllerTest : AbstractIntegrationTest() {
 
     @Test
     fun `administrative staff cannot upload document`() {
+        // Build a plain administrative staff user — the shared fixture grants
+        // RESIDENT_DOCTOR so admin staff can register admissions in setUp; that
+        // role's cloned DOCTOR perms include medical-order:upload-document, which
+        // would defeat the boundary this test guards.
+        val (_, plainStaffToken) = createUserWithRole(
+            roleCode = "ADMINISTRATIVE_STAFF",
+            username = "plainstaff",
+            email = "plainstaff@example.com",
+            password = "password123",
+        )
+
         val mockFile = MockMultipartFile(
             "file",
             "lab.pdf",
@@ -125,7 +136,7 @@ class MedicalOrderDocumentControllerTest : AbstractIntegrationTest() {
         mockMvc.perform(
             multipart(basePath())
                 .file(mockFile)
-                .header("Authorization", "Bearer $adminStaffToken"),
+                .header("Authorization", "Bearer $plainStaffToken"),
         )
             .andExpect(status().isForbidden)
     }

@@ -1236,6 +1236,8 @@
     "triageCode": "Código de Triage",
     "room": "Habitación",
     "treatingPhysician": "Médico Tratante",
+    "resident": "Médico Residente",
+    "residentRoleRequired": "Solo los médicos residentes pueden registrar admisiones.",
     "admissionDate": "Fecha de Admisión",
     "dischargeDate": "Fecha de Alta",
     "status": "Estado",
@@ -1348,6 +1350,7 @@
       },
       "labels": {
         "doctor": "Médico",
+        "resident": "Residente",
         "room": "Habitación",
         "triage": "Triage",
         "admitted": "Admitido",
