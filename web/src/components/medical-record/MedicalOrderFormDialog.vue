@@ -12,10 +12,12 @@ import { toTypedSchema } from '@/validation/zodI18n'
 import { medicalOrderSchema, type MedicalOrderFormData } from '@/validation/medicalRecord'
 import { useMedicalOrderStore } from '@/stores/medicalOrder'
 import { useInventoryItemStore } from '@/stores/inventoryItem'
+import { usePharmacyStore } from '@/stores/pharmacy'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useFormDateField } from '@/composables/useFormDateField'
 import { toApiDate } from '@/utils/format'
 import { MedicalOrderCategory, AdministrationRoute } from '@/types/medicalRecord'
+import { InventoryKind } from '@/types/inventoryItem'
 import type { MedicalOrderResponse } from '@/types/medicalRecord'
 import RichTextEditor from '@/components/common/RichTextEditor.vue'
 
@@ -34,6 +36,7 @@ const { t } = useI18n()
 const { showError } = useErrorHandler()
 const medicalOrderStore = useMedicalOrderStore()
 const inventoryItemStore = useInventoryItemStore()
+const pharmacyStore = usePharmacyStore()
 
 const loading = ref(false)
 const isEditMode = computed(() => !!props.order)
@@ -56,14 +59,46 @@ const categoryOptions = computed(() =>
   }))
 )
 
-// Inventory item options
-const inventoryItemOptions = computed(() => [
-  { label: '-', value: null },
-  ...inventoryItemStore.items.map(item => ({
-    label: item.name,
-    value: item.id
-  }))
-])
+// Inventory item options.
+// For MEDICAMENTOS we show the pharmacy catalog (DRUG items, accessible to
+// doctors / nurses / chief nurses via `medication:read`) because the legacy
+// admin inventory endpoint is gated by `inventory-item:read`, which only
+// ADMIN holds today.
+const inventoryItemOptions = computed(() => {
+  if (values.category === MedicalOrderCategory.MEDICAMENTOS) {
+    return [
+      { label: '-', value: null },
+      ...pharmacyStore.items.map(med => ({
+        label: medicationLabel(med),
+        value: med.itemId
+      }))
+    ]
+  }
+  return [
+    { label: '-', value: null },
+    ...inventoryItemStore.items
+      .filter(item => item.kind !== InventoryKind.DRUG)
+      .map(item => ({
+        label: item.name,
+        value: item.id
+      }))
+  ]
+})
+
+function medicationLabel(med: {
+  name: string
+  genericName: string
+  commercialName: string | null
+  strength: string | null
+}): string {
+  const parts: string[] = []
+  parts.push(med.genericName || med.name)
+  if (med.strength) parts.push(med.strength)
+  if (med.commercialName && med.commercialName !== med.genericName) {
+    parts.push(`(${med.commercialName})`)
+  }
+  return parts.join(' ')
+}
 
 // Route options
 const routeOptions = computed(() => [
@@ -74,7 +109,7 @@ const routeOptions = computed(() => [
   }))
 ])
 
-const { defineField, handleSubmit, errors, values, setValues, resetForm } =
+const { defineField, handleSubmit, errors, values, setValues, setFieldValue, resetForm } =
   useForm<MedicalOrderFormData>({
     validationSchema: toTypedSchema(medicalOrderSchema),
     initialValues: {
@@ -111,14 +146,49 @@ const showInventoryItemSelector = computed(() =>
 )
 
 onMounted(() => {
-  loadInventoryItems()
+  loadCatalog(values.category as MedicalOrderCategory)
 })
 
-async function loadInventoryItems() {
+// Re-fetch the appropriate catalog whenever the user switches category, so
+// the picker is populated with the right kind of items (medications vs
+// supplies/services) the next time the dropdown opens. Also drop any
+// previously chosen inventory item that no longer belongs to the new
+// catalog — otherwise a medication selected under MEDICAMENTOS could
+// remain attached when the user switches to LABORATORIOS / REFERENCIAS /
+// PRUEBAS_PSICOMETRICAS, and the backend would happily bill against it.
+watch(
+  () => values.category,
+  async newCategory => {
+    if (!newCategory) return
+    await loadCatalog(newCategory as MedicalOrderCategory)
+    const currentId = values.inventoryItemId
+    if (currentId == null) return
+    const opts = inventoryItemOptions.value
+    // Only the placeholder means the catalog is empty (fetch failed or
+    // nothing registered yet). Don't drop the selection in that case —
+    // a transient failure shouldn't silently disconnect an already-billed
+    // link when editing an existing order.
+    const hasRealOptions = opts.some(opt => opt.value != null)
+    if (!hasRealOptions) return
+    const stillValid = opts.some(opt => opt.value === currentId)
+    if (!stillValid) setFieldValue('inventoryItemId', null)
+  }
+)
+
+async function loadCatalog(category: MedicalOrderCategory): Promise<void> {
+  if (!billableCategories.includes(category)) return
   try {
-    await inventoryItemStore.fetchItems(0, 100)
+    if (category === MedicalOrderCategory.MEDICAMENTOS) {
+      // Pull the whole medication catalog so the in-dropdown filter can
+      // search by generic, commercial, or SKU without a round-trip per
+      // keystroke. ~615 SKUs today; bump if the catalog grows materially.
+      await pharmacyStore.fetchMedications(0, 1000)
+    } else {
+      await inventoryItemStore.fetchItems(0, 1000)
+    }
   } catch {
-    // Ignore errors when loading inventory items
+    // Picker is optional — fall back to an empty list rather than blocking
+    // the order form on a transient catalog fetch failure.
   }
 }
 
