@@ -97,6 +97,25 @@ export function canUploadResultDocument(
   return RESULTS_BEARING_CATEGORIES.includes(category) && RESULT_UPLOADABLE_STATES.includes(status)
 }
 
+const MEDICAL_ORDER_BROAD_ROLES = [
+  'ADMIN',
+  'DOCTOR',
+  'RESIDENT_DOCTOR',
+  'NURSE',
+  'CHIEF_NURSE',
+  'ADMINISTRATIVE_STAFF'
+]
+
+export function isPsychologistOutOfOrderScope(
+  category: MedicalOrderCategory,
+  user: { roles?: string[] } | null | undefined
+): boolean {
+  const roles = user?.roles ?? []
+  if (!roles.includes('PSYCHOLOGIST')) return false
+  if (MEDICAL_ORDER_BROAD_ROLES.some(r => roles.includes(r))) return false
+  return category !== MedicalOrderCategory.PRUEBAS_PSICOMETRICAS
+}
+
 export enum AdministrationRoute {
   ORAL = 'ORAL',
   IV = 'IV',

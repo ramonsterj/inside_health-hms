@@ -16,7 +16,8 @@ import {
   MedicalOrderCategory,
   RESULTS_BEARING_CATEGORIES,
   canDiscontinueStatus,
-  canUploadResultDocument
+  canUploadResultDocument,
+  isPsychologistOutOfOrderScope
 } from '@/types/medicalRecord'
 import type { MedicalOrderListItemResponse } from '@/types/medicalRecord'
 import { formatDateTime, getFullName } from '@/utils/format'
@@ -123,6 +124,7 @@ function isEmergencyAuthorizeRow(row: MedicalOrderListItemResponse): boolean {
 }
 
 function isMarkInProgressRow(row: MedicalOrderListItemResponse): boolean {
+  if (isPsychologistOutOfOrderScope(row.category, authStore.user)) return false
   return (
     canMarkInProgress.value &&
     row.status === MedicalOrderStatus.AUTORIZADO &&
@@ -135,6 +137,7 @@ function isDiscontinueRow(row: MedicalOrderListItemResponse): boolean {
 }
 
 function isUploadResultRow(row: MedicalOrderListItemResponse): boolean {
+  if (isPsychologistOutOfOrderScope(row.category, authStore.user)) return false
   return canUploadDocument.value && canUploadResultDocument(row.category, row.status)
 }
 

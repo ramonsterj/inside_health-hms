@@ -39,6 +39,10 @@ class MedicalOrderDocumentService(
         val order = medicalOrderRepository.findByIdAndAdmissionId(orderId, admissionId)
             ?: throw ResourceNotFoundException("Medical order not found with id: $orderId for admission: $admissionId")
 
+        if (medicalOrderService.isPsychologistOutOfScope(order.category)) {
+            throw BadRequestException(messageService.errorMedicalOrderPsychologistCategoryScope())
+        }
+
         validateOrderAcceptsDocuments(order)
         validateFile(file)
 
@@ -72,9 +76,8 @@ class MedicalOrderDocumentService(
 
     @Transactional(readOnly = true)
     fun listDocuments(admissionId: Long, orderId: Long): List<MedicalOrderDocumentResponse> {
-        // Verify order belongs to admission
-        medicalOrderRepository.findByIdAndAdmissionId(orderId, admissionId)
-            ?: throw ResourceNotFoundException("Medical order not found with id: $orderId for admission: $admissionId")
+        // Verify order belongs to admission and is in caller's scope
+        loadOrderInScope(orderId, admissionId)
 
         val documents = medicalOrderDocumentRepository.findByMedicalOrderIdOrderByCreatedAtDesc(orderId)
 
@@ -132,12 +135,25 @@ class MedicalOrderDocumentService(
     }
 
     private fun findByIdAndOrderId(documentId: Long, orderId: Long, admissionId: Long): MedicalOrderDocument {
-        // Verify order belongs to admission
-        medicalOrderRepository.findByIdAndAdmissionId(orderId, admissionId)
-            ?: throw ResourceNotFoundException("Medical order not found with id: $orderId for admission: $admissionId")
+        // Verify order belongs to admission and is in caller's scope
+        loadOrderInScope(orderId, admissionId)
 
         return medicalOrderDocumentRepository.findByIdAndMedicalOrderId(documentId, orderId)
             ?: throw ResourceNotFoundException("Document not found with id: $documentId for order: $orderId")
+    }
+
+    /**
+     * Loads the order and verifies the current user can see it. Psychologists
+     * may only access PRUEBAS_PSICOMETRICAS orders; everything else is hidden
+     * via 404 to avoid leaking existence.
+     */
+    private fun loadOrderInScope(orderId: Long, admissionId: Long): MedicalOrder {
+        val order = medicalOrderRepository.findByIdAndAdmissionId(orderId, admissionId)
+            ?: throw ResourceNotFoundException("Medical order not found with id: $orderId for admission: $admissionId")
+        if (medicalOrderService.isPsychologistOutOfScope(order.category)) {
+            throw ResourceNotFoundException("Medical order not found with id: $orderId for admission: $admissionId")
+        }
+        return order
     }
 
     private fun validateOrderAcceptsDocuments(order: MedicalOrder) {

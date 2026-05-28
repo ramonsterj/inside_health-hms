@@ -14,7 +14,8 @@ import {
   isTerminalStatus,
   canDiscontinueStatus,
   canUploadResultDocument,
-  categoryRequiresAuthorization
+  categoryRequiresAuthorization,
+  isPsychologistOutOfOrderScope
 } from '@/types/medicalRecord'
 import type { MedicalOrderResponse } from '@/types/medicalRecord'
 import type { MedicalOrderDocument } from '@/types/document'
@@ -81,8 +82,12 @@ const canAdminister = computed(
     isAuthorized.value &&
     props.order.inventoryItemId !== null
 )
+const isPsychologistOutOfScope = computed(() =>
+  isPsychologistOutOfOrderScope(props.order.category, authStore.user)
+)
 const canUploadDocument = computed(
   () =>
+    !isPsychologistOutOfScope.value &&
     authStore.hasPermission('medical-order:upload-document') &&
     canUploadResultDocument(props.order.category, props.order.status)
 )
@@ -105,6 +110,7 @@ const canEmergencyAuthorize = computed(
 )
 const canMarkInProgress = computed(
   () =>
+    !isPsychologistOutOfScope.value &&
     authStore.hasPermission('medical-order:mark-in-progress') &&
     isResultsBearingCategory.value &&
     isAuthorized.value

@@ -38,6 +38,7 @@ class MedicalOrderService(
     private val userRepository: UserRepository,
     private val eventPublisher: ApplicationEventPublisher,
     private val currentUserProvider: CurrentUserProvider,
+    private val messageService: MessageService,
 ) {
 
     private val log = LoggerFactory.getLogger(MedicalOrderService::class.java)
@@ -46,7 +47,12 @@ class MedicalOrderService(
     fun listMedicalOrders(admissionId: Long): GroupedMedicalOrdersResponse {
         verifyAdmissionExists(admissionId)
 
+        // Psychologists may only see PRUEBAS_PSICOMETRICAS orders, mirroring the per-order
+        // scope guard. Without this filter the admission-scoped listing would leak meds,
+        // labs, and referrals to anyone with the medical-order:read permission (granted to
+        // PSYCHOLOGIST by V116).
         val orders = medicalOrderRepository.findByAdmissionIdWithRelations(admissionId)
+            .filterNot { isPsychologistOutOfScope(it.category) }
         val users = loadAuditUsers(orders)
         val documentCounts = loadDocumentCounts(orders.mapNotNull { it.id })
 
@@ -64,6 +70,12 @@ class MedicalOrderService(
         val order = medicalOrderRepository.findByIdAndAdmissionId(orderId, admissionId)
             ?: throw ResourceNotFoundException("Medical order not found with id: $orderId for admission: $admissionId")
 
+        if (isPsychologistOutOfScope(order.category)) {
+            throw ResourceNotFoundException(
+                "Medical order not found with id: $orderId for admission: $admissionId",
+            )
+        }
+
         return buildResponse(order)
     }
 
@@ -73,7 +85,21 @@ class MedicalOrderService(
         categories: List<MedicalOrderCategory>?,
         pageable: Pageable,
     ): Page<MedicalOrderListItemResponse> {
-        val page = medicalOrderRepository.findByFilters(statuses, categories, pageable)
+        // For psychologists the requested category filter is *intersected* with their
+        // PRUEBAS_PSICOMETRICAS scope rather than replaced — replacing it returned
+        // psychometric orders for requests like ?category=LABORATORIOS, breaking the
+        // filter contract. If the intersection is empty the response is empty.
+        val effectiveCategories = if (isPsychologistOnly()) {
+            val scope = MedicalOrderCategory.PRUEBAS_PSICOMETRICAS
+            when {
+                categories.isNullOrEmpty() -> listOf(scope)
+                scope in categories -> listOf(scope)
+                else -> return Page.empty(pageable)
+            }
+        } else {
+            categories
+        }
+        val page = medicalOrderRepository.findByFilters(statuses, effectiveCategories, pageable)
 
         val users = loadUsers(page.content.mapNotNull { it.createdBy })
         val documentCounts = loadDocumentCounts(page.content.mapNotNull { it.id })
@@ -297,6 +323,10 @@ class MedicalOrderService(
         val order = medicalOrderRepository.findByIdAndAdmissionId(orderId, admissionId)
             ?: throw ResourceNotFoundException("Medical order not found with id: $orderId for admission: $admissionId")
 
+        if (isPsychologistOutOfScope(order.category)) {
+            throw BadRequestException(messageService.errorMedicalOrderPsychologistCategoryScope())
+        }
+
         requireResultsBearingAndAuthorized(order)
 
         val currentUserId = currentUserProvider.currentUserIdOrThrow()
@@ -340,6 +370,21 @@ class MedicalOrderService(
 
         return medicalOrderRepository.save(order)
     }
+
+    private fun isPsychologistOnly(): Boolean {
+        val details = currentUserProvider.currentUserDetails()
+        return details != null &&
+            details.hasRole("PSYCHOLOGIST") &&
+            MEDICAL_ORDER_BROAD_ROLES.none { details.hasRole(it) }
+    }
+
+    /**
+     * Psychologists may only act on (and see) PRUEBAS_PSICOMETRICAS orders.
+     * Returns true when the current user is a psychologist — without any
+     * broader role — and the order's category falls outside that scope.
+     */
+    fun isPsychologistOutOfScope(category: MedicalOrderCategory): Boolean =
+        isPsychologistOnly() && category != MedicalOrderCategory.PRUEBAS_PSICOMETRICAS
 
     private fun verifyAdmissionExists(admissionId: Long) {
         if (!admissionRepository.existsById(admissionId)) {
@@ -389,5 +434,16 @@ class MedicalOrderService(
         if (orderIds.isEmpty()) return emptyMap()
         return medicalOrderDocumentRepository.countByMedicalOrderIds(orderIds)
             .associate { (it[0] as Long) to (it[1] as Long).toInt() }
+    }
+
+    companion object {
+        private val MEDICAL_ORDER_BROAD_ROLES = setOf(
+            "ADMIN",
+            "DOCTOR",
+            "RESIDENT_DOCTOR",
+            "NURSE",
+            "CHIEF_NURSE",
+            "ADMINISTRATIVE_STAFF",
+        )
     }
 }
