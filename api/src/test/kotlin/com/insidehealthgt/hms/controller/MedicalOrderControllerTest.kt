@@ -9,6 +9,9 @@ import com.insidehealthgt.hms.entity.User
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasItem
 import org.hamcrest.Matchers.hasSize
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -736,13 +739,217 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
 
     @Test
     fun `cross-admission listing requires medical-order read permission`() {
+        val (_, basicTkn) = createUserWithRole(
+            roleCode = "USER",
+            username = "basicuser",
+            email = "basicuser@example.com",
+            password = "password123",
+            firstName = "Basic",
+            lastName = "User",
+        )
+
+        mockMvc.perform(
+            get("/api/v1/medical-orders")
+                .header("Authorization", "Bearer $basicTkn"),
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    // ============ PSYCHOLOGIST CATEGORY SCOPE TESTS (v1.6) ============
+
+    @Test
+    fun `V116 grants PSYCHOLOGIST exactly the three medical-order permissions and no more`() {
+        // Guards against accidental widening of the PSYCHOLOGIST grant in future
+        // migrations or seed edits. V116 must add only read, mark-in-progress, and
+        // upload-document — never authorize, reject, create, update, or discontinue.
+        val role = roleRepository.findByCodeWithPermissions("PSYCHOLOGIST")
+        assertNotNull(role, "PSYCHOLOGIST role must exist after migrations")
+        val medicalOrderPerms = role!!.permissions
+            .map { it.code }
+            .filter { it.startsWith("medical-order:") }
+            .toSet()
+        assertEquals(
+            setOf(
+                "medical-order:read",
+                "medical-order:mark-in-progress",
+                "medical-order:upload-document",
+            ),
+            medicalOrderPerms,
+            "PSYCHOLOGIST must hold exactly the three V116 medical-order permissions",
+        )
+        // Sanity-check: PSYCHOLOGIST must NOT hold any authoring/destructive perms.
+        val forbidden = listOf(
+            "medical-order:create",
+            "medical-order:update",
+            "medical-order:authorize",
+            "medical-order:emergency-authorize",
+            "medical-order:discontinue",
+            "medical-order:delete-document",
+        )
+        forbidden.forEach { code ->
+            assertTrue(
+                code !in medicalOrderPerms,
+                "PSYCHOLOGIST must not hold $code (V116 widening detected)",
+            )
+        }
+    }
+
+    @Test
+    fun `psychologist mark-in-progress on non-psychometric order returns 400`() {
+        val (_, staffToken) = createAdminStaffUser()
         val (_, psychTkn) = createPsychologistUser()
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
+                .header("Authorization", "Bearer $staffToken"),
+        ).andExpect(status().isOk)
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/mark-in-progress")
+                .header("Authorization", "Bearer $psychTkn"),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(
+                jsonPath("$.error.message")
+                    .value(containsString("psychometric")),
+            )
+    }
+
+    @Test
+    fun `psychologist mark-in-progress on psychometric order succeeds`() {
+        val (_, staffToken) = createAdminStaffUser()
+        val (_, psychTkn) = createPsychologistUser()
+        val orderId = createMedicalOrderAndGetId(
+            MedicalOrderCategory.PRUEBAS_PSICOMETRICAS,
+            "MMPI",
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
+                .header("Authorization", "Bearer $staffToken"),
+        ).andExpect(status().isOk)
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/mark-in-progress")
+                .header("Authorization", "Bearer $psychTkn"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("EN_PROCESO"))
+    }
+
+    @Test
+    fun `psychologist get single non-psychometric order returns 404 not 403`() {
+        val (_, psychTkn) = createPsychologistUser()
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
+
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/medical-orders/$orderId")
+                .header("Authorization", "Bearer $psychTkn"),
+        )
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `psychologist listing with category filter for labs returns empty`() {
+        // Out-of-scope category filter must intersect to nothing rather than silently
+        // returning psychometric orders — that would break the filter contract.
+        val (_, psychTkn) = createPsychologistUser()
+        createMedicalOrderAndGetId(MedicalOrderCategory.PRUEBAS_PSICOMETRICAS, "MMPI")
+        val labOrderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
+
+        mockMvc.perform(
+            get("/api/v1/medical-orders")
+                .param("category", "LABORATORIOS")
+                .header("Authorization", "Bearer $psychTkn"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content").isArray)
+            .andExpect(jsonPath("$.data.content.length()").value(0))
+            .andExpect(
+                jsonPath(
+                    "$.data.content[?(@.id == $labOrderId)]",
+                    hasSize<Any>(0),
+                ),
+            )
+    }
+
+    @Test
+    fun `psychologist listing with no category filter returns only psychometric orders`() {
+        val (_, psychTkn) = createPsychologistUser()
+        val psychOrderId = createMedicalOrderAndGetId(
+            MedicalOrderCategory.PRUEBAS_PSICOMETRICAS,
+            "MMPI",
+        )
+        val labOrderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
 
         mockMvc.perform(
             get("/api/v1/medical-orders")
                 .header("Authorization", "Bearer $psychTkn"),
         )
-            .andExpect(status().isForbidden)
+            .andExpect(status().isOk)
+            .andExpect(
+                jsonPath(
+                    "$.data.content[?(@.id == $labOrderId)]",
+                    hasSize<Any>(0),
+                ),
+            )
+            .andExpect(
+                jsonPath(
+                    "$.data.content[?(@.id == $psychOrderId)].category",
+                    hasItem("PRUEBAS_PSICOMETRICAS"),
+                ),
+            )
+    }
+
+    @Test
+    fun `psychologist admission-scoped list hides non-psychometric orders`() {
+        // listMedicalOrders must apply the same category scope as getMedicalOrder —
+        // otherwise GET /api/v1/admissions/{id}/medical-orders leaks meds and labs to
+        // any psychologist with the medical-order:read permission (granted by V116).
+        val (_, psychTkn) = createPsychologistUser()
+        createMedicalOrderAndGetId(MedicalOrderCategory.PRUEBAS_PSICOMETRICAS, "MMPI")
+        createMedicalOrderAndGetId(MedicalOrderCategory.MEDICAMENTOS, "Lorazepam")
+        createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
+
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/medical-orders")
+                .header("Authorization", "Bearer $psychTkn"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.orders.PRUEBAS_PSICOMETRICAS.length()").value(1))
+            .andExpect(jsonPath("$.data.orders.MEDICAMENTOS").doesNotExist())
+            .andExpect(jsonPath("$.data.orders.LABORATORIOS").doesNotExist())
+    }
+
+    @Test
+    fun `psychologist with doctor role sees all categories without scope restriction`() {
+        val (_, dualTkn) = createUserWithRole(
+            roleCode = "PSYCHOLOGIST",
+            username = "psychdoctor",
+            email = "psychdoctor@example.com",
+            password = "password123",
+            firstName = "Dual",
+            lastName = "Role",
+            extraRoleCodes = listOf("DOCTOR"),
+        )
+        createMedicalOrderAndGetId(MedicalOrderCategory.PRUEBAS_PSICOMETRICAS, "MMPI")
+        val labOrderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
+
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/medical-orders")
+                .header("Authorization", "Bearer $dualTkn"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.orders.PRUEBAS_PSICOMETRICAS.length()").value(1))
+            .andExpect(jsonPath("$.data.orders.LABORATORIOS.length()").value(1))
+
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/medical-orders/$labOrderId")
+                .header("Authorization", "Bearer $dualTkn"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.category").value("LABORATORIOS"))
     }
 
     // ============ AUTHORIZATION-TIME BILLING TESTS ============

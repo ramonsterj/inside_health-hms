@@ -28,7 +28,11 @@ const ERROR_CODE_MAP: Record<string, string> = {
  * Use sparingly - prefer code-based mapping above.
  */
 const ERROR_MESSAGE_MAP: Record<string, string> = {
-  'Patient already has an active admission': 'errors.patient.alreadyAdmitted'
+  'Patient already has an active admission': 'errors.patient.alreadyAdmitted',
+  'Psychologists can only act on psychometric test orders.':
+    'errors.medicalOrder.psychologistCategoryScope',
+  'Los psicólogos solo pueden actuar sobre órdenes de pruebas psicométricas.':
+    'errors.medicalOrder.psychologistCategoryScope'
 }
 
 /**

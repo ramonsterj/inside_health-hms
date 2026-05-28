@@ -1128,6 +1128,9 @@
     },
     "patient": {
       "alreadyAdmitted": "El paciente ya tiene una admisión activa."
+    },
+    "medicalOrder": {
+      "psychologistCategoryScope": "Los psicólogos solo pueden actuar sobre órdenes de pruebas psicométricas."
     }
   },
   "locale": {

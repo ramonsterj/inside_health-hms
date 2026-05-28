@@ -1128,6 +1128,9 @@
     },
     "patient": {
       "alreadyAdmitted": "Patient already has an active admission."
+    },
+    "medicalOrder": {
+      "psychologistCategoryScope": "Psychologists can only act on psychometric test orders."
     }
   },
   "locale": {

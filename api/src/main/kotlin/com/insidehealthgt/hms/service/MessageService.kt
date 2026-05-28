@@ -275,6 +275,7 @@ class MessageService(private val messageSource: MessageSource) {
     fun errorMedicalOrderDocumentFileType() = getMessage("error.medical.order.document.file.type")
     fun errorMedicalOrderDocumentInvalidStatus() = getMessage("error.medical.order.document.invalid.status")
     fun errorMedicalOrderDocumentInvalidCategory() = getMessage("error.medical.order.document.invalid.category")
+    fun errorMedicalOrderPsychologistCategoryScope() = getMessage("error.medical.order.psychologist.category.scope")
 
     // === Duplicate Patient Error Messages ===
 

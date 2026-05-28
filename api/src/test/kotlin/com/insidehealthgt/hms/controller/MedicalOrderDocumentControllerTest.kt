@@ -551,6 +551,70 @@ class MedicalOrderDocumentControllerTest : AbstractIntegrationTest() {
             .andExpect(status().isBadRequest)
     }
 
+    // ============ PSYCHOLOGIST CATEGORY SCOPE TESTS (v1.6) ============
+
+    @Test
+    fun `psychologist can upload document to psychometric order and transition to RESULTADOS_RECIBIDOS`() {
+        val (_, psychTkn) = createPsychologistUser()
+        val psychOrderRequest = CreateMedicalOrderRequest(
+            category = MedicalOrderCategory.PRUEBAS_PSICOMETRICAS,
+            startDate = LocalDate.now(),
+            observations = "MMPI",
+        )
+        val createResult = mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders")
+                .header("Authorization", "Bearer $doctorToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(psychOrderRequest)),
+        ).andReturn()
+        val psychOrderId = objectMapper.readTree(createResult.response.contentAsString)
+            .get("data").get("id").asLong()
+        authorizeOrder(psychOrderId)
+
+        val mockFile = MockMultipartFile(
+            "file",
+            "results.pdf",
+            MediaType.APPLICATION_PDF_VALUE,
+            "psychometric results".toByteArray(),
+        )
+
+        mockMvc.perform(
+            multipart("/api/v1/admissions/$admissionId/medical-orders/$psychOrderId/documents")
+                .file(mockFile)
+                .header("Authorization", "Bearer $psychTkn"),
+        )
+            .andExpect(status().isCreated)
+
+        // Confirm transition happened — fetch as a different role since psychologist
+        // would 404 on a non-psychometric order, but PRUEBAS_PSICOMETRICAS is in-scope.
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/medical-orders/$psychOrderId")
+                .header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("RESULTADOS_RECIBIDOS"))
+    }
+
+    @Test
+    fun `psychologist cannot upload document to a non-psychometric order`() {
+        val (_, psychTkn) = createPsychologistUser()
+        // Default orderId is LABORATORIOS in AUTORIZADO
+
+        val mockFile = MockMultipartFile(
+            "file",
+            "results.pdf",
+            MediaType.APPLICATION_PDF_VALUE,
+            "lab results".toByteArray(),
+        )
+
+        mockMvc.perform(
+            multipart(basePath())
+                .file(mockFile)
+                .header("Authorization", "Bearer $psychTkn"),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
     // ============ HELPERS ============
 
     private fun authorizeOrder(targetOrderId: Long) {

@@ -4,7 +4,7 @@
 -- This file truncates all tables and reseeds base data.
 -- WARNING: DESTRUCTIVE - DO NOT use in production!
 -- Default password for all users: admin123
--- Last updated: 2026-05-28 (lot-aware medication movements in seed 06)
+-- Last updated: 2026-05-28 (psychologist medical-order grants mirrored from V116)
 --
 -- !!! READ BEFORE EDITING ANY R__seed_*.sql FILE !!!
 -- This file TRUNCATEs patients/admissions/vitals/notes/meds/billing tables.
@@ -14,7 +14,7 @@
 -- repopulate it (we hit this in PR #53). Whenever any R__seed_*.sql is
 -- modified, bump the SEED-BUNDLE-VERSION line below in ALL eight files
 -- so they re-run together.
--- SEED-BUNDLE-VERSION: 2026-05-28b
+-- SEED-BUNDLE-VERSION: 2026-05-28c
 -- ============================================================================
 
 SET session_replication_role = replica;
@@ -155,8 +155,10 @@ SELECT
 FROM permissions p
 WHERE p.code = 'admission:create';
 
--- PSYCHOLOGIST: psychotherapy + patient/admission read
--- Sources: V042 + base patient/admission access
+-- PSYCHOLOGIST: psychotherapy + patient/admission read + psychometric medical orders
+-- Sources: V042 + base patient/admission access + V116 (medical-order:read,
+--   medical-order:mark-in-progress, medical-order:upload-document — scoped to
+--   PRUEBAS_PSICOMETRICAS at the service layer)
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
@@ -169,7 +171,8 @@ WHERE r.code = 'PSYCHOLOGIST'
     'admission:view-consent', 'admission:view-documents', 'admission:download-documents',
     'psychotherapy-activity:create', 'psychotherapy-activity:read',
     'psychotherapy-category:read',
-    'billing:read'
+    'billing:read',
+    'medical-order:read', 'medical-order:mark-in-progress', 'medical-order:upload-document'
   )
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
