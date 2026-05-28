@@ -33,6 +33,13 @@ function buildAdmission(overrides: Partial<AdmissionListItem> = {}): AdmissionLi
       salutation: 'DR',
       username: 'maria.garcia'
     },
+    resident: {
+      id: 4,
+      firstName: 'Carlos',
+      lastName: 'López',
+      salutation: 'DR',
+      username: 'carlos.lopez'
+    },
     admissionDate: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     dischargeDate: null,
     status: AdmissionStatus.ACTIVE,
