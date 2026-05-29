@@ -90,7 +90,6 @@ class PharmacyLotIT : AbstractIntegrationTest() {
             itemId = item.id!!,
             lotNumber = "LOT-A",
             expirationDate = expiration,
-            quantity = 10,
             receivedAt = LocalDate.now(),
             supplier = "Vendor1",
         )
@@ -98,14 +97,12 @@ class PharmacyLotIT : AbstractIntegrationTest() {
             itemId = item.id!!,
             lotNumber = "LOT-A",
             expirationDate = expiration,
-            quantity = 5,
             receivedAt = LocalDate.now(),
             supplier = null,
         )
 
         assertEquals(firstLotId, secondLotId, "ON CONFLICT must resolve to the same lot row")
         val lot = lotRepository.findById(firstLotId).orElseThrow()
-        assertEquals(15, lot.quantityOnHand, "Two ENTRY calls must add to quantity_on_hand")
         assertEquals("Vendor1", lot.supplier, "COALESCE preserves the existing supplier when a later ENTRY omits it")
     }
 
@@ -116,11 +113,10 @@ class PharmacyLotIT : AbstractIntegrationTest() {
         val item = seedDrugItem()
         val expiration = LocalDate.now().plusYears(1)
 
-        val firstId = lotUpsertDao.upsertEntry(item.id!!, null, expiration, 4, LocalDate.now(), null)
-        val secondId = lotUpsertDao.upsertEntry(item.id!!, null, expiration, 6, LocalDate.now(), null)
+        val firstId = lotUpsertDao.upsertEntry(item.id!!, null, expiration, LocalDate.now(), null)
+        val secondId = lotUpsertDao.upsertEntry(item.id!!, null, expiration, LocalDate.now(), null)
 
         assertEquals(firstId, secondId, "NULL lot_numbers must collide via NULLS NOT DISTINCT, not insert a duplicate")
-        assertEquals(10, lotRepository.findById(firstId).orElseThrow().quantityOnHand)
     }
 
     /**
@@ -273,7 +269,6 @@ class PharmacyLotIT : AbstractIntegrationTest() {
                 item = item,
                 lotNumber = "LOT-DELGUARD",
                 expirationDate = LocalDate.now().plusYears(1),
-                quantityOnHand = 10,
                 receivedAt = LocalDate.now(),
             ),
         )

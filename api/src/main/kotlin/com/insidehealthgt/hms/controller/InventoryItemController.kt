@@ -39,8 +39,9 @@ class InventoryItemController(private val itemService: InventoryItemService) {
         @RequestParam(required = false) categoryId: Long?,
         @RequestParam(required = false) kind: InventoryKind?,
         @RequestParam(required = false) search: String?,
+        @RequestParam(required = false) warehouseId: Long?,
     ): ResponseEntity<ApiResponse<PageResponse<InventoryItemResponse>>> {
-        val items = itemService.findAll(categoryId, kind, search, pageable)
+        val items = itemService.findAll(categoryId, kind, search, pageable, warehouseId)
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(items)))
     }
 
@@ -96,8 +97,9 @@ class InventoryItemController(private val itemService: InventoryItemService) {
     @PreAuthorize("hasAuthority('inventory-item:read')")
     fun getLowStock(
         @RequestParam(required = false) categoryId: Long?,
+        @RequestParam(required = false) warehouseId: Long?,
     ): ResponseEntity<ApiResponse<List<InventoryItemResponse>>> {
-        val items = itemService.findLowStock(categoryId)
+        val items = itemService.findLowStock(categoryId, warehouseId)
         return ResponseEntity.ok(ApiResponse.success(items))
     }
 
@@ -122,16 +124,5 @@ class InventoryItemController(private val itemService: InventoryItemService) {
     ): ResponseEntity<ApiResponse<InventoryMovementResponse>> {
         val movement = itemService.createMovement(itemId, request)
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(movement))
-    }
-
-    /**
-     * Manual force-recompute of the scalar quantity from active non-recalled lots.
-     * Used by ops when drift is detected.
-     */
-    @PostMapping("/{id}/reconcile-quantity")
-    @PreAuthorize("hasAuthority('inventory-item:update')")
-    fun reconcileQuantity(@PathVariable id: Long): ResponseEntity<ApiResponse<InventoryItemResponse>> {
-        val item = itemService.reconcileQuantity(id)
-        return ResponseEntity.ok(ApiResponse.success(item))
     }
 }

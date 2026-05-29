@@ -7,6 +7,7 @@
 | 1.0 | 2026-02-06 | @author | Initial draft |
 | 1.1 | 2026-02-06 | @author | Closed spec gaps: added search/sort, movement ordering, concurrency strategy, item name uniqueness clarification, room pricing i18n, bulk ops scope |
 | 1.2 | 2026-05-13 | Juan Ramón Paniagua | Superseded for medication/lot scope by [`pharmacy-and-inventory-evolution.md`](pharmacy-and-inventory-evolution.md). This v1 spec remains authoritative for the Billing Catalog base (`InventoryItem` identity, pricing, categories, restock, movement history, room pricing). |
+| 1.3 | 2026-05-29 | @author | Stock is now **per-warehouse** (V119–V121): the global `inventory_items.quantity` count has been replaced by `inventory_warehouse_stock`, and stock movements / low-stock reports are warehouse-scoped. The catalog (item identity, pricing, categories) is unchanged. See [`warehouse-inventory-management.md`](warehouse-inventory-management.md). |
 
 ---
 

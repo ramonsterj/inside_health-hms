@@ -22,14 +22,15 @@ data class InventoryLotResponse(
     val updatedAt: LocalDateTime?,
 ) {
     companion object {
-        fun from(lot: InventoryLot): InventoryLotResponse = InventoryLotResponse(
+        /** [quantityOnHand] is the lot's on-hand summed from `inventory_warehouse_stock`. */
+        fun from(lot: InventoryLot, quantityOnHand: Int = 0): InventoryLotResponse = InventoryLotResponse(
             id = lot.id!!,
             itemId = lot.item.id!!,
             itemName = lot.item.name,
             itemSku = lot.item.sku,
             lotNumber = lot.lotNumber,
             expirationDate = lot.expirationDate,
-            quantityOnHand = lot.quantityOnHand,
+            quantityOnHand = quantityOnHand,
             receivedAt = lot.receivedAt,
             supplier = lot.supplier,
             notes = lot.notes,

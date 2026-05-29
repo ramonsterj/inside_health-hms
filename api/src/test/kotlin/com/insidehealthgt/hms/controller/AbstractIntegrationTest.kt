@@ -206,10 +206,18 @@ abstract class AbstractIntegrationTest {
         jdbcTemplate.execute("DELETE FROM expenses")
         jdbcTemplate.execute("DELETE FROM treasury_employees")
         jdbcTemplate.execute("DELETE FROM bank_accounts")
+        // Warehouse charges reference patient_charges/admissions/items/lots — clear first.
+        jdbcTemplate.execute("DELETE FROM warehouse_charges")
         jdbcTemplate.execute("DELETE FROM medication_administrations")
         jdbcTemplate.execute("DELETE FROM patient_charges")
         jdbcTemplate.execute("DELETE FROM invoices")
         jdbcTemplate.execute("DELETE FROM inventory_movements")
+        // Warehouse stock + transfers reference items/lots/warehouses; movements
+        // reference transfers, so they come after inventory_movements above and
+        // before inventory_lots/inventory_items below. warehouses + role_default_warehouses
+        // are migration-seeded reference data and are intentionally NOT deleted.
+        jdbcTemplate.execute("DELETE FROM inventory_warehouse_stock")
+        jdbcTemplate.execute("DELETE FROM inventory_transfers")
         // medical_orders.inventory_item_id references inventory_items, so orders must be
         // removed first.
         jdbcTemplate.execute("DELETE FROM medical_order_documents")
@@ -237,6 +245,7 @@ abstract class AbstractIntegrationTest {
         jdbcTemplate.execute("DELETE FROM refresh_tokens")
         jdbcTemplate.execute("DELETE FROM audit_logs")
         jdbcTemplate.execute("DELETE FROM user_phone_numbers")
+        jdbcTemplate.execute("DELETE FROM user_warehouses")
         jdbcTemplate.execute("DELETE FROM user_roles")
         jdbcTemplate.execute("DELETE FROM users")
     }
@@ -297,7 +306,7 @@ abstract class AbstractIntegrationTest {
         return Pair(savedUser, token)
     }
 
-    // Admin does NOT carry RESIDENT_DOCTOR, mirroring production (V119): ADMIN is
+    // Admin does NOT carry RESIDENT_DOCTOR, mirroring production (V122): ADMIN is
     // a code-level exception in AdmissionService.resolveResident() and admits by
     // picking a resident (residentId), not by being one. The shared createAdmission
     // helper supplies that residentId automatically.

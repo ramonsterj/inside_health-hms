@@ -14,6 +14,7 @@ export const useExpiryReportStore = defineStore('expiryReport', () => {
       urgentWindow?: number
       section?: MedicationSection
       controlled?: boolean
+      warehouseId?: number
     } = {}
   ): Promise<void> {
     loading.value = true
@@ -23,6 +24,7 @@ export const useExpiryReportStore = defineStore('expiryReport', () => {
       if (opts.urgentWindow !== undefined) params.urgentWindow = opts.urgentWindow
       if (opts.section) params.section = opts.section
       if (opts.controlled !== undefined) params.controlled = opts.controlled
+      if (opts.warehouseId !== undefined) params.warehouseId = opts.warehouseId
       const res = await api.get<ApiResponse<ExpiryReport>>('/v1/medications/expiry-report', {
         params
       })

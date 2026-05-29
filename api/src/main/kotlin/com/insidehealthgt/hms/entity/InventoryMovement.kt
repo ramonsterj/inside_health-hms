@@ -43,4 +43,12 @@ class InventoryMovement(
     @JoinColumn(name = "lot_id")
     var lot: InventoryLot? = null,
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "warehouse_id")
+    var warehouse: Warehouse? = null,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "transfer_id")
+    var transfer: InventoryTransfer? = null,
+
 ) : BaseEntity()

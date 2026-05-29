@@ -1,9 +1,10 @@
 -- ============================================================================
 -- SEED FILE 02: Triage Codes, Rooms, Inventory
 -- ============================================================================
--- Last updated: 2026-05-13 (Medicamentos + supply rows moved to R__seed_02b
--- so dev/acceptance loads the workbook catalog the same way prod does)
--- SEED-BUNDLE-VERSION: 2026-05-29b (see R__seed_01 header for the rule)
+-- Last updated: 2026-05-29 (legacy inventory_items.quantity column was dropped by
+-- V121; non-drug item stock now lands in inventory_warehouse_stock(ADMINISTRACION)
+-- via CTE+RETURNING, mirroring the V120 backfill, instead of the dropped column)
+-- SEED-BUNDLE-VERSION: 2026-05-29d (see R__seed_01 header for the rule)
 
 SET session_replication_role = replica;
 
@@ -78,12 +79,8 @@ INSERT INTO inventory_categories (name, description, display_order, active, defa
 -- Material y Equipo: equipment rows only. Supply rows (syringes, sondas,
 -- gloves, gasas, etc.) come from workbook section E via R__seed_02b.
 -- Kind follows V100 backfill rule for this category: TIME_BASED -> EQUIPMENT, FLAT -> SUPPLY.
-INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
-SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active,
-       CASE WHEN v.pricing_type = 'TIME_BASED' THEN 'EQUIPMENT' ELSE 'SUPPLY' END,
-       CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-FROM inventory_categories c,
-(VALUES
+WITH src(name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active) AS (
+VALUES
 -- Time-based equipment usage
 ('MONITOR CARDIACO', 'USO MONITOR CARDIACO (1 HORA)', 250.00, 250.00, 0, 0, 'TIME_BASED', 'HOURS'::VARCHAR, 1::INT, true),
 ('BOMBA DE INFUSIÓN', 'USO DE BOMBA DE INFUSIÓN (1 HORA)', 250.00, 250.00, 0, 0, 'TIME_BASED', 'HOURS', 1, true),
@@ -92,14 +89,26 @@ FROM inventory_categories c,
 ('EKG', 'EKG', 265.00, 265.00, 0, 0, 'FLAT', NULL, NULL, true),
 ('USO DE DESFIBRILADOR', 'USO DE DESFIBRILADOR', 3000.00, 0.00, 0, 0, 'FLAT', NULL, NULL, true),
 ('USO DE GLUCÓMETRO', 'USO DE GLUCÓMETRO', 49.98, 12.09, 50, 5, 'FLAT', NULL, NULL, true)
-) AS v(name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active)
-WHERE c.name = 'Material y Equipo';
+),
+ins AS (
+    INSERT INTO inventory_items (category_id, name, description, price, cost, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
+    SELECT c.id, s.name, s.description, s.price, s.cost, s.restock_level, s.pricing_type, s.time_unit, s.time_interval, s.active,
+           CASE WHEN s.pricing_type = 'TIME_BASED' THEN 'EQUIPMENT' ELSE 'SUPPLY' END,
+           CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+    FROM inventory_categories c CROSS JOIN src s
+    WHERE c.name = 'Material y Equipo'
+    RETURNING id, name
+)
+INSERT INTO inventory_warehouse_stock (item_id, warehouse_id, lot_id, quantity, created_at, updated_at)
+SELECT ins.id, (SELECT id FROM warehouses WHERE code = 'ADMINISTRACION'), NULL, s.quantity, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM ins JOIN src s ON s.name = ins.name
+WHERE s.quantity > 0
+ON CONFLICT (item_id, warehouse_id, COALESCE(lot_id, -1)) WHERE deleted_at IS NULL DO UPDATE
+   SET quantity = EXCLUDED.quantity, updated_at = CURRENT_TIMESTAMP;
 
 -- Laboratorios
-INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
-SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active, 'SERVICE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-FROM inventory_categories c,
-(VALUES
+WITH src(name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active) AS (
+VALUES
 -- Chemistry panel
 ('ÁCIDO ÚRICO', 'SUERO', 150.00, 50.00, 0, 0, 'FLAT', NULL::VARCHAR, NULL::INT, true),
 ('ALBUMINA', 'SUERO', 120.00, 40.00, 0, 0, 'FLAT', NULL, NULL, true),
@@ -202,35 +211,65 @@ FROM inventory_categories c,
 ('PRUEBA DE EMBARAZO', 'SUERO', 225.00, 75.00, 0, 0, 'FLAT', NULL, NULL, true),
 -- Admission kit
 ('KIT DE INGRESO', 'KIT DE INGRESO (HEMATOLOGIA, GLUCOSA, CREATININA, NITRÓGENO DE UREA, PERFIL DE LÍPIDOS, TGO-TGP, SODIO, POTASIO, HORMONAS FT3, FT4 Y TSH, PANEL DE DROGAS EN ORINA, VITAMINA D)', 4950.00, 1650.00, 97, 10, 'FLAT', NULL, NULL, true)
-) AS v(name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active)
-WHERE c.name = 'Laboratorios';
+),
+ins AS (
+    INSERT INTO inventory_items (category_id, name, description, price, cost, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
+    SELECT c.id, s.name, s.description, s.price, s.cost, s.restock_level, s.pricing_type, s.time_unit, s.time_interval, s.active, 'SERVICE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+    FROM inventory_categories c CROSS JOIN src s
+    WHERE c.name = 'Laboratorios'
+    RETURNING id, name
+)
+INSERT INTO inventory_warehouse_stock (item_id, warehouse_id, lot_id, quantity, created_at, updated_at)
+SELECT ins.id, (SELECT id FROM warehouses WHERE code = 'ADMINISTRACION'), NULL, s.quantity, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM ins JOIN src s ON s.name = ins.name
+WHERE s.quantity > 0
+ON CONFLICT (item_id, warehouse_id, COALESCE(lot_id, -1)) WHERE deleted_at IS NULL DO UPDATE
+   SET quantity = EXCLUDED.quantity, updated_at = CURRENT_TIMESTAMP;
 
 -- Servicios
-INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
-SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active, 'SERVICE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-FROM inventory_categories c,
-(VALUES
+WITH src(name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active) AS (
+VALUES
 ('ATENCIÓN EMERGENCIA', 'ATENCIÓN EMERGENCIA', 900.00, 0.00, 0, 0, 'FLAT', NULL::VARCHAR, NULL::INT, true),
 ('KETAMINA AMBULATORIA', 'PROCEDIMIENTO DE KETAMINA', 1500.00, 0.00, 0, 0, 'FLAT', NULL, NULL, true),
 ('KETAMINA INTERNA', 'PROCEDIMIENTO DE KETAMINA INTERNA', 1100.00, 0.00, 0, 0, 'FLAT', NULL, NULL, true)
-) AS v(name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active)
-WHERE c.name = 'Servicios';
+),
+ins AS (
+    INSERT INTO inventory_items (category_id, name, description, price, cost, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
+    SELECT c.id, s.name, s.description, s.price, s.cost, s.restock_level, s.pricing_type, s.time_unit, s.time_interval, s.active, 'SERVICE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+    FROM inventory_categories c CROSS JOIN src s
+    WHERE c.name = 'Servicios'
+    RETURNING id, name
+)
+INSERT INTO inventory_warehouse_stock (item_id, warehouse_id, lot_id, quantity, created_at, updated_at)
+SELECT ins.id, (SELECT id FROM warehouses WHERE code = 'ADMINISTRACION'), NULL, s.quantity, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM ins JOIN src s ON s.name = ins.name
+WHERE s.quantity > 0
+ON CONFLICT (item_id, warehouse_id, COALESCE(lot_id, -1)) WHERE deleted_at IS NULL DO UPDATE
+   SET quantity = EXCLUDED.quantity, updated_at = CURRENT_TIMESTAMP;
 
 -- Personal Especial
-INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
-SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active, 'PERSONNEL', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-FROM inventory_categories c,
-(VALUES
+WITH src(name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active) AS (
+VALUES
 ('ENFERMERA SOMBRA HOSPITAL', 'ENFERMERA SOMBRA HOSPITAL', 500.00, 300.00, 0, 0, 'FLAT', NULL::VARCHAR, NULL::INT, true),
 ('ENFERMERA SOMBRA DOMICILIO', 'ENFERMERA SOMBRA DOMICILIO', 650.00, 350.00, 0, 0, 'FLAT', NULL, NULL, true)
-) AS v(name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active)
-WHERE c.name = 'Personal Especial';
+),
+ins AS (
+    INSERT INTO inventory_items (category_id, name, description, price, cost, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
+    SELECT c.id, s.name, s.description, s.price, s.cost, s.restock_level, s.pricing_type, s.time_unit, s.time_interval, s.active, 'PERSONNEL', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+    FROM inventory_categories c CROSS JOIN src s
+    WHERE c.name = 'Personal Especial'
+    RETURNING id, name
+)
+INSERT INTO inventory_warehouse_stock (item_id, warehouse_id, lot_id, quantity, created_at, updated_at)
+SELECT ins.id, (SELECT id FROM warehouses WHERE code = 'ADMINISTRACION'), NULL, s.quantity, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM ins JOIN src s ON s.name = ins.name
+WHERE s.quantity > 0
+ON CONFLICT (item_id, warehouse_id, COALESCE(lot_id, -1)) WHERE deleted_at IS NULL DO UPDATE
+   SET quantity = EXCLUDED.quantity, updated_at = CURRENT_TIMESTAMP;
 
 -- Ingredientes de Cocina
-INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
-SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active, 'FOOD', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-FROM inventory_categories c,
-(VALUES
+WITH src(name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active) AS (
+VALUES
 -- Granos y cereales
 ('ARROZ BLANCO (LIBRA)', 'ARROZ BLANCO DE PRIMERA CALIDAD', 5.50, 3.50, 100, 25, 'FLAT', NULL::VARCHAR, NULL::INT, true),
 ('FRIJOL NEGRO (LIBRA)', 'FRIJOL NEGRO SECO', 7.00, 4.50, 80, 20, 'FLAT', NULL, NULL, true),
@@ -275,14 +314,24 @@ FROM inventory_categories c,
 ('AGUA PURA (GARRAFÓN 5 GALONES)', 'AGUA PURIFICADA PARA CONSUMO', 25.00, 15.00, 8, 3, 'FLAT', NULL, NULL, true),
 ('JUGO DE NARANJA (LITRO)', 'JUGO DE NARANJA NATURAL', 15.00, 9.00, 12, 5, 'FLAT', NULL, NULL, true),
 ('LECHE EN POLVO (BOLSA 400G)', 'LECHE EN POLVO INSTANTÁNEA', 28.00, 18.00, 10, 3, 'FLAT', NULL, NULL, true)
-) AS v(name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active)
-WHERE c.name = 'Ingredientes de Cocina';
+),
+ins AS (
+    INSERT INTO inventory_items (category_id, name, description, price, cost, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
+    SELECT c.id, s.name, s.description, s.price, s.cost, s.restock_level, s.pricing_type, s.time_unit, s.time_interval, s.active, 'FOOD', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+    FROM inventory_categories c CROSS JOIN src s
+    WHERE c.name = 'Ingredientes de Cocina'
+    RETURNING id, name
+)
+INSERT INTO inventory_warehouse_stock (item_id, warehouse_id, lot_id, quantity, created_at, updated_at)
+SELECT ins.id, (SELECT id FROM warehouses WHERE code = 'ADMINISTRACION'), NULL, s.quantity, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM ins JOIN src s ON s.name = ins.name
+WHERE s.quantity > 0
+ON CONFLICT (item_id, warehouse_id, COALESCE(lot_id, -1)) WHERE deleted_at IS NULL DO UPDATE
+   SET quantity = EXCLUDED.quantity, updated_at = CURRENT_TIMESTAMP;
 
 -- Alimentación
-INSERT INTO inventory_items (category_id, name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
-SELECT c.id, v.name, v.description, v.price, v.cost, v.quantity, v.restock_level, v.pricing_type, v.time_unit, v.time_interval, v.active, 'FOOD', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-FROM inventory_categories c,
-(VALUES
+WITH src(name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active) AS (
+VALUES
 -- Tiempos de comida regulares
 ('DESAYUNO REGULAR', 'DESAYUNO COMPLETO: HUEVOS, FRIJOLES, PLÁTANO, PAN, CAFÉ O JUGO', 65.00, 35.00, 0, 0, 'FLAT', NULL::VARCHAR, NULL::INT, true),
 ('ALMUERZO REGULAR', 'ALMUERZO COMPLETO: SOPA, PLATO FUERTE CON PROTEINA, ARROZ, ENSALADA, REFRESCO', 85.00, 45.00, 0, 0, 'FLAT', NULL, NULL, true),
@@ -301,7 +350,19 @@ FROM inventory_categories c,
 ('PORCIÓN DE FRUTA EXTRA', 'PORCIÓN ADICIONAL DE FRUTA FRESCA DE TEMPORADA', 15.00, 8.00, 0, 0, 'FLAT', NULL, NULL, true),
 ('BEBIDA CALIENTE EXTRA', 'CAFÉ, TÉ O CHOCOLATE CALIENTE ADICIONAL', 10.00, 5.00, 0, 0, 'FLAT', NULL, NULL, true),
 ('JUGO NATURAL EXTRA', 'VASO DE JUGO NATURAL DE NARANJA O FRUTA DE TEMPORADA', 15.00, 8.00, 0, 0, 'FLAT', NULL, NULL, true)
-) AS v(name, description, price, cost, quantity, restock_level, pricing_type, time_unit, time_interval, active)
-WHERE c.name = 'Alimentación';
+),
+ins AS (
+    INSERT INTO inventory_items (category_id, name, description, price, cost, restock_level, pricing_type, time_unit, time_interval, active, kind, created_at, updated_at)
+    SELECT c.id, s.name, s.description, s.price, s.cost, s.restock_level, s.pricing_type, s.time_unit, s.time_interval, s.active, 'FOOD', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+    FROM inventory_categories c CROSS JOIN src s
+    WHERE c.name = 'Alimentación'
+    RETURNING id, name
+)
+INSERT INTO inventory_warehouse_stock (item_id, warehouse_id, lot_id, quantity, created_at, updated_at)
+SELECT ins.id, (SELECT id FROM warehouses WHERE code = 'ADMINISTRACION'), NULL, s.quantity, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM ins JOIN src s ON s.name = ins.name
+WHERE s.quantity > 0
+ON CONFLICT (item_id, warehouse_id, COALESCE(lot_id, -1)) WHERE deleted_at IS NULL DO UPDATE
+   SET quantity = EXCLUDED.quantity, updated_at = CURRENT_TIMESTAMP;
 
 SET session_replication_role = DEFAULT;

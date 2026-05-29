@@ -16,12 +16,14 @@ import com.insidehealthgt.hms.event.AdmissionCreatedEvent
 import com.insidehealthgt.hms.event.InventoryDispensedEvent
 import com.insidehealthgt.hms.event.MedicalOrderAuthorizedEvent
 import com.insidehealthgt.hms.event.PsychotherapyActivityCreatedEvent
+import com.insidehealthgt.hms.event.WarehouseChargeCreatedEvent
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
 import com.insidehealthgt.hms.repository.AdmissionRepository
 import com.insidehealthgt.hms.repository.InventoryItemRepository
 import com.insidehealthgt.hms.repository.PatientChargeRepository
 import com.insidehealthgt.hms.repository.UserRepository
+import com.insidehealthgt.hms.repository.WarehouseChargeRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -35,6 +37,7 @@ class BillingService(
     private val chargeRepository: PatientChargeRepository,
     private val admissionRepository: AdmissionRepository,
     private val inventoryItemRepository: InventoryItemRepository,
+    private val warehouseChargeRepository: WarehouseChargeRepository,
     private val userRepository: UserRepository,
     @Value("\${app.billing.daily-meal-rate:#{null}}") private val dailyMealRate: BigDecimal?,
     @Value("\${app.billing.electroshock-base-price:#{null}}") private val electroshockBasePrice: BigDecimal?,
@@ -192,6 +195,43 @@ class BillingService(
             "Created MEDICATION charge for admission {} from inventory item {}",
             event.admissionId,
             event.inventoryItemId,
+        )
+    }
+
+    @Transactional
+    fun createChargeFromWarehouseCharge(event: WarehouseChargeCreatedEvent) {
+        val admission = admissionRepository.findByIdWithRelations(event.admissionId)
+            ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(event.admissionId))
+
+        val inventoryItem = inventoryItemRepository.findById(event.inventoryItemId)
+            .orElseThrow { ResourceNotFoundException(messageService.errorInventoryItemNotFound(event.inventoryItemId)) }
+
+        val totalAmount = event.unitPrice.multiply(BigDecimal(event.quantity))
+
+        // Non-medical consumables (towels, cleaning supplies) bill as SERVICE — they
+        // do not originate from a doctor's order. See warehouse-inventory-management.md.
+        val charge = chargeRepository.save(
+            PatientCharge(
+                admission = admission,
+                chargeType = ChargeType.SERVICE,
+                description = "${event.itemName} — ${event.reason}",
+                quantity = event.quantity,
+                unitPrice = event.unitPrice,
+                totalAmount = totalAmount,
+                inventoryItem = inventoryItem,
+            ),
+        )
+
+        // Link the patient charge back onto the warehouse-charge audit row.
+        warehouseChargeRepository.findById(event.warehouseChargeId).ifPresent { wc ->
+            wc.charge = charge
+            warehouseChargeRepository.save(wc)
+        }
+
+        log.info(
+            "Created SERVICE charge for admission {} from warehouse charge {}",
+            event.admissionId,
+            event.warehouseChargeId,
         )
     }
 

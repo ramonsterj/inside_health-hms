@@ -51,10 +51,13 @@ class UserRepositoryTest {
         // Clean all data in FK dependency order using jdbcTemplate.
         // Must include the full chain because integration tests sharing
         // the same Testcontainers DB may leave behind data with FK references to users.
+        jdbcTemplate.execute("DELETE FROM warehouse_charges")
         jdbcTemplate.execute("DELETE FROM medication_administrations")
         jdbcTemplate.execute("DELETE FROM patient_charges")
         jdbcTemplate.execute("DELETE FROM invoices")
         jdbcTemplate.execute("DELETE FROM inventory_movements")
+        jdbcTemplate.execute("DELETE FROM inventory_warehouse_stock")
+        jdbcTemplate.execute("DELETE FROM inventory_transfers")
         jdbcTemplate.execute("DELETE FROM medical_order_documents")
         jdbcTemplate.execute("DELETE FROM medical_orders")
         jdbcTemplate.execute("DELETE FROM inventory_lots")
@@ -80,6 +83,7 @@ class UserRepositoryTest {
         jdbcTemplate.execute("DELETE FROM refresh_tokens")
         jdbcTemplate.execute("DELETE FROM audit_logs")
         jdbcTemplate.execute("DELETE FROM user_phone_numbers")
+        jdbcTemplate.execute("DELETE FROM user_warehouses")
         jdbcTemplate.execute("DELETE FROM user_roles")
         jdbcTemplate.execute("DELETE FROM users")
 

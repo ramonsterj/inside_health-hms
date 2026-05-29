@@ -79,4 +79,6 @@ enum class AuditAction {
     UPDATE,
     DELETE,
     ADMISSION_EXPORT,
+    WAREHOUSE_TRANSFER,
+    WAREHOUSE_CHARGE,
 }

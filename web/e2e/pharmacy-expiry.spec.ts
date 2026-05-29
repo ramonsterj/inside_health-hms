@@ -23,11 +23,11 @@ const mockNurseNoExpiry = {
   firstName: 'Ana',
   lastName: 'Lopez',
   roles: ['NURSE'],
-  // `admission:read` is granted so the post-redirect destination
-  // (nurse → /dashboard → /nursing-kardex) can resolve. Without it the
-  // router thrashes between dashboard and nursing-kardex and the URL
-  // never leaves /pharmacy/expiry-report.
-  permissions: ['medication:read', 'inventory-lot:read', 'admission:read'],
+  // `room:occupancy-view` is granted so the post-redirect destination
+  // (nurse → /dashboard → /bed-occupancy, the default landing for nursing
+  // roles) can resolve. Without it the router thrashes between dashboard and
+  // bed-occupancy and the URL never leaves /pharmacy/expiry-report.
+  permissions: ['medication:read', 'inventory-lot:read', 'admission:read', 'room:occupancy-view'],
   status: 'ACTIVE',
   emailVerified: true,
   createdAt: '2026-01-01T00:00:00Z',

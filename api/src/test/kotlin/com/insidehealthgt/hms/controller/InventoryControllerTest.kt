@@ -455,11 +455,14 @@ class InventoryControllerTest : AbstractIntegrationTest() {
     @Test
     fun `EXIT movement should decrease quantity`() {
         val itemId = createTestItem()
+        val wh = warehouseId("ENFERMERIA")
 
-        // First add stock
+        // First add stock (pin ENTRY + EXIT to the same warehouse so the EXIT
+        // debits the bodega we just stocked).
         val entryRequest = CreateInventoryMovementRequest(
             type = MovementType.ENTRY,
             quantity = 50,
+            warehouseId = wh,
         )
         mockMvc.perform(
             post("/api/v1/admin/inventory-items/$itemId/movements")
@@ -472,6 +475,7 @@ class InventoryControllerTest : AbstractIntegrationTest() {
         val exitRequest = CreateInventoryMovementRequest(
             type = MovementType.EXIT,
             quantity = 20,
+            warehouseId = wh,
         )
         mockMvc.perform(
             post("/api/v1/admin/inventory-items/$itemId/movements")
@@ -493,13 +497,15 @@ class InventoryControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `EXIT with insufficient stock should return 400`() {
+    fun `EXIT with insufficient stock should return 422`() {
         val itemId = createTestItem()
+        val wh = warehouseId("ENFERMERIA")
 
         // Add 10 units
         val entryRequest = CreateInventoryMovementRequest(
             type = MovementType.ENTRY,
             quantity = 10,
+            warehouseId = wh,
         )
         mockMvc.perform(
             post("/api/v1/admin/inventory-items/$itemId/movements")
@@ -508,10 +514,11 @@ class InventoryControllerTest : AbstractIntegrationTest() {
                 .content(objectMapper.writeValueAsString(entryRequest)),
         ).andExpect(status().isCreated)
 
-        // Try to remove 100
+        // Try to remove 100 — out of stock in the warehouse now returns 422.
         val exitRequest = CreateInventoryMovementRequest(
             type = MovementType.EXIT,
             quantity = 100,
+            warehouseId = wh,
         )
         mockMvc.perform(
             post("/api/v1/admin/inventory-items/$itemId/movements")
@@ -519,7 +526,7 @@ class InventoryControllerTest : AbstractIntegrationTest() {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(exitRequest)),
         )
-            .andExpect(status().isBadRequest)
+            .andExpect(status().isUnprocessableEntity)
     }
 
     @Test
@@ -791,4 +798,7 @@ class InventoryControllerTest : AbstractIntegrationTest() {
         return objectMapper.readTree(result.response.contentAsString)
             .get("data").get("id").asLong()
     }
+
+    private fun warehouseId(code: String): Long =
+        jdbcTemplate.queryForObject("SELECT id FROM warehouses WHERE code = ?", Long::class.java, code)!!
 }

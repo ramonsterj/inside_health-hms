@@ -19,6 +19,13 @@ data class CreateInventoryMovementRequest(
 
     val admissionId: Long? = null,
 
+    /**
+     * Warehouse this movement hits. When absent the service resolves it: EXIT
+     * falls back to the caller's dispensing warehouse, ENTRY to ADMINISTRACION
+     * (the receiving bodega).
+     */
+    val warehouseId: Long? = null,
+
     /** Admin override only — explicit lot for lot-tracked items. Service rejects non-admin senders. */
     val lotId: Long? = null,
 

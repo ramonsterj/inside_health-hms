@@ -5,6 +5,7 @@
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-02-07 | @author | Initial draft |
+| 1.1 | 2026-05-29 | @author | Documented the warehouse-charge → patient-charge pathway: non-medical maintenance consumables (broken/stained towels, cleaning kits) are billed to an admission as a `PatientCharge` of type `SERVICE` via a `WarehouseChargeCreatedEvent`. See [`warehouse-inventory-management.md`](warehouse-inventory-management.md). |
 
 ---
 
@@ -484,6 +485,17 @@ data class PatientDischargedEvent(
     val patientId: Long,
 )
 ```
+
+### Warehouse Charge → Patient Charge (non-medical consumables)
+
+A second, distinct billing origin was added with the Warehouse-Scoped Inventory feature (V119–V121, see [`warehouse-inventory-management.md`](warehouse-inventory-management.md)). It exists alongside the medical-order/medication path:
+
+- A `MAINTENANCE` (or ADMIN / ADMINISTRATIVE_STAFF) user charges a **non-medical consumable** — e.g. a broken or stained towel, a cleaning kit — directly to an admission via `POST /api/v1/warehouse-charges`. These items have no medical order; the towel does not belong to a doctor's prescription.
+- `WarehouseChargeService` decrements the source warehouse's stock (same EXIT semantics as a dispense), then publishes a `WarehouseChargeCreatedEvent`.
+- The billing listener handles the event `AFTER_COMMIT` in a `REQUIRES_NEW` transaction and creates a `PatientCharge` of **`ChargeType.SERVICE`** with `amount = item.price × quantity`, linking the resulting `patient_charges.id` back onto the `warehouse_charges` row.
+- The audit action `WAREHOUSE_CHARGE` is written in its own `REQUIRES_NEW` transaction so an audit failure cannot roll back the stock movement.
+
+Net effect: the medical-order/medication path and the warehouse-charge path both converge on `patient_charges`, but originate differently — one from a prescription, one from a warehouse operator manually charging a consumable.
 
 ### Daily Scheduler
 

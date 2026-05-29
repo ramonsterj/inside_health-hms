@@ -55,6 +55,7 @@ export interface User {
   createdAt: string | null
   localePreference: string | null
   phoneNumbers: PhoneNumber[]
+  assignedWarehouseIds: number[]
 }
 
 export interface UpdateUserRequest {
@@ -92,4 +93,5 @@ export interface AdminUpdateUserRequest {
   status?: UserStatus
   emailVerified?: boolean
   phoneNumbers?: PhoneNumberRequest[]
+  assignedWarehouseIds?: number[]
 }

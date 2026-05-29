@@ -366,6 +366,22 @@ Hospital billing system with real-time charge capture and automated billing from
 **Expected Result**: Final charges added. Invoice generated with all charges.
 **Type**: Automation
 
+### AUTO-11: Warehouse charge creates SERVICE charge
+**Role**: MAINTENANCE
+**Precondition**: MANTENIMIENTO_1 has a non-medical item (e.g. towel, price 75.00); active admission 42 exists. See `docs/features/warehouse-inventory-management.md` (V119–V121).
+**Steps**:
+1. POST `/api/v1/warehouse-charges` { warehouse=MANTENIMIENTO_1, item=towel, admission=42, quantity=1, reason="Stained" }
+2. As admin, check admission 42 billing
+**Expected Result**: 201; MANTENIMIENTO_1 towel stock decremented by 1; a `PatientCharge` of type **`SERVICE`** with amount = 75.00 (price × 1) appears on admission 42 (created via `WarehouseChargeCreatedEvent`, AFTER_COMMIT / REQUIRES_NEW); the `warehouse_charges` row links back to the resulting `patient_charges.id`; `WAREHOUSE_CHARGE` audit row written.
+**Type**: Automation
+
+### AUTO-12: Nurse cannot create a warehouse charge
+**Role**: NURSE
+**Steps**:
+1. POST `/api/v1/warehouse-charges` from ENFERMERIA
+**Expected Result**: 403 — NURSE does not hold `warehouse-charge:create`.
+**Type**: Permission
+
 ---
 
 ## Permission Matrix

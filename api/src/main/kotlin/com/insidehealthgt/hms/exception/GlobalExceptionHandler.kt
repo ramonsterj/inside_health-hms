@@ -114,6 +114,21 @@ class GlobalExceptionHandler(private val messageService: MessageService) {
             )
     }
 
+    @ExceptionHandler(UnprocessableEntityException::class)
+    fun handleUnprocessableEntity(ex: UnprocessableEntityException): ResponseEntity<ErrorResponse> {
+        logger.debug("Unprocessable entity: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.UNPROCESSABLE_ENTITY)
+            .body(
+                ErrorResponse(
+                    error = ErrorDetails(
+                        code = "UNPROCESSABLE_ENTITY",
+                        message = ex.message ?: messageService.errorBadRequest(),
+                    ),
+                ),
+            )
+    }
+
     @ExceptionHandler(AccountDisabledException::class)
     fun handleAccountDisabled(ex: AccountDisabledException): ResponseEntity<ErrorResponse> {
         logger.debug("Account disabled: {}", ex.message)

@@ -32,9 +32,6 @@ class InventoryItem(
     @Column(nullable = false, precision = 12, scale = 2)
     var cost: BigDecimal = BigDecimal.ZERO,
 
-    @Column(nullable = false)
-    var quantity: Int = 0,
-
     @Column(name = "restock_level", nullable = false)
     var restockLevel: Int = 0,
 

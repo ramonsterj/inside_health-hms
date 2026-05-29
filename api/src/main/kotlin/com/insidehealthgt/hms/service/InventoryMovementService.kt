@@ -2,45 +2,71 @@ package com.insidehealthgt.hms.service
 
 import com.insidehealthgt.hms.dto.request.CreateInventoryMovementRequest
 import com.insidehealthgt.hms.dto.response.InventoryMovementResponse
+import com.insidehealthgt.hms.entity.Admission
 import com.insidehealthgt.hms.entity.InventoryItem
 import com.insidehealthgt.hms.entity.InventoryLot
 import com.insidehealthgt.hms.entity.InventoryMovement
+import com.insidehealthgt.hms.entity.InventoryTransfer
+import com.insidehealthgt.hms.entity.InventoryWarehouseStock
 import com.insidehealthgt.hms.entity.MovementType
+import com.insidehealthgt.hms.entity.Warehouse
+import com.insidehealthgt.hms.entity.WarehouseCodes
 import com.insidehealthgt.hms.event.InventoryDispensedEvent
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
+import com.insidehealthgt.hms.exception.UnprocessableEntityException
 import com.insidehealthgt.hms.repository.AdmissionRepository
 import com.insidehealthgt.hms.repository.InventoryItemRepository
 import com.insidehealthgt.hms.repository.InventoryLotRepository
 import com.insidehealthgt.hms.repository.InventoryLotUpsertDao
 import com.insidehealthgt.hms.repository.InventoryMovementRepository
+import com.insidehealthgt.hms.repository.InventoryWarehouseStockRepository
+import com.insidehealthgt.hms.repository.InventoryWarehouseStockUpsertDao
 import com.insidehealthgt.hms.repository.UserRepository
+import com.insidehealthgt.hms.repository.WarehouseRepository
+import com.insidehealthgt.hms.security.CurrentUserProvider
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
 import java.time.LocalDate
 
 /**
- * Centralizes stock movement handling. Has two branches:
- *   - Scalar branch (item.lotTrackingEnabled = false): the legacy atomic-update path.
- *   - Lot branch (item.lotTrackingEnabled = true): FEFO selection on EXIT, ON CONFLICT
- *     upsert on ENTRY, then `recomputeQuantityFromLots` to keep the scalar `quantity`
- *     column consistent with the SUM of active non-recalled lots.
+ * Centralizes warehouse-scoped stock movement handling. Every EXIT/ENTRY now
+ * mutates a row in `inventory_warehouse_stock` (the per-warehouse on-hand) rather
+ * than the dropped global `inventory_items.quantity` / `inventory_lots.quantity_on_hand`
+ * columns.
  *
- * Extracted from InventoryItemService so the FEFO branch has a clean home.
+ * Two branches:
+ *   - Scalar (item.lotTrackingEnabled = false): one stock row per (item, warehouse),
+ *     lot_id NULL.
+ *   - Lot-tracked: FEFO selection on EXIT (warehouse-scoped, AC-5), find-or-create
+ *     lot identity + upsert stock row on ENTRY.
+ *
+ * [exitStock] / [entryStock] are the reusable primitives the transfer and charge
+ * services call within their own transactions; [createMovement] is the public
+ * single-warehouse entry/exit endpoint.
  */
 @Service
-@Suppress("LongParameterList", "ThrowsCount", "ComplexMethod")
+@Suppress("LongParameterList", "ThrowsCount", "TooManyFunctions")
 class InventoryMovementService(
     private val itemRepository: InventoryItemRepository,
     private val lotRepository: InventoryLotRepository,
     private val lotUpsertDao: InventoryLotUpsertDao,
+    private val stockRepository: InventoryWarehouseStockRepository,
+    private val stockUpsertDao: InventoryWarehouseStockUpsertDao,
     private val movementRepository: InventoryMovementRepository,
     private val admissionRepository: AdmissionRepository,
     private val userRepository: UserRepository,
+    private val warehouseRepository: WarehouseRepository,
+    private val scopeService: WarehouseScopeService,
+    private val currentUserProvider: CurrentUserProvider,
     private val eventPublisher: ApplicationEventPublisher,
     private val messageService: MessageService,
 ) {
+
+    /** Outcome of an EXIT: the saved movement and the lot it debited (null for scalar items). */
+    data class ExitResult(val movement: InventoryMovement, val lot: InventoryLot?)
 
     @Transactional
     fun createMovement(itemId: Long, request: CreateInventoryMovementRequest): InventoryMovementResponse {
@@ -52,10 +78,31 @@ class InventoryMovementService(
                 .orElseThrow { BadRequestException(messageService.errorInventoryAdmissionNotFound(admissionId)) }
         }
 
-        val movement = if (item.lotTrackingEnabled) {
-            handleLotTrackedMovement(item, request, admission)
-        } else {
-            handleScalarMovement(item, request, admission)
+        val warehouse = resolveWarehouse(request)
+
+        val movement = when (request.type) {
+            MovementType.EXIT -> exitStock(
+                item = item,
+                warehouse = warehouse,
+                requestedLotId = request.lotId,
+                quantity = BigDecimal(request.quantity),
+                notes = request.notes,
+                admission = admission,
+                transfer = null,
+            ).movement
+
+            MovementType.ENTRY -> {
+                val lot = resolveOrCreateEntryLot(item, request)
+                entryStock(
+                    item = item,
+                    warehouse = warehouse,
+                    lot = lot,
+                    quantity = BigDecimal(request.quantity),
+                    notes = request.notes,
+                    admission = admission,
+                    transfer = null,
+                )
+            }
         }
 
         if (movement.movementType == MovementType.EXIT && admission != null) {
@@ -89,132 +136,151 @@ class InventoryMovementService(
         return movements.map { m -> InventoryMovementResponse.from(m, m.createdBy?.let { usersById[it] }) }
     }
 
-    private fun handleScalarMovement(
+    /**
+     * Debit [quantity] from the item's stock in [warehouse]. Lot-tracked items use
+     * warehouse-scoped FEFO unless [requestedLotId] is given. Throws 422
+     * `error.warehouse.out-of-stock` (naming the warehouse + item) when the
+     * warehouse cannot cover the request — no rows are written. Reusable by the
+     * transfer and charge services within their own transaction.
+     */
+    @Suppress("LongParameterList")
+    fun exitStock(
         item: InventoryItem,
-        request: CreateInventoryMovementRequest,
-        admission: com.insidehealthgt.hms.entity.Admission?,
-    ): InventoryMovement {
-        val delta = if (request.type == MovementType.ENTRY) request.quantity else -request.quantity
+        warehouse: Warehouse,
+        requestedLotId: Long?,
+        quantity: BigDecimal,
+        notes: String?,
+        admission: Admission?,
+        transfer: InventoryTransfer?,
+    ): ExitResult {
+        val previousTotal = warehouseStockSum(item.id!!, warehouse.id!!)
 
-        val updatedRows = itemRepository.updateQuantityAtomically(item.id!!, delta)
-        if (updatedRows == 0) {
-            throw BadRequestException(
-                messageService.errorInventoryInsufficientStock(item.quantity, request.quantity),
-            )
+        val (stockRow, lot) = if (item.lotTrackingEnabled) {
+            selectLotStockForExit(item, warehouse, requestedLotId, quantity)
+        } else {
+            val row = stockRepository.findForUpdate(item.id!!, warehouse.id!!, null)
+            if (row == null || row.quantity < quantity) {
+                throw outOfStock(warehouse, item)
+            }
+            row to null
         }
-        val actualNewQuantity = itemRepository.findCurrentQuantity(item.id!!)
-        val previousQuantity = actualNewQuantity - delta
 
-        val movement = InventoryMovement(
-            item = item,
-            movementType = request.type,
-            quantity = request.quantity,
-            previousQuantity = previousQuantity,
-            newQuantity = actualNewQuantity,
-            notes = request.notes,
-            admission = admission,
-            lot = null,
+        stockRow.quantity = stockRow.quantity.subtract(quantity)
+        stockRepository.save(stockRow)
+
+        val newTotal = warehouseStockSum(item.id!!, warehouse.id!!)
+        val movement = movementRepository.save(
+            InventoryMovement(
+                item = item,
+                movementType = MovementType.EXIT,
+                quantity = quantity.toInt(),
+                previousQuantity = previousTotal,
+                newQuantity = newTotal,
+                notes = notes,
+                admission = admission,
+                lot = lot,
+                warehouse = warehouse,
+                transfer = transfer,
+            ),
         )
-        return movementRepository.save(movement)
+        return ExitResult(movement, lot)
     }
 
-    private fun handleLotTrackedMovement(
+    /**
+     * Credit [quantity] to the item's stock in [warehouse] for the given lot
+     * (null for scalar items), creating the stock row if absent. Reusable by the
+     * transfer service.
+     */
+    @Suppress("LongParameterList")
+    fun entryStock(
         item: InventoryItem,
-        request: CreateInventoryMovementRequest,
-        admission: com.insidehealthgt.hms.entity.Admission?,
-    ): InventoryMovement = when (request.type) {
-        MovementType.EXIT -> handleLotExit(item, request, admission)
-        MovementType.ENTRY -> handleLotEntry(item, request, admission)
-    }
-
-    private fun handleLotExit(
-        item: InventoryItem,
-        request: CreateInventoryMovementRequest,
-        admission: com.insidehealthgt.hms.entity.Admission?,
+        warehouse: Warehouse,
+        lot: InventoryLot?,
+        quantity: BigDecimal,
+        notes: String?,
+        admission: Admission?,
+        transfer: InventoryTransfer?,
     ): InventoryMovement {
-        val previousTotal = item.quantity
+        val previousTotal = warehouseStockSum(item.id!!, warehouse.id!!)
 
-        val selectedLot: InventoryLot = if (request.lotId != null) {
-            // Manual admin override: lock the chosen lot row before reading
-            // quantity_on_hand. Otherwise two concurrent overrides on the same
-            // lot could both pass the quantity check and over-debit. Spec § R-FEFO.
-            val lot = lotRepository.findByIdForUpdate(request.lotId)
-                ?: throw BadRequestException(messageService.errorInventoryLotNotFound(request.lotId))
+        stockUpsertDao.upsertAdd(item.id!!, warehouse.id!!, lot?.id, quantity)
+
+        val newTotal = warehouseStockSum(item.id!!, warehouse.id!!)
+        return movementRepository.save(
+            InventoryMovement(
+                item = item,
+                movementType = MovementType.ENTRY,
+                quantity = quantity.toInt(),
+                previousQuantity = previousTotal,
+                newQuantity = newTotal,
+                notes = notes,
+                admission = admission,
+                lot = lot,
+                warehouse = warehouse,
+                transfer = transfer,
+            ),
+        )
+    }
+
+    private fun selectLotStockForExit(
+        item: InventoryItem,
+        warehouse: Warehouse,
+        requestedLotId: Long?,
+        quantity: BigDecimal,
+    ): Pair<InventoryWarehouseStock, InventoryLot> {
+        if (requestedLotId != null) {
+            val lot = lotRepository.findById(requestedLotId).orElse(null)
+                ?: throw BadRequestException(messageService.errorInventoryLotNotFound(requestedLotId))
             if (lot.item.id != item.id) {
                 throw BadRequestException(messageService.errorInventoryLotItemMismatch())
             }
             if (lot.recalled) {
                 throw BadRequestException(messageService.errorInventoryLotRecalled())
             }
-            if (lot.quantityOnHand < request.quantity) {
-                throw BadRequestException(
-                    messageService.errorInventoryInsufficientStock(lot.quantityOnHand, request.quantity),
-                )
+            val row = stockRepository.findForUpdate(item.id!!, warehouse.id!!, requestedLotId)
+            if (row == null || row.quantity < quantity) {
+                throw outOfStock(warehouse, item)
             }
-            lot
-        } else {
-            val candidates = lotRepository.findFefoCandidates(item.id!!, request.quantity)
-            candidates.firstOrNull()
-                ?: throw BadRequestException(messageService.errorMedicationFefoNoSingleLot())
+            return row to lot
         }
-
-        selectedLot.quantityOnHand -= request.quantity
-        lotRepository.save(selectedLot)
-
-        itemRepository.recomputeQuantityFromLots(item.id!!)
-        val newTotal = itemRepository.findCurrentQuantity(item.id!!)
-
-        val movement = InventoryMovement(
-            item = item,
-            movementType = MovementType.EXIT,
-            quantity = request.quantity,
-            previousQuantity = previousTotal,
-            newQuantity = newTotal,
-            notes = request.notes,
-            admission = admission,
-            lot = selectedLot,
-        )
-        return movementRepository.save(movement)
+        val row = stockRepository.findFefoForUpdate(item.id!!, warehouse.id!!, quantity).firstOrNull()
+            ?: throw outOfStock(warehouse, item)
+        return row to row.lot!!
     }
 
-    private fun handleLotEntry(
-        item: InventoryItem,
-        request: CreateInventoryMovementRequest,
-        admission: com.insidehealthgt.hms.entity.Admission?,
-    ): InventoryMovement {
+    private fun resolveOrCreateEntryLot(item: InventoryItem, request: CreateInventoryMovementRequest): InventoryLot? {
+        if (!item.lotTrackingEnabled) return null
         val expirationDate = request.expirationDate
             ?: throw BadRequestException(messageService.errorInventoryLotExpirationRequired())
-
-        val previousTotal = item.quantity
-
-        // Race-safe upsert against the partial unique index — two concurrent
-        // ENTRY movements for the same (item, lotNumber, expirationDate) can no
-        // longer lose updates the way a find-then-save would.
         val lotId = lotUpsertDao.upsertEntry(
             itemId = item.id!!,
             lotNumber = request.lotNumber,
             expirationDate = expirationDate,
-            quantity = request.quantity,
             receivedAt = LocalDate.now(),
             supplier = request.supplier,
         )
-        val lot = lotRepository.findById(lotId).orElseThrow {
-            BadRequestException(messageService.errorInventoryLotNotFound(lotId))
-        }
-
-        itemRepository.recomputeQuantityFromLots(item.id!!)
-        val newTotal = itemRepository.findCurrentQuantity(item.id!!)
-
-        val movement = InventoryMovement(
-            item = item,
-            movementType = MovementType.ENTRY,
-            quantity = request.quantity,
-            previousQuantity = previousTotal,
-            newQuantity = newTotal,
-            notes = request.notes,
-            admission = admission,
-            lot = lot,
-        )
-        return movementRepository.save(movement)
+        return lotRepository.findById(lotId)
+            .orElseThrow { BadRequestException(messageService.errorInventoryLotNotFound(lotId)) }
     }
+
+    private fun resolveWarehouse(request: CreateInventoryMovementRequest): Warehouse {
+        request.warehouseId?.let { id ->
+            return warehouseRepository.findById(id)
+                .orElseThrow { BadRequestException(messageService.errorWarehouseNotFound(id)) }
+        }
+        return when (request.type) {
+            MovementType.EXIT ->
+                scopeService.resolveDispensingWarehouse(currentUserProvider.currentUserDetailsOrThrow())
+
+            MovementType.ENTRY ->
+                warehouseRepository.findByCode(WarehouseCodes.RECEIVING)
+                    ?: throw BadRequestException(messageService.errorWarehouseInactive(WarehouseCodes.RECEIVING))
+        }
+    }
+
+    private fun warehouseStockSum(itemId: Long, warehouseId: Long): Int =
+        stockRepository.sumByItemAndWarehouse(itemId, warehouseId).toInt()
+
+    private fun outOfStock(warehouse: Warehouse, item: InventoryItem) =
+        UnprocessableEntityException(messageService.errorWarehouseOutOfStock(warehouse.name, item.name))
 }

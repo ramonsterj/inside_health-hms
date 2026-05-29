@@ -20,6 +20,8 @@
 | E2E-09 | All (i18n) | ADMIN |
 | E2E-10 | Auth, Clinical History | DOCTOR |
 | E2E-11 | Audit, Patient, Admission, Medical Orders | STAFF, DOCTOR, ADMIN |
+| E2E-12 | Warehouse, Inventory, MAR | ADMIN, NURSE |
+| E2E-13 | Warehouse, Billing | MAINTENANCE, ADMIN |
 
 ---
 
@@ -366,5 +368,48 @@ For each role, log in and verify access:
 - Entries contain: entity type, ID, action, user, timestamp, before/after values
 - Filters work correctly (entity, user, date)
 - Before/after values accurately reflect data changes
+
+**Type**: End-to-End
+
+---
+
+### E2E-12: Warehouse-Scoped Dispense (Transfer then Nurse Dispense)
+**Roles Involved**: ADMIN, NURSE
+**Modules Tested**: Warehouse (Bodegas), Inventory, MAR
+**Preconditions**: Migrations V119–V121 applied. A lot-tracked medication with stock in ADMINISTRACION but 0 in ENFERMERIA. Active admission with a MEDICAMENTOS order linked to that medication. See `docs/features/warehouse-inventory-management.md`.
+
+**Steps**:
+1. **[nurse1]** Attempt to administer the medication (GIVEN)
+2. **Verify**: Administer fails with 422 `error.warehouse.out-of-stock` naming the ENFERMERIA warehouse — even though ADMINISTRACION has stock.
+3. **[admin]** POST a transfer of 20 units from ADMINISTRACION to ENFERMERIA
+4. **Verify**: Transfer `status=COMPLETED`; ADMINISTRACION -20, ENFERMERIA +20; one `inventory_transfers` row + two `inventory_movements`; `WAREHOUSE_TRANSFER` audit row.
+5. **[nurse1]** Administer the medication again (GIVEN)
+6. **Verify**: Succeeds; ENFERMERIA decremented; MEDICATION billing charge created. FEFO selected the earliest-expiring lot **in ENFERMERIA**.
+
+**Expected Results**:
+- Strict warehouse isolation enforced on dispense
+- Transfer atomically moves stock between bodegas
+- Dispense succeeds only after the nurse's warehouse holds stock
+
+**Type**: End-to-End
+
+---
+
+### E2E-13: Maintenance Charge Billed to Admission
+**Roles Involved**: MAINTENANCE, ADMIN
+**Modules Tested**: Warehouse (Bodegas), Billing
+**Preconditions**: Migrations V119–V121 applied. MAINTENANCE user assigned to MANTENIMIENTO_1, which holds a non-medical item (towel, price Q75). Active admission 42. See `docs/features/warehouse-inventory-management.md`.
+
+**Steps**:
+1. **[maint_user]** Log in; verify only assigned warehouse (MANTENIMIENTO_1) is visible
+2. **[maint_user]** POST `/api/v1/warehouse-charges` { warehouse=MANTENIMIENTO_1, item=towel, admission=42, quantity=1, reason="Stained — patient repainting" }
+3. **Verify**: 201; MANTENIMIENTO_1 towel stock -1; `WAREHOUSE_CHARGE` audit row.
+4. **[admin]** Open admission 42 billing
+5. **Verify**: A `PatientCharge` of type **SERVICE** with amount Q75 appears (created via `WarehouseChargeCreatedEvent`, AFTER_COMMIT / REQUIRES_NEW); `warehouse_charges` row links to the resulting `patient_charges.id`.
+
+**Expected Results**:
+- Non-medical consumable bills the admission as a SERVICE charge
+- Maintenance user is scoped to assigned warehouses only
+- Stock decrement, billing charge, and audit row all consistent
 
 **Type**: End-to-End

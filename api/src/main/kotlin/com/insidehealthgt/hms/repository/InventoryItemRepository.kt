@@ -32,42 +32,6 @@ interface InventoryItemRepository : JpaRepository<InventoryItem, Long> {
         pageable: Pageable,
     ): Page<InventoryItem>
 
-    @Query(
-        "SELECT i FROM InventoryItem i JOIN FETCH i.category " +
-            "WHERE i.quantity <= i.restockLevel AND i.restockLevel > 0 " +
-            "AND (:categoryId IS NULL OR i.category.id = :categoryId) " +
-            "ORDER BY (i.restockLevel - i.quantity) DESC",
-    )
-    fun findLowStock(categoryId: Long?): List<InventoryItem>
-
-    @Modifying
-    @Transactional
-    @Query(
-        value = "UPDATE inventory_items SET quantity = quantity + :delta, updated_at = CURRENT_TIMESTAMP " +
-            "WHERE id = :id AND quantity + :delta >= 0",
-        nativeQuery = true,
-    )
-    fun updateQuantityAtomically(id: Long, delta: Int): Int
-
-    @Query(value = "SELECT quantity FROM inventory_items WHERE id = :id", nativeQuery = true)
-    fun findCurrentQuantity(id: Long): Int
-
-    /**
-     * Recompute inventory_items.quantity from the SUM of active, non-recalled lots.
-     * Used by the lot-tracked dispensing path and the reconcile endpoint.
-     */
-    @Modifying
-    @Transactional
-    @Query(
-        value = "UPDATE inventory_items SET quantity = COALESCE(" +
-            "(SELECT SUM(quantity_on_hand) FROM inventory_lots " +
-            "WHERE item_id = :itemId AND deleted_at IS NULL AND recalled = FALSE), 0), " +
-            "updated_at = CURRENT_TIMESTAMP " +
-            "WHERE id = :itemId",
-        nativeQuery = true,
-    )
-    fun recomputeQuantityFromLots(itemId: Long): Int
-
     @Query("SELECT i FROM InventoryItem i WHERE i.sku = :sku")
     fun findBySku(sku: String): InventoryItem?
 

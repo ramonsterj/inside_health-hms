@@ -39,7 +39,7 @@ const router = createRouter({
             // Nurses (all nursing roles) and resident doctors land on the bed
             // occupancy screen as their default dashboard. Admins are never
             // auto-redirected — they keep the standard dashboard. The seeded
-            // admin no longer carries RESIDENT_DOCTOR after V119.
+            // admin no longer carries RESIDENT_DOCTOR after V122.
             const BED_OCCUPANCY_HOME_ROLES = [
               'NURSE',
               'CHIEF_NURSE',
@@ -312,6 +312,37 @@ const router = createRouter({
           name: 'pharmacy-medication-detail',
           component: () => import('@/views/pharmacy/PharmacyDetailView.vue'),
           meta: { requiresPermission: 'medication:read' }
+        },
+        // Warehouse (Bodegas) routes
+        {
+          path: 'warehouses',
+          name: 'warehouses',
+          component: () => import('@/views/warehouse/WarehouseList.vue'),
+          meta: { requiresPermission: 'warehouse:create' }
+        },
+        {
+          path: 'warehouses/stock',
+          name: 'warehouse-stock-default',
+          component: () => import('@/views/warehouse/WarehouseStockView.vue'),
+          meta: { requiresPermission: 'warehouse:read' }
+        },
+        {
+          path: 'warehouses/:code/stock',
+          name: 'warehouse-stock',
+          component: () => import('@/views/warehouse/WarehouseStockView.vue'),
+          meta: { requiresPermission: 'warehouse:read' }
+        },
+        {
+          path: 'warehouse-transfers',
+          name: 'warehouse-transfers',
+          component: () => import('@/views/warehouse/TransferListView.vue'),
+          meta: { requiresPermission: 'warehouse-transfer:read' }
+        },
+        {
+          path: 'warehouse-charges',
+          name: 'warehouse-charges',
+          component: () => import('@/views/warehouse/MaintenanceDashboardView.vue'),
+          meta: { requiresPermission: 'warehouse-charge:create' }
         },
         // Treasury routes
         {
