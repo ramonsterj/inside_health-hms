@@ -1,7 +1,7 @@
 package com.insidehealthgt.hms.entity
 
 /**
- * Stable codes for the day-1 seeded warehouses (see migration V118). Centralized
+ * Stable codes for the day-1 seeded warehouses (see migration V119). Centralized
  * so the "receiving warehouse is ADMINISTRACION" / "nursing dispenses from
  * ENFERMERIA" knowledge lives in one place instead of being duplicated as
  * per-service string constants.

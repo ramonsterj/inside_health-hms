@@ -5,7 +5,7 @@
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-05-28 | @author | Initial draft. Introduces named warehouses (bodegas) with **strict isolation**: each warehouse owns its own stock and can only dispense from itself. Adds inter-warehouse transfers, a new `MAINTENANCE` role, and the ability to charge non-medical consumables (e.g. broken towel) against an admission. Captures customer feedback from 2026-05-26. |
-| 1.1 | 2026-05-29 | @author | Migrations renumbered to **V118–V120** because V117 became AUXILIARY_NURSE (nursing-roles-split). Implemented. V118 also seeds the `role_default_warehouses` mapping table and adds `warehouse_id` + `transfer_id` columns to `inventory_movements` (not in the original v1.0 DDL). Maintenance / non-medical warehouse charges bill as `ChargeType.SERVICE`. |
+| 1.1 | 2026-05-29 | @author | Migrations renumbered to **V119–V121** because V117 became AUXILIARY_NURSE (nursing-roles-split) and V118 became the RESIDENT_DOCTOR occupancy-view grant (bed-occupancy-view). Implemented. V119 also seeds the `role_default_warehouses` mapping table and adds `warehouse_id` + `transfer_id` columns to `inventory_movements` (not in the original v1.0 DDL). Maintenance / non-medical warehouse charges bill as `ChargeType.SERVICE`. |
 | 1.2 | 2026-05-29 | @author | **Stock-display transparency fix (FR-11).** The pharmacy catalog (list + medication detail) was showing a single `quantity` = system-wide total across all six bodegas with no label, while dispensing is warehouse-scoped — misleading the clinical roles that hold `medication:read` (NURSE / CHIEF_NURSE / DOCTOR), who could read "50 in stock" yet hit `error.warehouse.out-of-stock` because ENFERMERIA holds 0. The medication **detail** response now carries a per-warehouse `warehouseStock` breakdown (every active warehouse, including 0-on-hand ones) and the UI presents `quantity` explicitly as the all-bodegas total. No dispense-path behavior changes; this is a read-model + labeling fix. |
 | 1.3 | 2026-05-29 | @author | **Read-scope parity fix (FR-6 / FR-7 / AC-13).** v1.0–1.2 only enforced the per-warehouse read scope on the dedicated stock view (`/warehouses/{id}/stock`), the expiry report, and the FEFO preview. The catalog list / low-stock endpoints (`/inventory-items?warehouseId=…`) returned a warehouse's per-item on-hand gated by `inventory-item:read` alone — a permission also granted to MAINTENANCE / NURSE / PSYCHOLOGIST for unrelated reasons (picking items on forms), so a bodega-scoped user could read another bodega's stock counts by passing its id. Clarified that **every** warehouse-scoped read facet enforces `WarehouseScopeService.assertCanView` when a `warehouseId` is supplied. The system-wide (no `warehouseId`) view is unchanged. |
 
@@ -179,7 +179,7 @@ A new join table `user_warehouses(user_id, warehouse_id)` lists which warehouses
 
 ### FR-10: Maintenance user management
 
-- `MAINTENANCE` is a new system role (V118), seeded with zero users in production. Admins assign warehouses to maintenance users via the existing user-edit screen (new "Assigned warehouses" multi-select section, visible when the user has the `MAINTENANCE` role).
+- `MAINTENANCE` is a new system role (V119), seeded with zero users in production. Admins assign warehouses to maintenance users via the existing user-edit screen (new "Assigned warehouses" multi-select section, visible when the user has the `MAINTENANCE` role).
 - Removing the `MAINTENANCE` role from a user does not delete the `user_warehouses` rows (they go dormant). Re-adding the role restores access.
 
 ### FR-11: Pharmacy catalog stock transparency (v1.2)
@@ -206,7 +206,7 @@ Because stock is warehouse-scoped but the catalog row is single, any UI that sho
 
 ## Acceptance Criteria / Scenarios
 
-- **AC-1 — Seeded warehouses.** After V118 (warehouses + per-warehouse stock + permissions + MAINTENANCE role) and V119 (backfill) run on a fresh DB, `SELECT code FROM warehouses ORDER BY code` returns exactly the six seeded codes.
+- **AC-1 — Seeded warehouses.** After V119 (warehouses + per-warehouse stock + permissions + MAINTENANCE role) and V120 (backfill) run on a fresh DB, `SELECT code FROM warehouses ORDER BY code` returns exactly the six seeded codes.
 - **AC-2 — Stock backfill.** After migration, for every catalog row that had `quantity > 0`, there is exactly one matching `inventory_warehouse_stock` row with `warehouse_id = ADMINISTRACION` and the same quantity. For every lot with `quantity_on_hand > 0`, same.
 - **AC-3 — Legacy columns gone.** `inventory_items.quantity` and `inventory_lots.quantity_on_hand` are dropped at the end of the migration; reads route through the new table.
 - **AC-4 — Nurse dispense uses ENFERMERIA only.** A NURSE administers a medication that has stock = 5 in ENFERMERIA and stock = 100 in ADMINISTRACION. The administration succeeds and decrements ENFERMERIA. If ENFERMERIA stock is 0, the call returns 422 `error.warehouse.out-of-stock` even though ADMINISTRACION has 100.
@@ -334,17 +334,17 @@ Confirm the feature follows the platform-wide date/time standard documented in `
 
 ### New Migrations (as shipped)
 
-> **v1.1 renumbering.** V117 was claimed by AUXILIARY_NURSE (nursing-roles-split) before this feature shipped, so the actual sequence is **V118 → V119 → V120**.
+> **v1.1 renumbering.** V117 was claimed by AUXILIARY_NURSE (nursing-roles-split) and V118 by the RESIDENT_DOCTOR occupancy-view grant (bed-occupancy-view) before this feature shipped, so the actual sequence is **V119 → V120 → V121**.
 
 | Migration | Description |
 |-----------|-------------|
-| `V118__add_warehouses_and_permissions.sql` | Create `warehouses`, `inventory_warehouse_stock`, `inventory_transfers`, `warehouse_charges`, `user_warehouses`, `role_default_warehouses`. Add `warehouse_id` + `transfer_id` columns to `inventory_movements`. Seed six warehouses. Seed the eight new permissions plus the `MAINTENANCE` role and its grants. Seed the role → default-warehouse mapping rows. |
-| `V119__backfill_warehouse_stock.sql` | Copy every `inventory_items.quantity` and `inventory_lots.quantity_on_hand` into `inventory_warehouse_stock` with `warehouse_id = ADMINISTRACION`. |
-| `V120__drop_legacy_stock_columns.sql` | Drop `inventory_items.quantity` and `inventory_lots.quantity_on_hand`. (Final step — only after backend code has switched to the new tables.) |
+| `V119__add_warehouses_and_permissions.sql` | Create `warehouses`, `inventory_warehouse_stock`, `inventory_transfers`, `warehouse_charges`, `user_warehouses`, `role_default_warehouses`. Add `warehouse_id` + `transfer_id` columns to `inventory_movements`. Seed six warehouses. Seed the eight new permissions plus the `MAINTENANCE` role and its grants. Seed the role → default-warehouse mapping rows. |
+| `V120__backfill_warehouse_stock.sql` | Copy every `inventory_items.quantity` and `inventory_lots.quantity_on_hand` into `inventory_warehouse_stock` with `warehouse_id = ADMINISTRACION`. |
+| `V121__drop_legacy_stock_columns.sql` | Drop `inventory_items.quantity` and `inventory_lots.quantity_on_hand`. (Final step — only after backend code has switched to the new tables.) |
 
-The V118/V119/V120 split exists so the cut-over from legacy stock columns can be staged. V118 + V119 are deploy-safe (additive). V120 is the irreversible cut.
+The V119/V120/V121 split exists so the cut-over from legacy stock columns can be staged. V119 + V120 are deploy-safe (additive). V121 is the irreversible cut.
 
-### Schema Example (V118)
+### Schema Example (V119)
 
 ```sql
 CREATE TABLE warehouses (
@@ -558,22 +558,22 @@ export const createWarehouseChargeSchema = z.object({
 
 ## Implementation Notes
 
-- **Staged cutover.** V118 + V119 are deploy-safe and additive: stock can be written to both legacy columns and the new table during a transitional window if needed. V120 (drop legacy columns) is the irreversible step — ship it only after monitoring confirms no read path falls back to `inventory_items.quantity`. The intermediate state is messy but safer than a single big-bang migration.
+- **Staged cutover.** V119 + V120 are deploy-safe and additive: stock can be written to both legacy columns and the new table during a transitional window if needed. V121 (drop legacy columns) is the irreversible step — ship it only after monitoring confirms no read path falls back to `inventory_items.quantity`. The intermediate state is messy but safer than a single big-bang migration.
 - **Service refactor scope.** `InventoryMovementService` becomes warehouse-aware: every EXIT must resolve a warehouse, every ENTRY must specify one. `MedicationAdministrationService` becomes the canonical consumer of `WarehouseScopeService.resolveDispensingWarehouse(user)`. `PharmacyService.fefoPreview` and the FEFO branch of `InventoryMovementService.exit` both accept a `warehouseId` (or fall back to the resolved default).
 - **Pattern reference for the MAINTENANCE role**: V114 (RESIDENT_DOCTOR add) for the role shape; the per-user warehouse assignment is novel and warrants a small in-repo design note in `WarehouseScopeService.kt`.
 - **Transfer is not just two movements.** Even though the net effect on `inventory_warehouse_stock` is `-q` and `+q`, modeling the transfer as its own aggregate gives us: (a) atomicity in the audit trail ("show me all moves of item X" should not require joining two `inventory_movement` rows by timestamp), (b) a place to land the Phase 2 approval flow without schema churn, (c) cleaner financial reporting later.
 - **Charging from a warehouse vs. from a medical order.** A medication administration charges against the medical order's linked inventory item (existing flow). A warehouse-charge is for items that have no medical order — the towel doesn't belong to a doctor's prescription. The two paths converge into `patient_charges` but originate differently. Document this clearly in `docs/features/hospital-billing-system.md` after this ships.
 - **Audit log actions.** Add `WAREHOUSE_TRANSFER` and `WAREHOUSE_CHARGE` to the `AuditAction` enum. The audit row is written in `REQUIRES_NEW` so an audit failure does not roll back the underlying stock change (matches V099 pattern).
-- **Default-warehouse mapping is data-driven**, not code-driven. The role → default-warehouse mapping in FR-3 / FR-9 is implemented as a small lookup table (`role_default_warehouses(role_id, warehouse_id)`, seeded by V118) so adding a role doesn't require a code change. Maintenance users use `user_warehouses` instead.
+- **Default-warehouse mapping is data-driven**, not code-driven. The role → default-warehouse mapping in FR-3 / FR-9 is implemented as a small lookup table (`role_default_warehouses(role_id, warehouse_id)`, seeded by V119) so adding a role doesn't require a code change. Maintenance users use `user_warehouses` instead.
 
 ---
 
 ## QA Checklist
 
 ### Backend
-- [ ] V118 migration runs against a fresh DB and against a dev DB with V111 catalog data; no row count changes outside the new tables.
-- [ ] V119 backfills every `inventory_items.quantity > 0` row and every `inventory_lots.quantity_on_hand > 0` row.
-- [ ] V120 drops the two legacy columns; subsequent reads route through the new table.
+- [ ] V119 migration runs against a fresh DB and against a dev DB with V111 catalog data; no row count changes outside the new tables.
+- [ ] V120 backfills every `inventory_items.quantity > 0` row and every `inventory_lots.quantity_on_hand > 0` row.
+- [ ] V121 drops the two legacy columns; subsequent reads route through the new table.
 - [ ] Six warehouses seeded; codes match exactly.
 - [ ] MAINTENANCE role exists with the granted permissions.
 - [ ] Unit tests for `WarehouseScopeService.resolveDispensingWarehouse` across all role combinations.
@@ -617,7 +617,7 @@ All four scenarios live in `web/e2e/warehouse.spec.ts` (mock-driven, the repo's 
 
 ### Must Update
 
-- [ ] **CLAUDE.md** — Migration entries for V118–V120; feature bullets for the warehouse module; MAINTENANCE role mention.
+- [ ] **CLAUDE.md** — Migration entries for V119–V121; feature bullets for the warehouse module; MAINTENANCE role mention.
 - [ ] **docs/roles-functionality-matrix.md** — Add MAINTENANCE column; add Warehouse / Transfer / Charge rows.
 - [ ] **docs/roles-functionality-matrix.es.md** — Same in Spanish.
 - [ ] **docs/features/inventory-module.md** — One-line note in Revision History pointing here, plus a sentence in Overview clarifying that stock is now per-warehouse.

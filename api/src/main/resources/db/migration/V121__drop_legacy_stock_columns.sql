@@ -1,5 +1,5 @@
 -- ============================================================================
--- V120: Drop the legacy global stock columns.
+-- V121: Drop the legacy global stock columns.
 -- ============================================================================
 -- Final, irreversible step of the warehouse cutover. Stock now lives entirely in
 -- inventory_warehouse_stock; all read/write paths route through it (see

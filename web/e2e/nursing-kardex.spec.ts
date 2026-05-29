@@ -18,6 +18,7 @@ const mockNurseUser = {
     'vital-sign:create',
     'medical-order:read',
     'medication-administration:create',
+    'room:occupancy-view',
   ],
   status: 'ACTIVE',
   emailVerified: true,
@@ -47,6 +48,27 @@ const mockDoctorUser = {
     'admission:read',
     'medical-order:read',
     'medical-order:create',
+  ],
+  status: 'ACTIVE',
+  emailVerified: true,
+  createdAt: '2026-01-01T00:00:00Z',
+  localePreference: 'en',
+}
+
+const mockResidentDoctorUser = {
+  id: 6,
+  username: 'resident',
+  email: 'resident@example.com',
+  firstName: 'Sofia',
+  lastName: 'Mendez',
+  salutation: 'DRA',
+  roles: ['RESIDENT_DOCTOR'],
+  permissions: [
+    'admission:read',
+    'admission:create',
+    'medical-order:read',
+    'medical-order:create',
+    'room:occupancy-view',
   ],
   status: 'ACTIVE',
   emailVerified: true,
@@ -246,6 +268,24 @@ async function setupKardexListMock(
   })
 }
 
+// Minimal mock for the bed occupancy screen, which is the default landing page
+// for nurses (the /dashboard redirect target as of 2026-05-29).
+async function setupOccupancyMock(page: Page) {
+  await page.route('**/api/v1/rooms/occupancy', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          summary: { totalBeds: 0, occupiedBeds: 0, freeBeds: 0, occupancyPercent: 0 },
+          rooms: [],
+        },
+      }),
+    })
+  })
+}
+
 // ── Tests ──
 
 test.describe('Nursing Kardex Dashboard', () => {
@@ -258,24 +298,34 @@ test.describe('Nursing Kardex Dashboard', () => {
   // ── Role-Based Routing ──
 
   test.describe('Role-based routing', () => {
-    test('nurse login redirects /dashboard to /nursing-kardex', async ({ page }) => {
+    test('nurse login redirects /dashboard to /bed-occupancy', async ({ page }) => {
       await setupAuth(page, mockNurseUser)
       await setupCommonMocks(page, mockNurseUser)
-      await setupKardexListMock(page)
+      await setupOccupancyMock(page)
 
       await page.goto('/dashboard')
 
-      await expect(page).toHaveURL(/\/nursing-kardex/, { timeout: 10000 })
+      await expect(page).toHaveURL(/\/bed-occupancy/, { timeout: 10000 })
     })
 
-    test('chief nurse login redirects /dashboard to /nursing-kardex', async ({ page }) => {
+    test('chief nurse login redirects /dashboard to /bed-occupancy', async ({ page }) => {
       await setupAuth(page, mockChiefNurseUser)
       await setupCommonMocks(page, mockChiefNurseUser)
-      await setupKardexListMock(page)
+      await setupOccupancyMock(page)
 
       await page.goto('/dashboard')
 
-      await expect(page).toHaveURL(/\/nursing-kardex/, { timeout: 10000 })
+      await expect(page).toHaveURL(/\/bed-occupancy/, { timeout: 10000 })
+    })
+
+    test('resident doctor login redirects /dashboard to /bed-occupancy', async ({ page }) => {
+      await setupAuth(page, mockResidentDoctorUser)
+      await setupCommonMocks(page, mockResidentDoctorUser)
+      await setupOccupancyMock(page)
+
+      await page.goto('/dashboard')
+
+      await expect(page).toHaveURL(/\/bed-occupancy/, { timeout: 10000 })
     })
 
     test('doctor is NOT redirected — stays on /dashboard', async ({ page }) => {

@@ -376,7 +376,7 @@ For each role, log in and verify access:
 ### E2E-12: Warehouse-Scoped Dispense (Transfer then Nurse Dispense)
 **Roles Involved**: ADMIN, NURSE
 **Modules Tested**: Warehouse (Bodegas), Inventory, MAR
-**Preconditions**: Migrations V118–V120 applied. A lot-tracked medication with stock in ADMINISTRACION but 0 in ENFERMERIA. Active admission with a MEDICAMENTOS order linked to that medication. See `docs/features/warehouse-inventory-management.md`.
+**Preconditions**: Migrations V119–V121 applied. A lot-tracked medication with stock in ADMINISTRACION but 0 in ENFERMERIA. Active admission with a MEDICAMENTOS order linked to that medication. See `docs/features/warehouse-inventory-management.md`.
 
 **Steps**:
 1. **[nurse1]** Attempt to administer the medication (GIVEN)
@@ -398,7 +398,7 @@ For each role, log in and verify access:
 ### E2E-13: Maintenance Charge Billed to Admission
 **Roles Involved**: MAINTENANCE, ADMIN
 **Modules Tested**: Warehouse (Bodegas), Billing
-**Preconditions**: Migrations V118–V120 applied. MAINTENANCE user assigned to MANTENIMIENTO_1, which holds a non-medical item (towel, price Q75). Active admission 42. See `docs/features/warehouse-inventory-management.md`.
+**Preconditions**: Migrations V119–V121 applied. MAINTENANCE user assigned to MANTENIMIENTO_1, which holds a non-medical item (towel, price Q75). Active admission 42. See `docs/features/warehouse-inventory-management.md`.
 
 **Steps**:
 1. **[maint_user]** Log in; verify only assigned warehouse (MANTENIMIENTO_1) is visible

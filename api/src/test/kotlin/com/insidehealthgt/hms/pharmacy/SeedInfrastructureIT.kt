@@ -9,10 +9,10 @@ import org.springframework.jdbc.datasource.init.ScriptUtils
 import javax.sql.DataSource
 
 /**
- * Guards the dev/acceptance seed against the V120 cut-over: `inventory_items.quantity`
+ * Guards the dev/acceptance seed against the V121 cut-over: `inventory_items.quantity`
  * was dropped, so `R__seed_02_infrastructure.sql` must no longer write that column and
  * must instead land non-drug starting stock in `inventory_warehouse_stock`
- * (ADMINISTRACION), mirroring the V119 backfill. This reproduces the exact runtime path
+ * (ADMINISTRACION), mirroring the V120 backfill. This reproduces the exact runtime path
  * a fresh dev seed takes: the script runs after all versioned migrations.
  */
 class SeedInfrastructureIT : AbstractIntegrationTest() {
@@ -44,7 +44,7 @@ class SeedInfrastructureIT : AbstractIntegrationTest() {
     )!!
 
     @Test
-    fun `R seed infrastructure runs after V120 and lands non-drug stock per warehouse`() {
+    fun `R seed infrastructure runs after V121 and lands non-drug stock per warehouse`() {
         // @BeforeEach already cleared inventory_items/stock/lots/movements. The
         // migration-seeded categories (created_by IS NULL) survive that cleanup and
         // R__seed_02 re-inserts them without ON CONFLICT, so drop them first to mirror

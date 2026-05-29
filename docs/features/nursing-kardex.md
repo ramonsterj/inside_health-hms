@@ -57,7 +57,7 @@ The Nursing Kardex is a specialized dashboard for nursing staff (NURSE, CHIEF_NU
 
 ### Kardex Dashboard View
 
-- Serves as the default landing page for users with NURSE or CHIEF_NURSE roles (via redirect from /dashboard)
+- Reachable from the side-nav and from `/dashboard` navigation. **Note:** as of 2026-05-29 the kardex is no longer the auto-redirect target for nurses — `/dashboard` now redirects nurses (NURSE / CHIEF_NURSE / AUXILIARY_NURSE) and resident doctors to the Bed Occupancy screen (`/bed-occupancy`) instead. See [bed-occupancy-view.md](./bed-occupancy-view.md). The kardex remains fully accessible via the menu.
 - Displays all ACTIVE admissions as expandable summary cards
 - Supports filtering by admission type (Hospitalization, Ambulatory, etc.)
 - Supports text search by patient name
@@ -132,7 +132,7 @@ When a card is expanded, it shows three sections:
 ## Acceptance Criteria / Scenarios
 
 ### Kardex View - Happy Path
-- When a nurse logs in, the system renders the kardex dashboard instead of the generic admission table.
+- When a nurse navigates to the kardex, the system renders the kardex dashboard instead of the generic admission table. (As of 2026-05-29 a nurse's *default* landing page is the Bed Occupancy screen, not the kardex — see [bed-occupancy-view.md](./bed-occupancy-view.md); the kardex is still reachable from the menu.)
 - When the kardex loads, each active admission appears as a summary card with all specified fields populated.
 - When a nurse expands a patient card, the medication list, care instructions, and latest vitals are displayed.
 - When a nurse clicks "Administer" on a medication, the existing MAR dialog opens pre-filled with the correct admission and order.
@@ -427,7 +427,7 @@ All required indexes already exist:
 |------|-----------|---------------|-------|
 | `/nursing-kardex` | `NursingKardexView` | Yes | NURSE, CHIEF_NURSE, ADMIN |
 
-**Role-based routing**: When a user with NURSE or CHIEF_NURSE role logs in, the router redirects `/dashboard` to `/nursing-kardex`. Other roles continue to see the standard `DashboardView`.
+**Role-based routing**: ⚠️ **Superseded 2026-05-29.** The `/dashboard` redirect for nurses now targets `/bed-occupancy`, not `/nursing-kardex` — see [bed-occupancy-view.md](./bed-occupancy-view.md) §"default landing page". The kardex is no longer an auto-redirect target; users reach it from the side-nav. The route itself (`/nursing-kardex`, gated by `admission:read`) is unchanged.
 
 ### Validation (Zod Schemas)
 

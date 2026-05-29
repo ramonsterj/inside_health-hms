@@ -488,7 +488,7 @@ data class PatientDischargedEvent(
 
 ### Warehouse Charge → Patient Charge (non-medical consumables)
 
-A second, distinct billing origin was added with the Warehouse-Scoped Inventory feature (V118–V120, see [`warehouse-inventory-management.md`](warehouse-inventory-management.md)). It exists alongside the medical-order/medication path:
+A second, distinct billing origin was added with the Warehouse-Scoped Inventory feature (V119–V121, see [`warehouse-inventory-management.md`](warehouse-inventory-management.md)). It exists alongside the medical-order/medication path:
 
 - A `MAINTENANCE` (or ADMIN / ADMINISTRATIVE_STAFF) user charges a **non-medical consumable** — e.g. a broken or stained towel, a cleaning kit — directly to an admission via `POST /api/v1/warehouse-charges`. These items have no medical order; the towel does not belong to a doctor's prescription.
 - `WarehouseChargeService` decrements the source warehouse's stock (same EXIT semantics as a dispense), then publishes a `WarehouseChargeCreatedEvent`.

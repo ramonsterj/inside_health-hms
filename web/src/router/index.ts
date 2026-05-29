@@ -36,10 +36,22 @@ const router = createRouter({
           beforeEnter: (_to, _from, next) => {
             const authStore = useAuthStore()
             const roles = authStore.user?.roles ?? []
+            // Nurses (all nursing roles) and resident doctors land on the bed
+            // occupancy screen as their default dashboard. Admins are never
+            // auto-redirected — they keep the standard dashboard even when they
+            // also carry a nursing/resident role (e.g. the seeded `admin`, which
+            // holds RESIDENT_DOCTOR so it can register admissions).
+            const BED_OCCUPANCY_HOME_ROLES = [
+              'NURSE',
+              'CHIEF_NURSE',
+              'AUXILIARY_NURSE',
+              'RESIDENT_DOCTOR'
+            ]
             if (
-              roles.some((r: string) => ['NURSE', 'CHIEF_NURSE', 'AUXILIARY_NURSE'].includes(r))
+              !authStore.isAdmin &&
+              roles.some((r: string) => BED_OCCUPANCY_HOME_ROLES.includes(r))
             ) {
-              next({ name: 'nursing-kardex' })
+              next({ name: 'bed-occupancy' })
             } else {
               next()
             }

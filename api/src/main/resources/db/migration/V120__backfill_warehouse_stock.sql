@@ -1,5 +1,5 @@
 -- ============================================================================
--- V119: Backfill inventory_warehouse_stock from the legacy global counts.
+-- V120: Backfill inventory_warehouse_stock from the legacy global counts.
 -- ============================================================================
 -- Every legacy stock count lands in the ADMINISTRACION (master/receiving)
 -- warehouse. Idempotent: the partial unique index uq_iws_item_wh_lot catches

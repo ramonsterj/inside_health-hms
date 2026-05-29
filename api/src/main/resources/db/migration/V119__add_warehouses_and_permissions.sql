@@ -1,5 +1,5 @@
 -- ============================================================================
--- V118: Warehouse-Scoped Inventory Management (Bodegas) — schema + seed
+-- V119: Warehouse-Scoped Inventory Management (Bodegas) — schema + seed
 -- ============================================================================
 -- Introduces named warehouses ("bodegas") with strict isolation: each warehouse
 -- owns its own stock and can only dispense from itself. Adds inter-warehouse
@@ -11,8 +11,9 @@
 -- MOVEMENTS (which bodega they entered/left from — new warehouse_id column).
 --
 -- Spec: docs/features/warehouse-inventory-management.md v1.0 (migrations
--- renumbered V117->V118, V118->V119, V119->V120 because V117 is AUXILIARY_NURSE).
--- This migration is additive/deploy-safe; V119 backfills, V120 drops legacy cols.
+-- renumbered to V119->V121 because V117 is AUXILIARY_NURSE and V118 is the
+-- RESIDENT_DOCTOR occupancy-view grant).
+-- This migration is additive/deploy-safe; V120 backfills, V121 drops legacy cols.
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------

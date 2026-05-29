@@ -9,7 +9,7 @@ import java.time.LocalDate
 /**
  * Race-safe lot-identity upsert for inventory_lots.
  *
- * Lots are metadata only since the warehouse cutover (V120 dropped
+ * Lots are metadata only since the warehouse cutover (V121 dropped
  * `quantity_on_hand`); on-hand quantity lives in `inventory_warehouse_stock`.
  * These methods only ensure the (item, lotNumber, expirationDate) identity row
  * exists and return its id — the caller then adds quantity to the warehouse

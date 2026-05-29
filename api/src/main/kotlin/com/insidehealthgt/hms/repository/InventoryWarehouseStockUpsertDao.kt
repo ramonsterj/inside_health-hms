@@ -11,7 +11,7 @@ import java.math.BigDecimal
  *
  * Mirrors [InventoryLotUpsertDao]: PostgreSQL `INSERT ... ON CONFLICT ...
  * RETURNING id` against the partial-unique index `uq_iws_item_wh_lot` (created in
- * V118) does not map cleanly onto `@Modifying @Query`. The conflict target uses
+ * V119) does not map cleanly onto `@Modifying @Query`. The conflict target uses
  * `COALESCE(lot_id, -1)` so NULL-lot (non-lot-tracked) rows still collide
  * deterministically.
  */

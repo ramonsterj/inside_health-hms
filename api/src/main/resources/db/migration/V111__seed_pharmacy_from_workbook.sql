@@ -11,8 +11,8 @@
 -- stock via the UI on first restock. Dev/acceptance overrides this in
 -- R__seed_02b (50 units per DRUG lot in the ADMINISTRACION warehouse).
 --
--- Rewritten in-place for the warehouse cutover (V118-V120): the legacy
--- `inventory_items.quantity` column dropped by V120 was removed from the INSERTs
+-- Rewritten in-place for the warehouse cutover (V119-V121): the legacy
+-- `inventory_items.quantity` column dropped by V121 was removed from the INSERTs
 -- here so the loader still runs against the post-cutover schema (a pharmacy IT
 -- re-runs this script). Any environment that already recorded the previous V111
 -- checksum must run `flyway repair` once after deploying.

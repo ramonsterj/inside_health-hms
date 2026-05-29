@@ -320,13 +320,13 @@ Inventory management for hospital supplies, medications, and services:
 
 ---
 
-## Warehouse-Scoped Scenarios (Bodegas, V118–V120)
+## Warehouse-Scoped Scenarios (Bodegas, V119–V121)
 
 > Stock now lives per-warehouse in `inventory_warehouse_stock`. Six warehouses are seeded: ADMINISTRACION, ENFERMERIA, MANTENIMIENTO_1, MANTENIMIENTO_2, COCINA, PSICOLOGIA. See `docs/features/warehouse-inventory-management.md`.
 
 ### WH-01: Seeded warehouses present
 **Role**: ADMIN
-**Precondition**: Migrations V118–V120 applied
+**Precondition**: Migrations V119–V121 applied
 **Steps**:
 1. GET `/api/v1/warehouses`
 **Expected Result**: The six seeded warehouse codes are returned.

@@ -368,7 +368,7 @@ Hospital billing system with real-time charge capture and automated billing from
 
 ### AUTO-11: Warehouse charge creates SERVICE charge
 **Role**: MAINTENANCE
-**Precondition**: MANTENIMIENTO_1 has a non-medical item (e.g. towel, price 75.00); active admission 42 exists. See `docs/features/warehouse-inventory-management.md` (V118–V120).
+**Precondition**: MANTENIMIENTO_1 has a non-medical item (e.g. towel, price 75.00); active admission 42 exists. See `docs/features/warehouse-inventory-management.md` (V119–V121).
 **Steps**:
 1. POST `/api/v1/warehouse-charges` { warehouse=MANTENIMIENTO_1, item=towel, admission=42, quantity=1, reason="Stained" }
 2. As admin, check admission 42 billing

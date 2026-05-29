@@ -24,7 +24,7 @@ import {
  *   4. Scope denials: NURSE cannot issue a transfer; MAINTENANCE only sees its bodegas.
  */
 
-// ── Mock users (permissions mirror the V118 seed grants) ──
+// ── Mock users (permissions mirror the V119 seed grants) ──
 
 const adminUser = {
   id: 1,
@@ -41,7 +41,10 @@ const adminUser = {
   localePreference: 'en'
 }
 
-// NURSE per V118: warehouse:read + transfer read/receive, but NOT transfer:create.
+// NURSE per V119: warehouse:read + transfer read/receive, but NOT transfer:create.
+// room:occupancy-view mirrors the real NURSE seed grant — the bed occupancy screen
+// is the nurse's default landing page (bed-occupancy-view), so the mock needs it to
+// avoid a dashboard -> bed-occupancy redirect loop.
 const nurseUser = {
   id: 3,
   username: 'nurse',
@@ -57,6 +60,7 @@ const nurseUser = {
     'medication-administration:read',
     'medication:read',
     'inventory-lot:read',
+    'room:occupancy-view',
     'warehouse:read',
     'warehouse-transfer:read',
     'warehouse-transfer:receive'
@@ -67,7 +71,7 @@ const nurseUser = {
   localePreference: 'en'
 }
 
-// MAINTENANCE per V118: read, transfer create/read/receive, charge.
+// MAINTENANCE per V119: read, transfer create/read/receive, charge.
 const maintenanceUser = {
   id: 50,
   username: 'maintenance',
@@ -641,14 +645,14 @@ test.describe('Warehouse — scope denials', () => {
 
   test('NURSE cannot reach the warehouse admin screen (redirected away)', async ({ page }) => {
     await setupAuth(page, nurseUser)
-    await page.route('**/api/v1/nursing-kardex**', route =>
-      route.fulfill(ok({ content: [], page: { totalElements: 0, totalPages: 1, size: 20, number: 0 } }))
+    await page.route('**/api/v1/rooms/occupancy', route =>
+      route.fulfill(ok({ rooms: [], totalBeds: 0, occupiedBeds: 0, availableBeds: 0, occupancyPercent: 0 }))
     )
 
     // /warehouses requires warehouse:create — the guard redirects to the dashboard,
-    // which in turn routes a nurse to the kardex.
+    // which in turn routes a nurse to the bed occupancy screen (their default landing).
     await page.goto('/warehouses')
-    await expect(page).toHaveURL(/\/(dashboard|nursing-kardex)/, { timeout: 10000 })
+    await expect(page).toHaveURL(/\/bed-occupancy/, { timeout: 10000 })
   })
 
   test('MAINTENANCE only sees its assigned warehouse', async ({ page }) => {

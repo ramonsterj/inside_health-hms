@@ -43,7 +43,7 @@ class AuxiliaryNurseRoleMigrationTest : AbstractIntegrationTest() {
             "patient:read",
             "admission:read",
             "room:occupancy-view",
-            // V118 warehouse grants: read its (ENFERMERIA) warehouse + read transfer history.
+            // V119 warehouse grants: read its (ENFERMERIA) warehouse + read transfer history.
             "warehouse:read",
             "warehouse-transfer:read",
         )

@@ -8,13 +8,13 @@
 --
 -- !!! READ BEFORE EDITING ANY R__seed_*.sql FILE !!!
 -- This file TRUNCATEs patients/admissions/vitals/notes/meds/billing tables.
--- Re-inserts of those rows live in R__seed_02..07. Flyway re-runs a
+-- Re-inserts of those rows live in R__seed_02..08. Flyway re-runs a
 -- repeatable migration only when ITS OWN checksum changes — so editing
 -- ONLY this file wipes data without re-running the sibling files that
 -- repopulate it (we hit this in PR #53). Whenever any R__seed_*.sql is
--- modified, bump the SEED-BUNDLE-VERSION line below in ALL eight files
--- so they re-run together.
--- SEED-BUNDLE-VERSION: 2026-05-29b
+-- modified, bump the SEED-BUNDLE-VERSION line below in ALL nine files
+-- (01, 02, 02b, 03, 04, 05, 06, 07, 08) so they re-run together.
+-- SEED-BUNDLE-VERSION: 2026-05-29c
 -- ============================================================================
 
 SET session_replication_role = replica;
@@ -71,12 +71,12 @@ INSERT INTO roles (code, name, description, is_system, created_at, updated_at)
 VALUES ('AUXILIARY_NURSE', 'Auxiliary Nurse', 'Enfermero auxiliar — notes and vital signs only', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
 
--- Add MAINTENANCE role if it doesn't exist (mirrors V118)
+-- Add MAINTENANCE role if it doesn't exist (mirrors V119)
 INSERT INTO roles (code, name, description, is_system, created_at, updated_at)
 VALUES ('MAINTENANCE', 'Maintenance', 'Mantenimiento — manages maintenance bodegas, transfers supplies, charges non-medical consumables', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
 
--- Ensure the six warehouses exist (mirrors V118; warehouses survive the reset
+-- Ensure the six warehouses exist (mirrors V119; warehouses survive the reset
 -- but re-assert so a fresh DB seeded without migrations is still consistent).
 INSERT INTO warehouses (code, name, description, active, created_at, updated_at) VALUES
 ('ADMINISTRACION',  'Administración',  'Master / receiving warehouse. Deliveries land here.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
@@ -87,7 +87,7 @@ INSERT INTO warehouses (code, name, description, active, created_at, updated_at)
 ('PSICOLOGIA',      'Psicología',      'Psychology warehouse.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
 
--- Role -> default-warehouse mapping (mirrors V118).
+-- Role -> default-warehouse mapping (mirrors V119).
 INSERT INTO role_default_warehouses (role_id, warehouse_id, created_at, updated_at)
 SELECT r.id, w.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
@@ -185,6 +185,18 @@ SELECT
     CURRENT_TIMESTAMP
 FROM permissions p
 WHERE p.code = 'admission:create';
+
+-- RESIDENT_DOCTOR also gets room:occupancy-view (V118): the bed occupancy
+-- screen is the default dashboard for residents. Not cloned from DOCTOR, which
+-- is deliberately excluded from this permission.
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
+SELECT
+    (SELECT id FROM roles WHERE code = 'RESIDENT_DOCTOR'),
+    p.id,
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+FROM permissions p
+WHERE p.code = 'room:occupancy-view';
 
 -- PSYCHOLOGIST: psychotherapy + patient/admission read + psychometric medical orders
 -- Sources: V042 + base patient/admission access + V116 (medical-order:read,
@@ -285,7 +297,7 @@ WHERE r.code = 'CHIEF_NURSE'
   )
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
--- Warehouse permissions (mirrors V118 grant matrix). ADMIN already has all via
+-- Warehouse permissions (mirrors V119 grant matrix). ADMIN already has all via
 -- the CROSS JOIN above; these add the per-role subsets.
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
