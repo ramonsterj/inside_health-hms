@@ -73,6 +73,9 @@ class MedicationAdministrationService(
         orderId: Long,
         request: CreateMedicationAdministrationRequest,
     ): MedicationAdministrationResponse {
+        // Auxiliary nurses cannot administer medications (belt-and-suspenders over @PreAuthorize).
+        currentUserProvider.requireNotAuxiliaryNurseOnly()
+
         val order = medicalOrderRepository.findByIdAndAdmissionId(orderId, admissionId)
             ?: throw ResourceNotFoundException(
                 messageService.errorMedicationOrderNotFound(orderId, admissionId),

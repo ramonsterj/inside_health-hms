@@ -36,7 +36,7 @@ const router = createRouter({
           beforeEnter: (_to, _from, next) => {
             const authStore = useAuthStore()
             const roles = authStore.user?.roles ?? []
-            if (roles.some((r: string) => ['NURSE', 'CHIEF_NURSE'].includes(r))) {
+            if (roles.some((r: string) => ['NURSE', 'CHIEF_NURSE', 'AUXILIARY_NURSE'].includes(r))) {
               next({ name: 'nursing-kardex' })
             } else {
               next()

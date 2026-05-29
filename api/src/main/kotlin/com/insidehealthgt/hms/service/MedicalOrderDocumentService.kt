@@ -36,6 +36,9 @@ class MedicalOrderDocumentService(
         displayName: String?,
         file: MultipartFile,
     ): MedicalOrderDocumentResponse {
+        // Auxiliary nurses cannot upload result documents (belt-and-suspenders over @PreAuthorize).
+        currentUserProvider.requireNotAuxiliaryNurseOnly()
+
         val order = medicalOrderRepository.findByIdAndAdmissionId(orderId, admissionId)
             ?: throw ResourceNotFoundException("Medical order not found with id: $orderId for admission: $admissionId")
 

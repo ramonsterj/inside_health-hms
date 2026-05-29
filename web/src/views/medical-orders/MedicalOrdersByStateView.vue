@@ -58,11 +58,16 @@ const canAuthorize = computed(() => authStore.hasPermission('medical-order:autho
 const canEmergencyAuthorize = computed(() =>
   authStore.hasPermission('medical-order:emergency-authorize')
 )
-const canMarkInProgress = computed(() =>
-  authStore.hasPermission('medical-order:mark-in-progress')
+// Auxiliary-only nurses are blocked from mark-in-progress and upload-document by the backend
+// service guard (403), so hide the buttons even if a custom role granted the permission.
+const canMarkInProgress = computed(
+  () =>
+    authStore.hasPermission('medical-order:mark-in-progress') && !authStore.isAuxiliaryNurseOnly
 )
 const canDiscontinue = computed(() => authStore.hasPermission('medical-order:discontinue'))
-const canUploadDocument = computed(() => authStore.hasPermission('medical-order:upload-document'))
+const canUploadDocument = computed(
+  () => authStore.hasPermission('medical-order:upload-document') && !authStore.isAuxiliaryNurseOnly
+)
 
 const statusOptions = computed(() =>
   Object.values(MedicalOrderStatus).map((status) => ({

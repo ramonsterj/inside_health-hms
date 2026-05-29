@@ -50,7 +50,8 @@ The reason we are not renaming `NURSE → GRADUATE_NURSE` is purely pragmatic: `
 | `medical-order:mark-in-progress` | ✓ | — | ✓ | **Restricted from auxiliary.** |
 | `medical-order:upload-document` | ✓ | — | ✓ | **Restricted from auxiliary** (V073 already excludes CHIEF_NURSE; only NURSE / DOCTOR / ADMIN can upload today — the auxiliary stays excluded). |
 | `clinical-history:read` | ✓ | ✓ | ✓ | |
-| `patient:read`, `admission:read`, `admission:update`, `room:occupancy-view` | inherit current NURSE grants | inherit current NURSE grants | inherit | The kardex/patient/admission visibility surface is intentionally the same so the auxiliary can do her job. |
+| `patient:read`, `admission:read`, `room:occupancy-view` | inherit current NURSE grants | ✓ | inherit | The kardex/patient/admission **read** visibility surface is intentionally the same so the auxiliary can do her job. |
+| `admission:update` | ✓ | — | ✓ | **Restricted from auxiliary.** This single permission gates discharge (`POST /admissions/{id}/discharge`), admission metadata edit (`PUT /admissions/{id}`), and consulting-physician add/remove — none of which are in the notes/vitals-only scope. `admission:read` alone gives the auxiliary all the visibility she needs. |
 
 ### Explicit denials (rejected by service-layer guard even if a custom role somehow grants the underlying permission to AUXILIARY_NURSE)
 
@@ -81,7 +82,7 @@ This mirrors the way `PsychotherapyActivityService.create` already enforces the 
 ## Acceptance Criteria / Scenarios
 
 - **AC-1 — Grant default.** After running the migration, `SELECT code FROM roles WHERE code='AUXILIARY_NURSE'` returns one row.
-- **AC-2 — Permission set.** The AUXILIARY_NURSE role has `nursing-note:read/create`, `vital-sign:read/create`, `medication-administration:read`, `medical-order:read`, `progress-note:read`, `clinical-history:read`, `patient:read`, `admission:read`, `admission:update`, `room:occupancy-view`. It does **not** have `medication-administration:create`, `medical-order:mark-in-progress`, `medical-order:upload-document`, or `progress-note:create`.
+- **AC-2 — Permission set.** The AUXILIARY_NURSE role has `nursing-note:read/create`, `vital-sign:read/create`, `medication-administration:read`, `medical-order:read`, `progress-note:read`, `clinical-history:read`, `patient:read`, `admission:read`, `room:occupancy-view`. It does **not** have `medication-administration:create`, `medical-order:mark-in-progress`, `medical-order:upload-document`, `progress-note:create`, or `admission:update` (the latter would authorize discharge / admission edit / consulting-physician changes).
 - **AC-3 — Service guard on administer.** Logged in as a user whose only nursing role is `AUXILIARY_NURSE`, `POST /api/v1/admissions/{id}/medical-orders/{orderId}/medication-administrations` returns 403 `error.nursing.auxiliary.denied`. (Even if a custom role accidentally grants the underlying permission, the service guard still blocks.)
 - **AC-4 — Service guard on mark-in-progress.** Same role, `POST /api/v1/admissions/{id}/medical-orders/{orderId}/mark-in-progress` returns 403.
 - **AC-5 — Service guard on upload-document.** Same role, document upload endpoint returns 403.
@@ -124,12 +125,12 @@ No new endpoints. The change is observable as new 403 responses on three existin
 
 | Migration | Description |
 |-----------|-------------|
-| `V116__add_auxiliary_nurse_role.sql` | Inserts `AUXILIARY_NURSE` into `roles` (idempotent) and grants the permissions listed in the table above. Pattern mirrors V114 (`add_resident_doctor_role.sql`). |
+| `V117__add_auxiliary_nurse_role.sql` | Inserts `AUXILIARY_NURSE` into `roles` (idempotent) and grants the permissions listed in the table above. Pattern mirrors V114 (`add_resident_doctor_role.sql`). (V116 was already taken by the psychologist medical-order permissions migration.) |
 
 ### Schema Example
 
 ```sql
--- V116 (shape; final wording during implementation)
+-- V117 (shape; final wording during implementation)
 INSERT INTO roles (code, name, description, is_system, created_at, updated_at)
 VALUES ('AUXILIARY_NURSE',
         'Auxiliary Nurse',
@@ -149,7 +150,7 @@ WHERE p.code IN (
     'progress-note:read',
     'clinical-history:read',
     'patient:read',
-    'admission:read', 'admission:update',
+    'admission:read',
     'room:occupancy-view'
 )
 ON CONFLICT DO NOTHING;
@@ -168,7 +169,11 @@ No table schema changes. No new columns. No data backfill required for existing 
 
 ### Stores
 
-No new stores. `auth` store's existing `hasRole(roleCode)` is sufficient.
+No new stores. The `auth` store gains a `hasRole(roleCode)` helper and an `isAuxiliaryNurseOnly`
+computed (mirrors the backend `CustomUserDetails.isAuxiliaryNurseOnly()` — holds AUXILIARY_NURSE but
+none of NURSE / CHIEF_NURSE / DOCTOR / RESIDENT_DOCTOR / ADMIN). Every restricted action gate is
+`hasPermission(...) && !isAuxiliaryNurseOnly`, so the buttons stay hidden even when a custom role
+grants the underlying permission (the backend would 403 in that case anyway).
 
 ### Components
 
@@ -181,8 +186,8 @@ No new stores. `auth` store's existing `hasRole(roleCode)` is sufficient.
 
 ### i18n
 
-- `roles.AUXILIARY_NURSE` → `Auxiliary Nurse` (en) / `Enfermero auxiliar` (es).
-- `error.nursing.auxiliary.denied` → `Auxiliary nurses cannot administer medications, mark orders in progress, or upload result documents.` (en) / `Los enfermeros auxiliares no pueden administrar medicamentos, marcar órdenes en proceso, ni adjuntar resultados.` (es).
+- `error.nursing.auxiliary.denied` → `Auxiliary nurses cannot administer medications, mark orders in progress, or upload result documents.` (en) / `Los enfermeros auxiliares no pueden administrar medicamentos, marcar órdenes en proceso, ni adjuntar resultados.` (es). Added to `errors.properties` / `errors_es.properties` (backend message bundles — this is the 403 body the service guards return).
+- **No `roles.*` label key is added.** Role display names are not localized via i18n keys in this codebase — they are rendered from the role's `name` column (`UsersView.vue` / `RolesView.vue` bind `role.name` directly). The migration seeds `name = 'Auxiliary Nurse'`, which is what the role-management and user screens show. This matches every other role (`NURSE`, `DOCTOR`, `RESIDENT_DOCTOR` … all render their DB `name`); there is no per-role-code i18n label convention to extend.
 
 ### Validation
 
@@ -193,7 +198,7 @@ No new Zod schemas — the change is permission-only.
 ## Implementation Notes
 
 - The service-layer guards are necessary because Spring's `@PreAuthorize` operates on permissions, and a custom role created in the platform could grant `medication-administration:create` to an AUXILIARY_NURSE without violating any DB constraint. The guard is a belt-and-suspenders check that the *role name* is graduate-or-better.
-- The `NURSE` ↔ "graduate nurse" semantic equivalence should be reflected in i18n labels (`roles.NURSE` → "Enfermero graduado" in Spanish, "Graduate Nurse" in English) so the customer's mental model lines up with the UI. This is a label-only change; the role code stays `NURSE`.
+- The `NURSE` ↔ "graduate nurse" semantic equivalence is documented in the roles matrices (en + es) rather than carried in the UI, because role display names come from the DB `name` column, not i18n keys — and the seeded `NURSE` name is left unchanged to avoid a migration that touches the most heavily granted role purely for a label. If the customer later wants "Enfermero graduado" surfaced in the UI, that is a separate change: either update the `roles.name` value via migration or introduce a per-role-code i18n label convention (which does not exist today). The role code stays `NURSE` regardless.
 - Consider whether `CHIEF_NURSE` should automatically include the auxiliary scope. It already does, by virtue of being a superset of `NURSE`. No change needed.
 - This spec deliberately does *not* introduce a "ward / floor assignment" concept (auxiliary nurses limited to specific patients). That is out of scope; current visibility rules (whole-hospital for nurses) are preserved.
 
@@ -202,7 +207,7 @@ No new Zod schemas — the change is permission-only.
 ## QA Checklist
 
 ### Backend
-- [ ] V116 migration runs against a fresh DB and against an existing dev DB (idempotency).
+- [ ] V117 migration runs against a fresh DB and against an existing dev DB (idempotency).
 - [ ] AUXILIARY_NURSE row exists in `roles` after migration.
 - [ ] Permission grants match AC-2 exactly (write a query test).
 - [ ] Service-layer guard on `MedicationAdministrationService.create` — unit test with mocked `SecurityContextHolder`.
@@ -239,7 +244,7 @@ No new Zod schemas — the change is permission-only.
 
 ### Must Update
 
-- [ ] **CLAUDE.md** — Add AUXILIARY_NURSE to the migration list (V116 entry) and to the "Implemented Features" backend bullet for roles.
+- [ ] **CLAUDE.md** — Add AUXILIARY_NURSE to the migration list (V117 entry) and to the "Implemented Features" backend bullet for roles.
 - [ ] **docs/roles-functionality-matrix.md** — Add `AUXILIARY_NURSE` column; explicitly mark each row as None / Read / Work according to the table above. Note that `NURSE` is conceptually "graduate nurse".
 - [ ] **docs/roles-functionality-matrix.es.md** — Same in Spanish.
 - [ ] **docs/features/nursing-module.md** — Cross-link to this spec from the Authorization section; clarify that the create/read grants on nursing-note and vital-sign apply to **both** `NURSE` and `AUXILIARY_NURSE`.

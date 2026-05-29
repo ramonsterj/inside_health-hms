@@ -41,6 +41,19 @@ class CustomUserDetails(private val user: User) : UserDetails {
 
     fun hasRole(roleCode: String): Boolean = user.hasRole(roleCode)
 
+    /**
+     * True when the user's only nursing-or-better role is AUXILIARY_NURSE — i.e. they hold
+     * AUXILIARY_NURSE but none of NURSE / CHIEF_NURSE / DOCTOR / ADMIN. Used by the service-layer
+     * guards that block auxiliary nurses from administering medications, marking medical orders in
+     * progress, and uploading result documents (see docs/features/nursing-roles-split.md). Stacked
+     * roles pass: a graduate nurse covering an auxiliary shift still has NURSE, so the guard lets
+     * them through.
+     */
+    fun isAuxiliaryNurseOnly(): Boolean {
+        if (!hasRole("AUXILIARY_NURSE")) return false
+        return getRoleCodes().none { it in ELEVATED_NURSING_ROLES }
+    }
+
     override fun getPassword(): String = user.passwordHash
 
     override fun getUsername(): String = user.email
@@ -52,4 +65,9 @@ class CustomUserDetails(private val user: User) : UserDetails {
     override fun isCredentialsNonExpired(): Boolean = true
 
     override fun isEnabled(): Boolean = user.status == UserStatus.ACTIVE
+
+    private companion object {
+        /** Roles that, when stacked with AUXILIARY_NURSE, lift the auxiliary-only restriction. */
+        val ELEVATED_NURSING_ROLES = setOf("NURSE", "CHIEF_NURSE", "DOCTOR", "RESIDENT_DOCTOR", "ADMIN")
+    }
 }

@@ -78,6 +78,7 @@ const requiresAuthorization = computed(() => categoryRequiresAuthorization(props
 const canAdminister = computed(
   () =>
     authStore.hasPermission('medication-administration:create') &&
+    !authStore.isAuxiliaryNurseOnly &&
     isMedicationCategory.value &&
     isAuthorized.value &&
     props.order.inventoryItemId !== null
@@ -89,6 +90,7 @@ const canUploadDocument = computed(
   () =>
     !isPsychologistOutOfScope.value &&
     authStore.hasPermission('medical-order:upload-document') &&
+    !authStore.isAuxiliaryNurseOnly &&
     canUploadResultDocument(props.order.category, props.order.status)
 )
 const canDeleteDocument = computed(() => authStore.hasPermission('medical-order:delete-document'))
@@ -112,6 +114,7 @@ const canMarkInProgress = computed(
   () =>
     !isPsychologistOutOfScope.value &&
     authStore.hasPermission('medical-order:mark-in-progress') &&
+    !authStore.isAuxiliaryNurseOnly &&
     isResultsBearingCategory.value &&
     isAuthorized.value
 )

@@ -318,6 +318,9 @@ class MedicalOrderService(
 
     @Transactional
     fun markInProgress(admissionId: Long, orderId: Long): MedicalOrderResponse {
+        // Auxiliary nurses cannot mark orders in progress (belt-and-suspenders over @PreAuthorize).
+        currentUserProvider.requireNotAuxiliaryNurseOnly()
+
         verifyAdmissionExists(admissionId)
 
         val order = medicalOrderRepository.findByIdAndAdmissionId(orderId, admissionId)

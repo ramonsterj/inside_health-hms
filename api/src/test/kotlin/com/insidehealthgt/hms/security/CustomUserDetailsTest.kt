@@ -111,6 +111,49 @@ class CustomUserDetailsTest {
     }
 
     @Test
+    fun `isAuxiliaryNurseOnly is true when the only role is AUXILIARY_NURSE`() {
+        val user = createUserWithRolesAndPermissions(roleCodes = listOf("AUXILIARY_NURSE"))
+        val userDetails = CustomUserDetails(user)
+
+        assertTrue(userDetails.isAuxiliaryNurseOnly())
+    }
+
+    @Test
+    fun `isAuxiliaryNurseOnly is false for a plain NURSE`() {
+        val user = createUserWithRolesAndPermissions(roleCodes = listOf("NURSE"))
+        val userDetails = CustomUserDetails(user)
+
+        assertFalse(userDetails.isAuxiliaryNurseOnly())
+    }
+
+    @Test
+    fun `isAuxiliaryNurseOnly is false when AUXILIARY_NURSE is stacked with NURSE`() {
+        val user = createUserWithRolesAndPermissions(roleCodes = listOf("NURSE", "AUXILIARY_NURSE"))
+        val userDetails = CustomUserDetails(user)
+
+        assertFalse(userDetails.isAuxiliaryNurseOnly())
+    }
+
+    @Test
+    fun `isAuxiliaryNurseOnly is false when AUXILIARY_NURSE is stacked with CHIEF_NURSE, DOCTOR, or ADMIN`() {
+        listOf("CHIEF_NURSE", "DOCTOR", "RESIDENT_DOCTOR", "ADMIN").forEach { elevatedRole ->
+            val user = createUserWithRolesAndPermissions(roleCodes = listOf("AUXILIARY_NURSE", elevatedRole))
+            assertFalse(
+                CustomUserDetails(user).isAuxiliaryNurseOnly(),
+                "AUXILIARY_NURSE stacked with $elevatedRole must not be treated as auxiliary-only",
+            )
+        }
+    }
+
+    @Test
+    fun `isAuxiliaryNurseOnly is false when the user has no AUXILIARY_NURSE role`() {
+        val user = createUserWithRolesAndPermissions(roleCodes = listOf("DOCTOR"))
+        val userDetails = CustomUserDetails(user)
+
+        assertFalse(userDetails.isAuxiliaryNurseOnly())
+    }
+
+    @Test
     fun `hasPermission should return true for assigned permission`() {
         val user = createUserWithRolesAndPermissions(
             roleCodes = listOf("ADMIN"),
