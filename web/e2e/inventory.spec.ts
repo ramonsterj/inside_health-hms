@@ -427,6 +427,12 @@ test.describe('Inventory Items - Create', () => {
 
     await page.locator('#timeUnit').click()
     await page.locator('.p-select-option').filter({ hasText: 'Hours' }).click()
+    // Wait for the selection to commit (overlay closes and the label reflects the
+    // chosen value) before submitting — under parallel load the option click can
+    // otherwise land after Save, leaving time-based validation unsatisfied.
+    await expect(page.locator('.p-select-overlay')).toHaveCount(0)
+    await expect(page.locator('#timeUnit')).toContainText('Hours')
+
     await page.locator('#timeInterval input').fill('1')
 
     await page.getByRole('button', { name: /Save/i }).click()
