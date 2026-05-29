@@ -271,6 +271,15 @@ function cancel() {
     router.push({ name: 'patients' })
   }
 }
+
+// Exposed for unit tests (AdmissionFormView.spec.ts), which drive the form
+// state directly and invoke submission without going through the template.
+defineExpose({
+  submitAdmission,
+  selectedType,
+  selectedPhysician,
+  selectedResident
+})
 </script>
 
 <template>

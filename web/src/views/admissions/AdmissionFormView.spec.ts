@@ -164,7 +164,7 @@ describe('AdmissionFormView resident picker', () => {
     await residentWrapper.vm.submitAdmission()
     await flushPromises()
 
-    const payload = mockedApi.post.mock.calls[0][1]
+    const payload = mockedApi.post.mock.calls[0]![1]
     expect(payload).toMatchObject({
       patientId: patientSummary.id,
       roomId: null,
