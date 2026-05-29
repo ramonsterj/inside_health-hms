@@ -48,17 +48,18 @@ The Nursing Module allows nursing staff and doctors to document patient care dur
 
 | Action | Required Role(s) | Permission | Notes |
 |--------|------------------|------------|-------|
-| View nursing notes | NURSE, DOCTOR, CHIEF_NURSE, ADMIN | `nursing-note:read` | All with permission |
-| Create nursing note | NURSE, DOCTOR, CHIEF_NURSE, ADMIN | `nursing-note:create` | Active admissions only |
+| View nursing notes | NURSE, AUXILIARY_NURSE, DOCTOR, CHIEF_NURSE, ADMIN | `nursing-note:read` | All with permission |
+| Create nursing note | NURSE, AUXILIARY_NURSE, DOCTOR, CHIEF_NURSE, ADMIN | `nursing-note:create` | Active admissions only. Both the graduate nurse (`NURSE`) and the auxiliary nurse (`AUXILIARY_NURSE`, V117) can author. |
 | Update nursing note | ADMIN | `nursing-note:update` | Admin-only. **No creator-edit window.** Active admissions only — discharge blocks even ADMIN. After V096, DOCTOR / NURSE / CHIEF_NURSE no longer hold this permission. |
-| View vital signs | NURSE, DOCTOR, CHIEF_NURSE, ADMIN | `vital-sign:read` | All with permission |
-| Create vital signs | NURSE, DOCTOR, CHIEF_NURSE, ADMIN | `vital-sign:create` | Active admissions only |
+| View vital signs | NURSE, AUXILIARY_NURSE, DOCTOR, CHIEF_NURSE, ADMIN | `vital-sign:read` | All with permission |
+| Create vital signs | NURSE, AUXILIARY_NURSE, DOCTOR, CHIEF_NURSE, ADMIN | `vital-sign:create` | Active admissions only. Both the graduate nurse (`NURSE`) and the auxiliary nurse (`AUXILIARY_NURSE`, V117) can record. |
 | Update vital signs | ADMIN | `vital-sign:update` | Admin-only. **No creator-edit window.** Active admissions only — discharge blocks even ADMIN. After V097, DOCTOR / NURSE / CHIEF_NURSE no longer hold this permission. |
 
 **Notes:**
 - No delete operations are allowed to maintain medical record integrity.
 - All write operations (create/update) are blocked for discharged admissions, including for ADMIN.
 - Nursing notes and vital signs share the same edit policy as of revision 1.4 (admin-only update on active admissions). Both mirror progress notes.
+- The nursing role split (V117) introduces `AUXILIARY_NURSE` alongside `NURSE` (now the graduate nurse). Both hold the nursing-note and vital-sign create/read grants above; the auxiliary additionally cannot administer medications, mark medical orders in progress, or upload result documents. See [nursing-roles-split.md](nursing-roles-split.md).
 
 ---
 

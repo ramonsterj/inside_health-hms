@@ -159,6 +159,10 @@ class MessageService(private val messageSource: MessageSource) {
     fun errorNursingNoteNotFound(id: Long, admissionId: Long) =
         getMessage("error.nursingNote.not.found", id, admissionId)
 
+    // === Nursing Role Error Messages ===
+
+    fun errorNursingAuxiliaryDenied() = getMessage("error.nursing.auxiliary.denied")
+
     // === Psychotherapy Error Messages ===
 
     fun errorPsychotherapyActivityNotFound(id: Long, admissionId: Long) =

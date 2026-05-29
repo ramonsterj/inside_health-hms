@@ -66,6 +66,11 @@ INSERT INTO roles (code, name, description, is_system, created_at, updated_at)
 VALUES ('RESIDENT_DOCTOR', 'Resident Doctor', 'Medical resident in charge of admissions', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
 
+-- Add AUXILIARY_NURSE role if it doesn't exist (mirrors V117)
+INSERT INTO roles (code, name, description, is_system, created_at, updated_at)
+VALUES ('AUXILIARY_NURSE', 'Auxiliary Nurse', 'Enfermero auxiliar — notes and vital signs only', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (code) DO NOTHING;
+
 -- ============================================================================
 -- STEP 3: REBUILD ROLE PERMISSIONS
 -- ============================================================================
@@ -200,6 +205,31 @@ WHERE r.code = 'NURSE'
   )
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
+-- AUXILIARY_NURSE: vital signs + nursing notes only, plus read-only context.
+-- Explicit SUBSET of NURSE — no medication-administration:create,
+-- medical-order:mark-in-progress, medical-order:upload-document,
+-- progress-note:create, or admission:update (which would let an auxiliary
+-- discharge patients / edit admissions). Service-layer guards enforce the three
+-- denied clinical actions; the discharge/edit denial is by omission of the grant.
+-- Source: V117. Spec: docs/features/nursing-roles-split.md.
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
+SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM roles r
+CROSS JOIN permissions p
+WHERE r.code = 'AUXILIARY_NURSE'
+  AND p.code IN (
+    'nursing-note:read', 'nursing-note:create',
+    'vital-sign:read', 'vital-sign:create',
+    'medication-administration:read',
+    'medical-order:read',
+    'progress-note:read',
+    'clinical-history:read',
+    'patient:read',
+    'admission:read',
+    'room:occupancy-view'
+  )
+  AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
+
 -- CHIEF_NURSE: same as NURSE + patient:update, admission:update.
 -- Note: progress-note:update, nursing-note:update, and vital-sign:update are
 -- intentionally NOT granted — all three record types are admin-only update per
@@ -274,6 +304,10 @@ INSERT INTO users (username, email, password_hash, first_name, last_name, saluta
 ('chiefnurse1', 'chiefnurse1@example.com', '$2b$10$PYXULrV.BlNnIPSz8HRFJeId5axQ/qoAQNhEldlY/H7xlqIpH35YC', 'Carmen', 'Flores', 'SRA', 'ACTIVE', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('chiefnurse2', 'chiefnurse2@example.com', '$2b$10$PYXULrV.BlNnIPSz8HRFJeId5axQ/qoAQNhEldlY/H7xlqIpH35YC', 'Ricardo', 'Mendoza', 'SR', 'ACTIVE', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
+-- AUXILIARY_NURSE role user (1) — QA exercises the restricted nursing flow
+INSERT INTO users (username, email, password_hash, first_name, last_name, salutation, status, email_verified, must_change_password, created_at, updated_at) VALUES
+('aux_nurse', 'aux_nurse@example.com', '$2b$10$PYXULrV.BlNnIPSz8HRFJeId5axQ/qoAQNhEldlY/H7xlqIpH35YC', 'Lucia', 'Gomez', 'SRTA', 'ACTIVE', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
 -- ============================================================================
 -- STEP 5: ASSIGN ROLES TO USERS
 -- ============================================================================
@@ -332,6 +366,12 @@ INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
 SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users u, roles r
 WHERE u.username IN ('chiefnurse1', 'chiefnurse2') AND r.code = 'CHIEF_NURSE';
+
+-- AUXILIARY_NURSE role assignment
+INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
+SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM users u, roles r
+WHERE u.username = 'aux_nurse' AND r.code = 'AUXILIARY_NURSE';
 
 -- ============================================================================
 -- STEP 6: CREATE TEST PATIENTS (20 patients)

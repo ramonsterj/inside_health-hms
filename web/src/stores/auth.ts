@@ -13,6 +13,10 @@ import type {
 } from '@/types'
 import type { ForceChangePasswordFormData } from '@/validation/user'
 
+// Roles that, when stacked with AUXILIARY_NURSE, lift the auxiliary-only restriction.
+// Kept in sync with `CustomUserDetails.ELEVATED_NURSING_ROLES` on the backend.
+const ELEVATED_NURSING_ROLES = ['NURSE', 'CHIEF_NURSE', 'DOCTOR', 'RESIDENT_DOCTOR', 'ADMIN']
+
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const loading = ref(false)
@@ -27,6 +31,22 @@ export const useAuthStore = defineStore('auth', () => {
     if (user.value.roles?.includes('ADMIN')) return true
     return user.value.permissions?.includes(permission) ?? false
   }
+
+  function hasRole(role: string): boolean {
+    return user.value?.roles?.includes(role) ?? false
+  }
+
+  /**
+   * Mirrors the backend `CustomUserDetails.isAuxiliaryNurseOnly()` guard: true when the user holds
+   * AUXILIARY_NURSE but none of the elevated nursing-or-better roles. Used to hide the three
+   * restricted nursing actions (administer medication, mark order in progress, upload result
+   * document) that the backend service guards would otherwise reject with 403 — even when a custom
+   * role grants the underlying permission. See docs/features/nursing-roles-split.md.
+   */
+  const isAuxiliaryNurseOnly = computed(() => {
+    if (!hasRole('AUXILIARY_NURSE')) return false
+    return !ELEVATED_NURSING_ROLES.some((role) => hasRole(role))
+  })
 
   async function login(credentials: LoginRequest): Promise<void> {
     loading.value = true
@@ -148,6 +168,8 @@ export const useAuthStore = defineStore('auth', () => {
     isAdmin,
     mustChangePassword,
     hasPermission,
+    hasRole,
+    isAuxiliaryNurseOnly,
     login,
     changePasswordForced,
     refreshToken,
