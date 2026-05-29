@@ -22,6 +22,7 @@ import { usePhoneNumberList } from '@/composables/usePhoneNumberList'
 import { extractApiErrorMessage } from '@/utils/errorUtils'
 import { formatDate } from '@/utils/format'
 import PhoneNumberInput from '@/components/users/PhoneNumberInput.vue'
+import UserWarehousesAssignmentField from '@/components/users/UserWarehousesAssignmentField.vue'
 import type { User, CreateUserRequest, AdminUpdateUserRequest, PhoneNumberRequest } from '@/types'
 import { UserStatus, Salutation, PhoneType } from '@/types'
 
@@ -87,7 +88,12 @@ const {
 const showEditUserDialog = ref(false)
 const editingUserId = ref<number | null>(null)
 const editUserPhoneNumbers = ref<PhoneNumberRequest[]>([])
+const editUserAssignedWarehouseIds = ref<number[]>([])
 const editUserLoading = ref(false)
+
+const editUserHasMaintenanceRole = computed(() =>
+  (editUser.roleCodes ?? []).includes('MAINTENANCE')
+)
 const editUser = reactive<Omit<AdminUpdateUserRequest, 'phoneNumbers'>>({
   firstName: '',
   lastName: '',
@@ -466,6 +472,7 @@ async function openEditUserDialog(user: User) {
     editUser.roleCodes = [...freshUser.roles]
     editUser.status = freshUser.status
     editUser.emailVerified = freshUser.emailVerified
+    editUserAssignedWarehouseIds.value = [...(freshUser.assignedWarehouseIds ?? [])]
     const existingPhones =
       freshUser.phoneNumbers?.map(p => ({
         id: p.id,
@@ -498,7 +505,10 @@ async function saveEditedUser() {
   try {
     const userData: AdminUpdateUserRequest = {
       ...editUser,
-      phoneNumbers: editUserPhoneNumbers.value.filter(p => p.phoneNumber.trim() !== '')
+      phoneNumbers: editUserPhoneNumbers.value.filter(p => p.phoneNumber.trim() !== ''),
+      assignedWarehouseIds: editUserHasMaintenanceRole.value
+        ? editUserAssignedWarehouseIds.value
+        : []
     }
     await userStore.updateUser(editingUserId.value, userData)
     showEditUserDialog.value = false
@@ -1001,6 +1011,10 @@ async function saveEditedUser() {
             class="w-full"
           />
         </div>
+        <UserWarehousesAssignmentField
+          v-if="editUserHasMaintenanceRole"
+          v-model="editUserAssignedWarehouseIds"
+        />
         <div class="form-field">
           <label for="editStatus">{{ t('users.editUserDialog.status') }}</label>
           <Select

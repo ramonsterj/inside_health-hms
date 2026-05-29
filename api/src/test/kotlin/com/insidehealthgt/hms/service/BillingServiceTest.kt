@@ -20,6 +20,7 @@ import com.insidehealthgt.hms.repository.AdmissionRepository
 import com.insidehealthgt.hms.repository.InventoryItemRepository
 import com.insidehealthgt.hms.repository.PatientChargeRepository
 import com.insidehealthgt.hms.repository.UserRepository
+import com.insidehealthgt.hms.repository.WarehouseChargeRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -39,6 +40,7 @@ class BillingServiceTest {
     private lateinit var chargeRepository: PatientChargeRepository
     private lateinit var admissionRepository: AdmissionRepository
     private lateinit var inventoryItemRepository: InventoryItemRepository
+    private lateinit var warehouseChargeRepository: WarehouseChargeRepository
     private lateinit var userRepository: UserRepository
     private lateinit var messageService: MessageService
     private lateinit var billingService: BillingService
@@ -52,6 +54,7 @@ class BillingServiceTest {
         chargeRepository = mock()
         admissionRepository = mock()
         inventoryItemRepository = mock()
+        warehouseChargeRepository = mock()
         userRepository = mock()
         messageService = mock {
             on { errorAdmissionNotFound(any()) } doReturn "Admission not found"
@@ -64,6 +67,7 @@ class BillingServiceTest {
             chargeRepository,
             admissionRepository,
             inventoryItemRepository,
+            warehouseChargeRepository,
             userRepository,
             dailyMealRate = BigDecimal("150.00"),
             electroshockBasePrice = BigDecimal("2500.00"),
@@ -237,7 +241,6 @@ class BillingServiceTest {
             name = "Amoxicillin",
             price = BigDecimal("25.00"),
             cost = BigDecimal("10.00"),
-            quantity = 100,
             restockLevel = 10,
         )
         item.id = 5L

@@ -8,6 +8,7 @@ import Select from 'primevue/select'
 import Button from 'primevue/button'
 import InputNumber from 'primevue/inputnumber'
 import { useExpiryReportStore } from '@/stores/expiryReport'
+import { useWarehouseStore } from '@/stores/warehouse'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { formatDate } from '@/utils/format'
 import ExpiryStatusChip from '@/components/pharmacy/ExpiryStatusChip.vue'
@@ -15,16 +16,22 @@ import { LotExpiryStatus, MedicationSection } from '@/types/pharmacy'
 
 const { t } = useI18n()
 const store = useExpiryReportStore()
+const warehouseStore = useWarehouseStore()
 const { showError } = useErrorHandler()
 
 const windowDays = ref(90)
 const urgentWindow = ref(30)
 const section = ref<MedicationSection | null>(null)
 const controlled = ref<boolean | null>(null)
+const warehouseId = ref<number | null>(null)
 
 const sectionOptions = computed(() => [
   { label: t('common.all'), value: null },
   ...Object.values(MedicationSection).map(s => ({ label: t(`pharmacy.section.${s}`), value: s }))
+])
+const warehouseOptions = computed(() => [
+  { label: t('pharmacy.expiry.allWarehouses'), value: null },
+  ...warehouseStore.warehouses.map(w => ({ label: w.name, value: w.id }))
 ])
 const controlledOptions = computed(() => [
   { label: t('common.all'), value: null },
@@ -32,7 +39,14 @@ const controlledOptions = computed(() => [
   { label: t('common.no'), value: false }
 ])
 
-onMounted(() => load())
+onMounted(async () => {
+  try {
+    await warehouseStore.fetchWarehouses()
+  } catch (e) {
+    showError(e)
+  }
+  await load()
+})
 
 async function load() {
   try {
@@ -40,7 +54,8 @@ async function load() {
       window: windowDays.value,
       urgentWindow: urgentWindow.value,
       section: section.value ?? undefined,
-      controlled: controlled.value ?? undefined
+      controlled: controlled.value ?? undefined,
+      warehouseId: warehouseId.value ?? undefined
     })
   } catch (e) {
     showError(e)
@@ -79,6 +94,15 @@ async function load() {
             <Select
               v-model="controlled"
               :options="controlledOptions"
+              optionLabel="label"
+              optionValue="value"
+            />
+          </div>
+          <div>
+            <label>{{ t('pharmacy.expiry.warehouse') }}</label>
+            <Select
+              v-model="warehouseId"
+              :options="warehouseOptions"
               optionLabel="label"
               optionValue="value"
             />

@@ -23,7 +23,8 @@ function makeUser(id: number): User {
     mustChangePassword: false,
     createdAt: null,
     localePreference: null,
-    phoneNumbers: []
+    phoneNumbers: [],
+    assignedWarehouseIds: []
   }
 }
 

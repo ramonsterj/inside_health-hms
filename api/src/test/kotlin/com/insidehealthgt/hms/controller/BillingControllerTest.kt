@@ -304,16 +304,30 @@ class BillingControllerTest : AbstractIntegrationTest() {
                 name = "Amoxicillin 500mg",
                 price = BigDecimal("25.00"),
                 cost = BigDecimal("10.00"),
-                quantity = 100,
                 restockLevel = 10,
             ),
         )
+
+        // Stock now lives per-warehouse. Receive 100 units into ENFERMERIA, then
+        // dispense from the same warehouse so the EXIT debits real stock.
+        val warehouseId = jdbcTemplate.queryForObject(
+            "SELECT id FROM warehouses WHERE code = 'ENFERMERIA'",
+            Long::class.java,
+        )!!
+        val entryRequest = mapOf("type" to "ENTRY", "quantity" to 100, "warehouseId" to warehouseId)
+        mockMvc.perform(
+            post("/api/v1/admin/inventory-items/${item.id}/movements")
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(entryRequest)),
+        ).andExpect(status().isCreated)
 
         val movementRequest = mapOf(
             "type" to "EXIT",
             "quantity" to 3,
             "notes" to "Dispensed to patient",
             "admissionId" to admissionId,
+            "warehouseId" to warehouseId,
         )
 
         mockMvc.perform(

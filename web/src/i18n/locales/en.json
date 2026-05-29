@@ -75,6 +75,11 @@
     "pharmacy": "Pharmacy",
     "pharmacyMedications": "Medications",
     "pharmacyExpiryReport": "Expirations",
+    "warehousesSection": "Warehouses",
+    "warehouses": "Warehouses",
+    "warehouseStock": "My warehouse stock",
+    "warehouseTransfers": "Transfers",
+    "maintenanceDashboard": "Maintenance Dashboard",
     "auditLogs": "Audit Logs",
     "profile": "Profile",
     "logout": "Logout",
@@ -332,6 +337,7 @@
   },
   "roles": {
     "title": "Role Management",
+    "MAINTENANCE": "Maintenance",
     "addRole": "Add Role",
     "editRole": "Edit Role",
     "managePermissions": "Manage Permissions",
@@ -554,6 +560,43 @@
       "expirationDate": { "required": "Expiration date is required" },
       "quantity": { "required": "Quantity is required" },
       "receivedAt": { "required": "Received date is required" }
+    },
+    "warehouse": {
+      "code": {
+        "required": "Code is required",
+        "max": "Code must be at most 50 characters",
+        "format": "Code must contain only uppercase letters, numbers, and underscores"
+      },
+      "name": {
+        "required": "Name is required",
+        "max": "Name must be at most 150 characters"
+      },
+      "description": { "max": "Description must be at most 500 characters" }
+    },
+    "transfer": {
+      "source": { "required": "Source warehouse is required" },
+      "destination": { "required": "Destination warehouse is required" },
+      "item": { "required": "Item is required" },
+      "quantity": {
+        "required": "Quantity is required",
+        "positive": "Quantity must be greater than zero"
+      },
+      "notes": { "max": "Notes must be at most 500 characters" },
+      "source-equals-destination": "Source and destination must be different"
+    },
+    "warehouseCharge": {
+      "warehouse": { "required": "Warehouse is required" },
+      "item": { "required": "Item is required" },
+      "admission": { "required": "Admission is required" },
+      "quantity": {
+        "required": "Quantity is required",
+        "positive": "Quantity must be greater than zero"
+      },
+      "reason": {
+        "required": "Reason is required",
+        "max": "Reason must be at most 500 characters"
+      },
+      "notes": { "max": "Notes must be at most 500 characters" }
     },
     "admission": {
       "patientId": {
@@ -1136,6 +1179,83 @@
   "locale": {
     "en": "English",
     "es": "Spanish"
+  },
+  "warehouse": {
+    "title": "Warehouses",
+    "new": "New Warehouse",
+    "edit": "Edit Warehouse",
+    "code": "Code",
+    "name": "Name",
+    "description": "Description",
+    "active": "Active",
+    "empty": "No warehouses found.",
+    "created": "Warehouse created successfully.",
+    "updated": "Warehouse updated successfully.",
+    "deleted": "Warehouse deleted successfully.",
+    "confirmDelete": "Are you sure you want to delete the warehouse \"{name}\"?",
+    "viewStock": "View stock",
+    "stock": {
+      "title": "Warehouse Stock",
+      "item": "Item",
+      "sku": "SKU",
+      "kind": "Kind",
+      "price": "Price",
+      "quantity": "Quantity",
+      "restockLevel": "Restock Level",
+      "lowStock": "Low Stock",
+      "low": "Low",
+      "lowStockOnly": "Low stock only",
+      "searchPlaceholder": "Search items...",
+      "empty": "No stock found for this warehouse.",
+      "notFound": "Warehouse not found or not accessible."
+    },
+    "transfer": {
+      "title": "Transfers",
+      "new": "New Transfer",
+      "created": "Transfer created successfully.",
+      "source": "Source",
+      "destination": "Destination",
+      "item": "Item",
+      "quantity": "Quantity",
+      "notes": "Notes",
+      "status": "Status",
+      "issuedAt": "Issued",
+      "empty": "No transfers found.",
+      "selectWarehouse": "Select a warehouse",
+      "selectItem": "Select an item",
+      "lot": "Lot",
+      "selectLot": "Select a lot",
+      "lotRequired": "Select a lot for this item.",
+      "allWarehouses": "All warehouses",
+      "statuses": {
+        "PENDING": "Pending",
+        "COMPLETED": "Completed",
+        "CANCELLED": "Cancelled"
+      }
+    },
+    "charge": {
+      "new": "Charge Consumable",
+      "created": "Consumable charged successfully.",
+      "warehouse": "Warehouse",
+      "item": "Item",
+      "admission": "Admission",
+      "quantity": "Quantity",
+      "reason": "Reason",
+      "notes": "Notes",
+      "selectAdmission": "Select an admission"
+    },
+    "maintenance": {
+      "title": "Maintenance Dashboard",
+      "assignedWarehouses": "Assigned Warehouses",
+      "recentTransfers": "Recent Transfers",
+      "chargeConsumable": "Charge Consumable",
+      "charge": "Charge",
+      "noWarehouses": "No warehouses assigned to you yet."
+    },
+    "assignment": {
+      "label": "Assigned Warehouses",
+      "placeholder": "Select warehouses"
+    }
   },
   "triageCode": {
     "title": "Triage Codes",
@@ -2446,6 +2566,10 @@
       "price": "Price",
       "cost": "Cost",
       "quantity": "Quantity",
+      "quantityTotal": "Total stock",
+      "quantityTotalHint": "Total on-hand across all warehouses. Medication is dispensed only from the bodega assigned to the dispensing user, so this total is not what is available to dispense from any single warehouse.",
+      "stockByWarehouse": "Stock by warehouse",
+      "stockByWarehouseHint": "On-hand in each bodega. Dispensing draws only from the warehouse assigned to the dispensing user (nurses → Enfermería).",
       "genericName": "Generic Name",
       "commercialName": "Commercial Name",
       "strength": "Strength",
@@ -2516,6 +2640,8 @@
       "window": "Window (days)",
       "urgentWindow": "Urgent window (days)",
       "daysToExpiry": "Days to expiry",
+      "warehouse": "Warehouse",
+      "allWarehouses": "All warehouses",
       "empty": "No lots in the selected window",
       "status": {
         "EXPIRED": "Expired",

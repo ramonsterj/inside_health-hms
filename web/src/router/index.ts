@@ -36,7 +36,9 @@ const router = createRouter({
           beforeEnter: (_to, _from, next) => {
             const authStore = useAuthStore()
             const roles = authStore.user?.roles ?? []
-            if (roles.some((r: string) => ['NURSE', 'CHIEF_NURSE', 'AUXILIARY_NURSE'].includes(r))) {
+            if (
+              roles.some((r: string) => ['NURSE', 'CHIEF_NURSE', 'AUXILIARY_NURSE'].includes(r))
+            ) {
               next({ name: 'nursing-kardex' })
             } else {
               next()
@@ -299,6 +301,37 @@ const router = createRouter({
           name: 'pharmacy-medication-detail',
           component: () => import('@/views/pharmacy/PharmacyDetailView.vue'),
           meta: { requiresPermission: 'medication:read' }
+        },
+        // Warehouse (Bodegas) routes
+        {
+          path: 'warehouses',
+          name: 'warehouses',
+          component: () => import('@/views/warehouse/WarehouseList.vue'),
+          meta: { requiresPermission: 'warehouse:create' }
+        },
+        {
+          path: 'warehouses/stock',
+          name: 'warehouse-stock-default',
+          component: () => import('@/views/warehouse/WarehouseStockView.vue'),
+          meta: { requiresPermission: 'warehouse:read' }
+        },
+        {
+          path: 'warehouses/:code/stock',
+          name: 'warehouse-stock',
+          component: () => import('@/views/warehouse/WarehouseStockView.vue'),
+          meta: { requiresPermission: 'warehouse:read' }
+        },
+        {
+          path: 'warehouse-transfers',
+          name: 'warehouse-transfers',
+          component: () => import('@/views/warehouse/TransferListView.vue'),
+          meta: { requiresPermission: 'warehouse-transfer:read' }
+        },
+        {
+          path: 'warehouse-charges',
+          name: 'warehouse-charges',
+          component: () => import('@/views/warehouse/MaintenanceDashboardView.vue'),
+          meta: { requiresPermission: 'warehouse-charge:create' }
         },
         // Treasury routes
         {

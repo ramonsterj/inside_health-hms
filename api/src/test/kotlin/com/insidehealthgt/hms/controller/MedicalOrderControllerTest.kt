@@ -1003,7 +1003,6 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
                 name = name,
                 price = BigDecimal("50.00"),
                 cost = BigDecimal("20.00"),
-                quantity = 100,
                 restockLevel = 10,
             ),
         )

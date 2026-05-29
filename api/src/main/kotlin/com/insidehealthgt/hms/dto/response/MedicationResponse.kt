@@ -30,9 +30,27 @@ data class MedicationResponse(
     val section: MedicationSection,
     val reviewStatus: MedicationReviewStatus,
     val reviewNotes: String?,
+    /**
+     * Per-warehouse on-hand breakdown (FR-11). `quantity` above is the system-wide
+     * total; this array makes explicit where that stock actually sits, since
+     * dispensing is warehouse-scoped. Empty on the list endpoint (detail-only).
+     */
+    val warehouseStock: List<WarehouseStockBreakdown> = emptyList(),
 ) {
+    data class WarehouseStockBreakdown(
+        val warehouseId: Long,
+        val warehouseCode: String,
+        val warehouseName: String,
+        val quantity: Int,
+    )
+
     companion object {
-        fun from(item: InventoryItem, details: MedicationDetails): MedicationResponse = MedicationResponse(
+        fun from(
+            item: InventoryItem,
+            details: MedicationDetails,
+            quantity: Int,
+            warehouseStock: List<WarehouseStockBreakdown> = emptyList(),
+        ): MedicationResponse = MedicationResponse(
             id = details.id!!,
             itemId = item.id!!,
             name = item.name,
@@ -42,7 +60,7 @@ data class MedicationResponse(
             price = item.price,
             cost = item.cost,
             restockLevel = item.restockLevel,
-            quantity = item.quantity,
+            quantity = quantity,
             active = item.active,
             genericName = details.genericName,
             commercialName = details.commercialName,
@@ -54,6 +72,7 @@ data class MedicationResponse(
             section = details.section,
             reviewStatus = details.reviewStatus,
             reviewNotes = details.reviewNotes,
+            warehouseStock = warehouseStock,
         )
     }
 }

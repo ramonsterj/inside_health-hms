@@ -77,8 +77,12 @@ async function load() {
             {{ formatPrice(pharmacyStore.currentMedication.price) }}
           </div>
           <div>
-            <strong>{{ t('pharmacy.medication.quantity') }}:</strong>
+            <strong>{{ t('pharmacy.medication.quantityTotal') }}:</strong>
             {{ pharmacyStore.currentMedication.quantity }}
+            <i
+              class="pi pi-info-circle stock-hint-icon"
+              v-tooltip.top="t('pharmacy.medication.quantityTotalHint')"
+            />
           </div>
           <div>
             <strong>{{ t('inventory.item.restockLevel') }}:</strong>
@@ -93,6 +97,29 @@ async function load() {
             "
           >
             <Tag severity="warn" :value="t('pharmacy.medication.needsReview')" />
+          </div>
+        </div>
+      </template>
+    </Card>
+
+    <Card
+      v-if="pharmacyStore.currentMedication?.warehouseStock?.length"
+      class="mt-4"
+    >
+      <template #title>
+        <span class="stock-title">{{ t('pharmacy.medication.stockByWarehouse') }}</span>
+      </template>
+      <template #content>
+        <p class="stock-subtitle">{{ t('pharmacy.medication.stockByWarehouseHint') }}</p>
+        <div class="warehouse-stock-grid">
+          <div
+            v-for="ws in pharmacyStore.currentMedication.warehouseStock"
+            :key="ws.warehouseId"
+            class="warehouse-stock-row"
+            :class="{ 'is-empty': ws.quantity <= 0 }"
+          >
+            <span class="warehouse-name">{{ ws.warehouseName }}</span>
+            <span class="warehouse-qty">{{ ws.quantity }}</span>
           </div>
         </div>
       </template>
@@ -134,5 +161,43 @@ async function load() {
 }
 .mt-4 {
   margin-top: 1rem;
+}
+.stock-hint-icon {
+  margin-left: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text-color-secondary);
+  cursor: help;
+}
+.stock-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+.stock-subtitle {
+  margin: 0 0 0.75rem;
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
+}
+.warehouse-stock-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.5rem;
+}
+.warehouse-stock-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-border-radius);
+}
+.warehouse-stock-row.is-empty .warehouse-qty {
+  color: var(--p-red-500);
+}
+.warehouse-name {
+  font-weight: 500;
+}
+.warehouse-qty {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
 }
 </style>

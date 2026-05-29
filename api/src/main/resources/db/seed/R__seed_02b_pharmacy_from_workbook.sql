@@ -4,7 +4,7 @@
 -- Mirrors what V111 inserts in prod. R__seed_01 truncates inventory_items, so
 -- the workbook rows seeded by the versioned migration need to be re-inserted
 -- after the categories are recreated in R__seed_02.
--- SEED-BUNDLE-VERSION: 2026-05-28c
+-- SEED-BUNDLE-VERSION: 2026-05-29b
 -- ============================================================================
 
 SET session_replication_role = replica;
@@ -26,18 +26,18 @@ ON CONFLICT (name) WHERE deleted_at IS NULL DO UPDATE
 
 -- DRUG rows from workbook sections A/B/C/D.
 INSERT INTO inventory_items (
-    category_id, name, description, price, cost, quantity, restock_level,
+    category_id, name, description, price, cost, restock_level,
     pricing_type, time_unit, time_interval, active, kind, sku,
     lot_tracking_enabled, created_at, updated_at
 )
--- Dev/acceptance seed: quantity = 50 (vs. production V111 which seeds 0).
--- Paired with a synthetic seed lot below so FEFO has a non-empty pool.
+-- Stock is per-warehouse now (inventory_warehouse_stock); the synthetic lot
+-- below holds 50 units in ADMINISTRACION for dev/acceptance (prod V111: 0).
 SELECT (
            SELECT id FROM inventory_categories
            WHERE LOWER(name) LIKE '%medicament%' AND deleted_at IS NULL
            ORDER BY id LIMIT 1
        ),
-       v.name, NULL, 0, 0, 50, 0, 'FLAT', NULL, NULL, TRUE, 'DRUG', v.sku, TRUE,
+       v.name, NULL, 0, 0, 0, 'FLAT', NULL, NULL, TRUE, 'DRUG', v.sku, TRUE,
        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM (VALUES
   ('A1', 'ARIPIPRAZOL PRIPAX 5 MG'),
@@ -520,7 +520,6 @@ ON CONFLICT (sku) WHERE sku IS NOT NULL AND deleted_at IS NULL DO UPDATE
        description = EXCLUDED.description,
        price = EXCLUDED.price,
        cost = EXCLUDED.cost,
-       quantity = EXCLUDED.quantity,
        restock_level = EXCLUDED.restock_level,
        pricing_type = EXCLUDED.pricing_type,
        time_unit = EXCLUDED.time_unit,
@@ -1031,7 +1030,7 @@ ON CONFLICT (item_id) WHERE deleted_at IS NULL DO UPDATE
 
 -- SUPPLY rows from workbook section E.
 INSERT INTO inventory_items (
-    category_id, name, description, price, cost, quantity, restock_level,
+    category_id, name, description, price, cost, restock_level,
     pricing_type, time_unit, time_interval, active, kind, sku,
     lot_tracking_enabled, created_at, updated_at
 )
@@ -1040,7 +1039,7 @@ SELECT (
            WHERE LOWER(name) LIKE '%material%' AND deleted_at IS NULL
            ORDER BY id LIMIT 1
        ),
-       v.name, NULL, 0, 0, 0, 0, 'FLAT', NULL, NULL, TRUE, 'SUPPLY', v.sku, FALSE,
+       v.name, NULL, 0, 0, 0, 'FLAT', NULL, NULL, TRUE, 'SUPPLY', v.sku, FALSE,
        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM (VALUES
   ('E1', 'QUELOPATCH ACIDO HIALURONICO 1 SOBRE'),
@@ -1192,7 +1191,6 @@ ON CONFLICT (sku) WHERE sku IS NOT NULL AND deleted_at IS NULL DO UPDATE
        description = EXCLUDED.description,
        price = EXCLUDED.price,
        cost = EXCLUDED.cost,
-       quantity = EXCLUDED.quantity,
        restock_level = EXCLUDED.restock_level,
        pricing_type = EXCLUDED.pricing_type,
        time_unit = EXCLUDED.time_unit,
@@ -1211,15 +1209,14 @@ ON CONFLICT (sku) WHERE sku IS NOT NULL AND deleted_at IS NULL DO UPDATE
 --
 -- R__seed_06 credits-then-debits this lot once per GIVEN MEDICAMENTOS
 -- administration to fabricate a believable inventory_movements ledger,
--- leaving quantity_on_hand back at 50 (see seed_06 "INVENTORY MOVEMENTS").
+-- leaving the ADMINISTRACION warehouse stock back at 50.
 INSERT INTO inventory_lots (
-    item_id, lot_number, expiration_date, quantity_on_hand, received_at,
+    item_id, lot_number, expiration_date, received_at,
     supplier, notes, recalled, synthetic_legacy, created_at, updated_at
 )
 SELECT i.id,
        NULL,
        DATE '9999-12-31',
-       50,
        CURRENT_DATE,
        NULL,
        'Dev seed — replace with real lots when restocking',
@@ -1232,13 +1229,31 @@ WHERE i.kind = 'DRUG'
   AND i.lot_tracking_enabled = TRUE
   AND i.deleted_at IS NULL
 ON CONFLICT (item_id, lot_number, expiration_date) WHERE deleted_at IS NULL DO UPDATE
-   SET quantity_on_hand = EXCLUDED.quantity_on_hand,
-       received_at = EXCLUDED.received_at,
+   SET received_at = EXCLUDED.received_at,
        supplier = EXCLUDED.supplier,
        notes = EXCLUDED.notes,
        recalled = EXCLUDED.recalled,
        recalled_reason = NULL,
        synthetic_legacy = EXCLUDED.synthetic_legacy,
+       updated_at = CURRENT_TIMESTAMP;
+
+-- Per-warehouse stock: 50 units of each synthetic DRUG lot in ADMINISTRACION
+-- (the receiving warehouse). R__seed_04 transfers a slice to ENFERMERIA so the
+-- nurse-dispense flow works without a manual transfer.
+INSERT INTO inventory_warehouse_stock (item_id, warehouse_id, lot_id, quantity, created_at, updated_at)
+SELECT l.item_id,
+       (SELECT id FROM warehouses WHERE code = 'ADMINISTRACION'),
+       l.id,
+       50,
+       CURRENT_TIMESTAMP,
+       CURRENT_TIMESTAMP
+FROM inventory_lots l
+JOIN inventory_items i ON i.id = l.item_id
+WHERE i.kind = 'DRUG'
+  AND l.synthetic_legacy = TRUE
+  AND l.deleted_at IS NULL
+ON CONFLICT (item_id, warehouse_id, COALESCE(lot_id, -1)) WHERE deleted_at IS NULL DO UPDATE
+   SET quantity = EXCLUDED.quantity,
        updated_at = CURRENT_TIMESTAMP;
 
 SET session_replication_role = DEFAULT;

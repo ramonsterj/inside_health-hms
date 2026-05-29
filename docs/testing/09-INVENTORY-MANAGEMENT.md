@@ -320,6 +320,83 @@ Inventory management for hospital supplies, medications, and services:
 
 ---
 
+## Warehouse-Scoped Scenarios (Bodegas, V118–V120)
+
+> Stock now lives per-warehouse in `inventory_warehouse_stock`. Six warehouses are seeded: ADMINISTRACION, ENFERMERIA, MANTENIMIENTO_1, MANTENIMIENTO_2, COCINA, PSICOLOGIA. See `docs/features/warehouse-inventory-management.md`.
+
+### WH-01: Seeded warehouses present
+**Role**: ADMIN
+**Precondition**: Migrations V118–V120 applied
+**Steps**:
+1. GET `/api/v1/warehouses`
+**Expected Result**: The six seeded warehouse codes are returned.
+**Type**: Happy Path
+
+### WH-02: Per-warehouse stock view
+**Role**: ADMIN
+**Precondition**: Item X has stock in two warehouses
+**Steps**:
+1. GET `/api/v1/admin/inventory-items?warehouseId={ENFERMERIA}`
+**Expected Result**: Item X `quantity` reflects the ENFERMERIA on-hand only, not the system-wide total.
+**Type**: Happy Path
+
+### WH-03: Inter-warehouse transfer (happy path)
+**Role**: ADMIN
+**Precondition**: ADMINISTRACION has 50 units of item X; ENFERMERIA has 0
+**Steps**:
+1. POST `/api/v1/warehouse-transfers` { source=ADMINISTRACION, destination=ENFERMERIA, item=X, quantity=20 }
+**Expected Result**: 201; transfer `status=COMPLETED`; ADMINISTRACION X = 30, ENFERMERIA X = 20; one `inventory_transfers` row + two `inventory_movements` (EXIT on source, ENTRY on destination, both linked to the transfer); `WAREHOUSE_TRANSFER` audit row.
+**Type**: Happy Path
+
+### WH-04: Transfer source out of stock
+**Role**: ADMIN
+**Precondition**: Source has 50 units
+**Steps**:
+1. POST a transfer of 100 units
+**Expected Result**: 422 `error.warehouse.out-of-stock`; no rows written.
+**Type**: Edge Case
+
+### WH-05: Transfer scope denied
+**Role**: NURSE
+**Precondition**: Nurse is scoped to ENFERMERIA
+**Steps**:
+1. POST a transfer with source = ADMINISTRACION
+**Expected Result**: 403 `error.warehouse.transfer.source.denied`.
+**Type**: Permission
+
+### WH-06: Nurse dispense uses ENFERMERIA only
+**Role**: NURSE
+**Precondition**: Medication has stock 5 in ENFERMERIA, 100 in ADMINISTRACION
+**Steps**:
+1. Administer the medication
+**Expected Result**: Succeeds and decrements ENFERMERIA. If ENFERMERIA stock is 0, the administer call returns 422 `error.warehouse.out-of-stock` even though ADMINISTRACION has 100.
+**Type**: Edge Case
+
+### WH-07: FEFO is per-warehouse
+**Role**: NURSE
+**Precondition**: ENFERMERIA has lot A (exp 2026-08-01) and lot B (exp 2026-06-15); ADMINISTRACION has lot C (exp 2026-05-30)
+**Steps**:
+1. Administer the medication from ENFERMERIA
+**Expected Result**: Lot B is debited (earliest expiring lot **in ENFERMERIA**), not lot C.
+**Type**: Edge Case
+
+### WH-08: Cannot delete non-empty warehouse
+**Role**: ADMIN
+**Precondition**: Warehouse has stock > 0
+**Steps**:
+1. DELETE `/api/v1/warehouses/{id}`
+**Expected Result**: 409 `error.warehouse.not-empty`.
+**Type**: Edge Case
+
+### WH-09: Maintenance user warehouse scope
+**Role**: MAINTENANCE (assigned MANTENIMIENTO_1 only)
+**Steps**:
+1. GET stock for MANTENIMIENTO_2
+**Expected Result**: 403; only the assigned warehouse is visible.
+**Type**: Permission
+
+---
+
 ## Permission Matrix
 
 | Action | ADMIN | STAFF | DOCTOR | PSYCH | NURSE | CHIEF_NURSE | USER |

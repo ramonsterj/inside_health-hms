@@ -14,8 +14,10 @@ import com.insidehealthgt.hms.exception.ResourceNotFoundException
 import com.insidehealthgt.hms.repository.InventoryCategoryRepository
 import com.insidehealthgt.hms.repository.InventoryItemRepository
 import com.insidehealthgt.hms.repository.InventoryLotRepository
+import com.insidehealthgt.hms.repository.InventoryWarehouseStockRepository
 import com.insidehealthgt.hms.repository.MedicationDetailsRepository
 import com.insidehealthgt.hms.repository.UserRepository
+import com.insidehealthgt.hms.security.CurrentUserProvider
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -28,9 +30,12 @@ class InventoryItemService(
     private val itemRepository: InventoryItemRepository,
     private val categoryRepository: InventoryCategoryRepository,
     private val lotRepository: InventoryLotRepository,
+    private val stockRepository: InventoryWarehouseStockRepository,
     private val medicationDetailsRepository: MedicationDetailsRepository,
     private val userRepository: UserRepository,
     private val movementService: InventoryMovementService,
+    private val scopeService: WarehouseScopeService,
+    private val currentUserProvider: CurrentUserProvider,
     private val messageService: MessageService,
 ) {
 
@@ -44,9 +49,18 @@ class InventoryItemService(
         kind: InventoryKind?,
         search: String?,
         pageable: Pageable,
-    ): Page<InventoryItemResponse> = itemRepository
-        .findAllWithFilters(categoryId, kind, search?.trim() ?: "", pageable)
-        .map { InventoryItemResponse.from(it) }
+        warehouseId: Long? = null,
+    ): Page<InventoryItemResponse> {
+        // Filtering to a warehouse exposes that bodega's per-item on-hand, so a
+        // warehouse-scoped caller must own it (FR-6 / AC-13 — parity with the
+        // dedicated stock view, expiry report, and FEFO preview).
+        if (warehouseId != null) {
+            scopeService.assertCanView(currentUserProvider.currentUserDetailsOrThrow(), warehouseId)
+        }
+        val page = itemRepository.findAllWithFilters(categoryId, kind, search?.trim() ?: "", pageable)
+        val quantities = quantitiesFor(page.content.mapNotNull { it.id }, warehouseId)
+        return page.map { InventoryItemResponse.from(it, quantities[it.id] ?: 0) }
+    }
 
     @Transactional(readOnly = true)
     fun getItem(id: Long): InventoryItemResponse {
@@ -159,8 +173,19 @@ class InventoryItemService(
     }
 
     @Transactional(readOnly = true)
-    fun findLowStock(categoryId: Long?): List<InventoryItemResponse> = itemRepository.findLowStock(categoryId)
-        .map { InventoryItemResponse.from(it) }
+    fun findLowStock(categoryId: Long?, warehouseId: Long? = null): List<InventoryItemResponse> {
+        val rows = if (warehouseId != null) {
+            // Same warehouse-view scope as findAll (FR-7 / AC-13).
+            scopeService.assertCanView(currentUserProvider.currentUserDetailsOrThrow(), warehouseId)
+            stockRepository.findWarehouseLowStock(warehouseId, categoryId)
+        } else {
+            stockRepository.findSystemWideLowStock(categoryId)
+        }
+        val itemsById = itemRepository.findAllById(rows.map { it.itemId }).associateBy { it.id }
+        return rows.mapNotNull { row ->
+            itemsById[row.itemId]?.let { InventoryItemResponse.from(it, row.quantity.toInt()) }
+        }
+    }
 
     @Transactional
     fun createMovement(itemId: Long, request: CreateInventoryMovementRequest): InventoryMovementResponse =
@@ -169,14 +194,14 @@ class InventoryItemService(
     @Transactional(readOnly = true)
     fun getMovements(itemId: Long): List<InventoryMovementResponse> = movementService.getMovements(itemId)
 
-    /** Force-recompute the scalar quantity from active non-recalled lots; for ops drift recovery. */
-    @Transactional
-    fun reconcileQuantity(id: Long): InventoryItemResponse {
-        val item = findById(id)
-        if (item.lotTrackingEnabled) {
-            itemRepository.recomputeQuantityFromLots(id)
+    private fun quantitiesFor(itemIds: List<Long>, warehouseId: Long?): Map<Long, Int> {
+        if (itemIds.isEmpty()) return emptyMap()
+        val rows = if (warehouseId != null) {
+            stockRepository.sumByItemIdsAndWarehouse(itemIds, warehouseId)
+        } else {
+            stockRepository.sumByItemIds(itemIds)
         }
-        return getItem(id)
+        return rows.associate { it.itemId to it.quantity.toInt() }
     }
 
     private fun validateTimeBased(
@@ -238,6 +263,7 @@ class InventoryItemService(
     private fun buildItemResponse(item: InventoryItem): InventoryItemResponse {
         val createdByUser = item.createdBy?.let { userRepository.findById(it).orElse(null) }
         val updatedByUser = item.updatedBy?.let { userRepository.findById(it).orElse(null) }
-        return InventoryItemResponse.from(item, createdByUser, updatedByUser)
+        val quantity = stockRepository.sumByItem(item.id!!).toInt()
+        return InventoryItemResponse.from(item, quantity, createdByUser, updatedByUser)
     }
 }

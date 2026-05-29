@@ -24,9 +24,6 @@ class InventoryLot(
     @Column(name = "expiration_date", nullable = false)
     var expirationDate: LocalDate,
 
-    @Column(name = "quantity_on_hand", nullable = false)
-    var quantityOnHand: Int,
-
     @Column(name = "received_at", nullable = false)
     var receivedAt: LocalDate,
 

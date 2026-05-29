@@ -41,9 +41,12 @@ class PasswordResetTokenRepositoryTest {
     fun setUp() {
         // Clean all data in FK dependency order using jdbcTemplate
         jdbcTemplate.execute("DELETE FROM medication_administrations")
+        jdbcTemplate.execute("DELETE FROM warehouse_charges")
         jdbcTemplate.execute("DELETE FROM patient_charges")
         jdbcTemplate.execute("DELETE FROM invoices")
         jdbcTemplate.execute("DELETE FROM inventory_movements")
+        jdbcTemplate.execute("DELETE FROM inventory_warehouse_stock")
+        jdbcTemplate.execute("DELETE FROM inventory_transfers")
         jdbcTemplate.execute("DELETE FROM medical_order_documents")
         jdbcTemplate.execute("DELETE FROM medical_orders")
         jdbcTemplate.execute("DELETE FROM inventory_lots")
@@ -69,6 +72,7 @@ class PasswordResetTokenRepositoryTest {
         jdbcTemplate.execute("DELETE FROM refresh_tokens")
         jdbcTemplate.execute("DELETE FROM audit_logs")
         jdbcTemplate.execute("DELETE FROM user_phone_numbers")
+        jdbcTemplate.execute("DELETE FROM user_warehouses")
         jdbcTemplate.execute("DELETE FROM user_roles")
         jdbcTemplate.execute("DELETE FROM users")
 

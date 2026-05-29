@@ -140,11 +140,17 @@ function viewMedication(id: number) {
               {{ t(`pharmacy.dosageForm.${data.dosageForm}`) }}
             </template>
           </Column>
-          <Column
-            field="quantity"
-            :header="t('pharmacy.medication.quantity')"
-            style="width: 80px"
-          />
+          <Column field="quantity" style="width: 130px">
+            <template #header>
+              <span
+                v-tooltip.top="t('pharmacy.medication.quantityTotalHint')"
+                class="qty-header"
+              >
+                {{ t('pharmacy.medication.quantityTotal') }}
+                <i class="pi pi-info-circle" />
+              </span>
+            </template>
+          </Column>
           <Column :header="t('pharmacy.medication.controlled')" style="width: 100px">
             <template #body="{ data }">
               <Tag v-if="data.controlled" severity="warn" :value="t('common.yes')" />
@@ -201,5 +207,15 @@ function viewMedication(id: number) {
   gap: 0.75rem;
   margin: 1rem 0;
   align-items: center;
+}
+.qty-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: help;
+}
+.qty-header .pi-info-circle {
+  font-size: 0.75rem;
+  color: var(--text-color-secondary);
 }
 </style>
