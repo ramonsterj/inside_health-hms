@@ -16,6 +16,11 @@ data class CreateAdmissionRequest(
     @field:NotNull(message = "{validation.admission.treatingPhysicianId.required}")
     val treatingPhysicianId: Long,
 
+    // Only used (and required) when an ADMIN registers an admission: admins are
+    // not residents, so they must name the resident doctor the admission is
+    // recorded under. Residents auto-bind to themselves and ignore this field.
+    val residentId: Long? = null,
+
     @field:NotNull(message = "{validation.admission.admissionDate.required}")
     val admissionDate: LocalDateTime,
 

@@ -7,7 +7,7 @@
 -- WarehouseTransferService shape: one inventory_transfers row + two
 -- inventory_movements (EXIT on source, ENTRY on destination) per lot, with the
 -- per-warehouse stock rows kept consistent.
--- SEED-BUNDLE-VERSION: 2026-05-29c (see R__seed_01 header for the rule)
+-- SEED-BUNDLE-VERSION: 2026-05-29d (see R__seed_01 header for the rule)
 -- ============================================================================
 
 SET session_replication_role = replica;

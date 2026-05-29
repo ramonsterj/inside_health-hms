@@ -20,6 +20,7 @@ import java.time.LocalDateTime
 class AdmissionDocumentControllerTest : AbstractIntegrationTest() {
 
     private lateinit var administrativeStaffToken: String
+    private lateinit var residentToken: String
     private lateinit var doctorUser: User
     private var patientId: Long = 0
     private var triageCodeId: Long = 0
@@ -29,6 +30,12 @@ class AdmissionDocumentControllerTest : AbstractIntegrationTest() {
     fun setUp() {
         val (_, staffTkn) = createAdminStaffUser()
         administrativeStaffToken = staffTkn
+
+        // Admissions can only be registered by a resident (auto-bound to self) or
+        // an admin who picks a resident; admin staff cannot. Register through a
+        // resident so the staff-centric assertions below keep working.
+        val (_, residentTkn) = createResidentUser()
+        residentToken = residentTkn
 
         val (doctorUsr, _) = createDoctorUser()
         doctorUser = doctorUsr
@@ -60,7 +67,7 @@ class AdmissionDocumentControllerTest : AbstractIntegrationTest() {
         )
         val createResult = mockMvc.perform(
             post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
+                .header("Authorization", "Bearer $residentToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)),
         ).andExpect(status().isCreated)

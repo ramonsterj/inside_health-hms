@@ -306,9 +306,10 @@ abstract class AbstractIntegrationTest {
         return Pair(savedUser, token)
     }
 
-    // Admin in tests carries RESIDENT_DOCTOR as well, mirroring the seed grant
-    // (admin needs the role to create admissions because resident is auto-bound
-    // to the authenticated user).
+    // Admin does NOT carry RESIDENT_DOCTOR, mirroring production (V122): ADMIN is
+    // a code-level exception in AdmissionService.resolveResident() and admits by
+    // picking a resident (residentId), not by being one. The shared createAdmission
+    // helper supplies that residentId automatically.
     protected fun createAdminUser(): Pair<User, String> = createUserWithRole(
         roleCode = "ADMIN",
         username = "admin",
@@ -316,7 +317,6 @@ abstract class AbstractIntegrationTest {
         password = "admin123",
         firstName = "Admin",
         lastName = "User",
-        extraRoleCodes = listOf("RESIDENT_DOCTOR"),
     )
 
     protected fun createResidentUser(): Pair<User, String> = createUserWithRole(
@@ -357,9 +357,10 @@ abstract class AbstractIntegrationTest {
         lastName = "Flores",
     )
 
-    // Administrative staff in tests carries RESIDENT_DOCTOR so existing fixtures
-    // that drive admission setup through this user keep working. Production
-    // administrative staff would need the role explicitly granted to admit.
+    // Administrative staff does NOT carry RESIDENT_DOCTOR, mirroring production:
+    // only residents (and admins, who pick a resident) may register admissions.
+    // Fixtures that need an admission register it through the admin or resident
+    // token via the shared createAdmission helper.
     protected fun createAdminStaffUser(): Pair<User, String> = createUserWithRole(
         roleCode = "ADMINISTRATIVE_STAFF",
         username = "receptionist",
@@ -367,7 +368,6 @@ abstract class AbstractIntegrationTest {
         password = "password123",
         firstName = "Reception",
         lastName = "Staff",
-        extraRoleCodes = listOf("RESIDENT_DOCTOR"),
     )
 
     protected fun createPsychologistUser(): Pair<User, String> = createUserWithRole(
@@ -415,6 +415,24 @@ abstract class AbstractIntegrationTest {
             .get("data").get("id").asLong()
     }
 
+    // Ensures at least one RESIDENT_DOCTOR exists and returns its id. Used by the
+    // shared createAdmission helper so admin-token callers can satisfy the new
+    // "admins must pick a resident" rule without each suite seeding one.
+    protected fun ensureFixtureResidentId(): Long {
+        userRepository.findByRoleCode("RESIDENT_DOCTOR").firstOrNull()?.let { return it.id!! }
+        val role = roleRepository.findByCode("RESIDENT_DOCTOR")!!
+        val resident = User(
+            username = "fixture_resident",
+            email = "fixture.resident@example.com",
+            passwordHash = passwordEncoder.encode("password123")!!,
+            firstName = "Fixture",
+            lastName = "Resident",
+            mustChangePassword = false,
+        )
+        resident.roles.add(role)
+        return userRepository.save(resident).id!!
+    }
+
     protected fun createAdmission(
         token: String,
         patientId: Long,
@@ -423,6 +441,7 @@ abstract class AbstractIntegrationTest {
         roomId: Long? = null,
         triageCodeId: Long? = null,
         admissionDate: LocalDateTime = LocalDateTime.now(),
+        residentId: Long? = null,
     ): Long {
         val request = CreateAdmissionRequest(
             patientId = patientId,
@@ -431,6 +450,10 @@ abstract class AbstractIntegrationTest {
             type = type,
             roomId = roomId,
             triageCodeId = triageCodeId,
+            // Honored only when the posting token is an admin; residents auto-bind
+            // to themselves. Default to any seeded resident so admin-token fixtures
+            // keep working.
+            residentId = residentId ?: ensureFixtureResidentId(),
         )
 
         val result = mockMvc.perform(

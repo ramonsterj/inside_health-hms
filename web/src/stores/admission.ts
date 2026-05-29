@@ -19,6 +19,7 @@ export const useAdmissionStore = defineStore('admission', () => {
   const totalAdmissions = ref(0)
   const currentAdmission = ref<AdmissionDetail | null>(null)
   const doctors = ref<Doctor[]>([])
+  const residents = ref<Doctor[]>([])
   const loading = ref(false)
 
   async function fetchAdmissions(
@@ -203,6 +204,17 @@ export const useAdmissionStore = defineStore('admission', () => {
     }
   }
 
+  async function fetchResidents(): Promise<void> {
+    try {
+      const response = await api.get<ApiResponse<Doctor[]>>('/v1/admissions/residents')
+      if (response.data.success && response.data.data) {
+        residents.value = response.data.data
+      }
+    } catch {
+      residents.value = []
+    }
+  }
+
   async function addConsultingPhysician(
     admissionId: number,
     request: AddConsultingPhysicianRequest
@@ -247,6 +259,7 @@ export const useAdmissionStore = defineStore('admission', () => {
     totalAdmissions,
     currentAdmission,
     doctors,
+    residents,
     loading,
     fetchAdmissions,
     fetchAdmission,
@@ -259,6 +272,7 @@ export const useAdmissionStore = defineStore('admission', () => {
     searchPatients,
     fetchPatientSummary,
     fetchDoctors,
+    fetchResidents,
     addConsultingPhysician,
     removeConsultingPhysician,
     clearCurrentAdmission

@@ -97,7 +97,7 @@ class BedOccupancyControllerTest : AbstractIntegrationTest() {
         val patientId = createPatient(staffToken)
 
         createAdmission(
-            token = staffToken,
+            token = adminToken,
             patientId = patientId,
             doctorId = doctorUser.id!!,
             type = AdmissionType.HOSPITALIZATION,
@@ -130,7 +130,7 @@ class BedOccupancyControllerTest : AbstractIntegrationTest() {
         // AMBULATORY does not require a room — but even if a row references one,
         // it must not count as occupying a bed.
         createAdmission(
-            token = staffToken,
+            token = adminToken,
             patientId = patientId,
             doctorId = doctorUser.id!!,
             type = AdmissionType.AMBULATORY,
@@ -154,7 +154,7 @@ class BedOccupancyControllerTest : AbstractIntegrationTest() {
         val patientId = createPatient(staffToken)
 
         val admissionId = createAdmission(
-            token = staffToken,
+            token = adminToken,
             patientId = patientId,
             doctorId = doctorUser.id!!,
             type = AdmissionType.HOSPITALIZATION,
@@ -207,7 +207,7 @@ class BedOccupancyControllerTest : AbstractIntegrationTest() {
 
         listOf(p1, p2, p3).forEach { pid ->
             createAdmission(
-                token = staffToken,
+                token = adminToken,
                 patientId = pid,
                 doctorId = doctorUser.id!!,
                 type = AdmissionType.HOSPITALIZATION,

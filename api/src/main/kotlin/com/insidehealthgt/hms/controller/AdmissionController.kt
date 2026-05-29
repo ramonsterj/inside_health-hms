@@ -164,6 +164,11 @@ class AdmissionController(
         return ResponseEntity.ok(ApiResponse.success(doctors))
     }
 
+    @GetMapping("/residents")
+    @PreAuthorize("hasAuthority('admission:create')")
+    fun listResidents(): ResponseEntity<ApiResponse<List<DoctorResponse>>> =
+        ResponseEntity.ok(ApiResponse.success(admissionService.listResidents()))
+
     @GetMapping("/{id}/consulting-physicians")
     @PreAuthorize("hasAuthority('admission:read')")
     fun listConsultingPhysicians(

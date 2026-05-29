@@ -122,6 +122,8 @@ class MessageService(private val messageSource: MessageSource) {
     fun errorAdmissionRoomRequired(type: String) = getMessage("error.admission.room.required", type)
     fun errorAdmissionPhysicianRole() = getMessage("error.admission.physician.role")
     fun errorAdmissionResidentRoleRequired() = getMessage("error.admission.resident.role.required")
+    fun errorAdmissionResidentRequired() = getMessage("error.admission.resident.required")
+    fun errorAdmissionResidentInvalidRole() = getMessage("error.admission.resident.invalid.role")
     fun errorAdmissionRoomFull(roomNumber: String) = getMessage("error.admission.room.full", roomNumber)
     fun errorAdmissionUpdateDischarged() = getMessage("error.admission.update.discharged")
     fun errorAdmissionAlreadyDischarged() = getMessage("error.admission.already.discharged")

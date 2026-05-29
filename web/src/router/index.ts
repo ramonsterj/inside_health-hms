@@ -38,9 +38,8 @@ const router = createRouter({
             const roles = authStore.user?.roles ?? []
             // Nurses (all nursing roles) and resident doctors land on the bed
             // occupancy screen as their default dashboard. Admins are never
-            // auto-redirected — they keep the standard dashboard even when they
-            // also carry a nursing/resident role (e.g. the seeded `admin`, which
-            // holds RESIDENT_DOCTOR so it can register admissions).
+            // auto-redirected — they keep the standard dashboard. The seeded
+            // admin no longer carries RESIDENT_DOCTOR after V122.
             const BED_OCCUPANCY_HOME_ROLES = [
               'NURSE',
               'CHIEF_NURSE',
