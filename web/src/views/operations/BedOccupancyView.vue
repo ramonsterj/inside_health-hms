@@ -281,14 +281,24 @@ function genderGroupLabel(genderKey: RoomGender): string {
 
 .gender-groups {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: flex-start;
   gap: 1.5rem;
 }
 
 .gender-group {
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+/* Collapse to stacked sections (women above men) on narrow viewports */
+@media (max-width: 900px) {
+  .gender-groups {
+    flex-direction: column;
+  }
 }
 
 .group-title {
