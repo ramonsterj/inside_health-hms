@@ -6,6 +6,8 @@
 |---------|------|--------|---------|
 | 1.0 | 2026-04-27 | @author | Initial draft |
 | 1.1 | 2026-04-27 | @author | Align permission `action` with hyphen convention (`occupancy-view`); correct role names to actual seed data (`ADMINISTRATIVE_STAFF`, drop non-existent `RECEPTIONIST`); call out admission wizard `?roomId=` support as an explicit deliverable; clarify new typed repository projection (existing `findRoomsWithAvailabilityAndCount()` is not extended); spec stale-data and search-highlight UX with i18n keys. |
+| 1.2 | 2026-05-29 | @author | Gender grouping renders **side-by-side columns** (women left, men right) instead of vertically stacked sections, per customer request. Columns collapse to stacked sections on narrow viewports. |
+| 1.3 | 2026-05-29 | @author | This screen becomes the **default dashboard (landing page)** for nurses (NURSE / CHIEF_NURSE / AUXILIARY_NURSE) and resident doctors (RESIDENT_DOCTOR), replacing the previous nurse → Nursing Kardex redirect. Adds migration V118 granting `room:occupancy-view` to RESIDENT_DOCTOR (it did not inherit it from DOCTOR). Admins are never auto-redirected. |
 
 ---
 
@@ -31,7 +33,7 @@ A read-only screen that gives staff and nurses an at-a-glance view of every room
 
 | Action | Required Role(s) | Permission | Notes |
 |--------|------------------|------------|-------|
-| View bed-occupancy screen | ADMIN, NURSE, ADMINISTRATIVE_STAFF | `room:occupancy-view` | **Not granted to DOCTOR by default.** A user with both DOCTOR and an admin/staff role inherits access via the second role. Role names match seed data (`V005`, `V014`); `RECEPTIONIST` is **not** a real role in this codebase. |
+| View bed-occupancy screen | ADMIN, NURSE, CHIEF_NURSE, AUXILIARY_NURSE, ADMINISTRATIVE_STAFF, RESIDENT_DOCTOR | `room:occupancy-view` | **Not granted to plain DOCTOR.** A user with both DOCTOR and an admin/staff role inherits access via the second role. `RESIDENT_DOCTOR` is granted explicitly (V118) — it does **not** inherit this from DOCTOR. Role names match seed data (`V005`, `V014`); `RECEPTIONIST` is **not** a real role in this codebase. |
 | See occupant patient names | Same as above | `room:occupancy-view` | No separate gate; included in the screen permission. |
 | "Admit here" deep-link from a free bed | Roles allowed to create admissions | `admission:create` (existing) | Button hidden/disabled if user lacks this permission. |
 
@@ -48,9 +50,10 @@ The new `room:occupancy-view` permission is introduced specifically to gate this
 - A summary header shows totals across all rooms: total beds, occupied beds, free beds, occupancy %.
 - Filters: by **gender** (primary), by room type, by occupancy status (all / only free / only occupied).
 - Free-text search: by room number or by occupant patient name.
-- **Default visual grouping is by gender** (men's rooms vs. women's rooms) — the only hard segregation rule in the domain.
+- **Default visual grouping is by gender** (women's rooms vs. men's rooms) — the only hard segregation rule in the domain. The two gender groups render **side by side as columns: women on the left, men on the right.** On narrow viewports the columns collapse to vertically stacked sections (women above men).
 - **Auto-refresh** every 30 seconds (default), plus a manual refresh button. In-flight filters and search state are preserved across refreshes.
 - The screen is **read-only for clinical state** — no admit, transfer, or discharge actions are exposed.
+- This screen is the **default landing page** for nurses (`NURSE`, `CHIEF_NURSE`, `AUXILIARY_NURSE`) and resident doctors (`RESIDENT_DOCTOR`): the `/dashboard` route redirects these roles to `/bed-occupancy`. ADMIN is never auto-redirected (it keeps the standard dashboard even when it also carries a nursing/resident role). Plain DOCTOR and other roles are unaffected. The Nursing Kardex remains reachable via the side-nav; it is simply no longer the auto-redirect target.
 - Each **Free** bed exposes an "Admit here" action that deep-links to the existing admission wizard with the target room pre-selected. Hidden if the user lacks `admission:create`.
 - Soft-deleted rooms are excluded; soft-deleted/discharged admissions do not count as occupying.
 - Only `HOSPITALIZATION` admissions count as occupying a bed (other admission types do not require a room — see `AdmissionType.requiresRoom()`).
@@ -206,7 +209,8 @@ None. The feature is a read-projection over existing `Room` and `Admission` enti
 
 | Migration | Description |
 |-----------|-------------|
-| `V091__add_room_occupancy_permission.sql` | Insert `room:occupancy-view` permission and grant to ADMIN, NURSE, and admin/staff roles. **Do not** grant to DOCTOR. |
+| `V091__add_room_occupancy_permission.sql` | Insert `room:occupancy-view` permission and grant to ADMIN, NURSE, CHIEF_NURSE, and ADMINISTRATIVE_STAFF. **Do not** grant to DOCTOR. |
+| `V118__grant_resident_doctor_occupancy_view.sql` | Grant `room:occupancy-view` to RESIDENT_DOCTOR so the bed occupancy screen can be its default landing page. RESIDENT_DOCTOR clones DOCTOR's grants (V114) and DOCTOR lacks this permission, so it must be added explicitly. Plain DOCTOR remains excluded. |
 
 ### Schema Example
 

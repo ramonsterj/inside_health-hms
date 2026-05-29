@@ -14,7 +14,7 @@
 -- repopulate it (we hit this in PR #53). Whenever any R__seed_*.sql is
 -- modified, bump the SEED-BUNDLE-VERSION line below in ALL eight files
 -- so they re-run together.
--- SEED-BUNDLE-VERSION: 2026-05-28c
+-- SEED-BUNDLE-VERSION: 2026-05-29a
 -- ============================================================================
 
 SET session_replication_role = replica;
@@ -159,6 +159,18 @@ SELECT
     CURRENT_TIMESTAMP
 FROM permissions p
 WHERE p.code = 'admission:create';
+
+-- RESIDENT_DOCTOR also gets room:occupancy-view (V118): the bed occupancy
+-- screen is the default dashboard for residents. Not cloned from DOCTOR, which
+-- is deliberately excluded from this permission.
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
+SELECT
+    (SELECT id FROM roles WHERE code = 'RESIDENT_DOCTOR'),
+    p.id,
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+FROM permissions p
+WHERE p.code = 'room:occupancy-view';
 
 -- PSYCHOLOGIST: psychotherapy + patient/admission read + psychometric medical orders
 -- Sources: V042 + base patient/admission access + V116 (medical-order:read,

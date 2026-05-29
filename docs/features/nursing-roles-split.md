@@ -64,7 +64,7 @@ This mirrors the way `PsychotherapyActivityService.create` already enforces the 
 
 - `NursingKardexView` continues to load for both `NURSE` and `AUXILIARY_NURSE` (and `CHIEF_NURSE`).
 - Quick-action buttons (`Administer`, `Mark in progress`, `Upload result`) on kardex cards and on `MedicalOrderCard` must be hidden when the user has *only* the `AUXILIARY_NURSE` role. The check uses `auth.hasRole('NURSE') || auth.hasRole('CHIEF_NURSE') || auth.hasRole('DOCTOR') || auth.hasRole('ADMIN')` — purely additive; if the user holds any of those, the auxiliary restriction does not apply.
-- The `/dashboard → /nursing-kardex` redirect already in `router/index.ts` gains `AUXILIARY_NURSE` in its allow-list.
+- The `/dashboard` redirect in `router/index.ts` includes `AUXILIARY_NURSE` in its allow-list. **(Updated 2026-05-29: the redirect target changed from `/nursing-kardex` to `/bed-occupancy` for all nursing roles — see [bed-occupancy-view.md](./bed-occupancy-view.md). The auxiliary nurse holds `room:occupancy-view`, so the new target works for it too.)**
 - Side-nav: pharmacy section stays hidden from auxiliary (no `medication:read` grant). Medications-by-state dashboard remains gated by `medical-order:read`, which the auxiliary holds — but the action buttons inside are hidden as above.
 
 ---
@@ -181,7 +181,7 @@ grants the underlying permission (the backend would 403 in that case anyway).
 |---|---|
 | `web/src/components/nursing/MedicationAdministerButton.vue` (or wherever the Administer quick-action lives in `NursingKardexCard` / `MedicalOrderCard`) | Hide when user has `AUXILIARY_NURSE` and none of `{NURSE, CHIEF_NURSE, DOCTOR, ADMIN}`. |
 | `web/src/components/medical-record/MedicalOrderCard.vue` | Hide "Mark in progress" + "Upload result" buttons under the same condition. |
-| `web/src/router/index.ts` | Add `AUXILIARY_NURSE` to the `/dashboard → /nursing-kardex` redirect list. |
+| `web/src/router/index.ts` | Add `AUXILIARY_NURSE` to the `/dashboard` default-landing redirect list. (Target is now `/bed-occupancy` as of 2026-05-29; was `/nursing-kardex`.) |
 | `web/src/layout/AppMenu.vue` | No change — auxiliary already inherits visibility from the existing permissions (`admission:read`, etc.). Verify no medication-administration entry leaks. |
 
 ### i18n
@@ -221,7 +221,7 @@ No new Zod schemas — the change is permission-only.
 ### Frontend
 - [ ] Quick-action buttons hidden for AUXILIARY_NURSE-only user on `NursingKardexView`.
 - [ ] Same buttons hidden on `MedicalOrderCard` / `MedicalOrdersByStateView`.
-- [ ] `/dashboard` redirect lands AUXILIARY_NURSE on `/nursing-kardex`.
+- [ ] `/dashboard` redirect lands AUXILIARY_NURSE on `/bed-occupancy` (updated 2026-05-29; previously `/nursing-kardex`).
 - [ ] Nursing note creation and vital sign creation both work for AUXILIARY_NURSE.
 - [ ] i18n keys present in `en.json` and `es.json`.
 - [ ] ESLint passes.

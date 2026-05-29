@@ -2,7 +2,7 @@
 -- SEED FILE 04: Clínical Histories, Progress Notes, Medical Orders
 -- ============================================================================
 -- Last updated: 2026-05-13 (medical-order drug lookups switched to workbook SKUs)
--- SEED-BUNDLE-VERSION: 2026-05-28c (see R__seed_01 header for the rule)
+-- SEED-BUNDLE-VERSION: 2026-05-29a (see R__seed_01 header for the rule)
 --
 -- Legacy V052 drug catalog → workbook SKU remap (V110 hard-deletes V052; V111
 -- loads the workbook). Reviewer can audit each substitution here:

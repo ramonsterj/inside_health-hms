@@ -208,12 +208,25 @@ test.describe('Auxiliary nurse role', () => {
     await page.addInitScript(() => localStorage.clear())
   })
 
-  test('auxiliary nurse login redirects /dashboard to /nursing-kardex', async ({ page }) => {
+  test('auxiliary nurse login redirects /dashboard to /bed-occupancy', async ({ page }) => {
     await setupAuth(page, auxNurseUser)
+    await page.route('**/api/v1/rooms/occupancy', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            summary: { totalBeds: 0, occupiedBeds: 0, freeBeds: 0, occupancyPercent: 0 },
+            rooms: [],
+          },
+        }),
+      })
+    })
 
     await page.goto('/dashboard')
 
-    await expect(page).toHaveURL(/\/nursing-kardex/, { timeout: 10000 })
+    await expect(page).toHaveURL(/\/bed-occupancy/, { timeout: 10000 })
   })
 
   test('auxiliary nurse sees the kardex but NO Administer button', async ({ page }) => {
