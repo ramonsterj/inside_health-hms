@@ -124,6 +124,38 @@ const model = computed<MenuItem[]>(() => {
     items.push({ label: 'nav.pharmacy', items: pharmacyItems })
   }
 
+  // Warehouse (Bodegas) section - visible to users with warehouse:read permission
+  if (authStore.hasPermission('warehouse:read')) {
+    const warehouseItems: MenuItem[] = []
+    if (authStore.hasPermission('warehouse:create')) {
+      warehouseItems.push({
+        label: 'nav.warehouses',
+        icon: 'pi pi-fw pi-warehouse',
+        to: '/warehouses'
+      })
+    }
+    warehouseItems.push({
+      label: 'nav.warehouseStock',
+      icon: 'pi pi-fw pi-box',
+      to: '/warehouses/stock'
+    })
+    if (authStore.hasPermission('warehouse-transfer:read')) {
+      warehouseItems.push({
+        label: 'nav.warehouseTransfers',
+        icon: 'pi pi-fw pi-arrows-h',
+        to: '/warehouse-transfers'
+      })
+    }
+    if (authStore.hasPermission('warehouse-charge:create')) {
+      warehouseItems.push({
+        label: 'nav.maintenanceDashboard',
+        icon: 'pi pi-fw pi-wrench',
+        to: '/warehouse-charges'
+      })
+    }
+    items.push({ label: 'nav.warehousesSection', items: warehouseItems })
+  }
+
   // Treasury section - visible to users with treasury permissions
   const hasTreasuryRead = authStore.hasPermission('treasury:read')
   const hasTreasuryReport = authStore.hasPermission('treasury:report')

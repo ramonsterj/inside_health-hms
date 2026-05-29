@@ -8,11 +8,15 @@ import com.insidehealthgt.hms.entity.PhoneType
 import com.insidehealthgt.hms.entity.Role
 import com.insidehealthgt.hms.entity.User
 import com.insidehealthgt.hms.entity.UserStatus
+import com.insidehealthgt.hms.entity.UserWarehouse
+import com.insidehealthgt.hms.entity.Warehouse
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ConflictException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
 import com.insidehealthgt.hms.repository.RoleRepository
 import com.insidehealthgt.hms.repository.UserRepository
+import com.insidehealthgt.hms.repository.UserWarehouseRepository
+import com.insidehealthgt.hms.repository.WarehouseRepository
 import com.insidehealthgt.hms.security.CurrentUserProvider
 import com.insidehealthgt.hms.security.CustomUserDetails
 import org.junit.jupiter.api.BeforeEach
@@ -39,6 +43,8 @@ class UserServiceTest {
     private lateinit var roleRepository: RoleRepository
     private lateinit var passwordEncoder: PasswordEncoder
     private lateinit var messageService: MessageService
+    private lateinit var userWarehouseRepository: UserWarehouseRepository
+    private lateinit var warehouseRepository: WarehouseRepository
     private lateinit var userService: UserService
 
     private lateinit var testUser: User
@@ -50,6 +56,8 @@ class UserServiceTest {
         roleRepository = mock()
         passwordEncoder = mock()
         messageService = mock()
+        userWarehouseRepository = mock()
+        warehouseRepository = mock()
 
         userService = UserService(
             userRepository,
@@ -57,6 +65,8 @@ class UserServiceTest {
             passwordEncoder,
             messageService,
             CurrentUserProvider(messageService),
+            userWarehouseRepository,
+            warehouseRepository,
         )
 
         adminRole = Role(
@@ -157,6 +167,20 @@ class UserServiceTest {
             userService.createUser(request)
         }
         assertTrue(exception.message!!.contains("Username"))
+    }
+
+    // === findResponseById tests ===
+
+    @Test
+    fun `findResponseById should include the user's assigned warehouse ids`() {
+        whenever(userRepository.findByIdWithRolesAndPermissions(1L)).thenReturn(testUser)
+        val warehouse = Warehouse(code = "MANTENIMIENTO_1", name = "Mant 1").apply { id = 7L }
+        whenever(userWarehouseRepository.findByUserId(1L))
+            .thenReturn(listOf(UserWarehouse(user = testUser, warehouse = warehouse)))
+
+        val result = userService.findResponseById(1L)
+
+        assertEquals(listOf(7L), result.assignedWarehouseIds)
     }
 
     // === updateProfile tests ===

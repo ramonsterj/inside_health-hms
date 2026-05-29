@@ -314,6 +314,37 @@ const router = createRouter({
           component: () => import('@/views/pharmacy/PharmacyDetailView.vue'),
           meta: { requiresPermission: 'medication:read' }
         },
+        // Warehouse (Bodegas) routes
+        {
+          path: 'warehouses',
+          name: 'warehouses',
+          component: () => import('@/views/warehouse/WarehouseList.vue'),
+          meta: { requiresPermission: 'warehouse:create' }
+        },
+        {
+          path: 'warehouses/stock',
+          name: 'warehouse-stock-default',
+          component: () => import('@/views/warehouse/WarehouseStockView.vue'),
+          meta: { requiresPermission: 'warehouse:read' }
+        },
+        {
+          path: 'warehouses/:code/stock',
+          name: 'warehouse-stock',
+          component: () => import('@/views/warehouse/WarehouseStockView.vue'),
+          meta: { requiresPermission: 'warehouse:read' }
+        },
+        {
+          path: 'warehouse-transfers',
+          name: 'warehouse-transfers',
+          component: () => import('@/views/warehouse/TransferListView.vue'),
+          meta: { requiresPermission: 'warehouse-transfer:read' }
+        },
+        {
+          path: 'warehouse-charges',
+          name: 'warehouse-charges',
+          component: () => import('@/views/warehouse/MaintenanceDashboardView.vue'),
+          meta: { requiresPermission: 'warehouse-charge:create' }
+        },
         // Treasury routes
         {
           path: 'treasury/bank-accounts',

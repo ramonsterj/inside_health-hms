@@ -249,6 +249,22 @@ class MessageService(private val messageSource: MessageSource) {
     fun errorMedicationOrderDiscontinued() = getMessage("error.medication.order.discontinued")
     fun errorMedicationOrderNoInventory() = getMessage("error.medication.order.no.inventory")
 
+    // === Warehouse Error Messages ===
+
+    fun errorWarehouseNotFound(id: Long) = getMessage("error.warehouse.not.found", id)
+    fun errorWarehouseCodeExists(code: String) = getMessage("error.warehouse.code.exists", code)
+    fun errorWarehouseCodeImmutable() = getMessage("error.warehouse.code.immutable")
+    fun errorWarehouseInactive(code: String) = getMessage("error.warehouse.inactive", code)
+    fun errorWarehouseNotEmpty() = getMessage("error.warehouse.not.empty")
+    fun errorWarehouseUnassigned() = getMessage("error.warehouse.unassigned")
+    fun errorWarehouseViewDenied() = getMessage("error.warehouse.view.denied")
+    fun errorWarehouseTransferSourceDenied() = getMessage("error.warehouse.transfer.source.denied")
+    fun errorWarehouseTransferSameWarehouse() = getMessage("error.warehouse.transfer.same.warehouse")
+    fun errorWarehouseOutOfStock(warehouse: String, item: String) =
+        getMessage("error.warehouse.out.of.stock", warehouse, item)
+    fun errorWarehouseLotRequired() = getMessage("error.warehouse.lot.required")
+    fun errorWarehouseItemNotFound(id: Long) = getMessage("error.warehouse.item.not.found", id)
+
     // === Common Error Messages ===
 
     fun errorNotAuthenticated() = getMessage("error.not.authenticated")

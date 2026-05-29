@@ -43,6 +43,14 @@ export enum LotExpiryStatus {
   NO_EXPIRY = 'NO_EXPIRY'
 }
 
+/** Per-warehouse on-hand breakdown for a medication (FR-11). Detail view only. */
+export interface WarehouseStockBreakdown {
+  warehouseId: number
+  warehouseCode: string
+  warehouseName: string
+  quantity: number
+}
+
 export interface Medication {
   id: number
   itemId: number
@@ -52,6 +60,7 @@ export interface Medication {
   price: number
   cost: number
   restockLevel: number
+  /** System-wide total across all bodegas. Dispensing is warehouse-scoped — see warehouseStock. */
   quantity: number
   active: boolean
   genericName: string
@@ -64,6 +73,8 @@ export interface Medication {
   section: MedicationSection
   reviewStatus: MedicationReviewStatus
   reviewNotes: string | null
+  /** Per-warehouse breakdown; populated on the detail endpoint, empty/absent on the list. */
+  warehouseStock?: WarehouseStockBreakdown[]
 }
 
 export interface CreateMedicationRequest {

@@ -34,6 +34,7 @@ data class InventoryItemResponse(
     companion object {
         fun from(
             item: InventoryItem,
+            quantity: Int,
             createdByUser: User? = null,
             updatedByUser: User? = null,
         ): InventoryItemResponse = InventoryItemResponse(
@@ -46,7 +47,7 @@ data class InventoryItemResponse(
             ),
             price = item.price,
             cost = item.cost,
-            quantity = item.quantity,
+            quantity = quantity,
             restockLevel = item.restockLevel,
             pricingType = item.pricingType,
             timeUnit = item.timeUnit,

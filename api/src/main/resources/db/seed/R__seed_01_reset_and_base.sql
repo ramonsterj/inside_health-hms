@@ -8,13 +8,13 @@
 --
 -- !!! READ BEFORE EDITING ANY R__seed_*.sql FILE !!!
 -- This file TRUNCATEs patients/admissions/vitals/notes/meds/billing tables.
--- Re-inserts of those rows live in R__seed_02..07. Flyway re-runs a
+-- Re-inserts of those rows live in R__seed_02..08. Flyway re-runs a
 -- repeatable migration only when ITS OWN checksum changes — so editing
 -- ONLY this file wipes data without re-running the sibling files that
 -- repopulate it (we hit this in PR #53). Whenever any R__seed_*.sql is
--- modified, bump the SEED-BUNDLE-VERSION line below in ALL eight files
--- so they re-run together.
--- SEED-BUNDLE-VERSION: 2026-05-29a
+-- modified, bump the SEED-BUNDLE-VERSION line below in ALL nine files
+-- (01, 02, 02b, 03, 04, 05, 06, 07, 08) so they re-run together.
+-- SEED-BUNDLE-VERSION: 2026-05-29c
 -- ============================================================================
 
 SET session_replication_role = replica;
@@ -70,6 +70,32 @@ ON CONFLICT (code) DO NOTHING;
 INSERT INTO roles (code, name, description, is_system, created_at, updated_at)
 VALUES ('AUXILIARY_NURSE', 'Auxiliary Nurse', 'Enfermero auxiliar — notes and vital signs only', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
+
+-- Add MAINTENANCE role if it doesn't exist (mirrors V119)
+INSERT INTO roles (code, name, description, is_system, created_at, updated_at)
+VALUES ('MAINTENANCE', 'Maintenance', 'Mantenimiento — manages maintenance bodegas, transfers supplies, charges non-medical consumables', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (code) DO NOTHING;
+
+-- Ensure the six warehouses exist (mirrors V119; warehouses survive the reset
+-- but re-assert so a fresh DB seeded without migrations is still consistent).
+INSERT INTO warehouses (code, name, description, active, created_at, updated_at) VALUES
+('ADMINISTRACION',  'Administración',  'Master / receiving warehouse. Deliveries land here.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('ENFERMERIA',      'Enfermería',      'Nursing warehouse.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('MANTENIMIENTO_1', 'Mantenimiento 1', 'Maintenance warehouse 1.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('MANTENIMIENTO_2', 'Mantenimiento 2', 'Maintenance warehouse 2.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('COCINA',          'Cocina',          'Kitchen warehouse.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('PSICOLOGIA',      'Psicología',      'Psychology warehouse.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (code) DO NOTHING;
+
+-- Role -> default-warehouse mapping (mirrors V119).
+INSERT INTO role_default_warehouses (role_id, warehouse_id, created_at, updated_at)
+SELECT r.id, w.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM roles r
+CROSS JOIN warehouses w
+WHERE ((r.code IN ('NURSE', 'AUXILIARY_NURSE', 'CHIEF_NURSE') AND w.code = 'ENFERMERIA')
+    OR (r.code = 'PSYCHOLOGIST' AND w.code = 'PSICOLOGIA'))
+  AND r.deleted_at IS NULL AND w.deleted_at IS NULL
+ON CONFLICT DO NOTHING;
 
 -- ============================================================================
 -- STEP 3: REBUILD ROLE PERMISSIONS
@@ -271,6 +297,61 @@ WHERE r.code = 'CHIEF_NURSE'
   )
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
+-- Warehouse permissions (mirrors V119 grant matrix). ADMIN already has all via
+-- the CROSS JOIN above; these add the per-role subsets.
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
+SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM roles r CROSS JOIN permissions p
+WHERE r.code = 'MAINTENANCE'
+  AND p.code IN ('warehouse:read', 'warehouse-transfer:create', 'warehouse-transfer:read',
+                 'warehouse-charge:create', 'inventory-item:read', 'admission:read', 'patient:read')
+  AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
+
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
+SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM roles r CROSS JOIN permissions p
+WHERE r.code = 'ADMINISTRATIVE_STAFF'
+  AND p.code IN ('warehouse:read', 'warehouse-transfer:create', 'warehouse-transfer:read',
+                 'warehouse-transfer:receive', 'warehouse-charge:create')
+  AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
+
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
+SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM roles r CROSS JOIN permissions p
+WHERE r.code = 'CHIEF_NURSE'
+  AND p.code IN ('warehouse:read', 'warehouse-transfer:create', 'warehouse-transfer:read',
+                 'warehouse-transfer:receive')
+  AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
+
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
+SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM roles r CROSS JOIN permissions p
+WHERE r.code = 'NURSE'
+  AND p.code IN ('warehouse:read', 'warehouse-transfer:read', 'warehouse-transfer:receive')
+  AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
+
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
+SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM roles r CROSS JOIN permissions p
+WHERE r.code = 'AUXILIARY_NURSE'
+  AND p.code IN ('warehouse:read', 'warehouse-transfer:read')
+  AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
+
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
+SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM roles r CROSS JOIN permissions p
+WHERE r.code IN ('DOCTOR', 'RESIDENT_DOCTOR')
+  AND p.code = 'warehouse:read'
+  AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
+
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
+SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM roles r CROSS JOIN permissions p
+WHERE r.code = 'PSYCHOLOGIST'
+  AND p.code IN ('warehouse:read', 'warehouse-transfer:create', 'warehouse-transfer:read',
+                 'warehouse-transfer:receive')
+  AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
+
 -- ============================================================================
 -- STEP 4: CREATE USERS
 -- ============================================================================
@@ -319,6 +400,10 @@ INSERT INTO users (username, email, password_hash, first_name, last_name, saluta
 -- AUXILIARY_NURSE role user (1) — QA exercises the restricted nursing flow
 INSERT INTO users (username, email, password_hash, first_name, last_name, salutation, status, email_verified, must_change_password, created_at, updated_at) VALUES
 ('aux_nurse', 'aux_nurse@example.com', '$2b$10$PYXULrV.BlNnIPSz8HRFJeId5axQ/qoAQNhEldlY/H7xlqIpH35YC', 'Lucia', 'Gomez', 'SRTA', 'ACTIVE', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- MAINTENANCE role user (1) — assigned to MANTENIMIENTO_1 below for the bodega flow
+INSERT INTO users (username, email, password_hash, first_name, last_name, salutation, status, email_verified, must_change_password, created_at, updated_at) VALUES
+('maint1', 'maint1@example.com', '$2b$10$PYXULrV.BlNnIPSz8HRFJeId5axQ/qoAQNhEldlY/H7xlqIpH35YC', 'Pedro', 'Castillo', 'SR', 'ACTIVE', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- ============================================================================
 -- STEP 5: ASSIGN ROLES TO USERS
@@ -384,6 +469,18 @@ INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
 SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users u, roles r
 WHERE u.username = 'aux_nurse' AND r.code = 'AUXILIARY_NURSE';
+
+-- MAINTENANCE role assignment + warehouse assignment (MANTENIMIENTO_1)
+INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
+SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM users u, roles r
+WHERE u.username = 'maint1' AND r.code = 'MAINTENANCE';
+
+INSERT INTO user_warehouses (user_id, warehouse_id, created_at, updated_at)
+SELECT u.id, w.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM users u, warehouses w
+WHERE u.username = 'maint1' AND w.code = 'MANTENIMIENTO_1'
+ON CONFLICT DO NOTHING;
 
 -- ============================================================================
 -- STEP 6: CREATE TEST PATIENTS (20 patients)

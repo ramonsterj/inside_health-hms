@@ -10,11 +10,14 @@ import com.insidehealthgt.hms.dto.response.UserResponse
 import com.insidehealthgt.hms.entity.User
 import com.insidehealthgt.hms.entity.UserPhoneNumber
 import com.insidehealthgt.hms.entity.UserStatus
+import com.insidehealthgt.hms.entity.UserWarehouse
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ConflictException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
 import com.insidehealthgt.hms.repository.RoleRepository
 import com.insidehealthgt.hms.repository.UserRepository
+import com.insidehealthgt.hms.repository.UserWarehouseRepository
+import com.insidehealthgt.hms.repository.WarehouseRepository
 import com.insidehealthgt.hms.security.CurrentUserProvider
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -32,6 +35,8 @@ class UserService(
     private val passwordEncoder: PasswordEncoder,
     private val messageService: MessageService,
     private val currentUserProvider: CurrentUserProvider,
+    private val userWarehouseRepository: UserWarehouseRepository,
+    private val warehouseRepository: WarehouseRepository,
 ) {
 
     @Transactional(readOnly = true)
@@ -46,6 +51,18 @@ class UserService(
         // Accessing .size triggers Hibernate to load the collection before the session closes.
         user.phoneNumbers.size
         return user
+    }
+
+    /**
+     * Single-user response including the caller's current warehouse assignments.
+     * The edit dialog preloads this before submitting, so the response MUST carry
+     * the real `assignedWarehouseIds` — otherwise editing a MAINTENANCE user would
+     * round-trip an empty list and wipe every assignment via [reconcileWarehouseAssignments].
+     */
+    @Transactional(readOnly = true)
+    fun findResponseById(id: Long): UserResponse {
+        val user = findByIdWithRoles(id)
+        return UserResponse.from(user, currentAssignedWarehouseIds(id))
     }
 
     @Transactional(readOnly = true)
@@ -195,8 +212,38 @@ class UserService(
         }
 
         val savedUser = userRepository.save(user)
-        return UserResponse.from(savedUser)
+
+        // Warehouse assignments only apply to MAINTENANCE users (FR-10).
+        if (request.assignedWarehouseIds != null && savedUser.roles.any { it.code == MAINTENANCE_ROLE }) {
+            reconcileWarehouseAssignments(savedUser, request.assignedWarehouseIds)
+        }
+
+        return UserResponse.from(savedUser, currentAssignedWarehouseIds(savedUser.id!!))
     }
+
+    /**
+     * Reconcile a MAINTENANCE user's warehouse assignments: soft-delete rows no
+     * longer in the set, add new ones. Rows are never deleted on role removal —
+     * only here, on an explicit assignment edit (FR-10).
+     */
+    private fun reconcileWarehouseAssignments(user: User, desiredIds: List<Long>) {
+        val existing = userWarehouseRepository.findByUserId(user.id!!)
+        val existingIds = existing.mapNotNull { it.warehouse.id }.toSet()
+        val desired = desiredIds.toSet()
+
+        existing.filter { it.warehouse.id !in desired }.forEach { row ->
+            row.deletedAt = LocalDateTime.now()
+            userWarehouseRepository.save(row)
+        }
+        desired.filter { it !in existingIds }.forEach { warehouseId ->
+            val warehouse = warehouseRepository.findById(warehouseId)
+                .orElseThrow { ResourceNotFoundException(messageService.errorWarehouseNotFound(warehouseId)) }
+            userWarehouseRepository.save(UserWarehouse(user = user, warehouse = warehouse))
+        }
+    }
+
+    private fun currentAssignedWarehouseIds(userId: Long): List<Long> =
+        userWarehouseRepository.findByUserId(userId).mapNotNull { it.warehouse.id }
 
     @Transactional
     fun resetPassword(id: Long, newPassword: String?): String {
@@ -267,5 +314,9 @@ class UserService(
             )
             user.addPhoneNumber(phone)
         }
+    }
+
+    private companion object {
+        const val MAINTENANCE_ROLE = "MAINTENANCE"
     }
 }

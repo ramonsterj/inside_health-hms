@@ -81,10 +81,8 @@ class UserController(private val userService: UserService, private val messageSe
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('user:read')")
-    fun getUser(@PathVariable id: Long): ResponseEntity<ApiResponse<UserResponse>> {
-        val user = userService.findByIdWithRoles(id)
-        return ResponseEntity.ok(ApiResponse.success(UserResponse.from(user)))
-    }
+    fun getUser(@PathVariable id: Long): ResponseEntity<ApiResponse<UserResponse>> =
+        ResponseEntity.ok(ApiResponse.success(userService.findResponseById(id)))
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('user:update')")

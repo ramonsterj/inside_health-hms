@@ -78,7 +78,8 @@ describe('RoomOccupancyCard', () => {
       mustChangePassword: false,
       createdAt: null,
       localePreference: null,
-      phoneNumbers: []
+      phoneNumbers: [],
+      assignedWarehouseIds: []
     }
   })
 

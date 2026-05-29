@@ -43,6 +43,9 @@ class AuxiliaryNurseRoleMigrationTest : AbstractIntegrationTest() {
             "patient:read",
             "admission:read",
             "room:occupancy-view",
+            // V119 warehouse grants: read its (ENFERMERIA) warehouse + read transfer history.
+            "warehouse:read",
+            "warehouse-transfer:read",
         )
 
         assertEquals(expected, granted, "AUXILIARY_NURSE grant set must match AC-2 exactly")

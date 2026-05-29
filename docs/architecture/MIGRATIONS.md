@@ -112,8 +112,8 @@ each seed file has a line like
 -- SEED-BUNDLE-VERSION: 2026-05-19a
 ```
 
-When you edit **any** `R__seed_*.sql`, bump this line in **all eight**
-files (01, 02, 02b, 03, 04, 05, 06, 07) to the same value. That forces
+When you edit **any** `R__seed_*.sql`, bump this line in **all nine**
+files (01, 02, 02b, 03, 04, 05, 06, 07, 08) to the same value. That forces
 the whole bundle to re-run together.
 
 ### dev vs prod data divergence
@@ -156,7 +156,7 @@ Lessons from real incidents, in order of how often they bite:
    referenced by classpath path are harder to find but still possible —
    `grep -r 'Vnnn__'`.
 3. **Check the bundle version.** If you touched any `R__seed_*.sql`, bump
-   `SEED-BUNDLE-VERSION` in all eight files.
+   `SEED-BUNDLE-VERSION` in all nine files.
 4. **Test on a fresh DB.** `docker compose down -v && docker compose up`
    (or your equivalent). Many migration bugs only surface on first apply.
 5. **Update CLAUDE.md.** The "Current migrations" line in CLAUDE.md is the

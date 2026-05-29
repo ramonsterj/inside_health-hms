@@ -42,6 +42,25 @@ class BillingEventListener(private val billingService: BillingService, private v
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun handleWarehouseChargeCreated(event: WarehouseChargeCreatedEvent) {
+        log.info(
+            "Received WarehouseChargeCreatedEvent for admission {} item {}",
+            event.admissionId,
+            event.inventoryItemId,
+        )
+        try {
+            billingService.createChargeFromWarehouseCharge(event)
+        } catch (e: Exception) {
+            log.error(
+                "Failed to create charge from warehouse charge event for admission {}",
+                event.admissionId,
+                e,
+            )
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun handlePsychotherapyActivityCreated(event: PsychotherapyActivityCreatedEvent) {
         log.info(
             "Received PsychotherapyActivityCreatedEvent for admission {} category '{}'",

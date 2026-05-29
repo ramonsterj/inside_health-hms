@@ -75,6 +75,11 @@
     "pharmacy": "Farmacia",
     "pharmacyMedications": "Medicamentos",
     "pharmacyExpiryReport": "Vencimientos",
+    "warehousesSection": "Bodegas",
+    "warehouses": "Bodegas",
+    "warehouseStock": "Mi bodega",
+    "warehouseTransfers": "Traslados",
+    "maintenanceDashboard": "Panel de Mantenimiento",
     "auditLogs": "Registros de Auditoria",
     "profile": "Perfil",
     "logout": "Cerrar Sesión",
@@ -332,6 +337,7 @@
   },
   "roles": {
     "title": "Gestión de Roles",
+    "MAINTENANCE": "Mantenimiento",
     "addRole": "Agregar Rol",
     "editRole": "Editar Rol",
     "managePermissions": "Gestionar Permisos",
@@ -554,6 +560,43 @@
       "expirationDate": { "required": "La fecha de vencimiento es requerida" },
       "quantity": { "required": "La cantidad es requerida" },
       "receivedAt": { "required": "La fecha de recepción es requerida" }
+    },
+    "warehouse": {
+      "code": {
+        "required": "El código es requerido",
+        "max": "El código debe tener como máximo 50 caracteres",
+        "format": "El código solo puede contener letras mayúsculas, números y guiones bajos"
+      },
+      "name": {
+        "required": "El nombre es requerido",
+        "max": "El nombre debe tener como máximo 150 caracteres"
+      },
+      "description": { "max": "La descripción debe tener como máximo 500 caracteres" }
+    },
+    "transfer": {
+      "source": { "required": "La bodega de origen es requerida" },
+      "destination": { "required": "La bodega de destino es requerida" },
+      "item": { "required": "El artículo es requerido" },
+      "quantity": {
+        "required": "La cantidad es requerida",
+        "positive": "La cantidad debe ser mayor que cero"
+      },
+      "notes": { "max": "Las notas deben tener como máximo 500 caracteres" },
+      "source-equals-destination": "El origen y el destino deben ser diferentes"
+    },
+    "warehouseCharge": {
+      "warehouse": { "required": "La bodega es requerida" },
+      "item": { "required": "El artículo es requerido" },
+      "admission": { "required": "La admisión es requerida" },
+      "quantity": {
+        "required": "La cantidad es requerida",
+        "positive": "La cantidad debe ser mayor que cero"
+      },
+      "reason": {
+        "required": "El motivo es requerido",
+        "max": "El motivo debe tener como máximo 500 caracteres"
+      },
+      "notes": { "max": "Las notas deben tener como máximo 500 caracteres" }
     },
     "admission": {
       "patientId": {
@@ -1136,6 +1179,83 @@
   "locale": {
     "en": "Ingles",
     "es": "Espanol"
+  },
+  "warehouse": {
+    "title": "Bodegas",
+    "new": "Nueva Bodega",
+    "edit": "Editar Bodega",
+    "code": "Código",
+    "name": "Nombre",
+    "description": "Descripción",
+    "active": "Activa",
+    "empty": "No se encontraron bodegas.",
+    "created": "Bodega creada correctamente.",
+    "updated": "Bodega actualizada correctamente.",
+    "deleted": "Bodega eliminada correctamente.",
+    "confirmDelete": "¿Está seguro de que desea eliminar la bodega \"{name}\"?",
+    "viewStock": "Ver existencias",
+    "stock": {
+      "title": "Existencias de Bodega",
+      "item": "Artículo",
+      "sku": "SKU",
+      "kind": "Tipo",
+      "price": "Precio",
+      "quantity": "Cantidad",
+      "restockLevel": "Nivel de Reabastecimiento",
+      "lowStock": "Existencia Baja",
+      "low": "Baja",
+      "lowStockOnly": "Solo existencia baja",
+      "searchPlaceholder": "Buscar artículos...",
+      "empty": "No se encontraron existencias para esta bodega.",
+      "notFound": "Bodega no encontrada o no accesible."
+    },
+    "transfer": {
+      "title": "Traslados",
+      "new": "Nuevo Traslado",
+      "created": "Traslado creado correctamente.",
+      "source": "Origen",
+      "destination": "Destino",
+      "item": "Artículo",
+      "quantity": "Cantidad",
+      "notes": "Notas",
+      "status": "Estado",
+      "issuedAt": "Emitido",
+      "empty": "No se encontraron traslados.",
+      "selectWarehouse": "Seleccione una bodega",
+      "selectItem": "Seleccione un artículo",
+      "lot": "Lote",
+      "selectLot": "Seleccione un lote",
+      "lotRequired": "Seleccione un lote para este artículo.",
+      "allWarehouses": "Todas las bodegas",
+      "statuses": {
+        "PENDING": "Pendiente",
+        "COMPLETED": "Completado",
+        "CANCELLED": "Cancelado"
+      }
+    },
+    "charge": {
+      "new": "Cargar Consumible",
+      "created": "Consumible cargado correctamente.",
+      "warehouse": "Bodega",
+      "item": "Artículo",
+      "admission": "Admisión",
+      "quantity": "Cantidad",
+      "reason": "Motivo",
+      "notes": "Notas",
+      "selectAdmission": "Seleccione una admisión"
+    },
+    "maintenance": {
+      "title": "Panel de Mantenimiento",
+      "assignedWarehouses": "Bodegas Asignadas",
+      "recentTransfers": "Traslados Recientes",
+      "chargeConsumable": "Cargar Consumible",
+      "charge": "Cargar",
+      "noWarehouses": "Aún no tiene bodegas asignadas."
+    },
+    "assignment": {
+      "label": "Bodegas Asignadas",
+      "placeholder": "Seleccione bodegas"
+    }
   },
   "triageCode": {
     "title": "Códigos de Triage",
@@ -2446,6 +2566,10 @@
       "price": "Precio",
       "cost": "Costo",
       "quantity": "Existencia",
+      "quantityTotal": "Existencia total",
+      "quantityTotalHint": "Existencia total sumando todas las bodegas. El medicamento se dispensa únicamente desde la bodega asignada al usuario que dispensa, por lo que este total no es lo disponible para dispensar en una bodega concreta.",
+      "stockByWarehouse": "Existencia por bodega",
+      "stockByWarehouseHint": "Existencia en cada bodega. La dispensación se hace solo desde la bodega asignada al usuario que dispensa (enfermería → Enfermería).",
       "genericName": "Nombre Genérico",
       "commercialName": "Nombre Comercial",
       "strength": "Concentración",
@@ -2516,6 +2640,8 @@
       "window": "Ventana (días)",
       "urgentWindow": "Ventana urgente (días)",
       "daysToExpiry": "Días al vencer",
+      "warehouse": "Bodega",
+      "allWarehouses": "Todas las bodegas",
       "empty": "Sin lotes en la ventana seleccionada",
       "status": {
         "EXPIRED": "Vencido",

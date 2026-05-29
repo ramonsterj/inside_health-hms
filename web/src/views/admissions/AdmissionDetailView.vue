@@ -131,11 +131,17 @@ function getStatusSeverity(status: AdmissionStatus): 'success' | 'secondary' {
   return status === AdmissionStatus.ACTIVE ? 'success' : 'secondary'
 }
 
-function formatDoctorName(doctor: {
-  salutation: string | null
-  firstName: string | null
-  lastName: string | null
-}): string {
+function formatDoctorName(
+  doctor:
+    | {
+        salutation: string | null
+        firstName: string | null
+        lastName: string | null
+      }
+    | null
+    | undefined
+): string {
+  if (!doctor) return '-'
   const salutationLabel = doctor.salutation ? t(`user.salutations.${doctor.salutation}`) : ''
   return `${salutationLabel} ${getFullName(doctor.firstName, doctor.lastName)}`.trim()
 }

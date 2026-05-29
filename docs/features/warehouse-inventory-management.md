@@ -5,6 +5,9 @@
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-05-28 | @author | Initial draft. Introduces named warehouses (bodegas) with **strict isolation**: each warehouse owns its own stock and can only dispense from itself. Adds inter-warehouse transfers, a new `MAINTENANCE` role, and the ability to charge non-medical consumables (e.g. broken towel) against an admission. Captures customer feedback from 2026-05-26. |
+| 1.1 | 2026-05-29 | @author | Migrations renumbered to **V119–V121** because V117 became AUXILIARY_NURSE (nursing-roles-split) and V118 became the RESIDENT_DOCTOR occupancy-view grant (bed-occupancy-view). Implemented. V119 also seeds the `role_default_warehouses` mapping table and adds `warehouse_id` + `transfer_id` columns to `inventory_movements` (not in the original v1.0 DDL). Maintenance / non-medical warehouse charges bill as `ChargeType.SERVICE`. |
+| 1.2 | 2026-05-29 | @author | **Stock-display transparency fix (FR-11).** The pharmacy catalog (list + medication detail) was showing a single `quantity` = system-wide total across all six bodegas with no label, while dispensing is warehouse-scoped — misleading the clinical roles that hold `medication:read` (NURSE / CHIEF_NURSE / DOCTOR), who could read "50 in stock" yet hit `error.warehouse.out-of-stock` because ENFERMERIA holds 0. The medication **detail** response now carries a per-warehouse `warehouseStock` breakdown (every active warehouse, including 0-on-hand ones) and the UI presents `quantity` explicitly as the all-bodegas total. No dispense-path behavior changes; this is a read-model + labeling fix. |
+| 1.3 | 2026-05-29 | @author | **Read-scope parity fix (FR-6 / FR-7 / AC-13).** v1.0–1.2 only enforced the per-warehouse read scope on the dedicated stock view (`/warehouses/{id}/stock`), the expiry report, and the FEFO preview. The catalog list / low-stock endpoints (`/inventory-items?warehouseId=…`) returned a warehouse's per-item on-hand gated by `inventory-item:read` alone — a permission also granted to MAINTENANCE / NURSE / PSYCHOLOGIST for unrelated reasons (picking items on forms), so a bodega-scoped user could read another bodega's stock counts by passing its id. Clarified that **every** warehouse-scoped read facet enforces `WarehouseScopeService.assertCanView` when a `warehouseId` is supplied. The system-wide (no `warehouseId`) view is unchanged. |
 
 ---
 
@@ -150,18 +153,20 @@ A new join table `user_warehouses(user_id, warehouse_id)` lists which warehouses
 
 - New endpoint: `POST /api/v1/warehouse-charges` with body `{ warehouseId, itemId, lotId?, admissionId, quantity, reason, notes? }`.
 - Gated by `warehouse-charge:create` plus service-layer scope on the source warehouse.
-- Behavior: decrement the warehouse stock by `quantity` (same exit semantics as FR-3), record an `inventory_movement` of type `EXIT` linked to the warehouse and to the admission, and emit a `WarehouseChargeCreatedEvent` that the billing module listens for to create a `PatientCharge` (using the item's `price` × `quantity`).
+- Behavior: decrement the warehouse stock by `quantity` (same exit semantics as FR-3), record an `inventory_movement` of type `EXIT` linked to the warehouse and to the admission, and emit a `WarehouseChargeCreatedEvent` (handled `AFTER_COMMIT` in a `REQUIRES_NEW` transaction) that the billing module listens for to create a `PatientCharge` of type `ChargeType.SERVICE` (using the item's `price` × `quantity`).
 - The `reason` field is a free-text string at minimum; we may later promote to an enum (`BREAKAGE`, `LOSS`, `CONSUMABLE_USE`, `OTHER`).
 - This is the customer's "load a broken/stained towel to room 203" flow.
 
 ### FR-6: Per-warehouse stock view
 
 - `GET /api/v1/admin/inventory-items?warehouseId={id}` extends the existing list endpoint with a warehouse filter. The returned `quantity` for each item is the on-hand in that warehouse (not the system-wide total).
+- When a `warehouseId` is supplied, the endpoint enforces the same warehouse-view scope as the dedicated stock view (`WarehouseScopeService.assertCanView`): a caller restricted to certain bodegas (NURSE / CHIEF_NURSE / AUXILIARY_NURSE / PSYCHOLOGIST / MAINTENANCE) gets 403 `error.warehouse.view.denied` for a warehouse they do not own, even though they hold `inventory-item:read`. ADMIN / ADMINISTRATIVE_STAFF / DOCTOR / RESIDENT_DOCTOR see any warehouse. The system-wide list (no `warehouseId`) is unchanged.
 - A new dashboard view `/warehouses/:code/stock` lists items in one warehouse with paging, search, and low-stock filter, gated by `warehouse:read` plus the user's warehouse scope.
 
 ### FR-7: Per-warehouse low-stock report
 
 - `GET /api/v1/admin/inventory-items/low-stock?warehouseId={id}` — same shape as today's low-stock report, scoped to one warehouse, comparing `inventory_warehouse_stock.quantity` against `inventory_items.restock_level`.
+- When `warehouseId` is supplied, the same `assertCanView` scope as FR-6 applies. The system-wide report (no `warehouseId`) is unchanged.
 
 ### FR-8: Lot expiry dashboard gains a warehouse facet
 
@@ -174,8 +179,17 @@ A new join table `user_warehouses(user_id, warehouse_id)` lists which warehouses
 
 ### FR-10: Maintenance user management
 
-- `MAINTENANCE` is a new system role (V117), seeded with zero users in production. Admins assign warehouses to maintenance users via the existing user-edit screen (new "Assigned warehouses" multi-select section, visible when the user has the `MAINTENANCE` role).
+- `MAINTENANCE` is a new system role (V119), seeded with zero users in production. Admins assign warehouses to maintenance users via the existing user-edit screen (new "Assigned warehouses" multi-select section, visible when the user has the `MAINTENANCE` role).
 - Removing the `MAINTENANCE` role from a user does not delete the `user_warehouses` rows (they go dormant). Re-adding the role restores access.
+
+### FR-11: Pharmacy catalog stock transparency (v1.2)
+
+Because stock is warehouse-scoped but the catalog row is single, any UI that shows a bare "quantity" risks misleading a viewer into thinking that number is available to dispense. The medication-administration dialog and Kardex already avoid this (they show only the **warehouse-scoped FEFO preview** and surface `error.warehouse.out-of-stock` on failure). The pharmacy **catalog** must be equally honest:
+
+- The medication **detail** response (`GET /api/v1/medications/{itemId}`) carries a `warehouseStock` array: one entry per **active** warehouse with the item's on-hand there, **including warehouses with 0 on-hand**, so a nurse always sees "Enfermería: 0" explicitly rather than inferring availability from the total. The detail view renders this breakdown.
+- The `quantity` field remains the **system-wide total** (sum across all bodegas) for backward compatibility (see NFR "Backward compatibility"), but every surface that displays it labels it as the all-bodegas total — never an unqualified "Quantity".
+- The medication **list** (`GET /api/v1/medications`) does **not** compute the breakdown (avoids N+1 across a paged catalog); it only relabels its total column. The breakdown is a detail-view concern.
+- This is a read-model + labeling change only. Dispensing, FEFO, transfers, and charges are unaffected.
 
 ---
 
@@ -192,7 +206,7 @@ A new join table `user_warehouses(user_id, warehouse_id)` lists which warehouses
 
 ## Acceptance Criteria / Scenarios
 
-- **AC-1 — Seeded warehouses.** After V117 (warehouses + permissions) and V118 (per-warehouse stock + MAINTENANCE role) run on a fresh DB, `SELECT code FROM warehouses ORDER BY code` returns exactly the six seeded codes.
+- **AC-1 — Seeded warehouses.** After V119 (warehouses + per-warehouse stock + permissions + MAINTENANCE role) and V120 (backfill) run on a fresh DB, `SELECT code FROM warehouses ORDER BY code` returns exactly the six seeded codes.
 - **AC-2 — Stock backfill.** After migration, for every catalog row that had `quantity > 0`, there is exactly one matching `inventory_warehouse_stock` row with `warehouse_id = ADMINISTRACION` and the same quantity. For every lot with `quantity_on_hand > 0`, same.
 - **AC-3 — Legacy columns gone.** `inventory_items.quantity` and `inventory_lots.quantity_on_hand` are dropped at the end of the migration; reads route through the new table.
 - **AC-4 — Nurse dispense uses ENFERMERIA only.** A NURSE administers a medication that has stock = 5 in ENFERMERIA and stock = 100 in ADMINISTRACION. The administration succeeds and decrements ENFERMERIA. If ENFERMERIA stock is 0, the call returns 422 `error.warehouse.out-of-stock` even though ADMINISTRACION has 100.
@@ -204,11 +218,12 @@ A new join table `user_warehouses(user_id, warehouse_id)` lists which warehouses
 - **AC-10 — Charge scope.** A NURSE attempting `warehouse-charge:create` from ENFERMERIA gets 403 (NURSE does not have `warehouse-charge:create`).
 - **AC-11 — Cannot delete non-empty warehouse.** DELETE on a warehouse that has any `inventory_warehouse_stock` row with quantity > 0 returns 409 `error.warehouse.not-empty`.
 - **AC-12 — Cannot deactivate without empty stock OR consent.** Deactivating a warehouse (`active=false`) is allowed even with stock present (it just hides it from dropdowns); deleting requires empty. Document this distinction in the admin UI copy.
-- **AC-13 — Maintenance assignment.** A MAINTENANCE user with `user_warehouses` row for MANTENIMIENTO_1 only sees that warehouse on the stock view; GET on MANTENIMIENTO_2 returns 403.
+- **AC-13 — Maintenance assignment.** A MAINTENANCE user with `user_warehouses` row for MANTENIMIENTO_1 only sees that warehouse on the stock view; GET on MANTENIMIENTO_2 returns 403. The scope is enforced uniformly across **every** warehouse-scoped read facet — the dedicated stock view (`/warehouses/{id}/stock`), the catalog list and low-stock report when filtered (`/inventory-items?warehouseId=…`), the expiry report (`?warehouseId=…`), and the FEFO preview — so the user cannot inspect another bodega's stock by passing its id to any of them.
 - **AC-14 — Low-stock per warehouse.** Item X has restock_level=10, ENFERMERIA stock=5, ADMINISTRACION stock=200. The low-stock report scoped to ENFERMERIA includes X; the same report scoped to ADMINISTRACION does not. The system-wide report (no warehouse filter) compares `SUM(quantity)` against restock_level — unchanged behavior.
 - **AC-15 — Expiry report per warehouse.** The expiry report filtered to a warehouse only lists lots that have stock > 0 in that warehouse.
 - **AC-16 — Concurrent dispenses don't oversell.** Two nurses on two devices dispense the last unit of a medication from ENFERMERIA at the same time. One succeeds, the other returns 422 (proved by integration test under `Testcontainers` with explicit two-transaction overlap).
 - **AC-17 — Audit row on every transfer and charge.** Each transfer writes one `audit_logs` row (`WAREHOUSE_TRANSFER`); each charge writes one (`WAREHOUSE_CHARGE`).
+- **AC-18 — Medication detail shows per-warehouse breakdown (FR-11).** Item X has ENFERMERIA stock=0 and ADMINISTRACION stock=50. `GET /api/v1/medications/{itemId}` returns `quantity=50` **and** a `warehouseStock` array that includes both `{ code: "ENFERMERIA", quantity: 0 }` and `{ code: "ADMINISTRACION", quantity: 50 }`. The detail view shows the total plus the breakdown; the list column for the same item is labelled as the all-bodegas total, not a bare "Quantity". The medication **list** response does not include `warehouseStock`.
 
 ---
 
@@ -248,6 +263,7 @@ Confirm the feature follows the platform-wide date/time standard documented in `
 | POST | `/api/v1/warehouse-charges` | `CreateChargeRequest` | `WarehouseChargeResponse` | `warehouse-charge:create` + scope | Non-medical consumable charge. |
 | GET | `/api/v1/admin/inventory-items?warehouseId=…` | - | `PagedResponse<InventoryItemResponse>` | `inventory-item:read` | Extended with `warehouseId` filter; `quantity` is per-warehouse when provided. |
 | GET | `/api/v1/medications/expiry-report?warehouseId=…` | - | `ExpiryReportResponse` | `medication:expiry-report` | Extended with `warehouseId` filter. |
+| GET | `/api/v1/medications/{itemId}` | - | `MedicationResponse` | `medication:read` | Detail now carries a `warehouseStock` per-warehouse breakdown (FR-11). `quantity` stays the system-wide total. |
 
 ### Request/Response Examples
 
@@ -314,18 +330,21 @@ Confirm the feature follows the platform-wide date/time standard documented in `
 | `InventoryTransfer` | `inventory_transfers` | `BaseEntity` | Atomic transfer aggregate (source, destination, item, lot, quantity, status, audit). |
 | `WarehouseCharge` | `warehouse_charges` | `BaseEntity` | Audit row for non-medical consumable charges. Links to `patient_charges`. |
 | `UserWarehouse` | `user_warehouses` | `BaseEntity` | Join table assigning MAINTENANCE users to warehouses they operate. |
+| `RoleDefaultWarehouse` | `role_default_warehouses` | `BaseEntity` | Data-driven role → default-warehouse mapping (see Implementation Notes). |
 
-### New Migrations (target sequence)
+### New Migrations (as shipped)
+
+> **v1.1 renumbering.** V117 was claimed by AUXILIARY_NURSE (nursing-roles-split) and V118 by the RESIDENT_DOCTOR occupancy-view grant (bed-occupancy-view) before this feature shipped, so the actual sequence is **V119 → V120 → V121**.
 
 | Migration | Description |
 |-----------|-------------|
-| `V117__add_warehouses_and_permissions.sql` | Create `warehouses`, `inventory_transfers`, `warehouse_charges`, `user_warehouses`, `inventory_warehouse_stock`. Seed six warehouses. Seed the eight new permissions plus the `MAINTENANCE` role. Grant role permissions per the table above. |
-| `V118__backfill_warehouse_stock.sql` | Copy every `inventory_items.quantity` and `inventory_lots.quantity_on_hand` into `inventory_warehouse_stock` with `warehouse_id = ADMINISTRACION`. |
-| `V119__drop_legacy_stock_columns.sql` | Drop `inventory_items.quantity` and `inventory_lots.quantity_on_hand`. (Final step — only after backend code has switched to the new tables. May ship behind a feature flag if the cutover risk is high.) |
+| `V119__add_warehouses_and_permissions.sql` | Create `warehouses`, `inventory_warehouse_stock`, `inventory_transfers`, `warehouse_charges`, `user_warehouses`, `role_default_warehouses`. Add `warehouse_id` + `transfer_id` columns to `inventory_movements`. Seed six warehouses. Seed the eight new permissions plus the `MAINTENANCE` role and its grants. Seed the role → default-warehouse mapping rows. |
+| `V120__backfill_warehouse_stock.sql` | Copy every `inventory_items.quantity` and `inventory_lots.quantity_on_hand` into `inventory_warehouse_stock` with `warehouse_id = ADMINISTRACION`. |
+| `V121__drop_legacy_stock_columns.sql` | Drop `inventory_items.quantity` and `inventory_lots.quantity_on_hand`. (Final step — only after backend code has switched to the new tables.) |
 
-The V117/V118/V119 split exists so the cut-over from legacy stock columns can be staged. V117 + V118 are deploy-safe (additive). V119 is the irreversible cut.
+The V119/V120/V121 split exists so the cut-over from legacy stock columns can be staged. V119 + V120 are deploy-safe (additive). V121 is the irreversible cut.
 
-### Schema Example (V117)
+### Schema Example (V119)
 
 ```sql
 CREATE TABLE warehouses (
@@ -426,6 +445,26 @@ CREATE TABLE user_warehouses (
 );
 CREATE INDEX idx_uw_user        ON user_warehouses(user_id);
 CREATE INDEX idx_uw_deleted_at  ON user_warehouses(deleted_at);
+
+CREATE TABLE role_default_warehouses (
+    id            BIGSERIAL PRIMARY KEY,
+    role_id       BIGINT       NOT NULL REFERENCES roles(id),
+    warehouse_id  BIGINT       NOT NULL REFERENCES warehouses(id),
+    created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by    BIGINT,
+    updated_by    BIGINT,
+    deleted_at    TIMESTAMP,
+    UNIQUE (role_id, warehouse_id)
+);
+CREATE INDEX idx_rdw_role        ON role_default_warehouses(role_id);
+CREATE INDEX idx_rdw_deleted_at  ON role_default_warehouses(deleted_at);
+
+-- inventory_movements gains warehouse + transfer linkage (not in the v1.0 DDL).
+ALTER TABLE inventory_movements ADD COLUMN warehouse_id BIGINT REFERENCES warehouses(id);
+ALTER TABLE inventory_movements ADD COLUMN transfer_id  BIGINT REFERENCES inventory_transfers(id);
+CREATE INDEX idx_movements_warehouse ON inventory_movements(warehouse_id);
+CREATE INDEX idx_movements_transfer  ON inventory_movements(transfer_id);
 ```
 
 ### Index Requirements
@@ -519,32 +558,32 @@ export const createWarehouseChargeSchema = z.object({
 
 ## Implementation Notes
 
-- **Staged cutover.** V117 + V118 are deploy-safe and additive: stock can be written to both legacy columns and the new table during a transitional window if needed. V119 (drop legacy columns) is the irreversible step — ship it only after monitoring confirms no read path falls back to `inventory_items.quantity`. The intermediate state is messy but safer than a single big-bang migration.
+- **Staged cutover.** V119 + V120 are deploy-safe and additive: stock can be written to both legacy columns and the new table during a transitional window if needed. V121 (drop legacy columns) is the irreversible step — ship it only after monitoring confirms no read path falls back to `inventory_items.quantity`. The intermediate state is messy but safer than a single big-bang migration.
 - **Service refactor scope.** `InventoryMovementService` becomes warehouse-aware: every EXIT must resolve a warehouse, every ENTRY must specify one. `MedicationAdministrationService` becomes the canonical consumer of `WarehouseScopeService.resolveDispensingWarehouse(user)`. `PharmacyService.fefoPreview` and the FEFO branch of `InventoryMovementService.exit` both accept a `warehouseId` (or fall back to the resolved default).
 - **Pattern reference for the MAINTENANCE role**: V114 (RESIDENT_DOCTOR add) for the role shape; the per-user warehouse assignment is novel and warrants a small in-repo design note in `WarehouseScopeService.kt`.
 - **Transfer is not just two movements.** Even though the net effect on `inventory_warehouse_stock` is `-q` and `+q`, modeling the transfer as its own aggregate gives us: (a) atomicity in the audit trail ("show me all moves of item X" should not require joining two `inventory_movement` rows by timestamp), (b) a place to land the Phase 2 approval flow without schema churn, (c) cleaner financial reporting later.
 - **Charging from a warehouse vs. from a medical order.** A medication administration charges against the medical order's linked inventory item (existing flow). A warehouse-charge is for items that have no medical order — the towel doesn't belong to a doctor's prescription. The two paths converge into `patient_charges` but originate differently. Document this clearly in `docs/features/hospital-billing-system.md` after this ships.
 - **Audit log actions.** Add `WAREHOUSE_TRANSFER` and `WAREHOUSE_CHARGE` to the `AuditAction` enum. The audit row is written in `REQUIRES_NEW` so an audit failure does not roll back the underlying stock change (matches V099 pattern).
-- **Default-warehouse mapping is data-driven**, not code-driven. The role → default-warehouse mapping in FR-3 / FR-9 is implemented as a small lookup table (`role_default_warehouses(role_id, warehouse_id)`) so adding a role doesn't require a code change. Maintenance users use `user_warehouses` instead.
+- **Default-warehouse mapping is data-driven**, not code-driven. The role → default-warehouse mapping in FR-3 / FR-9 is implemented as a small lookup table (`role_default_warehouses(role_id, warehouse_id)`, seeded by V119) so adding a role doesn't require a code change. Maintenance users use `user_warehouses` instead.
 
 ---
 
 ## QA Checklist
 
 ### Backend
-- [ ] V117 migration runs against a fresh DB and against a dev DB with V111 catalog data; no row count changes outside the new tables.
-- [ ] V118 backfills every `inventory_items.quantity > 0` row and every `inventory_lots.quantity_on_hand > 0` row.
-- [ ] V119 drops the two legacy columns; subsequent reads route through the new table.
+- [ ] V119 migration runs against a fresh DB and against a dev DB with V111 catalog data; no row count changes outside the new tables.
+- [ ] V120 backfills every `inventory_items.quantity > 0` row and every `inventory_lots.quantity_on_hand > 0` row.
+- [ ] V121 drops the two legacy columns; subsequent reads route through the new table.
 - [ ] Six warehouses seeded; codes match exactly.
 - [ ] MAINTENANCE role exists with the granted permissions.
 - [ ] Unit tests for `WarehouseScopeService.resolveDispensingWarehouse` across all role combinations.
-- [ ] Integration test for AC-4 (nurse dispense blocked when own warehouse is empty).
-- [ ] Integration test for AC-5 (FEFO per warehouse).
-- [ ] Integration test for AC-6 (transfer happy path).
-- [ ] Integration test for AC-7 / AC-8 (out-of-stock / scope denial).
-- [ ] Integration test for AC-9 (maintenance charge end-to-end including billing event).
-- [ ] Integration test for AC-13 (maintenance user scope).
-- [ ] Integration test for AC-16 (two-transaction overlap, only one succeeds).
+- [x] Integration test for AC-4 (nurse dispense blocked when own warehouse is empty). — `WarehouseDispenseIT`
+- [x] Integration test for AC-5 (FEFO per warehouse). — `WarehouseDispenseIT`
+- [x] Integration test for AC-6 (transfer happy path). — `WarehouseIntegrationTest`
+- [x] Integration test for AC-7 / AC-8 (out-of-stock / scope denial). — `WarehouseIntegrationTest`
+- [x] Integration test for AC-9 (maintenance charge end-to-end including billing event). — `WarehouseIntegrationTest`
+- [x] Integration test for AC-13 (maintenance user scope). — `WarehouseIntegrationTest`
+- [x] Integration test for AC-16 (two-transaction overlap, only one succeeds). — `WarehouseDispenseIT`
 - [ ] Audit rows for `WAREHOUSE_TRANSFER` / `WAREHOUSE_CHARGE` written in `REQUIRES_NEW`.
 - [ ] Detekt passes.
 - [ ] OWASP dependency-check passes.
@@ -560,10 +599,11 @@ export const createWarehouseChargeSchema = z.object({
 - [ ] Vitest unit tests for the three new stores.
 
 ### E2E (Playwright)
-- [ ] Admin happy path: create warehouse → seed stock → transfer to ENFERMERIA → nurse dispenses successfully.
-- [ ] Nurse out-of-stock path: empty ENFERMERIA → nurse dispense returns inline error with the message naming her warehouse.
-- [ ] Maintenance happy path: log in as MAINTENANCE → charge a broken towel to an admission → admission's bill shows the line item.
-- [ ] Scope denials: NURSE cannot issue a transfer from ADMINISTRACION; MAINTENANCE cannot see a non-assigned warehouse.
+All four scenarios live in `web/e2e/warehouse.spec.ts` (mock-driven, the repo's E2E convention).
+- [x] Admin happy path: create warehouse → transfer to ENFERMERIA → nurse dispenses successfully.
+- [x] Nurse out-of-stock path: nurse dispense surfaces the warehouse-scoped error toast naming her warehouse (`ENFERMERIA`) and the dialog stays open.
+- [x] Maintenance happy path: log in as MAINTENANCE → charge a consumable to an admission → admission's bill shows the SERVICE line item.
+- [x] Scope denials: NURSE cannot issue a transfer (New Transfer hidden) and is redirected from the warehouse admin screen; MAINTENANCE only sees its assigned warehouse.
 
 ### General
 - [ ] Roles matrix updated.
@@ -577,7 +617,7 @@ export const createWarehouseChargeSchema = z.object({
 
 ### Must Update
 
-- [ ] **CLAUDE.md** — Migration entries for V117–V119; feature bullets for the warehouse module; MAINTENANCE role mention.
+- [ ] **CLAUDE.md** — Migration entries for V119–V121; feature bullets for the warehouse module; MAINTENANCE role mention.
 - [ ] **docs/roles-functionality-matrix.md** — Add MAINTENANCE column; add Warehouse / Transfer / Charge rows.
 - [ ] **docs/roles-functionality-matrix.es.md** — Same in Spanish.
 - [ ] **docs/features/inventory-module.md** — One-line note in Revision History pointing here, plus a sentence in Overview clarifying that stock is now per-warehouse.

@@ -22,4 +22,10 @@ data class AdminUpdateUserRequest(
 
     @field:Valid
     val phoneNumbers: List<PhoneNumberRequest>? = null,
+
+    /**
+     * Warehouses this MAINTENANCE user operates. Only applied when the resulting
+     * role set includes MAINTENANCE; ignored otherwise. Null = leave unchanged.
+     */
+    val assignedWarehouseIds: List<Long>? = null,
 )

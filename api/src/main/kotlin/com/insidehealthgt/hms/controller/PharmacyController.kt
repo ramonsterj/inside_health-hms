@@ -71,8 +71,9 @@ class PharmacyController(
         @RequestParam(defaultValue = "30") urgentWindow: Int,
         @RequestParam(required = false) section: MedicationSection?,
         @RequestParam(required = false) controlled: Boolean?,
+        @RequestParam(required = false) warehouseId: Long?,
     ): ResponseEntity<ApiResponse<ExpiryReportResponse>> {
-        val report = expiryReportService.build(window, urgentWindow, section, controlled)
+        val report = expiryReportService.build(window, urgentWindow, section, controlled, warehouseId)
         return ResponseEntity.ok(ApiResponse.success(report))
     }
 
@@ -81,6 +82,7 @@ class PharmacyController(
     fun fefoPreview(
         @PathVariable itemId: Long,
         @RequestParam(defaultValue = "1") quantity: Int,
+        @RequestParam(required = false) warehouseId: Long?,
     ): ResponseEntity<ApiResponse<InventoryLotResponse?>> =
-        ResponseEntity.ok(ApiResponse.success(pharmacyService.fefoPreview(itemId, quantity)))
+        ResponseEntity.ok(ApiResponse.success(pharmacyService.fefoPreview(itemId, quantity, warehouseId)))
 }

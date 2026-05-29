@@ -5,7 +5,9 @@ import com.insidehealthgt.hms.dto.response.ExpiryReportRow
 import com.insidehealthgt.hms.dto.response.LotExpiryStatus
 import com.insidehealthgt.hms.entity.MedicationSection
 import com.insidehealthgt.hms.repository.InventoryLotRepository
+import com.insidehealthgt.hms.repository.InventoryWarehouseStockRepository
 import com.insidehealthgt.hms.repository.MedicationDetailsRepository
+import com.insidehealthgt.hms.security.CurrentUserProvider
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -15,13 +17,33 @@ import java.time.temporal.ChronoUnit
 @Service
 class ExpiryReportService(
     private val lotRepository: InventoryLotRepository,
+    private val stockRepository: InventoryWarehouseStockRepository,
     private val detailsRepository: MedicationDetailsRepository,
+    private val scopeService: WarehouseScopeService,
+    private val currentUserProvider: CurrentUserProvider,
 ) {
 
     @Transactional(readOnly = true)
-    fun build(window: Int, urgentWindow: Int, section: MedicationSection?, controlled: Boolean?): ExpiryReportResponse {
+    @Suppress("LongParameterList")
+    fun build(
+        window: Int,
+        urgentWindow: Int,
+        section: MedicationSection?,
+        controlled: Boolean?,
+        warehouseId: Long? = null,
+    ): ExpiryReportResponse {
         val today = LocalDate.now()
         val lots = lotRepository.findAllActiveWithItem()
+
+        // Per-lot on-hand: scoped to a warehouse (FR-8/AC-15) or summed system-wide.
+        val quantityByLot: Map<Long, Int> = if (warehouseId != null) {
+            // A warehouse-scoped caller (e.g. CHIEF_NURSE) cannot inspect another
+            // bodega's stock by passing its id (AC-13 parity with the stock view).
+            scopeService.assertCanView(currentUserProvider.currentUserDetailsOrThrow(), warehouseId)
+            stockRepository.findLotStockInWarehouse(warehouseId).associate { it.lotId to it.quantity.toInt() }
+        } else {
+            stockRepository.sumByLotIds(lots.mapNotNull { it.id }).associate { it.lotId to it.quantity.toInt() }
+        }
 
         // Pre-fetch details per item.
         val itemIds = lots.map { it.item.id!! }.toSet()
@@ -29,6 +51,8 @@ class ExpiryReportService(
             .associateBy { it.item.id!! }
 
         val rows = lots.mapNotNull { lot ->
+            // When filtered to a warehouse, only lots with positive stock there show.
+            if (warehouseId != null && (quantityByLot[lot.id] ?: 0) <= 0) return@mapNotNull null
             val details = detailsByItem[lot.item.id]
             if (section != null && details?.section != section) return@mapNotNull null
             if (controlled != null && details?.controlled != controlled) return@mapNotNull null
@@ -50,7 +74,7 @@ class ExpiryReportService(
                 expirationDate = lot.expirationDate,
                 daysToExpiry = days,
                 status = status,
-                quantityOnHand = lot.quantityOnHand,
+                quantityOnHand = quantityByLot[lot.id] ?: 0,
                 recalled = lot.recalled,
             )
         }.sortedWith(compareBy({ it.status.ordinal }, { it.expirationDate }))

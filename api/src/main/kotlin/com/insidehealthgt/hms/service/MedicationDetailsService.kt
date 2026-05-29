@@ -7,6 +7,7 @@ import com.insidehealthgt.hms.entity.MedicationReviewStatus
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
 import com.insidehealthgt.hms.repository.InventoryItemRepository
+import com.insidehealthgt.hms.repository.InventoryWarehouseStockRepository
 import com.insidehealthgt.hms.repository.MedicationDetailsRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional
 class MedicationDetailsService(
     private val itemRepository: InventoryItemRepository,
     private val detailsRepository: MedicationDetailsRepository,
+    private val stockRepository: InventoryWarehouseStockRepository,
     private val messageService: MessageService,
 ) {
 
@@ -56,7 +58,7 @@ class MedicationDetailsService(
         }
         detailsRepository.save(details)
 
-        return MedicationResponse.from(item, details)
+        return MedicationResponse.from(item, details, stockRepository.sumByItem(itemId).toInt())
     }
 
     private fun loadDrugItem(itemId: Long): com.insidehealthgt.hms.entity.InventoryItem {

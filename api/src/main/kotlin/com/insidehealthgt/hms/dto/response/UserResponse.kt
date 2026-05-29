@@ -20,10 +20,11 @@ data class UserResponse(
     val mustChangePassword: Boolean,
     val localePreference: String?,
     val phoneNumbers: List<PhoneNumberResponse>,
+    val assignedWarehouseIds: List<Long>,
     val createdAt: LocalDateTime?,
 ) {
     companion object {
-        fun from(user: User): UserResponse = UserResponse(
+        fun from(user: User, assignedWarehouseIds: List<Long> = emptyList()): UserResponse = UserResponse(
             id = user.id!!,
             username = user.username,
             email = user.email,
@@ -38,6 +39,7 @@ data class UserResponse(
             mustChangePassword = user.mustChangePassword,
             localePreference = user.localePreference,
             phoneNumbers = user.phoneNumbers.map { PhoneNumberResponse.from(it) },
+            assignedWarehouseIds = assignedWarehouseIds,
             createdAt = user.createdAt,
         )
 

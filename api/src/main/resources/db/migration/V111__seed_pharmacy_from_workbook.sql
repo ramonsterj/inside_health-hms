@@ -7,14 +7,20 @@
 -- read was never committed; the workbook data has only ever existed in SQL
 -- form (R__seed_02b mirrors this file for dev/acceptance).
 --
--- Production shape: quantity = 0, no initial lots. Pharmacists register real
+-- Production shape: no initial stock, no initial lots. Pharmacists register real
 -- stock via the UI on first restock. Dev/acceptance overrides this in
--- R__seed_02b (quantity = 50 + synthetic seed lot).
+-- R__seed_02b (50 units per DRUG lot in the ADMINISTRACION warehouse).
+--
+-- Rewritten in-place for the warehouse cutover (V119-V121): the legacy
+-- `inventory_items.quantity` column dropped by V121 was removed from the INSERTs
+-- here so the loader still runs against the post-cutover schema (a pharmacy IT
+-- re-runs this script). Any environment that already recorded the previous V111
+-- checksum must run `flyway repair` once after deploying.
 -- ============================================================================
 
 -- DRUG rows from workbook sections A/B/C/D.
 INSERT INTO inventory_items (
-    category_id, name, description, price, cost, quantity, restock_level,
+    category_id, name, description, price, cost, restock_level,
     pricing_type, time_unit, time_interval, active, kind, sku,
     lot_tracking_enabled, created_at, updated_at
 )
@@ -23,7 +29,7 @@ SELECT (
            WHERE LOWER(name) LIKE '%medicament%' AND deleted_at IS NULL
            ORDER BY id LIMIT 1
        ),
-       v.name, NULL, 0, 0, 0, 0, 'FLAT', NULL, NULL, TRUE, 'DRUG', v.sku, TRUE,
+       v.name, NULL, 0, 0, 0, 'FLAT', NULL, NULL, TRUE, 'DRUG', v.sku, TRUE,
        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM (VALUES
   ('A1', 'ARIPIPRAZOL PRIPAX 5 MG'),
@@ -991,7 +997,7 @@ WHERE i.sku = v.sku AND i.kind = 'DRUG';
 
 -- SUPPLY rows from workbook section E.
 INSERT INTO inventory_items (
-    category_id, name, description, price, cost, quantity, restock_level,
+    category_id, name, description, price, cost, restock_level,
     pricing_type, time_unit, time_interval, active, kind, sku,
     lot_tracking_enabled, created_at, updated_at
 )
@@ -1000,7 +1006,7 @@ SELECT (
            WHERE LOWER(name) LIKE '%material%' AND deleted_at IS NULL
            ORDER BY id LIMIT 1
        ),
-       v.name, NULL, 0, 0, 0, 0, 'FLAT', NULL, NULL, TRUE, 'SUPPLY', v.sku, FALSE,
+       v.name, NULL, 0, 0, 0, 'FLAT', NULL, NULL, TRUE, 'SUPPLY', v.sku, FALSE,
        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM (VALUES
   ('E1', 'QUELOPATCH ACIDO HIALURONICO 1 SOBRE'),

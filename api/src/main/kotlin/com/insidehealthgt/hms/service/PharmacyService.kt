@@ -15,12 +15,14 @@ import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
 import com.insidehealthgt.hms.repository.InventoryCategoryRepository
 import com.insidehealthgt.hms.repository.InventoryItemRepository
-import com.insidehealthgt.hms.repository.InventoryLotRepository
+import com.insidehealthgt.hms.repository.InventoryWarehouseStockRepository
 import com.insidehealthgt.hms.repository.MedicationDetailsRepository
+import com.insidehealthgt.hms.security.CurrentUserProvider
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
 
 /**
  * Read-model + write-model service that composes InventoryItem + MedicationDetails
@@ -33,7 +35,9 @@ class PharmacyService(
     private val detailsRepository: MedicationDetailsRepository,
     private val categoryRepository: InventoryCategoryRepository,
     private val medicationDetailsService: MedicationDetailsService,
-    private val lotRepository: InventoryLotRepository,
+    private val stockRepository: InventoryWarehouseStockRepository,
+    private val scopeService: WarehouseScopeService,
+    private val currentUserProvider: CurrentUserProvider,
     private val messageService: MessageService,
 ) {
 
@@ -43,12 +47,16 @@ class PharmacyService(
         controlled: Boolean?,
         search: String?,
         pageable: Pageable,
-    ): Page<MedicationResponse> = detailsRepository.findAllWithFilters(
-        section,
-        controlled,
-        search?.trim() ?: "",
-        pageable,
-    ).map { MedicationResponse.from(it.item, it) }
+    ): Page<MedicationResponse> {
+        val page = detailsRepository.findAllWithFilters(section, controlled, search?.trim() ?: "", pageable)
+        val itemIds = page.content.mapNotNull { it.item.id }
+        val quantities = if (itemIds.isNotEmpty()) {
+            stockRepository.sumByItemIds(itemIds).associate { it.itemId to it.quantity.toInt() }
+        } else {
+            emptyMap()
+        }
+        return page.map { MedicationResponse.from(it.item, it, quantities[it.item.id] ?: 0) }
+    }
 
     @Transactional(readOnly = true)
     fun getMedication(itemId: Long): MedicationResponse {
@@ -56,7 +64,15 @@ class PharmacyService(
             .orElseThrow { ResourceNotFoundException(messageService.errorInventoryItemNotFound(itemId)) }
         val details = detailsRepository.findByItemId(itemId)
             ?: throw ResourceNotFoundException(messageService.errorMedicationDetailsNotFound(itemId))
-        return MedicationResponse.from(item, details)
+        val breakdown = stockRepository.findWarehouseBreakdownForItem(itemId).map { row ->
+            MedicationResponse.WarehouseStockBreakdown(
+                warehouseId = row.warehouseId,
+                warehouseCode = row.code,
+                warehouseName = row.name,
+                quantity = row.quantity.toInt(),
+            )
+        }
+        return MedicationResponse.from(item, details, stockRepository.sumByItem(itemId).toInt(), breakdown)
     }
 
     @Transactional
@@ -103,7 +119,8 @@ class PharmacyService(
             ),
         )
 
-        return MedicationResponse.from(item, details)
+        // Freshly created medication has no warehouse stock yet — quantity is 0.
+        return MedicationResponse.from(item, details, quantity = 0)
     }
 
     @Transactional
@@ -117,13 +134,23 @@ class PharmacyService(
             )
 
     /**
-     * Non-binding FEFO preview: returns the lot the next dispense would select,
-     * or null when no eligible lot exists. UI-only — the write path locks and
-     * debits via [InventoryLotRepository.findNextFefoLotForUpdate].
+     * Non-binding, warehouse-scoped FEFO preview: returns the lot the next
+     * dispense from the resolved warehouse would select (or [warehouseId] when
+     * given), or null when no eligible lot exists there. UI-only — the write path
+     * locks and debits via [InventoryWarehouseStockRepository.findFefoForUpdate].
      */
     @Transactional(readOnly = true)
-    fun fefoPreview(itemId: Long, quantity: Int): InventoryLotResponse? =
-        lotRepository.peekFefoCandidates(itemId, quantity)
+    fun fefoPreview(itemId: Long, quantity: Int, warehouseId: Long? = null): InventoryLotResponse? {
+        val user = currentUserProvider.currentUserDetailsOrThrow()
+        val resolvedWarehouseId = if (warehouseId != null) {
+            scopeService.assertCanView(user, warehouseId)
+            warehouseId
+        } else {
+            scopeService.resolveDispensingWarehouse(user).id!!
+        }
+        return stockRepository
+            .peekFefoForWarehouse(itemId, resolvedWarehouseId, BigDecimal(quantity))
             .firstOrNull()
-            ?.let(InventoryLotResponse::from)
+            ?.let { row -> row.lot?.let { InventoryLotResponse.from(it, row.quantity.toInt()) } }
+    }
 }

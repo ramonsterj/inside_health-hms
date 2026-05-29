@@ -19,6 +19,9 @@ class ForbiddenException(message: String = "Access denied") : RuntimeException(m
 @ResponseStatus(HttpStatus.CONFLICT)
 class ConflictException(message: String) : RuntimeException(message)
 
+@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+class UnprocessableEntityException(message: String) : RuntimeException(message)
+
 @ResponseStatus(HttpStatus.UNAUTHORIZED)
 class InvalidTokenException(message: String = "Invalid or expired token") : RuntimeException(message)
 
