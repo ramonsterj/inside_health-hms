@@ -573,6 +573,9 @@
       "treatingPhysicianId": {
         "required": "Médico tratante es requerido"
       },
+      "residentId": {
+        "required": "Médico residente es requerido"
+      },
       "admissionDate": {
         "required": "Fecha de admisión es requerida"
       },
@@ -1266,6 +1269,7 @@
     "selectTriageCode": "Seleccione código de triage",
     "selectRoom": "Seleccione habitación",
     "selectPhysician": "Seleccione médico tratante",
+    "selectResident": "Seleccione médico residente",
     "empty": "No se encontraron admisiónes.",
     "created": "Admisión creada éxitosamente.",
     "updated": "Admisión actualizada éxitosamente.",

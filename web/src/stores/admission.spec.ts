@@ -446,6 +446,31 @@ describe('useAdmissionStore', () => {
     })
   })
 
+  describe('fetchResidents', () => {
+    it('should fetch residents and update state', async () => {
+      const mockResidents: Doctor[] = [mockDoctor]
+      mockedApi.get.mockResolvedValueOnce({
+        data: { success: true, data: mockResidents }
+      })
+
+      const store = useAdmissionStore()
+      await store.fetchResidents()
+
+      expect(mockedApi.get).toHaveBeenCalledWith('/v1/admissions/residents')
+      expect(store.residents).toHaveLength(1)
+      expect(store.residents[0]!.firstName).toBe('Dr. Maria')
+    })
+
+    it('should set empty array on error', async () => {
+      mockedApi.get.mockRejectedValueOnce(new Error('Network error'))
+
+      const store = useAdmissionStore()
+      await store.fetchResidents()
+
+      expect(store.residents).toEqual([])
+    })
+  })
+
   describe('clearCurrentAdmission', () => {
     it('should clear current admission', () => {
       const store = useAdmissionStore()

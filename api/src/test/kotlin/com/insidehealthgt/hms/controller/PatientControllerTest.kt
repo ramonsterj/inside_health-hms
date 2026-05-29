@@ -349,7 +349,7 @@ class PatientControllerTest : AbstractIntegrationTest() {
     @Test
     fun `get patient should allow psychologist access to patient with active admission`() {
         val patientId = createPatient(administrativeStaffToken)
-        createAdmission(administrativeStaffToken, patientId, doctorId)
+        createAdmission(adminToken, patientId, doctorId)
 
         mockMvc.perform(
             get("/api/v1/patients/$patientId")
@@ -362,7 +362,7 @@ class PatientControllerTest : AbstractIntegrationTest() {
     @Test
     fun `list patients should only return admitted patients for psychologist`() {
         val admittedPatientId = createPatient(administrativeStaffToken)
-        createAdmission(administrativeStaffToken, admittedPatientId, doctorId)
+        createAdmission(adminToken, admittedPatientId, doctorId)
         createSecondPatient(administrativeStaffToken)
 
         val result = mockMvc.perform(

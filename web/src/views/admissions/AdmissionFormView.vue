@@ -16,7 +16,7 @@ import { useRoomStore } from '@/stores/room'
 import type { PatientSummary } from '@/types'
 import { Sex } from '@/types/patient'
 import { RoomGender } from '@/types/room'
-import type { Doctor } from '@/types/admission'
+import type { CreateAdmissionRequest, Doctor } from '@/types/admission'
 import {
   AdmissionType,
   admissionTypeRequiresRoom,
@@ -32,11 +32,13 @@ const authStore = useAuthStore()
 const triageCodeStore = useTriageCodeStore()
 const roomStore = useRoomStore()
 
-// Resident is auto-bound to the authenticated user at create time; only users
-// carrying RESIDENT_DOCTOR can register an admission, so disable the submit
-// button and surface a banner for everyone else.
+// Only a RESIDENT_DOCTOR (auto-bound to themselves) or an ADMIN may register an
+// admission. Admins are not residents, so they must explicitly pick the resident
+// doctor the admission is recorded under. Everyone else sees a banner and a
+// disabled submit button.
+const isAdmin = computed(() => authStore.hasRole('ADMIN'))
 const canRegisterAdmission = computed(
-  () => authStore.user?.roles?.includes('RESIDENT_DOCTOR') ?? false
+  () => isAdmin.value || (authStore.user?.roles?.includes('RESIDENT_DOCTOR') ?? false)
 )
 
 const loading = ref(false)
@@ -59,6 +61,7 @@ const selectedPatient = ref<PatientSummary | null>(null)
 const selectedTriageCode = ref<number | null>(null)
 const selectedRoom = ref<number | null>(null)
 const selectedPhysician = ref<number | null>(null)
+const selectedResident = ref<number | null>(null)
 const selectedType = ref<AdmissionType>(AdmissionType.HOSPITALIZATION)
 const admissionDate = ref<Date>(new Date())
 
@@ -104,7 +107,9 @@ onMounted(async () => {
     await Promise.all([
       triageCodeStore.fetchTriageCodes(),
       roomStore.fetchAvailableRooms(),
-      admissionStore.fetchDoctors()
+      admissionStore.fetchDoctors(),
+      // Admins pick the resident the admission is recorded under.
+      ...(isAdmin.value ? [admissionStore.fetchResidents()] : [])
     ])
 
     if (isEditMode.value && admissionId.value) {
@@ -210,6 +215,9 @@ function validate(): boolean {
   if (!selectedPhysician.value) {
     errors.value.physician = t('validation.admission.treatingPhysicianId.required')
   }
+  if (isAdmin.value && !isEditMode.value && !selectedResident.value) {
+    errors.value.resident = t('validation.admission.residentId.required')
+  }
   if (!admissionDate.value) {
     errors.value.admissionDate = t('validation.admission.admissionDate.required')
   }
@@ -232,14 +240,18 @@ async function submitAdmission() {
       showSuccess('admission.updated')
       router.push({ name: 'admission-detail', params: { id: admissionId.value } })
     } else {
-      const admission = await admissionStore.createAdmission({
+      const createRequest: CreateAdmissionRequest = {
         patientId: selectedPatient.value!.id,
         triageCodeId: selectedTriageCode.value,
         roomId: selectedRoom.value,
         treatingPhysicianId: selectedPhysician.value!,
         admissionDate: admissionDate.value.toISOString(),
         type: selectedType.value
-      })
+      }
+      if (isAdmin.value) {
+        createRequest.residentId = selectedResident.value
+      }
+      const admission = await admissionStore.createAdmission(createRequest)
       showSuccess('admission.created')
       router.push({ name: 'admission-detail', params: { id: admission.id } })
     }
@@ -352,6 +364,21 @@ function cancel() {
               />
               <Message v-if="errors.physician" severity="error" :closable="false">
                 {{ errors.physician }}
+              </Message>
+            </div>
+
+            <div v-if="isAdmin && !isEditMode" class="form-field" data-testid="resident-field">
+              <label>{{ t('admission.resident') }} *</label>
+              <Select
+                v-model="selectedResident"
+                :options="admissionStore.residents"
+                optionValue="id"
+                :optionLabel="getDoctorLabel"
+                :placeholder="t('admission.selectResident')"
+                :class="{ 'p-invalid': errors.resident }"
+              />
+              <Message v-if="errors.resident" severity="error" :closable="false">
+                {{ errors.resident }}
               </Message>
             </div>
 

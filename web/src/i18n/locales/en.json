@@ -573,6 +573,9 @@
       "treatingPhysicianId": {
         "required": "Treating physician is required"
       },
+      "residentId": {
+        "required": "Resident doctor is required"
+      },
       "admissionDate": {
         "required": "Admission date is required"
       },
@@ -1266,6 +1269,7 @@
     "selectTriageCode": "Select triage code",
     "selectRoom": "Select room",
     "selectPhysician": "Select treating physician",
+    "selectResident": "Select resident doctor",
     "empty": "No admissions found.",
     "created": "Admission created successfully.",
     "updated": "Admission updated successfully.",

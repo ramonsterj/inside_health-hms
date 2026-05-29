@@ -4,7 +4,7 @@
 -- This file truncates all tables and reseeds base data.
 -- WARNING: DESTRUCTIVE - DO NOT use in production!
 -- Default password for all users: admin123
--- Last updated: 2026-05-28 (psychologist medical-order grants mirrored from V116)
+-- Last updated: 2026-05-29 (admin no longer carries RESIDENT_DOCTOR; ADMIN admits via residentId — mirrors V119)
 --
 -- !!! READ BEFORE EDITING ANY R__seed_*.sql FILE !!!
 -- This file TRUNCATEs patients/admissions/vitals/notes/meds/billing tables.
@@ -14,7 +14,7 @@
 -- repopulate it (we hit this in PR #53). Whenever any R__seed_*.sql is
 -- modified, bump the SEED-BUNDLE-VERSION line below in ALL eight files
 -- so they re-run together.
--- SEED-BUNDLE-VERSION: 2026-05-29a
+-- SEED-BUNDLE-VERSION: 2026-05-29b
 -- ============================================================================
 
 SET session_replication_role = replica;
@@ -329,13 +329,10 @@ SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users u, roles r
 WHERE u.username = 'admin' AND r.code = 'ADMIN';
 
--- Admin also gets RESIDENT_DOCTOR so the demo admin can create admissions.
--- (Resident is auto-bound to the authenticated user; without this grant the
--- admin account would get a 400 when registering admissions.)
-INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
-SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-FROM users u, roles r
-WHERE u.username = 'admin' AND r.code = 'RESIDENT_DOCTOR';
+-- NOTE: admin does NOT carry RESIDENT_DOCTOR. ADMIN is a first-class exception
+-- in AdmissionService.resolveResident(): an admin registering an admission must
+-- explicitly pick the resident doctor (residentId in the request). Admin keeps
+-- admission:create via the "ADMIN gets all permissions" CROSS JOIN above.
 
 -- USER role assignments
 INSERT INTO user_roles (user_id, role_id, created_at, updated_at)

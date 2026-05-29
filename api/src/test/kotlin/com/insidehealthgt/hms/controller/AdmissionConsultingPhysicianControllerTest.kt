@@ -22,6 +22,7 @@ import java.time.LocalDateTime
 class AdmissionConsultingPhysicianControllerTest : AbstractIntegrationTest() {
 
     private lateinit var administrativeStaffToken: String
+    private lateinit var residentToken: String
     private lateinit var doctorToken: String
     private lateinit var doctorUser: User
     private lateinit var secondDoctorUser: User
@@ -33,6 +34,10 @@ class AdmissionConsultingPhysicianControllerTest : AbstractIntegrationTest() {
     fun setUp() {
         val (_, staffTkn) = createAdminStaffUser()
         administrativeStaffToken = staffTkn
+
+        // Admissions are registered through a resident (auto-bound to self).
+        val (_, residentTkn) = createResidentUser()
+        residentToken = residentTkn
 
         val (doctorUsr, doctorTkn) = createDoctorUser()
         doctorUser = doctorUsr
@@ -78,7 +83,7 @@ class AdmissionConsultingPhysicianControllerTest : AbstractIntegrationTest() {
         val request = createValidAdmissionRequest()
         val createResult = mockMvc.perform(
             post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
+                .header("Authorization", "Bearer $residentToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)),
         ).andExpect(status().isCreated)

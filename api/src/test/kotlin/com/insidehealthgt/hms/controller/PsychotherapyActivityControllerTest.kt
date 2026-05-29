@@ -59,7 +59,7 @@ class PsychotherapyActivityControllerTest : AbstractIntegrationTest() {
         val triageCode = triageCodeRepository.findAll().first()
         val patient1Id = createPatient(adminStaffToken)
         hospitalizationAdmissionId = createAdmission(
-            adminStaffToken,
+            adminToken,
             patient1Id,
             doctorUser.id!!,
             AdmissionType.HOSPITALIZATION,
@@ -70,7 +70,7 @@ class PsychotherapyActivityControllerTest : AbstractIntegrationTest() {
         // Create ambulatory admission (different patient)
         val patient2Id = createSecondPatient(adminStaffToken)
         ambulatoryAdmissionId = createAdmission(
-            adminStaffToken,
+            adminToken,
             patient2Id,
             doctorUser.id!!,
             AdmissionType.AMBULATORY,

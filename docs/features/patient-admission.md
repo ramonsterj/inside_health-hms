@@ -48,7 +48,7 @@ Register hospital admissions starting from the patient list view. Staff selects 
 | Action | Required Role(s) | Permission | Notes |
 |--------|------------------|------------|-------|
 | View admissions | ADMINISTRATIVE_STAFF, ADMIN | `admission:read` | List and view details |
-| Create admission | ADMINISTRATIVE_STAFF, ADMIN | `admission:create` | Register new admission |
+| Create admission | RESIDENT_DOCTOR, ADMIN | `admission:create` | Register new admission. **Only a `RESIDENT_DOCTOR` may admit** — the resident slot is auto-bound to the authenticated user. `ADMIN` is the sole exception: an admin is not a resident, so they must explicitly pick the resident doctor (`residentId` in the request) and the picked user must carry `RESIDENT_DOCTOR`. `DOCTOR`, `ADMINISTRATIVE_STAFF`, and every other role are blocked: those holding `admission:create` but lacking the role get 400 `error.admission.resident.role.required`; those without the permission get 403. |
 | Update admission | ADMINISTRATIVE_STAFF, ADMIN | `admission:update` | Edit admission details |
 | Discharge patient | ADMINISTRATIVE_STAFF, ADMIN | `admission:update` | Change status to DISCHARGED |
 | Delete admission | ADMIN | `admission:delete` | Soft delete only |
@@ -184,6 +184,14 @@ Register hospital admissions starting from the patient list view. Staff selects 
 - When required fields (patient, triage code, room, treating physician) are missing, then return 400 with validation errors.
 - When user lacks `admission:create` permission, then return 403 Forbidden.
 
+**Resident binding (who may admit):**
+- Given the caller is a `RESIDENT_DOCTOR`, when admission is created, then the resident slot is auto-bound to the authenticated user (`residentId` in the request is ignored).
+- Given the caller is an `ADMIN`, when admission is created with a `residentId` pointing to a `RESIDENT_DOCTOR`, then that user is recorded as the resident.
+- Given the caller is an `ADMIN` and `residentId` is omitted, then return 400 `error.admission.resident.required`.
+- Given the caller is an `ADMIN` and `residentId` points to a user without the `RESIDENT_DOCTOR` role, then return 400 `error.admission.resident.invalid.role`.
+- Given the caller holds `admission:create` but is neither `ADMIN` nor `RESIDENT_DOCTOR` (e.g. `ADMINISTRATIVE_STAFF`), then return 400 `error.admission.resident.role.required`.
+- `GET /api/v1/admissions/residents` returns the `RESIDENT_DOCTOR` users for the admin's resident picker (gated by `admission:create`).
+
 ### Discharge
 
 **Happy Path:**
@@ -253,6 +261,7 @@ Register hospital admissions starting from the patient list view. Staff selects 
 | DELETE | `/api/v1/admissions/{id}` | - | - | Yes | Soft delete admission |
 | POST | `/api/v1/admissions/{id}/consent` | `MultipartFile` | `AdmissionDetailResponse` | Yes | Upload consent document |
 | GET | `/api/v1/admissions/{id}/consent` | - | `byte[]` | Yes | Download consent document |
+| GET | `/api/v1/admissions/residents` | - | `List<DoctorResponse>` | Yes | List `RESIDENT_DOCTOR` users for the admin resident picker (gated by `admission:create`) |
 
 ### Triage Code Endpoints
 

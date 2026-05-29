@@ -22,6 +22,7 @@ class RoomControllerTest : AbstractIntegrationTest() {
 
     private lateinit var adminToken: String
     private lateinit var administrativeStaffToken: String
+    private lateinit var residentToken: String
     private lateinit var doctorToken: String
     private lateinit var doctorUser: User
 
@@ -32,6 +33,11 @@ class RoomControllerTest : AbstractIntegrationTest() {
 
         val (_, staffTkn) = createAdminStaffUser()
         administrativeStaffToken = staffTkn
+
+        // Admissions are registered through a resident (auto-bound to self);
+        // admin staff can no longer admit.
+        val (_, residentTkn) = createResidentUser()
+        residentToken = residentTkn
 
         val (docUsr, docTkn) = createDoctorUser()
         doctorUser = docUsr
@@ -250,7 +256,7 @@ class RoomControllerTest : AbstractIntegrationTest() {
 
         mockMvc.perform(
             post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
+                .header("Authorization", "Bearer $residentToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(admissionRequest)),
         ).andExpect(status().isCreated)
@@ -295,7 +301,7 @@ class RoomControllerTest : AbstractIntegrationTest() {
 
         mockMvc.perform(
             post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
+                .header("Authorization", "Bearer $residentToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(admissionRequest)),
         ).andExpect(status().isCreated)
@@ -517,7 +523,7 @@ class RoomControllerTest : AbstractIntegrationTest() {
         )
         mockMvc.perform(
             post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
+                .header("Authorization", "Bearer $residentToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(admissionRequest1)),
         ).andExpect(status().isCreated)
@@ -527,7 +533,7 @@ class RoomControllerTest : AbstractIntegrationTest() {
         val admissionRequest2 = admissionRequest1.copy(patientId = patient2Id)
         mockMvc.perform(
             post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
+                .header("Authorization", "Bearer $residentToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(admissionRequest2)),
         ).andExpect(status().isCreated)
@@ -611,7 +617,7 @@ class RoomControllerTest : AbstractIntegrationTest() {
 
         mockMvc.perform(
             post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
+                .header("Authorization", "Bearer $residentToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(admissionRequest)),
         ).andExpect(status().isCreated)

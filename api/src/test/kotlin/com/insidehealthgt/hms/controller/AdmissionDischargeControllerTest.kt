@@ -17,6 +17,7 @@ import java.time.LocalDateTime
 class AdmissionDischargeControllerTest : AbstractIntegrationTest() {
 
     private lateinit var administrativeStaffToken: String
+    private lateinit var residentToken: String
     private lateinit var doctorUser: User
     private var patientId: Long = 0
     private var triageCodeId: Long = 0
@@ -26,6 +27,10 @@ class AdmissionDischargeControllerTest : AbstractIntegrationTest() {
     fun setUp() {
         val (_, staffTkn) = createAdminStaffUser()
         administrativeStaffToken = staffTkn
+
+        // Admissions are registered through a resident (auto-bound to self).
+        val (_, residentTkn) = createResidentUser()
+        residentToken = residentTkn
 
         val (doctorUsr, _) = createDoctorUser()
         doctorUser = doctorUsr
@@ -60,7 +65,7 @@ class AdmissionDischargeControllerTest : AbstractIntegrationTest() {
         val request = createValidAdmissionRequest()
         val createResult = mockMvc.perform(
             post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
+                .header("Authorization", "Bearer $residentToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)),
         ).andReturn()
@@ -82,7 +87,7 @@ class AdmissionDischargeControllerTest : AbstractIntegrationTest() {
         val request = createValidAdmissionRequest()
         val createResult = mockMvc.perform(
             post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
+                .header("Authorization", "Bearer $residentToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)),
         ).andReturn()
@@ -111,7 +116,7 @@ class AdmissionDischargeControllerTest : AbstractIntegrationTest() {
         val request1 = createValidAdmissionRequest()
         val createResult = mockMvc.perform(
             post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
+                .header("Authorization", "Bearer $residentToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request1)),
         ).andReturn()
@@ -123,7 +128,7 @@ class AdmissionDischargeControllerTest : AbstractIntegrationTest() {
         val request2 = createValidAdmissionRequest().copy(patientId = patient2Id)
         mockMvc.perform(
             post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
+                .header("Authorization", "Bearer $residentToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request2)),
         ).andExpect(status().isCreated)
@@ -133,7 +138,7 @@ class AdmissionDischargeControllerTest : AbstractIntegrationTest() {
         val request3 = createValidAdmissionRequest().copy(patientId = patient3Id)
         mockMvc.perform(
             post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
+                .header("Authorization", "Bearer $residentToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request3)),
         ).andExpect(status().isBadRequest)
@@ -147,7 +152,7 @@ class AdmissionDischargeControllerTest : AbstractIntegrationTest() {
         // Now third admission should succeed
         mockMvc.perform(
             post("/api/v1/admissions")
-                .header("Authorization", "Bearer $administrativeStaffToken")
+                .header("Authorization", "Bearer $residentToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request3)),
         ).andExpect(status().isCreated)
