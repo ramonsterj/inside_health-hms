@@ -33,10 +33,13 @@ pre-commit:
       glob: "**/*.{vue,ts,tsx,js,json,css,scss}"
       run: npm run format:check
 
+    # Build mode (vue-tsc -b) is required: the root tsconfig uses project
+    # references (files: []), so `vue-tsc --noEmit` without -b checks nothing
+    # and passes vacuously, letting type errors reach the prod Docker build.
     typescript:
       root: web/
       glob: "**/*.{vue,ts,tsx}"
-      run: npx vue-tsc --noEmit
+      run: npm run type-check
 
 pre-push:
   commands:

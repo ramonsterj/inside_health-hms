@@ -56,7 +56,7 @@ Example: `/qa_check docs/features/user-profile.md`
 
 7. Identify all modified frontend files (`.ts`, `.vue`) in the `web/` directory
 8. For each modified file:
-   - Run `cd web && npm run type-check` (or `vue-tsc --noEmit`) and fix all TypeScript errors
+   - Run `cd web && npm run type-check` (`vue-tsc -b`, build mode — the root tsconfig uses project references, so `--noEmit` without `-b` checks nothing and passes vacuously) and fix all TypeScript errors
    - Run `cd web && npm run lint` and fix all linting issues
    - Run `cd web && npm run format:check` (or `prettier --check`) and fix formatting
 
@@ -129,7 +129,7 @@ Example: `/qa_check docs/features/user-profile.md`
     cd api && ./gradlew test                 # Tests
 
     # Frontend
-    cd web && npm run type-check             # TypeScript
+    cd web && npm run type-check             # TypeScript (vue-tsc -b)
     cd web && npm run lint                   # ESLint
     cd web && npm run build                  # Build check
     cd web && npm run test:run               # Unit tests
