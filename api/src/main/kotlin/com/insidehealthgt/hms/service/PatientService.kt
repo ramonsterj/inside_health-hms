@@ -96,14 +96,40 @@ class PatientService(
     @Transactional(readOnly = true)
     fun getPatient(id: Long, doctorId: Long? = null, activeAdmissionsOnly: Boolean = false): PatientResponse {
         val patient = findByIdWithContacts(id)
+        val hasActiveAdmission = assertExistingPatientAccessible(id, doctorId, activeAdmissionsOnly)
+        return buildPatientResponse(patient, hasActiveAdmission)
+    }
+
+    /**
+     * Single source of truth for the patient-level visibility gate shared with [getPatient].
+     *
+     * Answers only "may this caller open this patient at all?" — it does NOT fetch or return
+     * the patient. Callers (e.g. the patient-scoped admissions history) use it as a one-time
+     * access gate before returning related data, and must NOT reuse [doctorId] /
+     * [activeAdmissionsOnly] as per-row filters on that data.
+     *
+     * @throws ResourceNotFoundException (404) if the patient does not exist.
+     * @throws AccessDeniedException (403) if a standalone doctor is not assigned to the patient,
+     *   or a psychologist views a patient with no active admission.
+     */
+    @Suppress("ThrowsCount")
+    @Transactional(readOnly = true)
+    fun assertPatientAccessible(id: Long, doctorId: Long? = null, activeAdmissionsOnly: Boolean = false) {
+        if (!patientRepository.existsById(id)) {
+            throw ResourceNotFoundException(messageService.errorPatientNotFound(id))
+        }
+        assertExistingPatientAccessible(id, doctorId, activeAdmissionsOnly)
+    }
+
+    private fun assertExistingPatientAccessible(id: Long, doctorId: Long?, activeAdmissionsOnly: Boolean): Boolean {
         if (doctorId != null && !patientRepository.isPatientAssignedToDoctor(id, doctorId)) {
             throw AccessDeniedException(messageService.errorPatientAccessDenied())
         }
         val hasActiveAdmission = admissionRepository.existsActiveByPatientId(id)
         if (activeAdmissionsOnly && !hasActiveAdmission) {
-            throw AccessDeniedException("Access denied")
+            throw AccessDeniedException(messageService.errorPatientAccessDenied())
         }
-        return buildPatientResponse(patient, hasActiveAdmission)
+        return hasActiveAdmission
     }
 
     @Transactional

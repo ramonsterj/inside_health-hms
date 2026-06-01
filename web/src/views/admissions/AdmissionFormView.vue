@@ -18,6 +18,7 @@ import { Sex } from '@/types/patient'
 import { RoomGender } from '@/types/room'
 import type { CreateAdmissionRequest, Doctor } from '@/types/admission'
 import {
+  AdmissionStatus,
   AdmissionType,
   admissionTypeRequiresRoom,
   admissionTypeRequiresTriageCode
@@ -130,6 +131,11 @@ onMounted(async () => {
 async function loadAdmission() {
   try {
     const admission = await admissionStore.fetchAdmission(admissionId.value!)
+    if (admission.status === AdmissionStatus.DISCHARGED) {
+      showError(t('admission.dischargedReadOnly'))
+      router.push({ name: 'admission-detail', params: { id: admissionId.value } })
+      return
+    }
     selectedPatient.value = admission.patient
     selectedTriageCode.value = admission.triageCode?.id ?? null
     selectedRoom.value = admission.room?.id ?? null

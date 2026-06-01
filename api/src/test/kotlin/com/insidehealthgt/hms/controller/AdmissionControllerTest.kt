@@ -7,6 +7,8 @@ import com.insidehealthgt.hms.entity.Room
 import com.insidehealthgt.hms.entity.RoomGender
 import com.insidehealthgt.hms.entity.RoomType
 import com.insidehealthgt.hms.entity.User
+import org.hamcrest.Matchers.containsInAnyOrder
+import org.hamcrest.Matchers.hasItem
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -18,6 +20,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDateTime
 
+@Suppress("LargeClass")
 class AdmissionControllerTest : AbstractIntegrationTest() {
 
     private lateinit var adminToken: String
@@ -720,5 +723,307 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
             .andExpect(jsonPath("$.data.length()").value(1))
             .andExpect(jsonPath("$.data[0].id").value(residentUser.id))
             .andExpect(jsonPath("$.data[0].firstName").value(residentUser.firstName))
+    }
+
+    // ============ PATIENT ADMISSIONS HISTORY TESTS ============
+
+    private fun patientHistoryUrl(id: Long) = "/api/v1/admissions/patients/$id/admissions"
+
+    @Test
+    fun `patient admissions history returns all admissions most-recent-first`() {
+        val now = LocalDateTime.now()
+        val oldest = createAdmission(
+            token = residentToken,
+            patientId = patientId,
+            doctorId = doctorUser.id!!,
+            type = AdmissionType.AMBULATORY,
+            admissionDate = now.minusDays(10),
+        )
+        dischargeAdmission(oldest, administrativeStaffToken)
+        val middle = createAdmission(
+            token = residentToken,
+            patientId = patientId,
+            doctorId = doctorUser.id!!,
+            type = AdmissionType.AMBULATORY,
+            admissionDate = now.minusDays(5),
+        )
+        dischargeAdmission(middle, administrativeStaffToken)
+        // Newest, still active (HOSPITALIZATION needs a room + triage code).
+        val newest = createAdmission(
+            token = residentToken,
+            patientId = patientId,
+            doctorId = doctorUser.id!!,
+            type = AdmissionType.HOSPITALIZATION,
+            roomId = roomId,
+            triageCodeId = triageCodeId,
+            admissionDate = now,
+        )
+
+        mockMvc.perform(
+            get(patientHistoryUrl(patientId)).header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content.length()").value(3))
+            .andExpect(jsonPath("$.data.page.totalElements").value(3))
+            // Most-recent-first: active newest, then discharged middle, then discharged oldest.
+            .andExpect(jsonPath("$.data.content[0].id").value(newest))
+            .andExpect(jsonPath("$.data.content[0].status").value("ACTIVE"))
+            .andExpect(jsonPath("$.data.content[1].id").value(middle))
+            .andExpect(jsonPath("$.data.content[1].status").value("DISCHARGED"))
+            .andExpect(jsonPath("$.data.content[2].id").value(oldest))
+    }
+
+    @Test
+    fun `patient admissions history returns all admission types without filtering`() {
+        val now = LocalDateTime.now()
+        val electroshock = createAdmission(
+            token = residentToken,
+            patientId = patientId,
+            doctorId = doctorUser.id!!,
+            type = AdmissionType.ELECTROSHOCK_THERAPY,
+            admissionDate = now.minusDays(2),
+        )
+        dischargeAdmission(electroshock, administrativeStaffToken)
+        createAdmission(
+            token = residentToken,
+            patientId = patientId,
+            doctorId = doctorUser.id!!,
+            type = AdmissionType.HOSPITALIZATION,
+            roomId = roomId,
+            triageCodeId = triageCodeId,
+            admissionDate = now,
+        )
+
+        mockMvc.perform(
+            get(patientHistoryUrl(patientId)).header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content.length()").value(2))
+            .andExpect(
+                jsonPath(
+                    "$.data.content[*].type",
+                    containsInAnyOrder("HOSPITALIZATION", "ELECTROSHOCK_THERAPY"),
+                ),
+            )
+    }
+
+    @Test
+    fun `patient admissions history returns empty page for patient with no admissions`() {
+        val freshPatient = createSecondPatient(administrativeStaffToken)
+
+        mockMvc.perform(
+            get(patientHistoryUrl(freshPatient)).header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content").isEmpty)
+            .andExpect(jsonPath("$.data.page.totalElements").value(0))
+    }
+
+    @Test
+    fun `patient admissions history returns 404 for unknown patient`() {
+        mockMvc.perform(
+            get(patientHistoryUrl(99999)).header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `patient admissions history honors pagination parameters`() {
+        val now = LocalDateTime.now()
+        val a1 = createAdmission(
+            token = residentToken,
+            patientId = patientId,
+            doctorId = doctorUser.id!!,
+            type = AdmissionType.AMBULATORY,
+            admissionDate = now.minusDays(3),
+        )
+        dischargeAdmission(a1, administrativeStaffToken)
+        val a2 = createAdmission(
+            token = residentToken,
+            patientId = patientId,
+            doctorId = doctorUser.id!!,
+            type = AdmissionType.AMBULATORY,
+            admissionDate = now.minusDays(2),
+        )
+        dischargeAdmission(a2, administrativeStaffToken)
+        createAdmission(
+            token = residentToken,
+            patientId = patientId,
+            doctorId = doctorUser.id!!,
+            type = AdmissionType.AMBULATORY,
+            admissionDate = now,
+        )
+
+        mockMvc.perform(
+            get(patientHistoryUrl(patientId))
+                .param("page", "0").param("size", "2")
+                .header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content.length()").value(2))
+            .andExpect(jsonPath("$.data.page.totalElements").value(3))
+
+        mockMvc.perform(
+            get(patientHistoryUrl(patientId))
+                .param("page", "1").param("size", "2")
+                .header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content.length()").value(1))
+    }
+
+    @Test
+    fun `patient admissions history allows assigned doctor full history but denies unassigned doctor`() {
+        val now = LocalDateTime.now()
+        val discharged = createAdmission(
+            token = residentToken,
+            patientId = patientId,
+            doctorId = doctorUser.id!!,
+            type = AdmissionType.AMBULATORY,
+            admissionDate = now.minusDays(3),
+        )
+        dischargeAdmission(discharged, administrativeStaffToken)
+        // Active admission with doctorUser as treating physician → doctorUser is "assigned".
+        createAdmission(
+            token = residentToken,
+            patientId = patientId,
+            doctorId = doctorUser.id!!,
+            type = AdmissionType.HOSPITALIZATION,
+            roomId = roomId,
+            triageCodeId = triageCodeId,
+            admissionDate = now,
+        )
+
+        // Assigned standalone doctor: gate passes, sees ALL admissions incl. the discharged one.
+        mockMvc.perform(
+            get(patientHistoryUrl(patientId)).header("Authorization", "Bearer $doctorToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content.length()").value(2))
+            .andExpect(jsonPath("$.data.content[*].status", hasItem("DISCHARGED")))
+
+        // A different standalone doctor, not assigned to the patient, is blocked.
+        val (_, otherDoctorToken) = createUserWithRole(
+            roleCode = "DOCTOR",
+            username = "doctor2",
+            email = "doctor2@example.com",
+            password = "password123",
+        )
+        mockMvc.perform(
+            get(patientHistoryUrl(patientId)).header("Authorization", "Bearer $otherDoctorToken"),
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `patient admissions history applies the psychologist active-admission gate`() {
+        val now = LocalDateTime.now()
+        val discharged = createAdmission(
+            token = residentToken,
+            patientId = patientId,
+            doctorId = doctorUser.id!!,
+            type = AdmissionType.AMBULATORY,
+            admissionDate = now.minusDays(4),
+        )
+        dischargeAdmission(discharged, administrativeStaffToken)
+
+        // No active admission → psychologist is denied, exactly like the patient detail page.
+        mockMvc.perform(
+            get(patientHistoryUrl(patientId)).header("Authorization", "Bearer $psychologistToken"),
+        )
+            .andExpect(status().isForbidden)
+
+        // Give the patient an active admission again.
+        createAdmission(
+            token = residentToken,
+            patientId = patientId,
+            doctorId = doctorUser.id!!,
+            type = AdmissionType.HOSPITALIZATION,
+            roomId = roomId,
+            triageCodeId = triageCodeId,
+            admissionDate = now,
+        )
+
+        // Now the psychologist is allowed and sees the FULL history, incl. the prior discharge.
+        mockMvc.perform(
+            get(patientHistoryUrl(patientId)).header("Authorization", "Bearer $psychologistToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content.length()").value(2))
+            .andExpect(jsonPath("$.data.content[*].status", hasItem("DISCHARGED")))
+    }
+
+    @Test
+    fun `patient admissions history forbids a user without patient read`() {
+        // The seeded USER role only holds user:read.
+        val (_, userToken) = createUserWithRole(
+            roleCode = "USER",
+            username = "plainuser",
+            email = "plainuser@example.com",
+            password = "password123",
+        )
+
+        mockMvc.perform(
+            get(patientHistoryUrl(patientId)).header("Authorization", "Bearer $userToken"),
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `patient admissions history excludes soft-deleted admissions`() {
+        val now = LocalDateTime.now()
+        val kept = createAdmission(
+            token = residentToken,
+            patientId = patientId,
+            doctorId = doctorUser.id!!,
+            type = AdmissionType.AMBULATORY,
+            admissionDate = now.minusDays(2),
+        )
+        dischargeAdmission(kept, administrativeStaffToken)
+        val deleted = createAdmission(
+            token = residentToken,
+            patientId = patientId,
+            doctorId = doctorUser.id!!,
+            type = AdmissionType.AMBULATORY,
+            admissionDate = now,
+        )
+        mockMvc.perform(
+            delete("/api/v1/admissions/$deleted").header("Authorization", "Bearer $adminToken"),
+        ).andExpect(status().isOk)
+
+        mockMvc.perform(
+            get(patientHistoryUrl(patientId)).header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content.length()").value(1))
+            .andExpect(jsonPath("$.data.content[0].id").value(kept))
+    }
+
+    @Test
+    fun `patient summary and admissions history routes both resolve without collision`() {
+        createAdmission(
+            token = residentToken,
+            patientId = patientId,
+            doctorId = doctorUser.id!!,
+            type = AdmissionType.AMBULATORY,
+            admissionDate = LocalDateTime.now(),
+        )
+
+        // Summary route returns a single patient object.
+        mockMvc.perform(
+            get("/api/v1/admissions/patients/$patientId")
+                .header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.id").value(patientId))
+            .andExpect(jsonPath("$.data.firstName").value("Juan"))
+
+        // History route returns a page of admissions.
+        mockMvc.perform(
+            get(patientHistoryUrl(patientId)).header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.content").isArray)
+            .andExpect(jsonPath("$.data.content.length()").value(1))
     }
 }

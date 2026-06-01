@@ -150,4 +150,24 @@ class AdmissionDocumentControllerTest : AbstractIntegrationTest() {
         )
             .andExpect(status().isNotFound)
     }
+
+    @Test
+    fun `upload consent document fails for discharged admission`() {
+        val admissionId = createAdmissionAndGetId()
+        dischargeAdmission(admissionId, administrativeStaffToken)
+
+        val mockFile = MockMultipartFile(
+            "file",
+            "consent.pdf",
+            MediaType.APPLICATION_PDF_VALUE,
+            "fake-pdf-content".toByteArray(),
+        )
+
+        mockMvc.perform(
+            multipart("/api/v1/admissions/$admissionId/consent")
+                .file(mockFile)
+                .header("Authorization", "Bearer $administrativeStaffToken"),
+        )
+            .andExpect(status().isBadRequest)
+    }
 }

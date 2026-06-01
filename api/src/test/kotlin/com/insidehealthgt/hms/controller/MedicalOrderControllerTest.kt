@@ -275,6 +275,71 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
             .andExpect(status().isForbidden)
     }
 
+    // ============ DISCHARGE PROTECTION TESTS ============
+
+    @Test
+    fun `create medical order fails for discharged admission`() {
+        dischargeAdmission(admissionId, adminToken)
+
+        val request = CreateMedicalOrderRequest(
+            category = MedicalOrderCategory.MEDICAMENTOS,
+            startDate = LocalDate.now(),
+            medication = "Should fail - discharged",
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders")
+                .header("Authorization", "Bearer $doctorToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `update medical order fails for discharged admission`() {
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.MEDICAMENTOS, "Before discharge")
+        dischargeAdmission(admissionId, adminToken)
+
+        val request = UpdateMedicalOrderRequest(
+            category = MedicalOrderCategory.MEDICAMENTOS,
+            startDate = LocalDate.now(),
+            medication = "Should fail - discharged",
+        )
+
+        mockMvc.perform(
+            put("/api/v1/admissions/$admissionId/medical-orders/$orderId")
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `discontinue medical order fails for discharged admission`() {
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.DIETA, null)
+        dischargeAdmission(admissionId, adminToken)
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/discontinue")
+                .header("Authorization", "Bearer $doctorToken"),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `authorize medical order fails for discharged admission`() {
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
+        dischargeAdmission(admissionId, adminToken)
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
+                .header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
     // ============ UNAUTHENTICATED / NON-EXISTENT ADMISSION TESTS ============
 
     @Test
@@ -733,6 +798,27 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
                 jsonPath(
                     "$.data.content[?(@.id == $authorizedId)]",
                     hasSize<Any>(0),
+                ),
+            )
+    }
+
+    @Test
+    fun `cross-admission listing exposes parent admission status (discharged rows still listed)`() {
+        val (_, staffToken) = createAdminStaffUser()
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Lab on discharged")
+        dischargeAdmission(admissionId, adminToken)
+
+        // The order is still listed (reads are never blocked by discharge) and the row
+        // carries admissionStatus = DISCHARGED so the dashboard can hide its action buttons.
+        mockMvc.perform(
+            get("/api/v1/medical-orders")
+                .header("Authorization", "Bearer $staffToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(
+                jsonPath(
+                    "$.data.content[?(@.id == $orderId)].admissionStatus",
+                    hasItem("DISCHARGED"),
                 ),
             )
     }

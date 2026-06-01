@@ -17,6 +17,10 @@ import type { PatientSummary, ApiResponse, PageResponse } from '@/types'
 export const useAdmissionStore = defineStore('admission', () => {
   const admissions = ref<AdmissionListItem[]>([])
   const totalAdmissions = ref(0)
+  // Patient-scoped history lives in dedicated refs so it never clobbers the global
+  // `admissions` list used by the dashboard / admissions views.
+  const patientAdmissions = ref<AdmissionListItem[]>([])
+  const totalPatientAdmissions = ref(0)
   const currentAdmission = ref<AdmissionDetail | null>(null)
   const doctors = ref<Doctor[]>([])
   const residents = ref<Doctor[]>([])
@@ -49,6 +53,21 @@ export const useAdmissionStore = defineStore('admission', () => {
       }
     } finally {
       loading.value = false
+    }
+  }
+
+  async function fetchPatientAdmissions(patientId: number, page = 0, size = 20): Promise<void> {
+    // Clear up front so a failed (or unsuccessful) fetch never leaves the previously
+    // viewed patient's rows in this shared ref to render under another patient.
+    patientAdmissions.value = []
+    totalPatientAdmissions.value = 0
+    const response = await api.get<ApiResponse<PageResponse<AdmissionListItem>>>(
+      `/v1/admissions/patients/${patientId}/admissions`,
+      { params: { page, size } }
+    )
+    if (response.data.success && response.data.data) {
+      patientAdmissions.value = response.data.data.content
+      totalPatientAdmissions.value = response.data.data.page.totalElements
     }
   }
 
@@ -257,11 +276,14 @@ export const useAdmissionStore = defineStore('admission', () => {
   return {
     admissions,
     totalAdmissions,
+    patientAdmissions,
+    totalPatientAdmissions,
     currentAdmission,
     doctors,
     residents,
     loading,
     fetchAdmissions,
+    fetchPatientAdmissions,
     fetchAdmission,
     createAdmission,
     updateAdmission,

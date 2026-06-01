@@ -3,6 +3,7 @@ package com.insidehealthgt.hms.service
 import com.insidehealthgt.hms.dto.request.CreateClinicalHistoryRequest
 import com.insidehealthgt.hms.dto.request.UpdateClinicalHistoryRequest
 import com.insidehealthgt.hms.dto.response.ClinicalHistoryResponse
+import com.insidehealthgt.hms.entity.Admission
 import com.insidehealthgt.hms.entity.ClinicalHistory
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
@@ -34,6 +35,8 @@ class ClinicalHistoryService(
     fun createClinicalHistory(admissionId: Long, request: CreateClinicalHistoryRequest): ClinicalHistoryResponse {
         val admission = admissionRepository.findByIdWithRelations(admissionId)
             ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
+
+        validateAdmissionActive(admission)
 
         if (clinicalHistoryRepository.existsByAdmissionId(admissionId)) {
             throw BadRequestException(messageService.errorClinicalHistoryAlreadyExists())
@@ -70,7 +73,9 @@ class ClinicalHistoryService(
 
     @Transactional
     fun updateClinicalHistory(admissionId: Long, request: UpdateClinicalHistoryRequest): ClinicalHistoryResponse {
-        verifyAdmissionExists(admissionId)
+        val admission = admissionRepository.findByIdWithRelations(admissionId)
+            ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
+        validateAdmissionActive(admission)
 
         val clinicalHistory = clinicalHistoryRepository.findByAdmissionIdWithRelations(admissionId)
             ?: throw ResourceNotFoundException(messageService.errorClinicalHistoryNotFound(admissionId))
@@ -104,6 +109,13 @@ class ClinicalHistoryService(
     private fun verifyAdmissionExists(admissionId: Long) {
         if (!admissionRepository.existsById(admissionId)) {
             throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
+        }
+    }
+
+    /** Discharge protection: a discharged admission's record is immutable (no create/update). */
+    private fun validateAdmissionActive(admission: Admission) {
+        if (admission.isDischarged()) {
+            throw BadRequestException(messageService.errorAdmissionDischargedRecords())
         }
     }
 

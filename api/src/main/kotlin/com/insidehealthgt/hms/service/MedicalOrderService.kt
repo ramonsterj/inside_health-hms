@@ -118,6 +118,10 @@ class MedicalOrderService(
         val admission = admissionRepository.findByIdWithRelations(admissionId)
             ?: throw ResourceNotFoundException("Admission not found with id: $admissionId")
 
+        if (admission.isDischarged()) {
+            throw BadRequestException(messageService.errorAdmissionDischargedRecords())
+        }
+
         val inventoryItem = request.inventoryItemId?.let { itemId ->
             inventoryItemRepository.findById(itemId)
                 .orElseThrow { ResourceNotFoundException("Inventory item not found with id: $itemId") }
@@ -149,7 +153,7 @@ class MedicalOrderService(
         orderId: Long,
         request: UpdateMedicalOrderRequest,
     ): MedicalOrderResponse {
-        verifyAdmissionExists(admissionId)
+        validateAdmissionActive(admissionId)
 
         val order = medicalOrderRepository.findByIdAndAdmissionId(orderId, admissionId)
             ?: throw ResourceNotFoundException("Medical order not found with id: $orderId for admission: $admissionId")
@@ -180,7 +184,7 @@ class MedicalOrderService(
 
     @Transactional
     fun discontinueMedicalOrder(admissionId: Long, orderId: Long): MedicalOrderResponse {
-        verifyAdmissionExists(admissionId)
+        validateAdmissionActive(admissionId)
 
         val order = medicalOrderRepository.findByIdAndAdmissionId(orderId, admissionId)
             ?: throw ResourceNotFoundException("Medical order not found with id: $orderId for admission: $admissionId")
@@ -251,7 +255,7 @@ class MedicalOrderService(
     }
 
     private fun loadAuthorizableOrder(admissionId: Long, orderId: Long): MedicalOrder {
-        verifyAdmissionExists(admissionId)
+        validateAdmissionActive(admissionId)
 
         val order = medicalOrderRepository.findByIdAndAdmissionId(orderId, admissionId)
             ?: throw ResourceNotFoundException(
@@ -321,7 +325,7 @@ class MedicalOrderService(
         // Auxiliary nurses cannot mark orders in progress (belt-and-suspenders over @PreAuthorize).
         currentUserProvider.requireNotAuxiliaryNurseOnly()
 
-        verifyAdmissionExists(admissionId)
+        validateAdmissionActive(admissionId)
 
         val order = medicalOrderRepository.findByIdAndAdmissionId(orderId, admissionId)
             ?: throw ResourceNotFoundException("Medical order not found with id: $orderId for admission: $admissionId")
@@ -392,6 +396,20 @@ class MedicalOrderService(
     private fun verifyAdmissionExists(admissionId: Long) {
         if (!admissionRepository.existsById(admissionId)) {
             throw ResourceNotFoundException("Admission not found with id: $admissionId")
+        }
+    }
+
+    /**
+     * Discharge protection: a discharged admission's record is immutable. Every order
+     * mutation (create / update / state transition) routes through here. Reads stay on
+     * [verifyAdmissionExists] so history remains viewable post-discharge.
+     */
+    private fun validateAdmissionActive(admissionId: Long) {
+        val admission = admissionRepository.findById(admissionId).orElseThrow {
+            ResourceNotFoundException("Admission not found with id: $admissionId")
+        }
+        if (admission.isDischarged()) {
+            throw BadRequestException(messageService.errorAdmissionDischargedRecords())
         }
     }
 

@@ -16,11 +16,13 @@ import {
   MedicalOrderStatus,
   type MedicalOrderResponse
 } from '@/types/medicalRecord'
+import { AdmissionStatus } from '@/types/admission'
 import MedicalOrderCard from './MedicalOrderCard.vue'
 import MedicalOrderFormDialog from './MedicalOrderFormDialog.vue'
 
 const props = defineProps<{
   admissionId: number
+  admissionStatus: AdmissionStatus
 }>()
 
 const { t } = useI18n()
@@ -36,8 +38,11 @@ const loaded = ref(false)
 const orders = computed(() => medicalOrderStore.getMedicalOrders(props.admissionId))
 const loading = computed(() => medicalOrderStore.loading)
 
-const canCreate = computed(() => authStore.hasPermission('medical-order:create'))
-const canUpdate = computed(() => authStore.hasPermission('medical-order:update'))
+// Discharge protection: a discharged admission's record is immutable. No new orders, no
+// edits, and no state transitions (the card's action buttons gate on `admissionActive`).
+const isActive = computed(() => props.admissionStatus === AdmissionStatus.ACTIVE)
+const canCreate = computed(() => authStore.hasPermission('medical-order:create') && isActive.value)
+const canUpdate = computed(() => authStore.hasPermission('medical-order:update') && isActive.value)
 
 const statusOptions = computed(() => [
   { label: t('common.all'), value: 'ALL' },
@@ -234,6 +239,7 @@ function handleOrderSaved() {
               :key="order.id"
               :order="order"
               :canEdit="canUpdate"
+              :admissionActive="isActive"
               @edit="openEditDialog(order)"
               @discontinue="handleDiscontinue(order)"
               @refresh="loadOrders()"

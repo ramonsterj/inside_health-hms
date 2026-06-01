@@ -10,6 +10,7 @@ import ProgressSpinner from 'primevue/progressspinner'
 import { usePatientStore } from '@/stores/patient'
 import { useAuthStore } from '@/stores/auth'
 import AuditInfo from '@/components/common/AuditInfo.vue'
+import PatientAdmissionsHistory from '@/components/patients/PatientAdmissionsHistory.vue'
 import { formatDate } from '@/utils/format'
 
 const { t } = useI18n()
@@ -239,6 +240,8 @@ function formatUserName(
             </div>
           </template>
         </Card>
+
+        <PatientAdmissionsHistory class="full-width" :patientId="patientId" />
 
         <AuditInfo
           class="full-width"

@@ -161,6 +161,22 @@ interface AdmissionRepository : JpaRepository<Admission, Long> {
 
     @Query(
         """
+        SELECT a FROM Admission a
+        LEFT JOIN FETCH a.patient
+        LEFT JOIN FETCH a.triageCode
+        LEFT JOIN FETCH a.room
+        LEFT JOIN FETCH a.treatingPhysician
+        LEFT JOIN FETCH a.resident
+        LEFT JOIN FETCH a.consentDocument
+        WHERE a.patient.id = :patientId
+        ORDER BY a.admissionDate DESC, a.id DESC
+        """,
+        countQuery = "SELECT COUNT(a) FROM Admission a WHERE a.patient.id = :patientId",
+    )
+    fun findByPatientIdWithRelations(@Param("patientId") patientId: Long, pageable: Pageable): Page<Admission>
+
+    @Query(
+        """
         SELECT DISTINCT a FROM Admission a
         LEFT JOIN FETCH a.patient
         LEFT JOIN FETCH a.triageCode

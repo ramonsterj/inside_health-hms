@@ -157,6 +157,30 @@ class AdmissionController(
         return ResponseEntity.ok(ApiResponse.success(patient))
     }
 
+    /**
+     * Lists all admissions for a single patient, most-recent-first.
+     *
+     * Gate-not-filter: [resolveDoctorId] / [resolveActiveAdmissionsOnly] are passed in ONLY to
+     * authorize access to the patient (the same visibility gate as the patient detail page) — they
+     * must NOT be wired into the admission query as per-row filters. Returns 403 if the caller
+     * cannot open the patient, 404 if the patient does not exist.
+     */
+    @GetMapping("/patients/{patientId}/admissions")
+    @PreAuthorize("hasAuthority('patient:read')")
+    fun listPatientAdmissions(
+        @PathVariable patientId: Long,
+        @PageableDefault(size = 20) pageable: Pageable,
+        @AuthenticationPrincipal currentUser: CustomUserDetails,
+    ): ResponseEntity<ApiResponse<PageResponse<AdmissionListResponse>>> {
+        val admissions = admissionService.findAdmissionsByPatient(
+            patientId = patientId,
+            doctorId = resolveDoctorId(currentUser),
+            activeAdmissionsOnly = resolveActiveAdmissionsOnly(currentUser),
+            pageable = pageable,
+        )
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(admissions)))
+    }
+
     @GetMapping("/doctors")
     @PreAuthorize("hasAuthority('admission:create')")
     fun listDoctors(): ResponseEntity<ApiResponse<List<DoctorResponse>>> {

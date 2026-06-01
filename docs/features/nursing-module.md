@@ -902,7 +902,7 @@ While the application validates systolic > diastolic, adding a database constrai
 The paginated list endpoint is optimized for table view (default 20 records). Charts need all data points to display trends accurately. A separate endpoint avoids overloading the paginated endpoint with a "fetch all" mode and makes the API contract clearer.
 
 ### Why block writes for discharged admissions?
-Medical records for discharged patients should be immutable for legal and compliance reasons. Nursing notes, vital signs, and progress notes all enforce this guard at the service layer (see [`medical-psychiatric-record.md`](./medical-psychiatric-record.md) revision 1.4). Clinical history and medical orders remain admin-only for `update`, with their own per-domain rules for state transitions.
+Medical records for discharged patients must be immutable for legal and compliance reasons. As of the **Discharge Protection** feature (2026-06-01) this guard is enforced across the **entire** admission record — not only nursing notes, vital signs, and progress notes, but also clinical history, medical orders (create + every state transition) and their result documents, psychotherapy activities, consent / admission documents, and consulting-physician changes. A discharged admission is fully read-only; every mutating endpoint returns `400 error.admission.discharged.records`. See [`discharge-protection.md`](./discharge-protection.md) for the canonical policy and full coverage matrix.
 
 ---
 

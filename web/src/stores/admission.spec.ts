@@ -190,6 +190,90 @@ describe('useAdmissionStore', () => {
     })
   })
 
+  describe('fetchPatientAdmissions', () => {
+    it('should hit the patient-scoped endpoint and populate dedicated refs', async () => {
+      mockedApi.get.mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: {
+            content: [mockAdmissionListItem],
+            page: { totalElements: 3, totalPages: 1, size: 20, number: 0 }
+          }
+        }
+      })
+
+      const store = useAdmissionStore()
+      await store.fetchPatientAdmissions(42, 0, 20)
+
+      expect(mockedApi.get).toHaveBeenCalledWith('/v1/admissions/patients/42/admissions', {
+        params: { page: 0, size: 20 }
+      })
+      expect(store.patientAdmissions).toHaveLength(1)
+      expect(store.patientAdmissions[0]).toEqual(mockAdmissionListItem)
+      expect(store.totalPatientAdmissions).toBe(3)
+    })
+
+    it('should leave the global admissions ref untouched', async () => {
+      mockedApi.get.mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: {
+            content: [mockAdmissionListItem],
+            page: { totalElements: 1, totalPages: 1, size: 20, number: 0 }
+          }
+        }
+      })
+
+      const store = useAdmissionStore()
+      await store.fetchPatientAdmissions(42)
+
+      // The dashboard / list state must not bleed into the patient-scoped fetch.
+      expect(store.admissions).toEqual([])
+      expect(store.totalAdmissions).toBe(0)
+    })
+
+    it('should clear stale rows when a subsequent fetch fails', async () => {
+      // First patient loads successfully.
+      mockedApi.get.mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: {
+            content: [mockAdmissionListItem],
+            page: { totalElements: 1, totalPages: 1, size: 20, number: 0 }
+          }
+        }
+      })
+
+      const store = useAdmissionStore()
+      await store.fetchPatientAdmissions(1)
+      expect(store.patientAdmissions).toHaveLength(1)
+      expect(store.totalPatientAdmissions).toBe(1)
+
+      // Switching to another patient whose fetch fails must not leave patient 1's rows behind.
+      mockedApi.get.mockRejectedValueOnce(new Error('Network error'))
+      await expect(store.fetchPatientAdmissions(2)).rejects.toThrow('Network error')
+
+      expect(store.patientAdmissions).toEqual([])
+      expect(store.totalPatientAdmissions).toBe(0)
+    })
+
+    it('should default to page 0 and size 20', async () => {
+      mockedApi.get.mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: { content: [], page: { totalElements: 0, totalPages: 0, size: 20, number: 0 } }
+        }
+      })
+
+      const store = useAdmissionStore()
+      await store.fetchPatientAdmissions(7)
+
+      expect(mockedApi.get).toHaveBeenCalledWith('/v1/admissions/patients/7/admissions', {
+        params: { page: 0, size: 20 }
+      })
+    })
+  })
+
   describe('fetchAdmission', () => {
     it('should fetch a single admission and set as current', async () => {
       mockedApi.get.mockResolvedValueOnce({

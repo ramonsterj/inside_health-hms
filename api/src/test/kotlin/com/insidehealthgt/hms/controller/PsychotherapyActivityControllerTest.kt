@@ -444,6 +444,50 @@ class PsychotherapyActivityControllerTest : AbstractIntegrationTest() {
             .andExpect(status().isForbidden)
     }
 
+    // ============ DISCHARGE PROTECTION TESTS ============
+
+    @Test
+    fun `create activity fails for discharged admission`() {
+        dischargeAdmission(hospitalizationAdmissionId, adminToken)
+
+        val request = CreatePsychotherapyActivityRequest(
+            categoryId = categoryId,
+            description = "Should fail - discharged",
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$hospitalizationAdmissionId/psychotherapy-activities")
+                .header("Authorization", "Bearer $psychologistToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `delete activity fails for discharged admission`() {
+        val createResult = mockMvc.perform(
+            post("/api/v1/admissions/$hospitalizationAdmissionId/psychotherapy-activities")
+                .header("Authorization", "Bearer $psychologistToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        CreatePsychotherapyActivityRequest(categoryId, "Before discharge"),
+                    ),
+                ),
+        ).andReturn()
+        val activityId = objectMapper.readTree(createResult.response.contentAsString)
+            .get("data").get("id").asLong()
+
+        dischargeAdmission(hospitalizationAdmissionId, adminToken)
+
+        mockMvc.perform(
+            delete("/api/v1/admissions/$hospitalizationAdmissionId/psychotherapy-activities/$activityId")
+                .header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
     // ============ UNAUTHENTICATED / NON-EXISTENT ADMISSION TESTS ============
 
     @Test

@@ -18,6 +18,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 @Service
+@Suppress("TooManyFunctions")
 class MedicalOrderDocumentService(
     private val medicalOrderDocumentRepository: MedicalOrderDocumentRepository,
     private val medicalOrderRepository: MedicalOrderRepository,
@@ -45,6 +46,9 @@ class MedicalOrderDocumentService(
         if (medicalOrderService.isPsychologistOutOfScope(order.category)) {
             throw BadRequestException(messageService.errorMedicalOrderPsychologistCategoryScope())
         }
+
+        // Discharge protection: results never arrive after discharge — the record is immutable.
+        validateAdmissionActive(order)
 
         validateOrderAcceptsDocuments(order)
         validateFile(file)
@@ -132,7 +136,11 @@ class MedicalOrderDocumentService(
 
     @Transactional
     fun deleteDocument(admissionId: Long, orderId: Long, documentId: Long) {
-        val document = findByIdAndOrderId(documentId, orderId, admissionId)
+        val order = loadOrderInScope(orderId, admissionId)
+        // Discharge protection: the record is immutable once the patient is discharged.
+        validateAdmissionActive(order)
+        val document = medicalOrderDocumentRepository.findByIdAndMedicalOrderId(documentId, orderId)
+            ?: throw ResourceNotFoundException("Document not found with id: $documentId for order: $orderId")
         document.deletedAt = LocalDateTime.now()
         medicalOrderDocumentRepository.save(document)
     }
@@ -157,6 +165,13 @@ class MedicalOrderDocumentService(
             throw ResourceNotFoundException("Medical order not found with id: $orderId for admission: $admissionId")
         }
         return order
+    }
+
+    /** Discharge protection: result documents cannot be added or removed after discharge. */
+    private fun validateAdmissionActive(order: MedicalOrder) {
+        if (order.admission.isDischarged()) {
+            throw BadRequestException(messageService.errorAdmissionDischargedRecords())
+        }
     }
 
     private fun validateOrderAcceptsDocuments(order: MedicalOrder) {

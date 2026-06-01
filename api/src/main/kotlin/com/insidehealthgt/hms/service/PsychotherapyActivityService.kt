@@ -2,6 +2,7 @@ package com.insidehealthgt.hms.service
 
 import com.insidehealthgt.hms.dto.request.CreatePsychotherapyActivityRequest
 import com.insidehealthgt.hms.dto.response.PsychotherapyActivityResponse
+import com.insidehealthgt.hms.entity.Admission
 import com.insidehealthgt.hms.entity.AdmissionType
 import com.insidehealthgt.hms.entity.PsychotherapyActivity
 import com.insidehealthgt.hms.event.PsychotherapyActivityCreatedEvent
@@ -80,6 +81,8 @@ class PsychotherapyActivityService(
         val admission = admissionRepository.findByIdWithRelations(admissionId)
             ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
 
+        validateAdmissionActive(admission)
+
         // Verify admission type is HOSPITALIZATION
         if (admission.type != AdmissionType.HOSPITALIZATION) {
             throw BadRequestException(
@@ -116,7 +119,9 @@ class PsychotherapyActivityService(
 
     @Transactional
     fun deleteActivity(admissionId: Long, activityId: Long) {
-        verifyAdmissionExists(admissionId)
+        val admission = admissionRepository.findByIdWithRelations(admissionId)
+            ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
+        validateAdmissionActive(admission)
 
         val activity = activityRepository.findByIdAndAdmissionId(activityId, admissionId)
             ?: throw ResourceNotFoundException(
@@ -130,6 +135,13 @@ class PsychotherapyActivityService(
     private fun verifyAdmissionExists(admissionId: Long) {
         if (!admissionRepository.existsById(admissionId)) {
             throw ResourceNotFoundException(messageService.errorAdmissionNotFound(admissionId))
+        }
+    }
+
+    /** Discharge protection: psychotherapy activities cannot be added or removed after discharge. */
+    private fun validateAdmissionActive(admission: Admission) {
+        if (admission.isDischarged()) {
+            throw BadRequestException(messageService.errorAdmissionDischargedRecords())
         }
     }
 

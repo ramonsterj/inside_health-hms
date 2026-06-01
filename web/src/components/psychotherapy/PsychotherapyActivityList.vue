@@ -7,11 +7,13 @@ import SelectButton from 'primevue/selectbutton'
 import { usePsychotherapyActivityStore } from '@/stores/psychotherapyActivity'
 import { useAuthStore } from '@/stores/auth'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { AdmissionStatus } from '@/types/admission'
 import PsychotherapyActivityCard from './PsychotherapyActivityCard.vue'
 import PsychotherapyActivityFormDialog from './PsychotherapyActivityFormDialog.vue'
 
 const props = defineProps<{
   admissionId: number
+  admissionStatus: AdmissionStatus
 }>()
 
 const { t } = useI18n()
@@ -27,8 +29,14 @@ const loaded = ref(false)
 const activities = computed(() => activityStore.getActivities(props.admissionId))
 const loading = computed(() => activityStore.loading)
 
-const canCreate = computed(() => authStore.hasPermission('psychotherapy-activity:create'))
-const canDelete = computed(() => authStore.hasPermission('psychotherapy-activity:delete'))
+// Discharge protection: a discharged admission's record is immutable (no add/delete).
+const isActive = computed(() => props.admissionStatus === AdmissionStatus.ACTIVE)
+const canCreate = computed(
+  () => authStore.hasPermission('psychotherapy-activity:create') && isActive.value
+)
+const canDelete = computed(
+  () => authStore.hasPermission('psychotherapy-activity:delete') && isActive.value
+)
 
 const sortOptions = computed(() => [
   { label: t('psychotherapy.activity.newestFirst'), value: 'desc' },

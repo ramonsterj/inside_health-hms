@@ -1,5 +1,6 @@
 package com.insidehealthgt.hms.dto.response
 
+import com.insidehealthgt.hms.entity.AdmissionStatus
 import com.insidehealthgt.hms.entity.MedicalOrder
 import com.insidehealthgt.hms.entity.MedicalOrderCategory
 import com.insidehealthgt.hms.entity.MedicalOrderStatus
@@ -15,6 +16,9 @@ import java.time.LocalDateTime
 data class MedicalOrderListItemResponse(
     val id: Long,
     val admissionId: Long,
+    // Parent admission status — lets the dashboard hide row actions for discharged admissions
+    // (discharge protection: a discharged admission's record is immutable).
+    val admissionStatus: AdmissionStatus,
     val patientId: Long,
     val patientFirstName: String,
     val patientLastName: String,
@@ -39,6 +43,7 @@ data class MedicalOrderListItemResponse(
             MedicalOrderListItemResponse(
                 id = order.id!!,
                 admissionId = order.admission.id!!,
+                admissionStatus = order.admission.status,
                 patientId = order.admission.patient.id!!,
                 patientFirstName = order.admission.patient.firstName,
                 patientLastName = order.admission.patient.lastName,

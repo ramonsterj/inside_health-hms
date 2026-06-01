@@ -828,6 +828,9 @@ export const addConsultingPhysicianSchema = z.object({
 
 ## Related Docs/Commits/Issues
 
+- Related feature: [Patient Admissions History](patient-admissions-history.md) — patient-scoped
+  list of all prior/current admissions surfaced on the Patient Detail page
+  (`GET /api/v1/admissions/patients/{patientId}/admissions`)
 - Related entity: `Patient` ([Patient.kt](../../api/src/main/kotlin/com/insidehealthgt/hms/entity/Patient.kt))
 - Related pattern: `PatientIdDocument` (file storage pattern)
 - Related migration: `V015__add_patient_permissions.sql` (permission seeding pattern)

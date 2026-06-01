@@ -373,6 +373,39 @@ class MedicalOrderDocumentControllerTest : AbstractIntegrationTest() {
             .andExpect(status().isNotFound)
     }
 
+    // ============ DISCHARGE PROTECTION TESTS ============
+
+    @Test
+    fun `upload document fails for discharged admission`() {
+        dischargeAdmission(admissionId, adminToken)
+
+        val mockFile = MockMultipartFile(
+            "file",
+            "lab-result.pdf",
+            MediaType.APPLICATION_PDF_VALUE,
+            "fake-pdf-content".toByteArray(),
+        )
+
+        mockMvc.perform(
+            multipart(basePath())
+                .file(mockFile)
+                .header("Authorization", "Bearer $doctorToken"),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `delete document fails for discharged admission`() {
+        val docId = uploadDocumentAndGetId("before-discharge.pdf", "Before discharge")
+        dischargeAdmission(admissionId, adminToken)
+
+        mockMvc.perform(
+            delete("${basePath()}/$docId")
+                .header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
     // ============ UNAUTHENTICATED TESTS ============
 
     @Test
