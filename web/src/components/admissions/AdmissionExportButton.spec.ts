@@ -66,7 +66,9 @@ describe('AdmissionExportButton', () => {
   it('is visible when the user has the permission', async () => {
     const wrapper = mountButton()
     const auth = useAuthStore()
-    auth.$patch({ user: { roles: ['ADMINISTRATIVE_STAFF'], permissions: ['admission:export-pdf'] } } as never)
+    auth.$patch({
+      user: { roles: ['ADMINISTRATIVE_STAFF'], permissions: ['admission:export-pdf'] }
+    } as never)
     await wrapper.vm.$nextTick()
 
     expect(wrapper.find('[data-testid="admission-export-button"]').exists()).toBe(true)
@@ -77,10 +79,11 @@ describe('AdmissionExportButton', () => {
     const auth = useAuthStore()
     auth.$patch({ user: { roles: ['ADMIN'], permissions: [] } } as never)
     await wrapper.vm.$nextTick()
-
     ;(api.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       data: new Blob(['%PDF-1.4']),
-      headers: { 'content-disposition': 'attachment; filename="admission-42-doe-20260511-1400.pdf"' }
+      headers: {
+        'content-disposition': 'attachment; filename="admission-42-doe-20260511-1400.pdf"'
+      }
     })
 
     await wrapper.find('[data-testid="admission-export-button"]').trigger('click')
@@ -100,7 +103,7 @@ describe('AdmissionExportButton', () => {
 
     let resolveRequest!: (value: unknown) => void
     ;(api.get as ReturnType<typeof vi.fn>).mockReturnValue(
-      new Promise((resolve) => {
+      new Promise(resolve => {
         resolveRequest = resolve
       })
     )

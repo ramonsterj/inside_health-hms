@@ -26,7 +26,7 @@ const reason = ref('')
 
 watch(
   () => props.visible,
-  (open) => {
+  open => {
     if (open) reason.value = ''
   }
 )

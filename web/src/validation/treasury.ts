@@ -233,7 +233,10 @@ export const saveColumnMappingSchema = z.object({
   descriptionColumn: z.string().max(50).optional().or(z.literal('')),
   referenceColumn: z.string().max(50).optional().or(z.literal('')),
   debitColumn: z.string().min(1, 'validation.treasury.reconciliation.debitColumn.required').max(50),
-  creditColumn: z.string().min(1, 'validation.treasury.reconciliation.creditColumn.required').max(50),
+  creditColumn: z
+    .string()
+    .min(1, 'validation.treasury.reconciliation.creditColumn.required')
+    .max(50),
   balanceColumn: z.string().max(50).optional().or(z.literal('')),
   dateFormat: z.string().min(1).max(30).default('dd/MM/yyyy'),
   skipRows: z.number().min(0).default(0)

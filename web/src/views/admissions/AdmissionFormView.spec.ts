@@ -51,8 +51,20 @@ const patientSummary = {
   hasActiveAdmission: false
 }
 
-const doctor = { id: 10, salutation: 'DR', firstName: 'Maria', lastName: 'Garcia', username: 'doctor' }
-const resident = { id: 20, salutation: 'DRA', firstName: 'Andrea', lastName: 'Pineda', username: 'resident' }
+const doctor = {
+  id: 10,
+  salutation: 'DR',
+  firstName: 'Maria',
+  lastName: 'Garcia',
+  username: 'doctor'
+}
+const resident = {
+  id: 20,
+  salutation: 'DRA',
+  firstName: 'Andrea',
+  lastName: 'Pineda',
+  username: 'resident'
+}
 const admissionDetail = {
   id: 5,
   patient: patientSummary,
@@ -91,7 +103,12 @@ function setupApi() {
 }
 
 function mountForm(roles: string[]) {
-  const i18n = createI18n({ legacy: false, locale: 'en', fallbackLocale: 'en', messages: { en, es } })
+  const i18n = createI18n({
+    legacy: false,
+    locale: 'en',
+    fallbackLocale: 'en',
+    messages: { en, es }
+  })
   return mount(AdmissionFormView, {
     global: {
       plugins: [

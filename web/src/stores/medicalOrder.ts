@@ -153,8 +153,8 @@ export const useMedicalOrderStore = defineStore('medicalOrder', () => {
     loading.value = true
     try {
       const queryParams = new URLSearchParams()
-      params.status?.forEach((s) => queryParams.append('status', s))
-      params.category?.forEach((c) => queryParams.append('category', c))
+      params.status?.forEach(s => queryParams.append('status', s))
+      params.category?.forEach(c => queryParams.append('category', c))
       if (params.page !== undefined) queryParams.set('page', String(params.page))
       if (params.size !== undefined) queryParams.set('size', String(params.size))
 

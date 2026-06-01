@@ -164,7 +164,9 @@ async function deleteAccount(id: number) {
                   rounded
                   v-tooltip.top="t('treasury.reconciliation.statements')"
                   :aria-label="t('treasury.reconciliation.statements')"
-                  @click="$router.push({ name: 'bank-statements', params: { bankAccountId: data.id } })"
+                  @click="
+                    $router.push({ name: 'bank-statements', params: { bankAccountId: data.id } })
+                  "
                 />
                 <Button
                   v-if="canConfigure"

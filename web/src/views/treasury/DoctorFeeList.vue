@@ -103,11 +103,7 @@ async function onFileSelected(event: Event) {
   const file = input.files?.[0]
   if (!file || !uploadingFeeId.value) return
   try {
-    await doctorFeeStore.uploadInvoiceDocument(
-      employeeId.value,
-      uploadingFeeId.value,
-      file
-    )
+    await doctorFeeStore.uploadInvoiceDocument(employeeId.value, uploadingFeeId.value, file)
     showSuccess('treasury.doctorFee.documentUploaded')
     await loadFees()
   } catch (error) {
@@ -202,7 +198,9 @@ function goBack() {
           </div>
           <div class="summary-item">
             <span class="summary-label">{{ t('treasury.doctorFee.totalGross') }}</span>
-            <span class="summary-value">{{ formatCurrency(doctorFeeStore.summary.totalGross) }}</span>
+            <span class="summary-value">{{
+              formatCurrency(doctorFeeStore.summary.totalGross)
+            }}</span>
           </div>
           <div class="summary-item">
             <span class="summary-label">{{ t('treasury.doctorFee.totalCommission') }}</span>
@@ -218,7 +216,9 @@ function goBack() {
           </div>
           <div class="summary-item">
             <span class="summary-label">{{ t('treasury.doctorFee.amountPaid') }}</span>
-            <span class="summary-value">{{ formatCurrency(doctorFeeStore.summary.amountPaid) }}</span>
+            <span class="summary-value">{{
+              formatCurrency(doctorFeeStore.summary.amountPaid)
+            }}</span>
           </div>
           <div class="summary-item">
             <span class="summary-label">{{ t('treasury.doctorFee.outstandingBalance') }}</span>
@@ -227,13 +227,22 @@ function goBack() {
             </span>
           </div>
           <div class="summary-item">
-            <Tag :value="`${t('treasury.doctorFee.statuses.PENDING')}: ${doctorFeeStore.summary.pendingCount}`" severity="warn" />
+            <Tag
+              :value="`${t('treasury.doctorFee.statuses.PENDING')}: ${doctorFeeStore.summary.pendingCount}`"
+              severity="warn"
+            />
           </div>
           <div class="summary-item">
-            <Tag :value="`${t('treasury.doctorFee.statuses.INVOICED')}: ${doctorFeeStore.summary.invoicedCount}`" severity="info" />
+            <Tag
+              :value="`${t('treasury.doctorFee.statuses.INVOICED')}: ${doctorFeeStore.summary.invoicedCount}`"
+              severity="info"
+            />
           </div>
           <div class="summary-item">
-            <Tag :value="`${t('treasury.doctorFee.statuses.PAID')}: ${doctorFeeStore.summary.paidCount}`" severity="success" />
+            <Tag
+              :value="`${t('treasury.doctorFee.statuses.PAID')}: ${doctorFeeStore.summary.paidCount}`"
+              severity="success"
+            />
           </div>
         </div>
       </template>
@@ -260,7 +269,10 @@ function goBack() {
               icon="pi pi-times"
               severity="secondary"
               outlined
-              @click="filterStatus = null; loadFees()"
+              @click="
+                filterStatus = null
+                loadFees()
+              "
             />
           </div>
         </div>
@@ -314,7 +326,11 @@ function goBack() {
             </template>
           </Column>
 
-          <Column field="doctorInvoiceNumber" :header="t('treasury.doctorFee.invoiceNumber')" style="width: 120px">
+          <Column
+            field="doctorInvoiceNumber"
+            :header="t('treasury.doctorFee.invoiceNumber')"
+            style="width: 120px"
+          >
             <template #body="{ data }">{{ data.doctorInvoiceNumber || '—' }}</template>
           </Column>
 
@@ -344,7 +360,11 @@ function goBack() {
                 />
                 <!-- INVOICED actions -->
                 <Button
-                  v-if="canWrite && data.status === DoctorFeeStatus.INVOICED && !data.invoiceDocumentPath"
+                  v-if="
+                    canWrite &&
+                    data.status === DoctorFeeStatus.INVOICED &&
+                    !data.invoiceDocumentPath
+                  "
                   icon="pi pi-upload"
                   severity="secondary"
                   text

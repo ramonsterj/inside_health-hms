@@ -43,7 +43,12 @@ onMounted(() => {
             <label>{{ t('treasury.report.common.to') }}</label>
             <DatePicker v-model="toDate" />
           </div>
-          <Button :label="t('treasury.report.common.filter')" icon="pi pi-search" @click="loadReport" class="filter-btn" />
+          <Button
+            :label="t('treasury.report.common.filter')"
+            icon="pi pi-search"
+            @click="loadReport"
+            class="filter-btn"
+          />
         </div>
       </template>
     </Card>
@@ -57,17 +62,24 @@ onMounted(() => {
           </div>
           <div class="balance-detail">
             <span class="balance-label">{{ t('treasury.report.monthly.totalExpenses') }}</span>
-            <span class="balance-amount expense">{{ formatCurrency(store.monthlyReport?.totalExpenses) }}</span>
+            <span class="balance-amount expense">{{
+              formatCurrency(store.monthlyReport?.totalExpenses)
+            }}</span>
           </div>
         </div>
         <div class="balance-divider" />
         <div class="balance-item">
-          <div class="balance-icon" style="background: var(--p-green-50); color: var(--p-green-500)">
+          <div
+            class="balance-icon"
+            style="background: var(--p-green-50); color: var(--p-green-500)"
+          >
             <i class="pi pi-arrow-up-right" />
           </div>
           <div class="balance-detail">
             <span class="balance-label">{{ t('treasury.report.monthly.totalIncome') }}</span>
-            <span class="balance-amount income">{{ formatCurrency(store.monthlyReport?.totalIncome) }}</span>
+            <span class="balance-amount income">{{
+              formatCurrency(store.monthlyReport?.totalIncome)
+            }}</span>
           </div>
         </div>
         <div class="balance-divider" />
@@ -75,15 +87,24 @@ onMounted(() => {
           <div
             class="balance-icon"
             :style="{
-              background: (store.monthlyReport?.netBalance ?? 0) >= 0 ? 'var(--p-green-50)' : 'var(--p-red-50)',
-              color: (store.monthlyReport?.netBalance ?? 0) >= 0 ? 'var(--p-green-500)' : 'var(--p-red-500)'
+              background:
+                (store.monthlyReport?.netBalance ?? 0) >= 0
+                  ? 'var(--p-green-50)'
+                  : 'var(--p-red-50)',
+              color:
+                (store.monthlyReport?.netBalance ?? 0) >= 0
+                  ? 'var(--p-green-500)'
+                  : 'var(--p-red-500)'
             }"
           >
             <i class="pi pi-equals" />
           </div>
           <div class="balance-detail">
             <span class="balance-label">{{ t('treasury.report.monthly.netBalance') }}</span>
-            <span class="balance-amount" :class="(store.monthlyReport?.netBalance ?? 0) >= 0 ? 'income' : 'expense'">
+            <span
+              class="balance-amount"
+              :class="(store.monthlyReport?.netBalance ?? 0) >= 0 ? 'income' : 'expense'"
+            >
               {{ formatCurrency(store.monthlyReport?.netBalance) }}
             </span>
           </div>
@@ -101,13 +122,30 @@ onMounted(() => {
           </div>
         </template>
         <template #content>
-          <DataTable :value="store.monthlyReport?.expensesByCategory ?? []" :loading="store.loading" stripedRows paginator :rows="10" :rowsPerPageOptions="[5, 10, 20]">
+          <DataTable
+            :value="store.monthlyReport?.expensesByCategory ?? []"
+            :loading="store.loading"
+            stripedRows
+            paginator
+            :rows="10"
+            :rowsPerPageOptions="[5, 10, 20]"
+          >
             <template #empty>{{ t('treasury.report.monthly.noData') }}</template>
             <Column field="label" :header="t('treasury.report.common.category')">
-              <template #body="{ data }">{{ t(`treasury.expense.categories.${data.category}`) }}</template>
+              <template #body="{ data }">{{
+                t(`treasury.expense.categories.${data.category}`)
+              }}</template>
             </Column>
-            <Column field="count" :header="t('treasury.report.common.count')" style="width: 80px; text-align: center" />
-            <Column field="total" :header="t('treasury.report.common.total')" style="text-align: right">
+            <Column
+              field="count"
+              :header="t('treasury.report.common.count')"
+              style="width: 80px; text-align: center"
+            />
+            <Column
+              field="total"
+              :header="t('treasury.report.common.total')"
+              style="text-align: right"
+            >
               <template #body="{ data }">
                 <span class="font-semibold">{{ formatCurrency(data.total) }}</span>
               </template>
@@ -115,7 +153,9 @@ onMounted(() => {
           </DataTable>
           <div class="table-footer">
             <span class="footer-label">{{ t('treasury.report.monthly.totalExpenses') }}</span>
-            <span class="footer-value expense">{{ formatCurrency(store.monthlyReport?.totalExpenses) }}</span>
+            <span class="footer-value expense">{{
+              formatCurrency(store.monthlyReport?.totalExpenses)
+            }}</span>
           </div>
         </template>
       </Card>
@@ -128,13 +168,30 @@ onMounted(() => {
           </div>
         </template>
         <template #content>
-          <DataTable :value="store.monthlyReport?.incomeByCategory ?? []" :loading="store.loading" stripedRows paginator :rows="10" :rowsPerPageOptions="[5, 10, 20]">
+          <DataTable
+            :value="store.monthlyReport?.incomeByCategory ?? []"
+            :loading="store.loading"
+            stripedRows
+            paginator
+            :rows="10"
+            :rowsPerPageOptions="[5, 10, 20]"
+          >
             <template #empty>{{ t('treasury.report.monthly.noData') }}</template>
             <Column field="label" :header="t('treasury.report.common.category')">
-              <template #body="{ data }">{{ t(`treasury.income.categories.${data.category}`) }}</template>
+              <template #body="{ data }">{{
+                t(`treasury.income.categories.${data.category}`)
+              }}</template>
             </Column>
-            <Column field="count" :header="t('treasury.report.common.count')" style="width: 80px; text-align: center" />
-            <Column field="total" :header="t('treasury.report.common.total')" style="text-align: right">
+            <Column
+              field="count"
+              :header="t('treasury.report.common.count')"
+              style="width: 80px; text-align: center"
+            />
+            <Column
+              field="total"
+              :header="t('treasury.report.common.total')"
+              style="text-align: right"
+            >
               <template #body="{ data }">
                 <span class="font-semibold">{{ formatCurrency(data.total) }}</span>
               </template>
@@ -142,7 +199,9 @@ onMounted(() => {
           </DataTable>
           <div class="table-footer">
             <span class="footer-label">{{ t('treasury.report.monthly.totalIncome') }}</span>
-            <span class="footer-value income">{{ formatCurrency(store.monthlyReport?.totalIncome) }}</span>
+            <span class="footer-value income">{{
+              formatCurrency(store.monthlyReport?.totalIncome)
+            }}</span>
           </div>
         </template>
       </Card>

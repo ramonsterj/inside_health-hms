@@ -38,7 +38,10 @@ function mountCard(props: { room: RoomOccupancyItem; searchHighlight?: string })
     fallbackLocale: 'en',
     messages: { en, es }
   })
-  const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: { template: '<div />' } }] })
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [{ path: '/', component: { template: '<div />' } }]
+  })
   return mount(RoomOccupancyCard, {
     props,
     global: {
@@ -140,7 +143,12 @@ describe('RoomOccupancyCard', () => {
         occupiedBeds: 2,
         availableBeds: 0,
         occupants: [
-          { admissionId: 1, patientId: 10, patientName: 'María González', admissionDate: '2026-04-01' },
+          {
+            admissionId: 1,
+            patientId: 10,
+            patientName: 'María González',
+            admissionDate: '2026-04-01'
+          },
           { admissionId: 2, patientId: 20, patientName: 'Pedro López', admissionDate: '2026-04-02' }
         ]
       }),

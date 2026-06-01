@@ -54,11 +54,10 @@ describe('KardexMedicationList — Administer button gating', () => {
   })
 
   it('hides the Administer button for an auxiliary nurse (no medication-administration:create)', () => {
-    const wrapper = mountList(['AUXILIARY_NURSE'], [
-      'vital-sign:create',
-      'nursing-note:create',
-      'medication-administration:read'
-    ])
+    const wrapper = mountList(
+      ['AUXILIARY_NURSE'],
+      ['vital-sign:create', 'nursing-note:create', 'medication-administration:read']
+    )
 
     expect(wrapper.findAllComponents(Button)).toHaveLength(0)
   })
@@ -66,10 +65,10 @@ describe('KardexMedicationList — Administer button gating', () => {
   it('hides the Administer button for an auxiliary-only nurse even when a custom role grants the permission', () => {
     // Models the AC-3 scenario: a custom role accidentally grants medication-administration:create
     // to an AUXILIARY_NURSE-only user. The button must still hide because the backend 403s.
-    const wrapper = mountList(['AUXILIARY_NURSE'], [
-      'medication-administration:create',
-      'medication-administration:read'
-    ])
+    const wrapper = mountList(
+      ['AUXILIARY_NURSE'],
+      ['medication-administration:create', 'medication-administration:read']
+    )
 
     expect(wrapper.findAllComponents(Button)).toHaveLength(0)
   })
@@ -82,10 +81,10 @@ describe('KardexMedicationList — Administer button gating', () => {
   })
 
   it('shows the Administer button for a graduate nurse with medication-administration:create', () => {
-    const wrapper = mountList(['NURSE'], [
-      'medication-administration:create',
-      'medication-administration:read'
-    ])
+    const wrapper = mountList(
+      ['NURSE'],
+      ['medication-administration:create', 'medication-administration:read']
+    )
 
     expect(wrapper.findAllComponents(Button)).toHaveLength(1)
   })

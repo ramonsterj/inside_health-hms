@@ -15,10 +15,14 @@ const expandedRows = ref<BankAccountSummaryItem[]>([])
 
 function getAccountTypeSeverity(type: string) {
   switch (type) {
-    case 'CHECKING': return 'info'
-    case 'SAVINGS': return 'success'
-    case 'PETTY_CASH': return 'warn'
-    default: return 'secondary'
+    case 'CHECKING':
+      return 'info'
+    case 'SAVINGS':
+      return 'success'
+    case 'PETTY_CASH':
+      return 'warn'
+    default:
+      return 'secondary'
   }
 }
 
@@ -62,25 +66,52 @@ onMounted(() => {
           <Column expander style="width: 3rem" />
           <Column field="name" :header="t('treasury.report.bankSummary.accountName')" sortable />
           <Column field="bankName" :header="t('treasury.report.bankSummary.bankName')" sortable />
-          <Column field="accountType" :header="t('treasury.report.bankSummary.accountType')" sortable style="width: 130px">
+          <Column
+            field="accountType"
+            :header="t('treasury.report.bankSummary.accountType')"
+            sortable
+            style="width: 130px"
+          >
             <template #body="{ data }">
-              <Tag :value="t(`treasury.bankAccount.accountTypes.${data.accountType}`)" :severity="getAccountTypeSeverity(data.accountType)" />
+              <Tag
+                :value="t(`treasury.bankAccount.accountTypes.${data.accountType}`)"
+                :severity="getAccountTypeSeverity(data.accountType)"
+              />
             </template>
           </Column>
-          <Column field="openingBalance" :header="t('treasury.report.bankSummary.openingBalance')" style="text-align: right">
+          <Column
+            field="openingBalance"
+            :header="t('treasury.report.bankSummary.openingBalance')"
+            style="text-align: right"
+          >
             <template #body="{ data }">{{ formatCurrency(data.openingBalance) }}</template>
           </Column>
-          <Column field="bookBalance" :header="t('treasury.report.bankSummary.bookBalance')" style="text-align: right">
+          <Column
+            field="bookBalance"
+            :header="t('treasury.report.bankSummary.bookBalance')"
+            style="text-align: right"
+          >
             <template #body="{ data }">
               <span class="font-bold">{{ formatCurrency(data.bookBalance) }}</span>
             </template>
           </Column>
-          <Column field="lastStatementDate" :header="t('treasury.report.bankSummary.lastStatement')" style="width: 140px">
+          <Column
+            field="lastStatementDate"
+            :header="t('treasury.report.bankSummary.lastStatement')"
+            style="width: 140px"
+          >
             <template #body="{ data }">{{ data.lastStatementDate ?? '-' }}</template>
           </Column>
-          <Column field="active" :header="t('treasury.report.bankSummary.status')" style="width: 100px">
+          <Column
+            field="active"
+            :header="t('treasury.report.bankSummary.status')"
+            style="width: 100px"
+          >
             <template #body="{ data }">
-              <Tag :value="data.active ? t('common.active') : t('common.inactive')" :severity="data.active ? 'success' : 'danger'" />
+              <Tag
+                :value="data.active ? t('common.active') : t('common.inactive')"
+                :severity="data.active ? 'success' : 'danger'"
+              />
             </template>
           </Column>
 
@@ -90,23 +121,51 @@ onMounted(() => {
                 <i class="pi pi-history" />
                 {{ t('treasury.report.bankSummary.recentTransactions') }}
               </h4>
-              <DataTable :value="data.recentTransactions" stripedRows paginator :rows="5" :rowsPerPageOptions="[5, 10, 20]">
+              <DataTable
+                :value="data.recentTransactions"
+                stripedRows
+                paginator
+                :rows="5"
+                :rowsPerPageOptions="[5, 10, 20]"
+              >
                 <template #empty>{{ t('treasury.report.bankSummary.noTransactions') }}</template>
-                <Column field="type" :header="t('treasury.report.common.type')" style="width: 130px">
+                <Column
+                  field="type"
+                  :header="t('treasury.report.common.type')"
+                  style="width: 130px"
+                >
                   <template #body="{ data: txn }">
-                    <Tag :value="t(`treasury.report.bankSummary.transactionTypes.${txn.type}`)" :severity="txn.type === 'INCOME' ? 'success' : 'warn'" />
+                    <Tag
+                      :value="t(`treasury.report.bankSummary.transactionTypes.${txn.type}`)"
+                      :severity="txn.type === 'INCOME' ? 'success' : 'warn'"
+                    />
                   </template>
                 </Column>
-                <Column field="date" :header="t('treasury.report.common.date')" style="width: 120px" />
+                <Column
+                  field="date"
+                  :header="t('treasury.report.common.date')"
+                  style="width: 120px"
+                />
                 <Column field="description" :header="t('treasury.report.common.description')" />
-                <Column field="amount" :header="t('treasury.report.common.amount')" style="text-align: right; width: 140px">
+                <Column
+                  field="amount"
+                  :header="t('treasury.report.common.amount')"
+                  style="text-align: right; width: 140px"
+                >
                   <template #body="{ data: txn }">
-                    <span class="font-semibold" :class="txn.amount >= 0 ? 'text-green' : 'text-red'">
+                    <span
+                      class="font-semibold"
+                      :class="txn.amount >= 0 ? 'text-green' : 'text-red'"
+                    >
                       {{ formatCurrency(txn.amount) }}
                     </span>
                   </template>
                 </Column>
-                <Column field="reference" :header="t('treasury.report.common.reference')" style="width: 160px">
+                <Column
+                  field="reference"
+                  :header="t('treasury.report.common.reference')"
+                  style="width: 160px"
+                >
                   <template #body="{ data: txn }">
                     <span class="ref-text">{{ txn.reference ?? '-' }}</span>
                   </template>

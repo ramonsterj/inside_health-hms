@@ -82,7 +82,12 @@ function onSaved() {
     <div class="page-header">
       <h1 class="page-title">{{ t('warehouse.title') }}</h1>
       <div class="header-actions">
-        <Button v-if="canCreate" icon="pi pi-plus" :label="t('warehouse.new')" @click="openCreate" />
+        <Button
+          v-if="canCreate"
+          icon="pi pi-plus"
+          :label="t('warehouse.new')"
+          @click="openCreate"
+        />
         <Button
           icon="pi pi-refresh"
           :label="t('common.refresh')"

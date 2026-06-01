@@ -85,7 +85,11 @@ function statusSeverity(status: BankStatementStatus): string {
   return status === BankStatementStatus.COMPLETED ? 'success' : 'warn'
 }
 
-function progressPercent(data: { totalRows: number; matchedCount: number; acknowledgedCount: number }): number {
+function progressPercent(data: {
+  totalRows: number
+  matchedCount: number
+  acknowledgedCount: number
+}): number {
   if (data.totalRows === 0) return 0
   return Math.round(((data.matchedCount + data.acknowledgedCount) / data.totalRows) * 100)
 }
@@ -135,19 +139,18 @@ function progressPercent(data: { totalRows: number; matchedCount: number; acknow
 
     <Card>
       <template #content>
-        <DataTable
-          :value="store.statements"
-          :loading="store.loading"
-          data-key="id"
-          striped-rows
-        >
+        <DataTable :value="store.statements" :loading="store.loading" data-key="id" striped-rows>
           <template #empty>
             <div class="text-center p-4">{{ t('treasury.reconciliation.empty') }}</div>
           </template>
 
           <Column field="fileName" :header="t('treasury.reconciliation.fileName')" />
 
-          <Column field="statementDate" :header="t('treasury.reconciliation.statementDate')" style="width: 130px" />
+          <Column
+            field="statementDate"
+            :header="t('treasury.reconciliation.statementDate')"
+            style="width: 130px"
+          />
 
           <Column :header="t('treasury.reconciliation.status')" style="width: 130px">
             <template #body="{ data }">
@@ -170,8 +173,16 @@ function progressPercent(data: { totalRows: number; matchedCount: number; acknow
           <Column :header="t('treasury.reconciliation.summary')" style="width: 200px">
             <template #body="{ data }">
               <div class="summary-badges">
-                <Tag v-if="data.suggestedCount > 0" :value="`${data.suggestedCount} suggested`" severity="info" />
-                <Tag v-if="data.unmatchedCount > 0" :value="`${data.unmatchedCount} unmatched`" severity="warn" />
+                <Tag
+                  v-if="data.suggestedCount > 0"
+                  :value="`${data.suggestedCount} suggested`"
+                  severity="info"
+                />
+                <Tag
+                  v-if="data.unmatchedCount > 0"
+                  :value="`${data.unmatchedCount} unmatched`"
+                  severity="warn"
+                />
               </div>
             </template>
           </Column>

@@ -8,7 +8,10 @@ import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@/validation/zodI18n'
-import { updateDoctorFeeStatusSchema, type UpdateDoctorFeeStatusFormData } from '@/validation/treasury'
+import {
+  updateDoctorFeeStatusSchema,
+  type UpdateDoctorFeeStatusFormData
+} from '@/validation/treasury'
 import { useDoctorFeeStore } from '@/stores/doctorFee'
 import { DoctorFeeStatus } from '@/types/treasury'
 import type { DoctorFee } from '@/types/treasury'
@@ -30,13 +33,12 @@ const doctorFeeStore = useDoctorFeeStore()
 const submitLoading = ref(false)
 const invoiceFile = ref<File | null>(null)
 
-const { defineField, handleSubmit, errors, resetForm } =
-  useForm<UpdateDoctorFeeStatusFormData>({
-    validationSchema: toTypedSchema(updateDoctorFeeStatusSchema),
-    initialValues: {
-      doctorInvoiceNumber: ''
-    }
-  })
+const { defineField, handleSubmit, errors, resetForm } = useForm<UpdateDoctorFeeStatusFormData>({
+  validationSchema: toTypedSchema(updateDoctorFeeStatusSchema),
+  initialValues: {
+    doctorInvoiceNumber: ''
+  }
+})
 
 const [doctorInvoiceNumber] = defineField('doctorInvoiceNumber')
 
@@ -65,11 +67,7 @@ const submitForm = handleSubmit(async formValues => {
 
     // Upload document after status is confirmed (UI handles missing doc on INVOICED fees)
     if (invoiceFile.value) {
-      await doctorFeeStore.uploadInvoiceDocument(
-        props.employeeId,
-        props.fee.id,
-        invoiceFile.value
-      )
+      await doctorFeeStore.uploadInvoiceDocument(props.employeeId, props.fee.id, invoiceFile.value)
     }
 
     showSuccess('treasury.doctorFee.invoiced')
@@ -119,7 +117,11 @@ const submitForm = handleSubmit(async formValues => {
           outlined
           @click="onHide"
         />
-        <Button type="submit" :label="t('treasury.doctorFee.submitInvoice')" :loading="submitLoading" />
+        <Button
+          type="submit"
+          :label="t('treasury.doctorFee.submitInvoice')"
+          :loading="submitLoading"
+        />
       </div>
     </form>
   </Dialog>
