@@ -20,6 +20,7 @@ import {
   isPsychologistOutOfOrderScope
 } from '@/types/medicalRecord'
 import type { MedicalOrderListItemResponse } from '@/types/medicalRecord'
+import { AdmissionStatus } from '@/types/admission'
 import { formatDateTime, getFullName } from '@/utils/format'
 import MedicalOrderStateBadge from '@/components/medical-record/MedicalOrderStateBadge.vue'
 import MedicalOrderDocumentUploadDialog from '@/components/medical-record/MedicalOrderDocumentUploadDialog.vue'
@@ -61,8 +62,7 @@ const canEmergencyAuthorize = computed(() =>
 // Auxiliary-only nurses are blocked from mark-in-progress and upload-document by the backend
 // service guard (403), so hide the buttons even if a custom role granted the permission.
 const canMarkInProgress = computed(
-  () =>
-    authStore.hasPermission('medical-order:mark-in-progress') && !authStore.isAuxiliaryNurseOnly
+  () => authStore.hasPermission('medical-order:mark-in-progress') && !authStore.isAuxiliaryNurseOnly
 )
 const canDiscontinue = computed(() => authStore.hasPermission('medical-order:discontinue'))
 const canUploadDocument = computed(
@@ -70,14 +70,14 @@ const canUploadDocument = computed(
 )
 
 const statusOptions = computed(() =>
-  Object.values(MedicalOrderStatus).map((status) => ({
+  Object.values(MedicalOrderStatus).map(status => ({
     label: t(`medicalRecord.medicalOrder.statuses.${status}`),
     value: status
   }))
 )
 
 const categoryOptions = computed(() =>
-  Object.values(MedicalOrderCategory).map((category) => ({
+  Object.values(MedicalOrderCategory).map(category => ({
     label: t(`medicalRecord.medicalOrder.categories.${category}`),
     value: category
   }))
@@ -120,15 +120,27 @@ function onPageChange(event: { first: number; rows: number }) {
   void load()
 }
 
+// Discharge protection: a discharged admission's record is immutable, so no row action
+// (authorize / emergency / mark-in-progress / discontinue / upload) is offered for it.
+// The backend also rejects these with 400, but hiding the buttons avoids a dead-end click.
+function isRowActionable(row: MedicalOrderListItemResponse): boolean {
+  return row.admissionStatus === AdmissionStatus.ACTIVE
+}
+
 function isAuthorizableRow(row: MedicalOrderListItemResponse): boolean {
-  return canAuthorize.value && row.status === MedicalOrderStatus.SOLICITADO
+  return isRowActionable(row) && canAuthorize.value && row.status === MedicalOrderStatus.SOLICITADO
 }
 
 function isEmergencyAuthorizeRow(row: MedicalOrderListItemResponse): boolean {
-  return canEmergencyAuthorize.value && row.status === MedicalOrderStatus.SOLICITADO
+  return (
+    isRowActionable(row) &&
+    canEmergencyAuthorize.value &&
+    row.status === MedicalOrderStatus.SOLICITADO
+  )
 }
 
 function isMarkInProgressRow(row: MedicalOrderListItemResponse): boolean {
+  if (!isRowActionable(row)) return false
   if (isPsychologistOutOfOrderScope(row.category, authStore.user)) return false
   return (
     canMarkInProgress.value &&
@@ -138,10 +150,11 @@ function isMarkInProgressRow(row: MedicalOrderListItemResponse): boolean {
 }
 
 function isDiscontinueRow(row: MedicalOrderListItemResponse): boolean {
-  return canDiscontinue.value && canDiscontinueStatus(row.status)
+  return isRowActionable(row) && canDiscontinue.value && canDiscontinueStatus(row.status)
 }
 
 function isUploadResultRow(row: MedicalOrderListItemResponse): boolean {
+  if (!isRowActionable(row)) return false
   if (isPsychologistOutOfOrderScope(row.category, authStore.user)) return false
   return canUploadDocument.value && canUploadResultDocument(row.category, row.status)
 }
@@ -329,13 +342,19 @@ async function onDocumentUploaded() {
             </template>
           </Column>
 
-          <Column :header="t('medicalRecord.medicalOrder.byState.columns.status')" style="width: 180px">
+          <Column
+            :header="t('medicalRecord.medicalOrder.byState.columns.status')"
+            style="width: 180px"
+          >
             <template #body="{ data }">
               <MedicalOrderStateBadge :status="data.status" />
             </template>
           </Column>
 
-          <Column :header="t('medicalRecord.medicalOrder.byState.columns.requestedBy')" style="width: 160px">
+          <Column
+            :header="t('medicalRecord.medicalOrder.byState.columns.requestedBy')"
+            style="width: 160px"
+          >
             <template #body="{ data }">
               <span v-if="data.createdBy">
                 {{ getFullName(data.createdBy.firstName, data.createdBy.lastName) }}
@@ -344,7 +363,10 @@ async function onDocumentUploaded() {
             </template>
           </Column>
 
-          <Column :header="t('medicalRecord.medicalOrder.byState.columns.requestedAt')" style="width: 160px">
+          <Column
+            :header="t('medicalRecord.medicalOrder.byState.columns.requestedAt')"
+            style="width: 160px"
+          >
             <template #body="{ data }">
               {{ formatDateTime(data.createdAt) }}
             </template>
@@ -362,7 +384,10 @@ async function onDocumentUploaded() {
             </template>
           </Column>
 
-          <Column :header="t('medicalRecord.medicalOrder.byState.columns.actions')" style="width: 240px">
+          <Column
+            :header="t('medicalRecord.medicalOrder.byState.columns.actions')"
+            style="width: 240px"
+          >
             <template #body="{ data }">
               <div class="action-buttons">
                 <Button

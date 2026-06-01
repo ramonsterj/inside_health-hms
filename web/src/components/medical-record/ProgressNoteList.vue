@@ -8,11 +8,13 @@ import { useProgressNoteStore } from '@/stores/progressNote'
 import { useAuthStore } from '@/stores/auth'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import type { ProgressNoteResponse } from '@/types/medicalRecord'
+import { AdmissionStatus } from '@/types/admission'
 import ProgressNoteCard from './ProgressNoteCard.vue'
 import ProgressNoteFormDialog from './ProgressNoteFormDialog.vue'
 
 const props = defineProps<{
   admissionId: number
+  admissionStatus: AdmissionStatus
 }>()
 
 const { t } = useI18n()
@@ -31,7 +33,13 @@ const notes = computed(() => progressNoteStore.getProgressNotes(props.admissionI
 const totalNotes = computed(() => progressNoteStore.getTotalNotes(props.admissionId))
 const loading = computed(() => progressNoteStore.loading)
 
-const canCreate = computed(() => authStore.hasPermission('progress-note:create'))
+// Discharge protection: a discharged admission's record is immutable — no new notes.
+// Per-note edit visibility comes from the server-computed `note.canEdit` (admin + active).
+const canCreate = computed(
+  () =>
+    authStore.hasPermission('progress-note:create') &&
+    props.admissionStatus === AdmissionStatus.ACTIVE
+)
 
 const sortOptions = computed(() => [
   { label: t('medicalRecord.progressNote.newestFirst'), value: 'DESC' },

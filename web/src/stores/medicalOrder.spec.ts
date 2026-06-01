@@ -8,6 +8,7 @@ import {
   MedicalOrderStatus
 } from '@/types/medicalRecord'
 import type { MedicalOrderResponse, MedicalOrderListItemResponse } from '@/types/medicalRecord'
+import { AdmissionStatus } from '@/types/admission'
 
 vi.mock('@/services/api', () => ({
   default: {
@@ -23,9 +24,7 @@ const mockedApi = api as unknown as {
   put: Mock
 }
 
-function makeOrder(
-  overrides: Partial<MedicalOrderResponse> = {}
-): MedicalOrderResponse {
+function makeOrder(overrides: Partial<MedicalOrderResponse> = {}): MedicalOrderResponse {
   return {
     id: 1,
     admissionId: 100,
@@ -72,6 +71,7 @@ function makeListItem(
   return {
     id: 1,
     admissionId: 100,
+    admissionStatus: AdmissionStatus.ACTIVE,
     patientId: 5,
     patientFirstName: 'Juan',
     patientLastName: 'Pérez',
@@ -106,7 +106,9 @@ describe('useMedicalOrderStore', () => {
     vi.clearAllMocks()
     // Default refresh after a transition fetches the per-admission grouped orders
     mockedApi.get.mockResolvedValue(
-      successResponse({ orders: { LABORATORIOS: [makeOrder({ status: MedicalOrderStatus.AUTORIZADO })] } })
+      successResponse({
+        orders: { LABORATORIOS: [makeOrder({ status: MedicalOrderStatus.AUTORIZADO })] }
+      })
     )
   })
 
@@ -127,10 +129,9 @@ describe('useMedicalOrderStore', () => {
       )
       expect(result.status).toBe(MedicalOrderStatus.AUTORIZADO)
       // Cache refresh
-      expect(mockedApi.get).toHaveBeenCalledWith(
-        '/v1/admissions/100/medical-orders',
-        { params: {} }
-      )
+      expect(mockedApi.get).toHaveBeenCalledWith('/v1/admissions/100/medical-orders', {
+        params: {}
+      })
     })
   })
 
@@ -145,10 +146,9 @@ describe('useMedicalOrderStore', () => {
 
       const result = await store.rejectMedicalOrder(100, 1, { reason: 'Not covered' })
 
-      expect(mockedApi.post).toHaveBeenCalledWith(
-        '/v1/admissions/100/medical-orders/1/reject',
-        { reason: 'Not covered' }
-      )
+      expect(mockedApi.post).toHaveBeenCalledWith('/v1/admissions/100/medical-orders/1/reject', {
+        reason: 'Not covered'
+      })
       expect(result.rejectionReason).toBe('Not covered')
     })
 
@@ -160,10 +160,7 @@ describe('useMedicalOrderStore', () => {
 
       await store.rejectMedicalOrder(100, 1)
 
-      expect(mockedApi.post).toHaveBeenCalledWith(
-        '/v1/admissions/100/medical-orders/1/reject',
-        {}
-      )
+      expect(mockedApi.post).toHaveBeenCalledWith('/v1/admissions/100/medical-orders/1/reject', {})
     })
   })
 

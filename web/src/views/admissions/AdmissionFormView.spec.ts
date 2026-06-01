@@ -7,7 +7,7 @@ import AdmissionFormView from './AdmissionFormView.vue'
 import en from '@/i18n/locales/en.json'
 import es from '@/i18n/locales/es.json'
 import api from '@/services/api'
-import { AdmissionType } from '@/types/admission'
+import { AdmissionStatus, AdmissionType } from '@/types/admission'
 
 vi.mock('@/services/api', () => ({
   default: {
@@ -25,10 +25,17 @@ vi.mock('@/composables/useErrorHandler', () => ({
   })
 }))
 
-const routerPush = vi.fn()
+const { routerPush, mockRoute } = vi.hoisted(() => ({
+  routerPush: vi.fn(),
+  mockRoute: {
+    params: {} as Record<string, string>,
+    query: { patientId: '1' } as Record<string, string>
+  }
+}))
+
 vi.mock('vue-router', () => ({
   useRouter: () => ({ push: routerPush }),
-  useRoute: () => ({ params: {}, query: { patientId: '1' } })
+  useRoute: () => mockRoute
 }))
 
 const mockedApi = api as unknown as {
@@ -46,6 +53,25 @@ const patientSummary = {
 
 const doctor = { id: 10, salutation: 'DR', firstName: 'Maria', lastName: 'Garcia', username: 'doctor' }
 const resident = { id: 20, salutation: 'DRA', firstName: 'Andrea', lastName: 'Pineda', username: 'resident' }
+const admissionDetail = {
+  id: 5,
+  patient: patientSummary,
+  triageCode: null,
+  room: null,
+  treatingPhysician: doctor,
+  resident,
+  consultingPhysicians: [],
+  admissionDate: '2026-05-20T14:30:00',
+  dischargeDate: null,
+  status: AdmissionStatus.ACTIVE,
+  type: AdmissionType.AMBULATORY,
+  inventory: null,
+  hasConsentDocument: false,
+  createdAt: null,
+  updatedAt: null,
+  createdBy: null,
+  updatedBy: null
+}
 
 function ok<T>(payload: T) {
   return { data: { success: true, data: payload } }
@@ -55,6 +81,7 @@ function setupApi() {
   mockedApi.get.mockImplementation((url: string) => {
     if (url === '/v1/admissions/residents') return Promise.resolve(ok([resident]))
     if (url === '/v1/admissions/doctors') return Promise.resolve(ok([doctor]))
+    if (url === '/v1/admissions/5') return Promise.resolve(ok(admissionDetail))
     if (url.startsWith('/v1/admissions/patients/')) return Promise.resolve(ok(patientSummary))
     if (url === '/v1/triage-codes') return Promise.resolve(ok([]))
     if (url === '/v1/rooms/available') return Promise.resolve(ok([]))
@@ -83,6 +110,8 @@ function mountForm(roles: string[]) {
 describe('AdmissionFormView resident picker', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockRoute.params = {}
+    mockRoute.query = { patientId: '1' }
     setupApi()
   })
 
@@ -173,5 +202,24 @@ describe('AdmissionFormView resident picker', () => {
       type: AdmissionType.AMBULATORY
     })
     expect(payload).not.toHaveProperty('residentId')
+  })
+
+  it('redirects discharged admissions away from edit mode', async () => {
+    mockRoute.params = { id: '5' }
+    mockRoute.query = {}
+    mockedApi.get.mockImplementation((url: string) => {
+      if (url === '/v1/admissions/doctors') return Promise.resolve(ok([doctor]))
+      if (url === '/v1/triage-codes') return Promise.resolve(ok([]))
+      if (url === '/v1/rooms/available') return Promise.resolve(ok([]))
+      if (url === '/v1/admissions/5') {
+        return Promise.resolve(ok({ ...admissionDetail, status: AdmissionStatus.DISCHARGED }))
+      }
+      return Promise.resolve(ok([]))
+    })
+
+    mountForm(['ADMIN'])
+    await flushPromises()
+
+    expect(routerPush).toHaveBeenCalledWith({ name: 'admission-detail', params: { id: 5 } })
   })
 })

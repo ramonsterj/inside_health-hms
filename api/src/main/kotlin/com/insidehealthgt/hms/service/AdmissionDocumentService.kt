@@ -1,6 +1,7 @@
 package com.insidehealthgt.hms.service
 
 import com.insidehealthgt.hms.dto.response.AdmissionDocumentResponse
+import com.insidehealthgt.hms.entity.Admission
 import com.insidehealthgt.hms.entity.AdmissionDocument
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
@@ -24,6 +25,7 @@ class AdmissionDocumentService(
     private val userRepository: UserRepository,
     private val fileStorageService: FileStorageService,
     private val thumbnailService: ThumbnailService,
+    private val messageService: MessageService,
 ) {
 
     @Transactional
@@ -35,6 +37,9 @@ class AdmissionDocumentService(
     ): AdmissionDocumentResponse {
         val admission = admissionRepository.findById(admissionId)
             .orElseThrow { ResourceNotFoundException("Admission not found with id: $admissionId") }
+
+        // Discharge protection: the record is immutable once the patient is discharged.
+        validateAdmissionActive(admission)
 
         val documentType = documentTypeRepository.findById(documentTypeId)
             .orElseThrow { ResourceNotFoundException("Document type not found with id: $documentTypeId") }
@@ -127,9 +132,20 @@ class AdmissionDocumentService(
 
     @Transactional
     fun deleteDocument(admissionId: Long, documentId: Long) {
+        val admission = admissionRepository.findById(admissionId)
+            .orElseThrow { ResourceNotFoundException("Admission not found with id: $admissionId") }
+        // Discharge protection: the record is immutable once the patient is discharged.
+        validateAdmissionActive(admission)
         val document = findByIdAndAdmissionId(documentId, admissionId)
         document.deletedAt = LocalDateTime.now()
         admissionDocumentRepository.save(document)
+    }
+
+    /** Discharge protection: documents cannot be added or removed after discharge. */
+    private fun validateAdmissionActive(admission: Admission) {
+        if (admission.isDischarged()) {
+            throw BadRequestException(messageService.errorAdmissionDischargedRecords())
+        }
     }
 
     private fun findByIdAndAdmissionId(documentId: Long, admissionId: Long): AdmissionDocument =

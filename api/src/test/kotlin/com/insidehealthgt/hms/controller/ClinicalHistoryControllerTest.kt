@@ -215,6 +215,43 @@ class ClinicalHistoryControllerTest : AbstractIntegrationTest() {
             .andExpect(status().isNotFound)
     }
 
+    // ============ DISCHARGE PROTECTION TESTS ============
+
+    @Test
+    fun `create clinical history fails for discharged admission`() {
+        dischargeAdmission(admissionId, adminToken)
+
+        val request = CreateClinicalHistoryRequest(
+            reasonForAdmission = "Should fail - discharged",
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/clinical-history")
+                .header("Authorization", "Bearer $doctorToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `admin update clinical history fails for discharged admission`() {
+        createClinicalHistory()
+        dischargeAdmission(admissionId, adminToken)
+
+        val updateRequest = UpdateClinicalHistoryRequest(
+            reasonForAdmission = "Should fail - discharged",
+        )
+
+        mockMvc.perform(
+            put("/api/v1/admissions/$admissionId/clinical-history")
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
     // ============ UNAUTHENTICATED / NON-EXISTENT ADMISSION TESTS ============
 
     @Test

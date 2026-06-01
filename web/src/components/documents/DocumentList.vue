@@ -9,6 +9,7 @@ import { useDocumentStore } from '@/stores/document'
 import { useAuthStore } from '@/stores/auth'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import type { AdmissionDocument } from '@/types/document'
+import { AdmissionStatus } from '@/types/admission'
 
 const { t } = useI18n()
 const confirm = useConfirm()
@@ -18,6 +19,7 @@ const authStore = useAuthStore()
 
 const props = defineProps<{
   admissionId: number
+  admissionStatus: AdmissionStatus
 }>()
 
 const emit = defineEmits<{
@@ -25,8 +27,14 @@ const emit = defineEmits<{
 }>()
 
 const documents = computed(() => documentStore.getDocuments(props.admissionId))
-const canUpload = computed(() => authStore.hasPermission('admission:upload-documents'))
-const canDelete = computed(() => authStore.hasPermission('admission:delete-documents'))
+// Discharge protection: a discharged admission's record is immutable (no upload/delete).
+const isActive = computed(() => props.admissionStatus === AdmissionStatus.ACTIVE)
+const canUpload = computed(
+  () => authStore.hasPermission('admission:upload-documents') && isActive.value
+)
+const canDelete = computed(
+  () => authStore.hasPermission('admission:delete-documents') && isActive.value
+)
 
 onMounted(() => {
   loadDocuments()

@@ -10,6 +10,7 @@ import { useClinicalHistoryStore } from '@/stores/clinicalHistory'
 import { useAuthStore } from '@/stores/auth'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import type { ClinicalHistoryFieldName } from '@/types/medicalRecord'
+import { AdmissionStatus } from '@/types/admission'
 import { sanitizeHtml } from '@/utils/sanitize'
 import { formatStaffName } from '@/utils/format'
 import AuditInfo from '@/components/common/AuditInfo.vue'
@@ -17,6 +18,7 @@ import ClinicalHistoryForm from './ClinicalHistoryForm.vue'
 
 const props = defineProps<{
   admissionId: number
+  admissionStatus: AdmissionStatus
 }>()
 
 const { t } = useI18n()
@@ -31,8 +33,14 @@ const clinicalHistory = computed(() => clinicalHistoryStore.getClinicalHistory(p
 const loading = computed(() => clinicalHistoryStore.loading)
 const hasHistory = computed(() => clinicalHistory.value !== undefined)
 
-const canCreate = computed(() => authStore.hasPermission('clinical-history:create'))
-const canUpdate = computed(() => authStore.hasPermission('clinical-history:update'))
+// Discharge protection: a discharged admission's record is immutable (no create/edit).
+const isActive = computed(() => props.admissionStatus === AdmissionStatus.ACTIVE)
+const canCreate = computed(
+  () => authStore.hasPermission('clinical-history:create') && isActive.value
+)
+const canUpdate = computed(
+  () => authStore.hasPermission('clinical-history:update') && isActive.value
+)
 
 // Group fields into sections for accordion display
 const fieldSections = computed(() => {

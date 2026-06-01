@@ -35,6 +35,10 @@ import MedicalOrderEmergencyAuthorizeDialog from './MedicalOrderEmergencyAuthori
 const props = defineProps<{
   order: MedicalOrderResponse
   canEdit: boolean
+  // Discharge protection: false once the admission is discharged → every write action
+  // (authorize / reject / emergency / mark-in-progress / discontinue / upload / administer /
+  // delete) is hidden. The record becomes read-only.
+  admissionActive: boolean
 }>()
 
 const emit = defineEmits<{
@@ -77,6 +81,7 @@ const requiresAuthorization = computed(() => categoryRequiresAuthorization(props
 // Medication administration only makes sense for AUTORIZADO medication orders.
 const canAdminister = computed(
   () =>
+    props.admissionActive &&
     authStore.hasPermission('medication-administration:create') &&
     !authStore.isAuxiliaryNurseOnly &&
     isMedicationCategory.value &&
@@ -88,17 +93,21 @@ const isPsychologistOutOfScope = computed(() =>
 )
 const canUploadDocument = computed(
   () =>
+    props.admissionActive &&
     !isPsychologistOutOfScope.value &&
     authStore.hasPermission('medical-order:upload-document') &&
     !authStore.isAuxiliaryNurseOnly &&
     canUploadResultDocument(props.order.category, props.order.status)
 )
-const canDeleteDocument = computed(() => authStore.hasPermission('medical-order:delete-document'))
+const canDeleteDocument = computed(
+  () => props.admissionActive && authStore.hasPermission('medical-order:delete-document')
+)
 
 // State-machine gating for the action buttons. Each button only shows when the order is in the
 // right state AND the user holds the required permission.
 const canAuthorize = computed(
   () =>
+    props.admissionActive &&
     authStore.hasPermission('medical-order:authorize') &&
     requiresAuthorization.value &&
     props.order.status === MedicalOrderStatus.SOLICITADO
@@ -106,12 +115,14 @@ const canAuthorize = computed(
 const canReject = canAuthorize
 const canEmergencyAuthorize = computed(
   () =>
+    props.admissionActive &&
     authStore.hasPermission('medical-order:emergency-authorize') &&
     requiresAuthorization.value &&
     props.order.status === MedicalOrderStatus.SOLICITADO
 )
 const canMarkInProgress = computed(
   () =>
+    props.admissionActive &&
     !isPsychologistOutOfScope.value &&
     authStore.hasPermission('medical-order:mark-in-progress') &&
     !authStore.isAuxiliaryNurseOnly &&
@@ -120,7 +131,9 @@ const canMarkInProgress = computed(
 )
 const canDiscontinue = computed(
   () =>
-    authStore.hasPermission('medical-order:discontinue') && canDiscontinueStatus(props.order.status)
+    props.admissionActive &&
+    authStore.hasPermission('medical-order:discontinue') &&
+    canDiscontinueStatus(props.order.status)
 )
 
 // Per-category label for the "mark in progress" button.

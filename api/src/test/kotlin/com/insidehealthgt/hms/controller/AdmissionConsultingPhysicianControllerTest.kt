@@ -247,6 +247,54 @@ class AdmissionConsultingPhysicianControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
+    fun `add consulting physician fails for discharged admission`() {
+        val admissionId = createAdmissionAndGetId()
+        dischargeAdmission(admissionId, administrativeStaffToken)
+
+        val consultingRequest = AddConsultingPhysicianRequest(
+            physicianId = secondDoctorUser.id!!,
+            reason = "Should fail - discharged",
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/consulting-physicians")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(consultingRequest)),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `remove consulting physician fails for discharged admission`() {
+        val admissionId = createAdmissionAndGetId()
+
+        val addResult = mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/consulting-physicians")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        AddConsultingPhysicianRequest(
+                            physicianId = secondDoctorUser.id!!,
+                            reason = "Before discharge",
+                        ),
+                    ),
+                ),
+        ).andReturn()
+        val consultingPhysicianId = objectMapper.readTree(addResult.response.contentAsString)
+            .get("data").get("id").asLong()
+
+        dischargeAdmission(admissionId, administrativeStaffToken)
+
+        mockMvc.perform(
+            delete("/api/v1/admissions/$admissionId/consulting-physicians/$consultingPhysicianId")
+                .header("Authorization", "Bearer $administrativeStaffToken"),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
     fun `add consulting physician should fail for doctor role`() {
         val admissionId = createAdmissionAndGetId()
 

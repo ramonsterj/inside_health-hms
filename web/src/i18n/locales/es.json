@@ -470,6 +470,16 @@
     "actions": {
       "admit": "Hospitalizar"
     },
+    "admissionsHistory": {
+      "title": "Historial de ingresos",
+      "empty": "Sin ingresos registrados",
+      "active": "Activo",
+      "admissionDate": "Fecha de ingreso",
+      "dischargeDate": "Fecha de egreso",
+      "type": "Tipo",
+      "room": "Habitación",
+      "treatingPhysician": "Médico tratante"
+    },
     "admitPatient": "Hospitalizar Paciente",
     "alreadyAdmitted": "El paciente ya tiene una admisión activa",
     "newPatient": "Registro de Nuevo Paciente",
@@ -1394,6 +1404,7 @@
     "created": "Admisión creada éxitosamente.",
     "updated": "Admisión actualizada éxitosamente.",
     "deleted": "Admisión eliminada éxitosamente.",
+    "dischargedReadOnly": "Las admisiones dadas de alta son de solo lectura y no se pueden editar.",
     "patientAlreadyAdmitted": "El paciente ya tiene una admisión activa. Por favor de de alta la admisión existente primero.",
     "patientAlreadyAdmittedWarning": "Este paciente ya tiene una admisión activa. Debe dar de alta la admisión existente antes de crear una nueva.",
     "roomPreselectGenderMismatch": "No se pudo preseleccionar la habitación {number}: está reservada para {gender}. Seleccione otra habitación.",
@@ -1536,6 +1547,7 @@
   },
   "medicalRecord": {
     "title": "Expediente Medico",
+    "dischargedReadOnly": "Esta admisión fue dada de alta. El expediente médico es de solo lectura y ya no puede modificarse.",
     "tabs": {
       "clinicalHistory": "Historia Clínica",
       "progressNotes": "Notas de Evolución",

@@ -470,6 +470,16 @@
     "actions": {
       "admit": "Admit"
     },
+    "admissionsHistory": {
+      "title": "Admissions history",
+      "empty": "No admissions recorded",
+      "active": "Active",
+      "admissionDate": "Admission date",
+      "dischargeDate": "Discharge date",
+      "type": "Type",
+      "room": "Room",
+      "treatingPhysician": "Treating physician"
+    },
     "admitPatient": "Admit Patient",
     "alreadyAdmitted": "Patient already has an active admission",
     "newPatient": "New Patient",
@@ -1394,6 +1404,7 @@
     "created": "Admission created successfully.",
     "updated": "Admission updated successfully.",
     "deleted": "Admission deleted successfully.",
+    "dischargedReadOnly": "Discharged admissions are read-only and cannot be edited.",
     "patientAlreadyAdmitted": "Patient already has an active admission. Please discharge the existing admission first.",
     "patientAlreadyAdmittedWarning": "This patient already has an active admission. You must discharge the existing admission before creating a new one.",
     "roomPreselectGenderMismatch": "Could not pre-select room {number}: it is reserved for {gender}. Please pick another room.",
@@ -1536,6 +1547,7 @@
   },
   "medicalRecord": {
     "title": "Medical Record",
+    "dischargedReadOnly": "This admission has been discharged. The medical record is read-only and can no longer be modified.",
     "tabs": {
       "clinicalHistory": "Clinical History",
       "progressNotes": "Progress Notes",

@@ -2,6 +2,7 @@
  * Medical Record types for Clinical Histories, Progress Notes, and Medical Orders.
  * Matches backend DTOs from the medical record feature.
  */
+import type { AdmissionStatus } from './admission'
 
 // Enums matching backend
 export enum MedicalOrderCategory {
@@ -288,6 +289,8 @@ export interface MedicalOrderResponse {
 export interface MedicalOrderListItemResponse {
   id: number
   admissionId: number
+  // Parent admission status — the by-state dashboard hides row actions when DISCHARGED.
+  admissionStatus: AdmissionStatus
   patientId: number
   patientFirstName: string
   patientLastName: string

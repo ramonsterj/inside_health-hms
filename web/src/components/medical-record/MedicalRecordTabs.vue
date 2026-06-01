@@ -104,6 +104,10 @@ const canUpdateAdmission = computed(
     authStore.hasPermission('admission:update') && props.admissionStatus === AdmissionStatus.ACTIVE
 )
 
+// Discharge protection: when the admission is discharged the whole record is read-only.
+// Each tab gates its own write affordances; this banner explains why they are gone.
+const isDischarged = computed(() => props.admissionStatus === AdmissionStatus.DISCHARGED)
+
 // Define all tabs with role-based priority
 // Priority: 1 = highest priority for role
 // For nursing roles: nursing notes, vital signs have priority
@@ -231,6 +235,10 @@ watch(
       </h2>
     </template>
     <template #content>
+      <div v-if="isDischarged" class="discharged-banner">
+        <i class="pi pi-lock"></i>
+        <span>{{ t('medicalRecord.dischargedReadOnly') }}</span>
+      </div>
       <Tabs v-model:value="activeTab" class="tab-navigation">
         <TabList>
           <Tab v-for="tab in allTabs" :key="tab.key" :value="tab.key">
@@ -243,17 +251,26 @@ watch(
       <div class="tab-content">
         <!-- Clinical History -->
         <div v-if="activeTab === 'clinicalHistory' && canViewClinicalHistory" class="tab-panel">
-          <ClinicalHistoryView :admissionId="admissionId" />
+          <ClinicalHistoryView
+            :admissionId="admissionId"
+            :admissionStatus="admissionStatus || AdmissionStatus.DISCHARGED"
+          />
         </div>
 
         <!-- Progress Notes -->
         <div v-if="activeTab === 'progressNotes' && canViewProgressNotes" class="tab-panel">
-          <ProgressNoteList :admissionId="admissionId" />
+          <ProgressNoteList
+            :admissionId="admissionId"
+            :admissionStatus="admissionStatus || AdmissionStatus.DISCHARGED"
+          />
         </div>
 
         <!-- Medical Orders -->
         <div v-if="activeTab === 'medicalOrders' && canViewMedicalOrders" class="tab-panel">
-          <MedicalOrderList :admissionId="admissionId" />
+          <MedicalOrderList
+            :admissionId="admissionId"
+            :admissionStatus="admissionStatus || AdmissionStatus.DISCHARGED"
+          />
         </div>
 
         <!-- Nursing Notes -->
@@ -306,7 +323,11 @@ watch(
 
         <!-- Documents -->
         <div v-if="activeTab === 'documents' && canViewDocuments" class="tab-panel">
-          <DocumentList :admissionId="admissionId" @upload="emit('uploadDocument')" />
+          <DocumentList
+            :admissionId="admissionId"
+            :admissionStatus="admissionStatus || AdmissionStatus.DISCHARGED"
+            @upload="emit('uploadDocument')"
+          />
         </div>
 
         <!-- Consulting Physicians -->
@@ -324,7 +345,10 @@ watch(
           v-if="activeTab === 'psychotherapyActivities' && canViewPsychotherapyActivities"
           class="tab-panel"
         >
-          <PsychotherapyActivityList :admissionId="admissionId" />
+          <PsychotherapyActivityList
+            :admissionId="admissionId"
+            :admissionStatus="admissionStatus || AdmissionStatus.DISCHARGED"
+          />
         </div>
       </div>
     </template>
@@ -345,6 +369,19 @@ watch(
 
 .active-tab-label {
   color: var(--p-primary-color);
+}
+
+.discharged-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--p-surface-100);
+  border: 1px solid var(--p-surface-border);
+  border-radius: var(--p-border-radius);
+  color: var(--p-text-muted-color);
+  font-size: 0.875rem;
 }
 
 .tab-navigation {

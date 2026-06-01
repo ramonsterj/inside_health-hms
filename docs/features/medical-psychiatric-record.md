@@ -21,11 +21,13 @@ This feature provides a comprehensive medical/psychiatric record system for hosp
 
 **Edit policy** (per record type):
 
-- **Clinical History** — append-only for non-admins; only ADMIN can edit existing records.
+- **Clinical History** — append-only for non-admins; only ADMIN can edit existing records. **Create and update are both blocked once the admission is discharged** (Discharge Protection, 2026-06-01).
 - **Progress Notes (Evoluciones)** — append-only for non-admins. DOCTOR, NURSE, and CHIEF_NURSE can `create` and `read`. Only ADMIN can edit existing notes. ADMIN edits are blocked once the admission is discharged. There is no creator-edit window — a doctor or nurse who needs to correct their own note must request the change from an administrator. This matches the policy originally specified for the medical record (only admin can modify existing entries).
-- **Medical Orders** — append-only for non-admins; only ADMIN can free-form-edit. State transitions (authorize, mark-in-progress, discontinue, etc.) are exposed as their own permissioned endpoints, not as `update`.
+- **Medical Orders** — append-only for non-admins; only ADMIN can free-form-edit. State transitions (authorize, mark-in-progress, discontinue, etc.) are exposed as their own permissioned endpoints, not as `update`. **All of these — create, update, and every state transition, plus result-document upload — are blocked once the admission is discharged** (Discharge Protection, 2026-06-01).
 
 > **Note** — Nursing notes and vital signs follow the same admin-only update rule as progress notes (see [`nursing-module.md`](./nursing-module.md) revisions 1.3 and 1.4 — V096 + V097). Doctors, nurses, and chief nurses are append-only on all three record types and must request edits from an administrator.
+
+> **Discharge Protection** — once an admission is `DISCHARGED` its entire record is immutable (read-only). Every mutating endpoint across clinical history, progress notes, medical orders + state transitions + result documents, psychotherapy, nursing notes, vital signs, documents, and consulting physicians returns `400 error.admission.discharged.records`. See [`discharge-protection.md`](./discharge-protection.md) for the canonical policy.
 
 ---
 

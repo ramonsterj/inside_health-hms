@@ -73,6 +73,7 @@ const mockDoctorWithEmergency = {
 const requestedMed = {
   id: 100,
   admissionId: 1,
+  admissionStatus: 'ACTIVE',
   patientId: 1,
   patientFirstName: 'Juan',
   patientLastName: 'Pérez',
@@ -95,6 +96,7 @@ const requestedMed = {
 const authorizedLab = {
   id: 101,
   admissionId: 2,
+  admissionStatus: 'ACTIVE',
   patientId: 2,
   patientFirstName: 'Ana',
   patientLastName: 'García',

@@ -49,6 +49,7 @@ class AdmissionService(
     private val fileStorageService: FileStorageService,
     private val eventPublisher: ApplicationEventPublisher,
     private val messageService: MessageService,
+    private val patientService: PatientService,
 ) {
 
     @Transactional(readOnly = true)
@@ -80,6 +81,30 @@ class AdmissionService(
             }
         }
         return admissions.map { AdmissionListResponse.from(it) }
+    }
+
+    /**
+     * Lists every admission for a single patient, most-recent-first.
+     *
+     * Authorization is a two-step **gate, not a filter**:
+     *  1. [patientService.assertPatientAccessible] enforces the SAME patient-level visibility as
+     *     the patient detail page — 404 if the patient is unknown, 403 (AccessDenied) if a
+     *     standalone doctor is not assigned to the patient or a psychologist views a patient with
+     *     no active admission.
+     *  2. Once access is granted, ALL of the patient's admissions are returned (every status and
+     *     type). [doctorId] / [activeAdmissionsOnly] authorize patient ACCESS only — they are
+     *     deliberately NOT applied as per-admission row filters (unlike the global [findAll]).
+     */
+    @Transactional(readOnly = true)
+    fun findAdmissionsByPatient(
+        patientId: Long,
+        doctorId: Long?,
+        activeAdmissionsOnly: Boolean,
+        pageable: Pageable,
+    ): Page<AdmissionListResponse> {
+        patientService.assertPatientAccessible(patientId, doctorId, activeAdmissionsOnly)
+        return admissionRepository.findByPatientIdWithRelations(patientId, pageable)
+            .map { AdmissionListResponse.from(it) }
     }
 
     @Transactional(readOnly = true)
@@ -266,6 +291,7 @@ class AdmissionService(
     fun uploadConsentDocument(admissionId: Long, file: MultipartFile): AdmissionDetailResponse {
         val admission = findById(admissionId)
 
+        validateAdmissionActive(admission)
         validateConsentFile(file)
 
         // Get patient ID for directory organization (consent files stored under patient directory)
@@ -383,6 +409,8 @@ class AdmissionService(
     fun addConsultingPhysician(admissionId: Long, request: AddConsultingPhysicianRequest): ConsultingPhysicianResponse {
         val admission = findById(admissionId)
 
+        validateAdmissionActive(admission)
+
         val physician = userRepository.findById(request.physicianId)
             .orElseThrow { ResourceNotFoundException(messageService.errorAdmissionUserNotFound(request.physicianId)) }
 
@@ -417,8 +445,8 @@ class AdmissionService(
 
     @Transactional
     fun removeConsultingPhysician(admissionId: Long, consultingPhysicianId: Long) {
-        // Verify admission exists
-        findById(admissionId)
+        // Verify admission exists and is not discharged (record immutable post-discharge)
+        validateAdmissionActive(findById(admissionId))
 
         val consultingPhysician = admissionConsultingPhysicianRepository
             .findByIdAndAdmissionId(consultingPhysicianId, admissionId)
@@ -454,6 +482,17 @@ class AdmissionService(
         }
         return userRepository.findById(principal.id)
             .orElseThrow { ResourceNotFoundException(messageService.errorAdmissionUserNotFound(principal.id)) }
+    }
+
+    /**
+     * Discharge protection: once an admission is discharged its record is immutable —
+     * no consent uploads and no consulting-physician changes. Admission field edits and
+     * discharge have their own dedicated guards ([updateAdmission] / [dischargePatient]).
+     */
+    private fun validateAdmissionActive(admission: Admission) {
+        if (admission.isDischarged()) {
+            throw BadRequestException(messageService.errorAdmissionDischargedRecords())
+        }
     }
 
     private fun validateConsentFile(file: MultipartFile) {
