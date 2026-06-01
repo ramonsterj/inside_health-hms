@@ -74,6 +74,11 @@ async function loadFees() {
   }
 }
 
+function clearFilters() {
+  filterStatus.value = null
+  loadFees()
+}
+
 async function refreshAll() {
   await loadFees()
   await doctorFeeStore.fetchSummary(employeeId.value)
@@ -269,10 +274,7 @@ function goBack() {
               icon="pi pi-times"
               severity="secondary"
               outlined
-              @click="
-                filterStatus = null
-                loadFees()
-              "
+              @click="clearFilters"
             />
           </div>
         </div>
