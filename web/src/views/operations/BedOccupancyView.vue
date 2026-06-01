@@ -148,12 +148,7 @@ function genderGroupLabel(genderKey: RoomGender): string {
     </div>
 
     <template v-else>
-      <Message
-        v-if="showStaleBanner"
-        severity="warn"
-        :closable="false"
-        class="stale-banner"
-      >
+      <Message v-if="showStaleBanner" severity="warn" :closable="false" class="stale-banner">
         <div class="stale-content">
           <span>
             {{ t('bedOccupancy.error.stale', { time: lastFetchedAbsolute }) }}

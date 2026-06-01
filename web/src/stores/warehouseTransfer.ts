@@ -20,9 +20,12 @@ export const useWarehouseTransferStore = defineStore('warehouseTransfer', () => 
       const params: Record<string, unknown> = { page, size }
       if (warehouseId) params.warehouseId = warehouseId
       if (itemId) params.itemId = itemId
-      const response = await api.get<ApiResponse<PageResponse<Transfer>>>('/v1/warehouse-transfers', {
-        params
-      })
+      const response = await api.get<ApiResponse<PageResponse<Transfer>>>(
+        '/v1/warehouse-transfers',
+        {
+          params
+        }
+      )
       if (response.data.success && response.data.data) {
         transfers.value = response.data.data.content
         totalTransfers.value = response.data.data.page.totalElements

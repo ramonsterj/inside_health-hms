@@ -29,7 +29,12 @@ onMounted(() => {
         <h1 class="page-title">{{ t('treasury.report.reconciliationSummary.title') }}</h1>
       </div>
       <div class="header-actions">
-        <Button icon="pi pi-refresh" :label="t('treasury.report.common.refresh')" outlined @click="store.fetchReconciliation()" />
+        <Button
+          icon="pi pi-refresh"
+          :label="t('treasury.report.common.refresh')"
+          outlined
+          @click="store.fetchReconciliation()"
+        />
       </div>
     </div>
 
@@ -45,25 +50,61 @@ onMounted(() => {
           :rowsPerPageOptions="[5, 10, 20]"
         >
           <template #empty>{{ t('treasury.report.reconciliationSummary.empty') }}</template>
-          <Column field="bankAccountName" :header="t('treasury.report.reconciliationSummary.account')" sortable />
-          <Column field="totalStatements" :header="t('treasury.report.reconciliationSummary.statements')" sortable style="width: 110px; text-align: center" />
-          <Column field="totalRows" :header="t('treasury.report.reconciliationSummary.totalRows')" sortable style="width: 100px; text-align: center" />
-          <Column field="matchedCount" :header="t('treasury.report.reconciliationSummary.matched')" sortable style="width: 110px; text-align: center">
+          <Column
+            field="bankAccountName"
+            :header="t('treasury.report.reconciliationSummary.account')"
+            sortable
+          />
+          <Column
+            field="totalStatements"
+            :header="t('treasury.report.reconciliationSummary.statements')"
+            sortable
+            style="width: 110px; text-align: center"
+          />
+          <Column
+            field="totalRows"
+            :header="t('treasury.report.reconciliationSummary.totalRows')"
+            sortable
+            style="width: 100px; text-align: center"
+          />
+          <Column
+            field="matchedCount"
+            :header="t('treasury.report.reconciliationSummary.matched')"
+            sortable
+            style="width: 110px; text-align: center"
+          >
             <template #body="{ data }">
               <span class="count-badge matched">{{ data.matchedCount }}</span>
             </template>
           </Column>
-          <Column field="unmatchedCount" :header="t('treasury.report.reconciliationSummary.unmatched')" sortable style="width: 120px; text-align: center">
+          <Column
+            field="unmatchedCount"
+            :header="t('treasury.report.reconciliationSummary.unmatched')"
+            sortable
+            style="width: 120px; text-align: center"
+          >
             <template #body="{ data }">
-              <span class="count-badge" :class="data.unmatchedCount > 0 ? 'unmatched' : 'zero'">{{ data.unmatchedCount }}</span>
+              <span class="count-badge" :class="data.unmatchedCount > 0 ? 'unmatched' : 'zero'">{{
+                data.unmatchedCount
+              }}</span>
             </template>
           </Column>
-          <Column field="acknowledgedCount" :header="t('treasury.report.reconciliationSummary.acknowledged')" sortable style="width: 130px; text-align: center">
+          <Column
+            field="acknowledgedCount"
+            :header="t('treasury.report.reconciliationSummary.acknowledged')"
+            sortable
+            style="width: 130px; text-align: center"
+          >
             <template #body="{ data }">
               <span class="count-badge acknowledged">{{ data.acknowledgedCount }}</span>
             </template>
           </Column>
-          <Column field="coveragePct" :header="t('treasury.report.reconciliationSummary.coverage')" sortable style="width: 180px">
+          <Column
+            field="coveragePct"
+            :header="t('treasury.report.reconciliationSummary.coverage')"
+            sortable
+            style="width: 180px"
+          >
             <template #body="{ data }">
               <div class="coverage-cell">
                 <ProgressBar
@@ -72,13 +113,21 @@ onMounted(() => {
                   style="height: 0.6rem; flex: 1"
                   :class="'coverage-' + getCoverageSeverity(data.coveragePct)"
                 />
-                <span class="coverage-text" :class="'text-' + getCoverageSeverity(data.coveragePct)">
+                <span
+                  class="coverage-text"
+                  :class="'text-' + getCoverageSeverity(data.coveragePct)"
+                >
                   {{ Math.round(data.coveragePct) }}%
                 </span>
               </div>
             </template>
           </Column>
-          <Column field="lastReconciliationDate" :header="t('treasury.report.reconciliationSummary.lastReconciliation')" sortable style="width: 160px">
+          <Column
+            field="lastReconciliationDate"
+            :header="t('treasury.report.reconciliationSummary.lastReconciliation')"
+            sortable
+            style="width: 160px"
+          >
             <template #body="{ data }">{{ data.lastReconciliationDate ?? '-' }}</template>
           </Column>
         </DataTable>

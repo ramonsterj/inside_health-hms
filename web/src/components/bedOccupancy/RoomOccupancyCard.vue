@@ -47,9 +47,7 @@ function isHighlighted(occupant: ReturnType<typeof getOccupant>): boolean {
 
 const genderLabel = computed(() => t(`room.genders.${props.room.gender}`))
 const typeLabel = computed(() => t(`room.types.${props.room.type}`))
-const genderSeverity = computed(() =>
-  props.room.gender === RoomGender.FEMALE ? 'warn' : 'info'
-)
+const genderSeverity = computed(() => (props.room.gender === RoomGender.FEMALE ? 'warn' : 'info'))
 </script>
 
 <template>
@@ -64,9 +62,7 @@ const genderSeverity = computed(() =>
           </div>
         </div>
         <div class="capacity-summary">
-          <span class="capacity-text">
-            {{ room.availableBeds }} / {{ room.capacity }}
-          </span>
+          <span class="capacity-text"> {{ room.availableBeds }} / {{ room.capacity }} </span>
           <span class="capacity-label">{{ t('bedOccupancy.bed.free') }}</span>
         </div>
       </div>

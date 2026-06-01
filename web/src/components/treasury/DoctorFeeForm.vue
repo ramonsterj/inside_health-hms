@@ -34,19 +34,18 @@ const doctorFeeStore = useDoctorFeeStore()
 const submitLoading = ref(false)
 const localFeeDate = ref<Date | null>(new Date())
 
-const { defineField, handleSubmit, errors, resetForm } =
-  useForm<CreateDoctorFeeFormData>({
-    validationSchema: toTypedSchema(createDoctorFeeSchema),
-    initialValues: {
-      billingType: undefined as unknown as DoctorFeeBillingType,
-      grossAmount: undefined as unknown as number,
-      commissionPct: props.employee.hospitalCommissionPct,
-      feeDate: toApiDate(new Date()),
-      patientChargeId: null,
-      description: '',
-      notes: ''
-    }
-  })
+const { defineField, handleSubmit, errors, resetForm } = useForm<CreateDoctorFeeFormData>({
+  validationSchema: toTypedSchema(createDoctorFeeSchema),
+  initialValues: {
+    billingType: undefined as unknown as DoctorFeeBillingType,
+    grossAmount: undefined as unknown as number,
+    commissionPct: props.employee.hospitalCommissionPct,
+    feeDate: toApiDate(new Date()),
+    patientChargeId: null,
+    description: '',
+    notes: ''
+  }
+})
 
 const [billingType] = defineField('billingType')
 const [grossAmount] = defineField('grossAmount')
@@ -142,10 +141,7 @@ const submitForm = handleSubmit(async formValues => {
         </div>
         <div class="form-field">
           <label>{{ t('treasury.doctorFee.feeDate') }} *</label>
-          <DatePicker
-            v-model="localFeeDate"
-            :class="{ 'p-invalid': errors.feeDate }"
-          />
+          <DatePicker v-model="localFeeDate" :class="{ 'p-invalid': errors.feeDate }" />
           <Message v-if="errors.feeDate" severity="error" :closable="false">
             {{ errors.feeDate }}
           </Message>

@@ -1,7 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/services/api'
-import type { Income, InvoiceSummary, CreateIncomeRequest, UpdateIncomeRequest } from '@/types/treasury'
+import type {
+  Income,
+  InvoiceSummary,
+  CreateIncomeRequest,
+  UpdateIncomeRequest
+} from '@/types/treasury'
 import type { ApiResponse, PageResponse } from '@/types'
 
 export interface IncomeFilters {

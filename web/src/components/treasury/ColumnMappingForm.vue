@@ -45,7 +45,7 @@ const form = ref({
 
 watch(
   () => props.visible,
-  async (val) => {
+  async val => {
     if (val) {
       await store.fetchColumnMapping(props.bankAccountId)
       if (store.columnMapping) {

@@ -10,11 +10,7 @@ import {
   MatchedEntityType,
   StatementFileType
 } from '@/types/treasury'
-import type {
-  BankStatement,
-  BankStatementRow,
-  ColumnMapping
-} from '@/types/treasury'
+import type { BankStatement, BankStatementRow, ColumnMapping } from '@/types/treasury'
 
 vi.mock('@/services/api', () => ({
   default: {

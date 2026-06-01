@@ -20,12 +20,42 @@ const totalBalance = computed(() => {
 })
 
 const reportLinks = [
-  { label: 'nav.monthlyReport', icon: 'pi pi-chart-pie', route: 'treasury-monthly-report', color: 'var(--p-blue-500)' },
-  { label: 'nav.upcomingPayments', icon: 'pi pi-calendar', route: 'treasury-upcoming-payments', color: 'var(--p-orange-500)' },
-  { label: 'nav.bankSummary', icon: 'pi pi-building-columns', route: 'treasury-bank-summary', color: 'var(--p-teal-500)' },
-  { label: 'nav.compensationSummary', icon: 'pi pi-users', route: 'treasury-compensation', color: 'var(--p-purple-500)' },
-  { label: 'nav.indemnizacionReport', icon: 'pi pi-calculator', route: 'treasury-indemnizacion', color: 'var(--p-red-500)' },
-  { label: 'nav.reconciliationSummary', icon: 'pi pi-check-square', route: 'treasury-reconciliation-summary', color: 'var(--p-cyan-500)' }
+  {
+    label: 'nav.monthlyReport',
+    icon: 'pi pi-chart-pie',
+    route: 'treasury-monthly-report',
+    color: 'var(--p-blue-500)'
+  },
+  {
+    label: 'nav.upcomingPayments',
+    icon: 'pi pi-calendar',
+    route: 'treasury-upcoming-payments',
+    color: 'var(--p-orange-500)'
+  },
+  {
+    label: 'nav.bankSummary',
+    icon: 'pi pi-building-columns',
+    route: 'treasury-bank-summary',
+    color: 'var(--p-teal-500)'
+  },
+  {
+    label: 'nav.compensationSummary',
+    icon: 'pi pi-users',
+    route: 'treasury-compensation',
+    color: 'var(--p-purple-500)'
+  },
+  {
+    label: 'nav.indemnizacionReport',
+    icon: 'pi pi-calculator',
+    route: 'treasury-indemnizacion',
+    color: 'var(--p-red-500)'
+  },
+  {
+    label: 'nav.reconciliationSummary',
+    icon: 'pi pi-check-square',
+    route: 'treasury-reconciliation-summary',
+    color: 'var(--p-cyan-500)'
+  }
 ]
 
 onMounted(() => {
@@ -74,7 +104,8 @@ onMounted(() => {
             {{ formatCurrency(store.dashboard?.next7DayTotal) }}
           </span>
           <span class="kpi-sub">
-            {{ store.dashboard?.next7DayObligations?.length ?? 0 }} {{ t('treasury.report.dashboard.obligations') }}
+            {{ store.dashboard?.next7DayObligations?.length ?? 0 }}
+            {{ t('treasury.report.dashboard.obligations') }}
           </span>
         </div>
       </div>
@@ -97,11 +128,26 @@ onMounted(() => {
           </div>
         </template>
         <template #content>
-          <DataTable :value="store.dashboard?.bankBalances ?? []" :loading="store.loading" stripedRows paginator :rows="5" :rowsPerPageOptions="[5, 10, 20]">
+          <DataTable
+            :value="store.dashboard?.bankBalances ?? []"
+            :loading="store.loading"
+            stripedRows
+            paginator
+            :rows="5"
+            :rowsPerPageOptions="[5, 10, 20]"
+          >
             <template #empty>{{ t('treasury.report.bankSummary.empty') }}</template>
             <Column field="name" :header="t('treasury.report.dashboard.accountName')" />
-            <Column field="currency" :header="t('treasury.report.dashboard.currency')" style="width: 100px" />
-            <Column field="bookBalance" :header="t('treasury.report.dashboard.balance')" style="text-align: right">
+            <Column
+              field="currency"
+              :header="t('treasury.report.dashboard.currency')"
+              style="width: 100px"
+            />
+            <Column
+              field="bookBalance"
+              :header="t('treasury.report.dashboard.balance')"
+              style="text-align: right"
+            >
               <template #body="{ data }">
                 <span class="font-semibold">{{ formatCurrency(data.bookBalance) }}</span>
               </template>
@@ -125,20 +171,38 @@ onMounted(() => {
           </div>
         </template>
         <template #content>
-          <DataTable :value="store.dashboard?.next7DayObligations ?? []" :loading="store.loading" stripedRows paginator :rows="5" :rowsPerPageOptions="[5, 10, 20]">
+          <DataTable
+            :value="store.dashboard?.next7DayObligations ?? []"
+            :loading="store.loading"
+            stripedRows
+            paginator
+            :rows="5"
+            :rowsPerPageOptions="[5, 10, 20]"
+          >
             <template #empty>{{ t('treasury.report.upcoming.empty') }}</template>
             <Column field="type" :header="t('treasury.report.common.type')" style="width: 100px">
               <template #body="{ data }">
-                <Tag :value="t(`treasury.report.upcoming.types.${data.type}`)" :severity="data.type === 'EXPENSE' ? 'warn' : 'info'" />
+                <Tag
+                  :value="t(`treasury.report.upcoming.types.${data.type}`)"
+                  :severity="data.type === 'EXPENSE' ? 'warn' : 'info'"
+                />
               </template>
             </Column>
             <Column field="description" :header="t('treasury.report.common.description')" />
-            <Column field="amount" :header="t('treasury.report.common.amount')" style="text-align: right">
+            <Column
+              field="amount"
+              :header="t('treasury.report.common.amount')"
+              style="text-align: right"
+            >
               <template #body="{ data }">
                 <span class="font-semibold">{{ formatCurrency(data.amount) }}</span>
               </template>
             </Column>
-            <Column field="dueDate" :header="t('treasury.report.common.dueDate')" style="width: 120px" />
+            <Column
+              field="dueDate"
+              :header="t('treasury.report.common.dueDate')"
+              style="width: 120px"
+            />
           </DataTable>
         </template>
       </Card>

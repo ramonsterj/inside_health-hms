@@ -45,7 +45,7 @@ export const useAuthStore = defineStore('auth', () => {
    */
   const isAuxiliaryNurseOnly = computed(() => {
     if (!hasRole('AUXILIARY_NURSE')) return false
-    return !ELEVATED_NURSING_ROLES.some((role) => hasRole(role))
+    return !ELEVATED_NURSING_ROLES.some(role => hasRole(role))
   })
 
   async function login(credentials: LoginRequest): Promise<void> {

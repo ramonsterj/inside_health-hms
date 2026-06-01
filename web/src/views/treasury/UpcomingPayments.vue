@@ -37,7 +37,12 @@ onMounted(() => {
             <label>{{ t('treasury.report.upcoming.windowDays') }}</label>
             <InputNumber v-model="windowDays" :min="1" :max="365" style="width: 120px" />
           </div>
-          <Button :label="t('treasury.report.common.filter')" icon="pi pi-search" @click="loadReport" class="filter-btn" />
+          <Button
+            :label="t('treasury.report.common.filter')"
+            icon="pi pi-search"
+            @click="loadReport"
+            class="filter-btn"
+          />
         </div>
       </template>
     </Card>
@@ -90,24 +95,55 @@ onMounted(() => {
           :rowsPerPageOptions="[5, 10, 20, 50]"
         >
           <template #empty>{{ t('treasury.report.upcoming.empty') }}</template>
-          <Column field="type" :header="t('treasury.report.common.type')" sortable style="width: 110px">
+          <Column
+            field="type"
+            :header="t('treasury.report.common.type')"
+            sortable
+            style="width: 110px"
+          >
             <template #body="{ data }">
-              <Tag :value="t(`treasury.report.upcoming.types.${data.type}`)" :severity="data.type === 'EXPENSE' ? 'warn' : 'info'" />
+              <Tag
+                :value="t(`treasury.report.upcoming.types.${data.type}`)"
+                :severity="data.type === 'EXPENSE' ? 'warn' : 'info'"
+              />
             </template>
           </Column>
           <Column field="description" :header="t('treasury.report.common.description')" sortable />
-          <Column field="supplierName" :header="t('treasury.report.common.supplierEmployee')" sortable>
-            <template #body="{ data }">{{ data.supplierName || data.employeeName || '-' }}</template>
+          <Column
+            field="supplierName"
+            :header="t('treasury.report.common.supplierEmployee')"
+            sortable
+          >
+            <template #body="{ data }">{{
+              data.supplierName || data.employeeName || '-'
+            }}</template>
           </Column>
-          <Column field="category" :header="t('treasury.report.common.category')" sortable style="width: 140px">
-            <template #body="{ data }">{{ data.category ? t(`treasury.expense.categories.${data.category}`) : '-' }}</template>
+          <Column
+            field="category"
+            :header="t('treasury.report.common.category')"
+            sortable
+            style="width: 140px"
+          >
+            <template #body="{ data }">{{
+              data.category ? t(`treasury.expense.categories.${data.category}`) : '-'
+            }}</template>
           </Column>
-          <Column field="amount" :header="t('treasury.report.common.amount')" sortable style="text-align: right; width: 140px">
+          <Column
+            field="amount"
+            :header="t('treasury.report.common.amount')"
+            sortable
+            style="text-align: right; width: 140px"
+          >
             <template #body="{ data }">
               <span class="font-semibold">{{ formatCurrency(data.amount) }}</span>
             </template>
           </Column>
-          <Column field="dueDate" :header="t('treasury.report.common.dueDate')" sortable style="width: 130px" />
+          <Column
+            field="dueDate"
+            :header="t('treasury.report.common.dueDate')"
+            sortable
+            style="width: 130px"
+          />
         </DataTable>
       </template>
     </Card>

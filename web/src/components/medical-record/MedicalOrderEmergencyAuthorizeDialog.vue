@@ -43,7 +43,7 @@ const submitDisabled = computed(() => {
 
 watch(
   () => props.visible,
-  (open) => {
+  open => {
     if (open) {
       reason.value = null
       reasonNote.value = ''

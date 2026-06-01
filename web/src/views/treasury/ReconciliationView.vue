@@ -17,12 +17,7 @@ import DatePicker from 'primevue/datepicker'
 import InputNumber from 'primevue/inputnumber'
 import { useBankStatementStore } from '@/stores/bankStatement'
 import { useBankAccountStore } from '@/stores/bankAccount'
-import {
-  MatchStatus,
-  BankStatementStatus,
-  ExpenseCategory,
-  IncomeCategory
-} from '@/types/treasury'
+import { MatchStatus, BankStatementStatus, ExpenseCategory, IncomeCategory } from '@/types/treasury'
 import type { BankStatementRow } from '@/types/treasury'
 import { formatCurrency } from '@/utils/format'
 import { toApiDate } from '@/utils/format'
@@ -67,12 +62,12 @@ const incomeForm = ref({
   notes: ''
 })
 
-const expenseCategories = Object.values(ExpenseCategory).map((v) => ({
+const expenseCategories = Object.values(ExpenseCategory).map(v => ({
   label: t(`treasury.expense.categories.${v}`),
   value: v
 }))
 
-const incomeCategories = Object.values(IncomeCategory).map((v) => ({
+const incomeCategories = Object.values(IncomeCategory).map(v => ({
   label: t(`treasury.income.categories.${v}`),
   value: v
 }))
@@ -86,9 +81,7 @@ const canComplete = computed(() => {
   )
 })
 
-const isCompleted = computed(
-  () => store.currentStatement?.status === BankStatementStatus.COMPLETED
-)
+const isCompleted = computed(() => store.currentStatement?.status === BankStatementStatus.COMPLETED)
 
 onMounted(async () => {
   try {
@@ -189,20 +182,15 @@ function openCreateExpense(row: BankStatementRow) {
 async function submitCreateExpense() {
   if (!selectedRow.value || !expenseForm.value.category || !expenseForm.value.expenseDate) return
   try {
-    await store.createExpenseFromRow(
-      bankAccountId.value,
-      statementId.value,
-      selectedRow.value.id,
-      {
-        supplierName: expenseForm.value.supplierName,
-        category: expenseForm.value.category,
-        description: expenseForm.value.description || undefined,
-        amount: expenseForm.value.amount || 0,
-        expenseDate: toApiDate(expenseForm.value.expenseDate)!,
-        invoiceNumber: expenseForm.value.invoiceNumber,
-        notes: expenseForm.value.notes || undefined
-      }
-    )
+    await store.createExpenseFromRow(bankAccountId.value, statementId.value, selectedRow.value.id, {
+      supplierName: expenseForm.value.supplierName,
+      category: expenseForm.value.category,
+      description: expenseForm.value.description || undefined,
+      amount: expenseForm.value.amount || 0,
+      expenseDate: toApiDate(expenseForm.value.expenseDate)!,
+      invoiceNumber: expenseForm.value.invoiceNumber,
+      notes: expenseForm.value.notes || undefined
+    })
     showSuccess('treasury.reconciliation.expenseCreated')
     showCreateExpenseDialog.value = false
     refreshStatement()
@@ -227,19 +215,14 @@ function openCreateIncome(row: BankStatementRow) {
 async function submitCreateIncome() {
   if (!selectedRow.value || !incomeForm.value.category || !incomeForm.value.incomeDate) return
   try {
-    await store.createIncomeFromRow(
-      bankAccountId.value,
-      statementId.value,
-      selectedRow.value.id,
-      {
-        description: incomeForm.value.description,
-        category: incomeForm.value.category,
-        amount: incomeForm.value.amount || 0,
-        incomeDate: toApiDate(incomeForm.value.incomeDate)!,
-        reference: incomeForm.value.reference || undefined,
-        notes: incomeForm.value.notes || undefined
-      }
-    )
+    await store.createIncomeFromRow(bankAccountId.value, statementId.value, selectedRow.value.id, {
+      description: incomeForm.value.description,
+      category: incomeForm.value.category,
+      amount: incomeForm.value.amount || 0,
+      incomeDate: toApiDate(incomeForm.value.incomeDate)!,
+      reference: incomeForm.value.reference || undefined,
+      notes: incomeForm.value.notes || undefined
+    })
     showSuccess('treasury.reconciliation.incomeCreated')
     showCreateIncomeDialog.value = false
     refreshStatement()
@@ -315,7 +298,10 @@ async function refreshStatement() {
             <span>{{ store.currentStatement.totalRows }}</span>
           </div>
           <div class="summary-item">
-            <Tag :value="`${store.currentStatement.matchedCount} ${t('treasury.reconciliation.matchStatuses.MATCHED')}`" severity="success" />
+            <Tag
+              :value="`${store.currentStatement.matchedCount} ${t('treasury.reconciliation.matchStatuses.MATCHED')}`"
+              severity="success"
+            />
             <Tag
               v-if="store.currentStatement.suggestedCount > 0"
               :value="`${store.currentStatement.suggestedCount} ${t('treasury.reconciliation.matchStatuses.SUGGESTED')}`"
@@ -416,12 +402,7 @@ async function refreshStatement() {
             </template>
           </Column>
 
-          <Column
-            :header="t('common.actions')"
-            style="width: 160px"
-            frozen
-            align-frozen="right"
-          >
+          <Column :header="t('common.actions')" style="width: 160px" frozen align-frozen="right">
             <template #body="{ data }">
               <div class="action-buttons" v-if="!isCompleted">
                 <!-- SUGGESTED actions -->

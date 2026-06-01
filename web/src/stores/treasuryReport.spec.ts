@@ -30,7 +30,13 @@ const mockedApi = api as unknown as {
 
 const mockDashboard: TreasuryDashboardData = {
   bankBalances: [
-    { bankAccountId: 1, name: 'Cuenta Principal', bookBalance: 150000, currency: 'GTQ', active: true }
+    {
+      bankAccountId: 1,
+      name: 'Cuenta Principal',
+      bookBalance: 150000,
+      currency: 'GTQ',
+      active: true
+    }
   ],
   pendingPayablesCount: 3,
   pendingPayablesTotal: 25000,
@@ -205,10 +211,9 @@ describe('useTreasuryReportStore', () => {
     expect(store.monthlyReport).toEqual(mockMonthlyReport)
     expect(store.monthlyReport!.totalExpenses).toBe(45000)
     expect(store.monthlyReport!.netBalance).toBe(35000)
-    expect(mockedApi.get).toHaveBeenCalledWith(
-      '/v1/treasury/reports/monthly',
-      { params: { from: '2026-03-01', to: '2026-03-31' } }
-    )
+    expect(mockedApi.get).toHaveBeenCalledWith('/v1/treasury/reports/monthly', {
+      params: { from: '2026-03-01', to: '2026-03-31' }
+    })
   })
 
   it('fetchMonthlyReport sets loading to false on error', async () => {
@@ -230,10 +235,9 @@ describe('useTreasuryReportStore', () => {
     expect(store.upcomingPayments).toEqual(mockUpcomingPayments)
     expect(store.upcomingPayments!.items).toHaveLength(1)
     expect(store.upcomingPayments!.payrollCount).toBe(1)
-    expect(mockedApi.get).toHaveBeenCalledWith(
-      '/v1/treasury/reports/upcoming-payments',
-      { params: { windowDays: 30 } }
-    )
+    expect(mockedApi.get).toHaveBeenCalledWith('/v1/treasury/reports/upcoming-payments', {
+      params: { windowDays: 30 }
+    })
   })
 
   it('fetchUpcomingPayments uses default windowDays of 30', async () => {
@@ -242,10 +246,9 @@ describe('useTreasuryReportStore', () => {
 
     await store.fetchUpcomingPayments()
 
-    expect(mockedApi.get).toHaveBeenCalledWith(
-      '/v1/treasury/reports/upcoming-payments',
-      { params: { windowDays: 30 } }
-    )
+    expect(mockedApi.get).toHaveBeenCalledWith('/v1/treasury/reports/upcoming-payments', {
+      params: { windowDays: 30 }
+    })
   })
 
   it('fetchUpcomingPayments sets loading to false on error', async () => {
@@ -289,10 +292,9 @@ describe('useTreasuryReportStore', () => {
     expect(store.compensation).toEqual(mockCompensation)
     expect(store.compensation!.year).toBe(2026)
     expect(store.compensation!.employees).toHaveLength(1)
-    expect(mockedApi.get).toHaveBeenCalledWith(
-      '/v1/treasury/reports/compensation',
-      { params: { year: 2026 } }
-    )
+    expect(mockedApi.get).toHaveBeenCalledWith('/v1/treasury/reports/compensation', {
+      params: { year: 2026 }
+    })
   })
 
   it('fetchCompensation sends empty params when year is not provided', async () => {
@@ -301,10 +303,7 @@ describe('useTreasuryReportStore', () => {
 
     await store.fetchCompensation()
 
-    expect(mockedApi.get).toHaveBeenCalledWith(
-      '/v1/treasury/reports/compensation',
-      { params: {} }
-    )
+    expect(mockedApi.get).toHaveBeenCalledWith('/v1/treasury/reports/compensation', { params: {} })
   })
 
   it('fetchCompensation sets loading to false on error', async () => {

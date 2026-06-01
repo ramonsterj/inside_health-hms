@@ -102,10 +102,7 @@ async function load() {
       </template>
     </Card>
 
-    <Card
-      v-if="pharmacyStore.currentMedication?.warehouseStock?.length"
-      class="mt-4"
-    >
+    <Card v-if="pharmacyStore.currentMedication?.warehouseStock?.length" class="mt-4">
       <template #title>
         <span class="stock-title">{{ t('pharmacy.medication.stockByWarehouse') }}</span>
       </template>

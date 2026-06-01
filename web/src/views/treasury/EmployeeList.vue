@@ -257,12 +257,19 @@ function compensationDisplay(employee: TreasuryEmployee): string {
             <template #body="{ data }">
               <div class="action-buttons">
                 <Button
-                  v-if="data.employeeType === EmployeeType.PAYROLL || data.employeeType === EmployeeType.CONTRACTOR"
+                  v-if="
+                    data.employeeType === EmployeeType.PAYROLL ||
+                    data.employeeType === EmployeeType.CONTRACTOR
+                  "
                   icon="pi pi-calendar"
                   severity="info"
                   text
                   rounded
-                  v-tooltip.top="data.employeeType === EmployeeType.PAYROLL ? t('treasury.payroll.title') : t('treasury.employee.contractorPayments')"
+                  v-tooltip.top="
+                    data.employeeType === EmployeeType.PAYROLL
+                      ? t('treasury.payroll.title')
+                      : t('treasury.employee.contractorPayments')
+                  "
                   @click="viewPayroll(data)"
                 />
                 <Button

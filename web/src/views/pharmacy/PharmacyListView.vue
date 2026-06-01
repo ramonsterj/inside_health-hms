@@ -142,10 +142,7 @@ function viewMedication(id: number) {
           </Column>
           <Column field="quantity" style="width: 130px">
             <template #header>
-              <span
-                v-tooltip.top="t('pharmacy.medication.quantityTotalHint')"
-                class="qty-header"
-              >
+              <span v-tooltip.top="t('pharmacy.medication.quantityTotalHint')" class="qty-header">
                 {{ t('pharmacy.medication.quantityTotal') }}
                 <i class="pi pi-info-circle" />
               </span>

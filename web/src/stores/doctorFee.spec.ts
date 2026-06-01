@@ -2,14 +2,8 @@ import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useDoctorFeeStore } from './doctorFee'
 import api from '@/services/api'
-import {
-  DoctorFeeStatus,
-  DoctorFeeBillingType
-} from '@/types/treasury'
-import type {
-  DoctorFee,
-  DoctorFeeSummary
-} from '@/types/treasury'
+import { DoctorFeeStatus, DoctorFeeBillingType } from '@/types/treasury'
+import type { DoctorFee, DoctorFeeSummary } from '@/types/treasury'
 
 vi.mock('@/services/api', () => ({
   default: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() }
@@ -153,7 +147,11 @@ describe('useDoctorFeeStore', () => {
   // ─── updateDoctorFeeStatus ──────────────────
 
   it('updateDoctorFeeStatus returns updated fee', async () => {
-    const invoiced = { ...mockDoctorFee, status: DoctorFeeStatus.INVOICED, doctorInvoiceNumber: 'INV-001' }
+    const invoiced = {
+      ...mockDoctorFee,
+      status: DoctorFeeStatus.INVOICED,
+      doctorInvoiceNumber: 'INV-001'
+    }
     mockedApi.put.mockResolvedValueOnce(apiSuccess(invoiced))
     const store = useDoctorFeeStore()
 
@@ -172,7 +170,10 @@ describe('useDoctorFeeStore', () => {
   // ─── uploadInvoiceDocument ──────────────────
 
   it('uploadInvoiceDocument sends FormData and returns fee', async () => {
-    const withDoc = { ...mockDoctorFee, invoiceDocumentPath: 'treasury/doctor-fees/1/uuid_invoice.pdf' }
+    const withDoc = {
+      ...mockDoctorFee,
+      invoiceDocumentPath: 'treasury/doctor-fees/1/uuid_invoice.pdf'
+    }
     mockedApi.post.mockResolvedValueOnce(apiSuccess(withDoc))
     const store = useDoctorFeeStore()
     const file = new File(['content'], 'invoice.pdf', { type: 'application/pdf' })
@@ -236,9 +237,7 @@ describe('useDoctorFeeStore', () => {
 
     expect(store.summary).toEqual(mockSummary)
     expect(store.summary!.totalFees).toBe(3)
-    expect(mockedApi.get).toHaveBeenCalledWith(
-      '/v1/treasury/employees/10/doctor-fees/summary'
-    )
+    expect(mockedApi.get).toHaveBeenCalledWith('/v1/treasury/employees/10/doctor-fees/summary')
   })
 
   // ─── clearState ─────────────────────────────

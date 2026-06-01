@@ -31,7 +31,12 @@ onMounted(() => {
         <h1 class="page-title">{{ t('treasury.report.indemnizacion.title') }}</h1>
       </div>
       <div class="header-actions">
-        <Button icon="pi pi-refresh" :label="t('treasury.report.common.refresh')" outlined @click="store.fetchIndemnizacion()" />
+        <Button
+          icon="pi pi-refresh"
+          :label="t('treasury.report.common.refresh')"
+          outlined
+          @click="store.fetchIndemnizacion()"
+        />
       </div>
     </div>
 
@@ -55,7 +60,9 @@ onMounted(() => {
         </div>
         <div class="summary-content">
           <span class="summary-label">{{ t('treasury.report.indemnizacion.grandTotal') }}</span>
-          <span class="summary-value liability">{{ formatCurrency(store.indemnizacion?.grandTotal) }}</span>
+          <span class="summary-value liability">{{
+            formatCurrency(store.indemnizacion?.grandTotal)
+          }}</span>
         </div>
       </div>
 
@@ -89,16 +96,36 @@ onMounted(() => {
           <template #empty>{{ t('treasury.report.indemnizacion.empty') }}</template>
           <Column field="fullName" :header="t('treasury.report.common.name')" sortable />
           <Column field="position" :header="t('treasury.report.compensation.position')" sortable />
-          <Column field="hireDate" :header="t('treasury.report.indemnizacion.hireDate')" sortable style="width: 130px" />
-          <Column field="tenureDays" :header="t('treasury.report.indemnizacion.tenure')" sortable style="width: 100px">
+          <Column
+            field="hireDate"
+            :header="t('treasury.report.indemnizacion.hireDate')"
+            sortable
+            style="width: 130px"
+          />
+          <Column
+            field="tenureDays"
+            :header="t('treasury.report.indemnizacion.tenure')"
+            sortable
+            style="width: 100px"
+          >
             <template #body="{ data }">
               <span class="tenure-badge">{{ formatTenure(data.tenureDays) }}</span>
             </template>
           </Column>
-          <Column field="currentSalary" :header="t('treasury.report.indemnizacion.salary')" sortable style="text-align: right">
+          <Column
+            field="currentSalary"
+            :header="t('treasury.report.indemnizacion.salary')"
+            sortable
+            style="text-align: right"
+          >
             <template #body="{ data }">{{ formatCurrency(data.currentSalary) }}</template>
           </Column>
-          <Column field="liability" :header="t('treasury.report.indemnizacion.liability')" sortable style="text-align: right">
+          <Column
+            field="liability"
+            :header="t('treasury.report.indemnizacion.liability')"
+            sortable
+            style="text-align: right"
+          >
             <template #body="{ data }">
               <span class="liability-amount">{{ formatCurrency(data.liability) }}</span>
             </template>

@@ -35,7 +35,10 @@ export const useBankStatementStore = defineStore('bankStatement', () => {
     }
   }
 
-  async function fetchStatement(bankAccountId: number, statementId: number): Promise<BankStatement> {
+  async function fetchStatement(
+    bankAccountId: number,
+    statementId: number
+  ): Promise<BankStatement> {
     loading.value = true
     try {
       const response = await api.get<ApiResponse<BankStatement>>(
@@ -250,7 +253,7 @@ export const useBankStatementStore = defineStore('bankStatement', () => {
   }
 
   function updateRowInList(updatedRow: BankStatementRow) {
-    const idx = rows.value.findIndex((r) => r.id === updatedRow.id)
+    const idx = rows.value.findIndex(r => r.id === updatedRow.id)
     if (idx !== -1) {
       // eslint-disable-next-line security/detect-object-injection -- idx is from findIndex, not user input
       rows.value[idx] = updatedRow

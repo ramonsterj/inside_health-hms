@@ -117,7 +117,10 @@ describe('useWarehouseStore', () => {
     mockedApi.get.mockResolvedValueOnce({
       data: {
         success: true,
-        data: { content: [mockStock], page: { totalElements: 1, totalPages: 1, size: 20, number: 0 } }
+        data: {
+          content: [mockStock],
+          page: { totalElements: 1, totalPages: 1, size: 20, number: 0 }
+        }
       }
     })
 

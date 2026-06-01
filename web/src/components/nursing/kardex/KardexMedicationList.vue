@@ -30,7 +30,8 @@ const selectedInventoryItemId = ref<number | null>(null)
 // Auxiliary-only nurses never administer, even if a custom role grants the permission —
 // the backend service guard would reject it with 403 anyway (see nursing-roles-split.md).
 const canAdminister = computed(
-  () => authStore.hasPermission('medication-administration:create') && !authStore.isAuxiliaryNurseOnly
+  () =>
+    authStore.hasPermission('medication-administration:create') && !authStore.isAuxiliaryNurseOnly
 )
 
 function openAdministerDialog(med: KardexMedicationSummary) {

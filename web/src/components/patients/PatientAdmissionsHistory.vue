@@ -26,6 +26,7 @@ const admissionStore = useAdmissionStore()
 const authStore = useAuthStore()
 
 const rowsPerPageOptions = [10, 20, 50]
+const smallestPageSize = rowsPerPageOptions[0] ?? 10
 const first = ref(0)
 const rows = ref(20)
 const loading = ref(false)
@@ -131,7 +132,7 @@ onMounted(loadAdmissions)
         <!-- Show whenever more than the smallest page size exists, so the rows-per-page
              selector stays reachable even after the user picks a larger page size. -->
         <Paginator
-          v-if="total > rowsPerPageOptions[0]"
+          v-if="total > smallestPageSize"
           :first="first"
           :rows="rows"
           :totalRecords="total"

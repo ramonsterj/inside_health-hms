@@ -21,10 +21,14 @@ const yearOptions = Array.from({ length: 5 }, (_, i) => ({
 
 function getTypeSeverity(type: string) {
   switch (type) {
-    case 'PAYROLL': return 'info'
-    case 'CONTRACTOR': return 'warn'
-    case 'DOCTOR': return 'success'
-    default: return 'secondary'
+    case 'PAYROLL':
+      return 'info'
+    case 'CONTRACTOR':
+      return 'warn'
+    case 'DOCTOR':
+      return 'success'
+    default:
+      return 'secondary'
   }
 }
 
@@ -46,7 +50,14 @@ onMounted(() => {
       <div class="header-actions">
         <div class="filter-field">
           <label>{{ t('treasury.report.compensation.year') }}</label>
-          <Select v-model="selectedYear" :options="yearOptions" optionLabel="label" optionValue="value" @change="loadReport" style="width: 120px" />
+          <Select
+            v-model="selectedYear"
+            :options="yearOptions"
+            optionLabel="label"
+            optionValue="value"
+            @change="loadReport"
+            style="width: 120px"
+          />
         </div>
       </div>
     </div>
@@ -59,7 +70,9 @@ onMounted(() => {
         </div>
         <div class="kpi-content">
           <span class="kpi-label">{{ t('treasury.report.compensation.totalYtd') }}</span>
-          <span class="kpi-value" style="color: var(--p-green-500)">{{ formatCurrency(store.compensation?.totalYtdPayments) }}</span>
+          <span class="kpi-value" style="color: var(--p-green-500)">{{
+            formatCurrency(store.compensation?.totalYtdPayments)
+          }}</span>
         </div>
       </div>
 
@@ -69,7 +82,9 @@ onMounted(() => {
         </div>
         <div class="kpi-content">
           <span class="kpi-label">{{ t('treasury.report.compensation.totalPending') }}</span>
-          <span class="kpi-value" style="color: var(--p-orange-500)">{{ formatCurrency(store.compensation?.totalPending) }}</span>
+          <span class="kpi-value" style="color: var(--p-orange-500)">{{
+            formatCurrency(store.compensation?.totalPending)
+          }}</span>
         </div>
       </div>
     </div>
@@ -90,23 +105,54 @@ onMounted(() => {
         >
           <template #empty>{{ t('treasury.report.compensation.empty') }}</template>
           <Column field="fullName" :header="t('treasury.report.common.name')" sortable />
-          <Column field="employeeType" :header="t('treasury.report.common.type')" sortable style="width: 130px">
+          <Column
+            field="employeeType"
+            :header="t('treasury.report.common.type')"
+            sortable
+            style="width: 130px"
+          >
             <template #body="{ data }">
-              <Tag :value="t(`treasury.employee.types.${data.employeeType}`)" :severity="getTypeSeverity(data.employeeType)" />
+              <Tag
+                :value="t(`treasury.employee.types.${data.employeeType}`)"
+                :severity="getTypeSeverity(data.employeeType)"
+              />
             </template>
           </Column>
           <Column field="position" :header="t('treasury.report.compensation.position')" sortable />
-          <Column field="compensation" :header="t('treasury.report.compensation.compensation')" sortable style="text-align: right">
+          <Column
+            field="compensation"
+            :header="t('treasury.report.compensation.compensation')"
+            sortable
+            style="text-align: right"
+          >
             <template #body="{ data }">{{ formatCurrency(data.compensation) }}</template>
           </Column>
-          <Column field="ytdPayments" :header="t('treasury.report.compensation.ytdPayments')" sortable style="text-align: right">
+          <Column
+            field="ytdPayments"
+            :header="t('treasury.report.compensation.ytdPayments')"
+            sortable
+            style="text-align: right"
+          >
             <template #body="{ data }">
-              <span class="font-semibold" style="color: var(--p-green-500)">{{ formatCurrency(data.ytdPayments) }}</span>
+              <span class="font-semibold" style="color: var(--p-green-500)">{{
+                formatCurrency(data.ytdPayments)
+              }}</span>
             </template>
           </Column>
-          <Column field="pendingAmount" :header="t('treasury.report.compensation.pending')" sortable style="text-align: right">
+          <Column
+            field="pendingAmount"
+            :header="t('treasury.report.compensation.pending')"
+            sortable
+            style="text-align: right"
+          >
             <template #body="{ data }">
-              <span class="font-semibold" :style="{ color: data.pendingAmount > 0 ? 'var(--p-orange-500)' : 'var(--p-text-muted-color)' }">
+              <span
+                class="font-semibold"
+                :style="{
+                  color:
+                    data.pendingAmount > 0 ? 'var(--p-orange-500)' : 'var(--p-text-muted-color)'
+                }"
+              >
                 {{ formatCurrency(data.pendingAmount) }}
               </span>
             </template>
