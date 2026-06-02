@@ -94,7 +94,7 @@ All write operations (create/update) are blocked for discharged admissions. Nurs
 ### Clinical History (Historia Clínica)
 
 - **One record per admission**, created during hospitalization
-- Displayed as a dedicated tab/section in admission detail view
+- Displayed as a dedicated section card / hub in admission detail view
 - All fields are rich text (WYSIWYG editor) for formatted content
 - **Sections and fields:**
 
@@ -303,7 +303,7 @@ A new top-level screen lists medical orders across all admissions, grouped/filte
 
 ### General Requirements
 
-- All three sections displayed as tabs within admission detail view
+- All three sections displayed as section cards in the medical-record hub within admission detail view
 - Rich text editor for all text fields (TipTap or PrimeVue Editor)
 - Full audit trail: created_by, created_at, updated_by, updated_at visible on all entries
 - Print-friendly view for medical records
@@ -332,7 +332,7 @@ The two rules are inseparable: display-side sanitization without paste-side sani
 ### Clinical History - Happy Path
 
 - When a doctor creates a clinical history for an admission, all fields are saved and associated with the admission.
-- When a user views an admission, the clinical history tab displays all documented fields with rich text formatting preserved.
+- When a user views an admission, the clinical history section displays all documented fields with rich text formatting preserved.
 - When an admin edits a clinical history, changes are saved and the audit trail reflects the modification.
 
 ### Clinical History - Edge Cases
@@ -352,7 +352,7 @@ The two rules are inseparable: display-side sanitization without paste-side sani
 
 ### Progress Notes - Rich-Text Formatting (spec v1.5)
 
-- When a user types **bold text**, a **bullet list**, and **multiple paragraphs** into any SOAP field and saves, reloads the admission, and re-opens the progress notes tab, the rendered card shows the same visual structure (bold characters bold, list items as bullets on separate lines, paragraphs separated). The displayed HTML must include `<strong>`, `<ul><li>`, `<p>` etc. as **rendered DOM**, never as visible literal text.
+- When a user types **bold text**, a **bullet list**, and **multiple paragraphs** into any SOAP field and saves, reloads the admission, and re-opens the progress notes section, the rendered card shows the same visual structure (bold characters bold, list items as bullets on separate lines, paragraphs separated). The displayed HTML must include `<strong>`, `<ul><li>`, `<p>` etc. as **rendered DOM**, never as visible literal text.
 - When a user **pastes** content from Word, Google Docs, or Chrome that contains inline `style="..."` attributes, `<span>` wrappers, or unsupported tags into a SOAP field and saves, the persisted value must not contain those `style` attributes, `<span>` wrappers, or unsupported tags. The visible text content is preserved.
 - The collapsed (truncated) view of a long progress note may use a plain-text projection for the preview, but the **expanded** view must render the HTML.
 
@@ -994,7 +994,9 @@ WHERE r.code = 'CHIEF_NURSE' AND p.code IN (
 
 | Component | Location | Description |
 |-----------|----------|-------------|
-| `MedicalRecordTabs.vue` | `src/components/admissions/` | Tab container for all three sections |
+| `MedicalRecordHub.vue` | `src/components/medical-record/` | Card-hub container for every record section: a two-level layout (responsive grid of section summary cards → drill-in to one section). Replaces the former tab bar. |
+| `MedicalRecordSectionCard.vue` | `src/components/medical-record/` | Presentational hub card showing a section's icon, title, live metric, and last-updated; emits `open` to drill in (`data-testid="section-card-<key>"`). |
+| `AdmissionHeroHeader.vue` | `src/components/medical-record/` | Hero identity header (gradient banner + icon facts strip) replacing the two boxy info cards. |
 | `ClinicalHistoryView.vue` | `src/components/medical-record/` | View/display clinical history |
 | `ClinicalHistoryForm.vue` | `src/components/medical-record/` | Create/edit clinical history form |
 | `ProgressNoteList.vue` | `src/components/medical-record/` | List of progress notes with pagination |
@@ -1016,11 +1018,27 @@ WHERE r.code = 'CHIEF_NURSE' AND p.code IN (
 | `useProgressNoteStore` | `src/stores/progressNote.ts` | Progress notes CRUD, pagination |
 | `useMedicalOrderStore` | `src/stores/medicalOrder.ts` | Medical orders CRUD, grouping |
 
+### Composables
+
+| Composable | Location | Description |
+|-----------|----------|-------------|
+| `useMedicalRecordSummary` | `src/composables/useMedicalRecordSummary.ts` | Prefetches lightweight data for the **visible** record sections (size=1 for paginated, single fetch otherwise) via `Promise.allSettled` with per-section try/catch, and exposes a reactive `summary` map (`sectionKey → { metric, severity, updated }`) derived from store getters for the hub cards. A failed prefetch degrades silently (bare card). |
+
+### Card Hub Layout
+
+The record is presented as a **card hub** rather than a tab bar (mirrors the Camas / Hospitalizaciones screens):
+
+1. **`AdmissionHeroHeader`** — a single hero identity card (gradient banner + icon facts strip: room, treating/resident physician, admission date, and discharge date when discharged) replaces the two former info cards. The muted gradient + lock chip signal a discharged admission.
+2. **Section hub (`MedicalRecordHub`)** — level 1 is a responsive grid of `MedicalRecordSectionCard`s, each showing a **live metric** (e.g. note count, active-order count, latest blood pressure) and last-updated, ordered by the same role-based priority as the former tabs. There is **no default-open section**. Clicking a card drills into level 2: a back control (`data-testid="section-back"`) + the section title + the section's full content mounted as before.
+3. **Card-ified Historia Clínica** — `ClinicalHistoryView` renders its field groups as a grid of cards (empty groups dimmed) instead of an accordion.
+
+All existing acceptance criteria are preserved: per-section permissions, server-driven `canEdit`, discharge read-only protection (the banner + hidden write affordances), sanitized rich-text rendering, and the date helpers from `@/utils/format`.
+
 ### Routes
 
 | Route | Component | Notes |
 |-------|-----------|-------|
-| `/admissions/:id` | existing admission detail | Clinical history, progress notes, and per-admission medical orders remain here as tabs |
+| `/admissions/:id` | existing admission detail | Clinical history, progress notes, and per-admission medical orders live here as section cards in the medical-record hub |
 | `/medical-orders` | `MedicalOrdersByStateView.vue` | New top-level page. Sidebar entry visible to roles holding `medical-order:read`. Default filter is `SOLICITADO`. |
 
 ### Validation (Zod Schemas)
@@ -1134,7 +1152,7 @@ export const emergencyAuthorizeMedicalOrderSchema = z.object({
 ## Implementation Notes
 
 - **Rich Text Editor**: Use PrimeVue's `Editor` component (Quill-based) for rich text fields. Alternatively, consider TipTap for more control.
-- **Tab Structure**: Add a `MedicalRecordTabs` component to the existing `AdmissionDetail.vue` that contains three tabs: Clinical History, Progress Notes, Medical Orders.
+- **Card-Hub Structure**: Add a `MedicalRecordHub` component to the existing `AdmissionDetail.vue` that renders a grid of section cards (Clinical History, Progress Notes, Medical Orders, …) drilling into each section's full content.
 - **Append-Only Pattern (Clinical History, Progress Notes, Medical Orders)**: Services check user role before allowing updates. Only users with ADMIN role can call update endpoints for these record types. For progress notes specifically, `ProgressNoteService.updateProgressNote()` must call an `assertAdmin()` helper that throws `ForbiddenException` when `!currentUser.hasRole("ADMIN")`, independently of the controller's `@PreAuthorize`. Independently, the service must throw `BadRequestException` if the admission is discharged — even for ADMIN. `ProgressNoteResponse.canEdit` is computed as `currentUser.isAdmin && admission.isActive` so the frontend can hide the edit button without re-deriving the rule. **Do not** rely on `@PreAuthorize` alone — these are domain rules, not just role rules.
 - **Audit Display**: Show `createdBy`, `createdAt`, `updatedBy`, `updatedAt` on all entries using a reusable `AuditInfo` component.
 - **Grouping Medical Orders**: The API returns medical orders grouped by category. Frontend can use PrimeVue's `Accordion` or `TabView` to display categories.
@@ -1178,7 +1196,7 @@ export const emergencyAuthorizeMedicalOrderSchema = z.object({
 - [ ] OWASP dependency-check passes
 
 ### Frontend
-- [ ] MedicalRecordTabs component integrated into AdmissionDetail
+- [ ] MedicalRecordHub component integrated into AdmissionDetail
 - [ ] Clinical history form with all 16+ rich text fields
 - [ ] Clinical history view displays formatted content
 - [ ] Progress notes list with pagination

@@ -134,7 +134,7 @@ before this feature.
 9. **ADMIN not exempt** — An ADMIN performing any of the above writes still receives `400`.
 10. **UI read-only** — On the admission detail page of a discharged admission, the Medical
     Record section shows a read-only banner and exposes **no** create/edit/delete/upload/
-    authorize/administer buttons in any tab; the Edit and Discharge buttons in the page header
+    authorize/administer buttons in any section; the Edit and Discharge buttons in the page header
     are also hidden (pre-existing).
 
 ---
@@ -159,8 +159,8 @@ Read methods continue to use the lightweight `verifyAdmissionExists` (existence 
 
 ## Frontend Changes
 
-`MedicalRecordTabs.vue` threads `admissionStatus` into every tab that can author content and
-renders a read-only banner (`medicalRecord.dischargedReadOnly`) when discharged. Each tab
+`MedicalRecordHub.vue` threads `admissionStatus` into every section that can author content and
+renders a read-only banner (`medicalRecord.dischargedReadOnly`) when discharged. Each section
 component derives `isActive = admissionStatus === AdmissionStatus.ACTIVE` and ANDs it into its
 write computeds:
 

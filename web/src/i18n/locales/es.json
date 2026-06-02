@@ -1548,6 +1548,18 @@
   "medicalRecord": {
     "title": "Expediente Medico",
     "dischargedReadOnly": "Esta admisión fue dada de alta. El expediente médico es de solo lectura y ya no puede modificarse.",
+    "backToRecord": "Volver al expediente",
+    "openSection": "Abrir",
+    "metrics": {
+      "complete": "Completa",
+      "notRecorded": "Sin registrar",
+      "notes": "{count} notas",
+      "activeOrders": "{count} activas",
+      "bloodPressure": "TA {value}",
+      "files": "{count} archivos",
+      "consultations": "{count} interconsultas",
+      "sessions": "{count} sesiones"
+    },
     "tabs": {
       "clinicalHistory": "Historia Clínica",
       "progressNotes": "Notas de Evolución",

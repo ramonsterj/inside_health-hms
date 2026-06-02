@@ -6,18 +6,16 @@ import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useConfirm } from 'primevue/useconfirm'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
-import Tag from 'primevue/tag'
-import { formatDateTime, getContrastColor, getFullName } from '@/utils/format'
 import AuditInfo from '@/components/common/AuditInfo.vue'
 import { useAdmissionStore } from '@/stores/admission'
 import { useAuthStore } from '@/stores/auth'
 import { AdmissionStatus } from '@/types/admission'
 import AddConsultingPhysicianDialog from '@/components/admissions/AddConsultingPhysicianDialog.vue'
 import AdmissionExportButton from '@/components/admissions/AdmissionExportButton.vue'
-import AdmissionTypeBadge from '@/components/admissions/AdmissionTypeBadge.vue'
 import DocumentUploadDialog from '@/components/documents/DocumentUploadDialog.vue'
 import DocumentViewer from '@/components/documents/DocumentViewer.vue'
-import MedicalRecordTabs from '@/components/medical-record/MedicalRecordTabs.vue'
+import AdmissionHeroHeader from '@/components/medical-record/AdmissionHeroHeader.vue'
+import MedicalRecordHub from '@/components/medical-record/MedicalRecordHub.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -127,25 +125,6 @@ async function deleteAdmission() {
   }
 }
 
-function getStatusSeverity(status: AdmissionStatus): 'success' | 'secondary' {
-  return status === AdmissionStatus.ACTIVE ? 'success' : 'secondary'
-}
-
-function formatDoctorName(
-  doctor:
-    | {
-        salutation: string | null
-        firstName: string | null
-        lastName: string | null
-      }
-    | null
-    | undefined
-): string {
-  if (!doctor) return '-'
-  const salutationLabel = doctor.salutation ? t(`user.salutations.${doctor.salutation}`) : ''
-  return `${salutationLabel} ${getFullName(doctor.firstName, doctor.lastName)}`.trim()
-}
-
 async function handleConsultingPhysicianAdded() {
   showAddConsultingPhysicianDialog.value = false
   showSuccess('admission.consultingPhysicians.added')
@@ -218,87 +197,23 @@ function handleDocumentUploaded() {
     </div>
 
     <div v-else-if="admission" class="detail-grid">
-      <Card>
-        <template #title>{{ t('admission.patientInfo') }}</template>
-        <template #content>
-          <div class="info-row">
-            <span class="info-label">{{ t('admission.patient') }}</span>
-            <span class="info-value">
-              {{ getFullName(admission.patient.firstName, admission.patient.lastName) }}
-            </span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">{{ t('patient.idDocumentNumber') }}</span>
-            <span class="info-value">{{ admission.patient.idDocumentNumber || '-' }}</span>
-          </div>
-        </template>
-      </Card>
-
-      <Card>
-        <template #title>{{ t('admission.admissionInfo') }}</template>
-        <template #content>
-          <div class="info-row">
-            <span class="info-label">{{ t('admission.status') }}</span>
-            <Tag
-              :value="t(`admission.statuses.${admission.status}`)"
-              :severity="getStatusSeverity(admission.status)"
-            />
-          </div>
-          <div class="info-row">
-            <span class="info-label">{{ t('admission.type') }}</span>
-            <AdmissionTypeBadge :type="admission.type" />
-          </div>
-          <div v-if="admission.triageCode" class="info-row">
-            <span class="info-label">{{ t('admission.triageCode') }}</span>
-            <span
-              class="triage-badge"
-              :style="{
-                backgroundColor: admission.triageCode.color,
-                color: getContrastColor(admission.triageCode.color)
-              }"
-            >
-              {{ admission.triageCode.code }}
-            </span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">{{ t('admission.room') }}</span>
-            <span class="info-value">{{ admission.room?.number || '-' }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">{{ t('admission.treatingPhysician') }}</span>
-            <span class="info-value">{{ formatDoctorName(admission.treatingPhysician) }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">{{ t('admission.resident') }}</span>
-            <span class="info-value">{{ formatDoctorName(admission.resident) }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">{{ t('admission.admissionDate') }}</span>
-            <span class="info-value">{{ formatDateTime(admission.admissionDate) }}</span>
-          </div>
-          <div v-if="admission.dischargeDate" class="info-row">
-            <span class="info-label">{{ t('admission.dischargeDate') }}</span>
-            <span class="info-value">{{ formatDateTime(admission.dischargeDate) }}</span>
-          </div>
-        </template>
-      </Card>
+      <AdmissionHeroHeader :admission="admission" :admissionStatus="admission.status" />
 
       <!-- Medical Record Section (includes Documents, Consulting Physicians, Nursing, etc.) -->
-      <MedicalRecordTabs
+      <MedicalRecordHub
         v-if="canViewMedicalRecord"
         :admissionId="admissionId"
+        :admission="admission"
         :admissionType="admission.type"
         :admissionStatus="admission.status"
         :consultingPhysicians="admission.consultingPhysicians"
-        :treatingPhysicianId="admission.treatingPhysician.id"
-        class="full-width"
         @upload-document="showDocumentUploadDialog = true"
         @add-consulting-physician="showAddConsultingPhysicianDialog = true"
         @remove-consulting-physician="confirmRemoveConsultingPhysicianById"
       />
 
       <!-- Billing Section -->
-      <Card v-if="canViewBilling" class="full-width">
+      <Card v-if="canViewBilling">
         <template #title>{{ t('billing.title') }}</template>
         <template #content>
           <div class="billing-links">
@@ -329,7 +244,6 @@ function handleDocumentUploaded() {
       </Card>
 
       <AuditInfo
-        class="full-width"
         :createdAt="admission.createdAt"
         :createdByName="admission.createdBy?.username || '-'"
         :updatedAt="admission.updatedAt"
@@ -394,45 +308,14 @@ function handleDocumentUploaded() {
 }
 
 .detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-}
-
-.full-width {
-  grid-column: span 2;
-}
-
-.info-row {
   display: flex;
-  justify-content: space-between;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--p-surface-border);
-}
-
-.info-row:last-child {
-  border-bottom: none;
-}
-
-.info-label {
-  font-weight: 500;
-  color: var(--p-text-muted-color);
-}
-
-.info-value {
-  font-weight: 500;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .billing-links {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
-}
-
-.triage-badge {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-weight: 600;
 }
 </style>

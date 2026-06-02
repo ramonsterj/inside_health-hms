@@ -223,6 +223,67 @@ describe('useVitalSignStore', () => {
     })
   })
 
+  describe('fetchVitalSignsSummary', () => {
+    it('should fetch only the latest reading (size=1), ignoring any active date range', async () => {
+      mockedApi.get.mockResolvedValueOnce(mockPageResponse([mockVitalSigns[0]!], 3))
+
+      const store = useVitalSignStore()
+      // An active date range must NOT leak into the summary request — the hub wants the true latest.
+      store.setDateRange({ fromDate: '2026-01-01', toDate: '2026-01-31' })
+      await store.fetchVitalSignsSummary(100)
+
+      expect(mockedApi.get).toHaveBeenCalledWith('/v1/admissions/100/vital-signs', {
+        params: { page: 0, size: 1, sort: 'recordedAt,DESC' }
+      })
+      expect(store.getTotalVitalSigns(100)).toBe(3)
+      expect(store.getLatestVitalSign(100)?.id).toBe(3)
+      // List map is left untouched so a drilled-in view's full list is never clobbered.
+      expect(store.vitalSigns.has(100)).toBe(false)
+    })
+
+    it('should not truncate a full list when it resolves after the list fetch', async () => {
+      const store = useVitalSignStore()
+
+      mockedApi.get.mockResolvedValueOnce(mockPageResponse(mockVitalSigns, 3))
+      await store.fetchVitalSigns(100)
+      expect(store.getVitalSigns(100)).toHaveLength(3)
+
+      mockedApi.get.mockResolvedValueOnce(mockPageResponse([mockVitalSigns[0]!], 3))
+      await store.fetchVitalSignsSummary(100)
+
+      expect(store.getVitalSigns(100)).toHaveLength(3)
+      expect(store.getLatestVitalSign(100)?.id).toBe(3)
+    })
+  })
+
+  describe('getLatestVitalSign', () => {
+    it('prefers the live list head when no date range is active', async () => {
+      const store = useVitalSignStore()
+
+      mockedApi.get.mockResolvedValueOnce(mockPageResponse(mockVitalSigns, 3))
+      await store.fetchVitalSigns(100)
+
+      expect(store.getLatestVitalSign(100)?.id).toBe(3)
+    })
+
+    it('falls back to the unfiltered summary cache when a date range is active', async () => {
+      const store = useVitalSignStore()
+
+      // Summary cache holds the true latest (id 3) from an unfiltered size=1 fetch.
+      mockedApi.get.mockResolvedValueOnce(mockPageResponse([mockVitalSigns[0]!], 3))
+      await store.fetchVitalSignsSummary(100)
+
+      // Drilled-in view then loads a date-scoped list whose head (id 2) is NOT the true latest.
+      store.setDateRange({ fromDate: '2026-02-05', toDate: '2026-02-05' })
+      mockedApi.get.mockResolvedValueOnce(mockPageResponse([mockVitalSigns[1]!], 1))
+      await store.fetchVitalSigns(100)
+
+      // With a filter active the date-scoped list head must be ignored in favor of the summary cache.
+      expect(store.getVitalSigns(100)[0]?.id).toBe(2)
+      expect(store.getLatestVitalSign(100)?.id).toBe(3)
+    })
+  })
+
   describe('fetchChartData', () => {
     it('should fetch chart data (non-paginated)', async () => {
       mockedApi.get.mockResolvedValueOnce(mockListResponse(mockVitalSigns))

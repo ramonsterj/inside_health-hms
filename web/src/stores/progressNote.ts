@@ -12,6 +12,9 @@ export const useProgressNoteStore = defineStore('progressNote', () => {
   // State - Map by admissionId for caching lists
   const progressNotes = ref<Map<number, ProgressNoteResponse[]>>(new Map())
   const totalNotes = ref<Map<number, number>>(new Map())
+  // Summary cache (hub metric only) — kept separate from the list map above so a lightweight
+  // size=1 prefetch can never overwrite the full list a drilled-in view has loaded.
+  const latestNote = ref<Map<number, ProgressNoteResponse | null>>(new Map())
   const loading = ref(false)
 
   async function fetchProgressNotes(
@@ -37,6 +40,22 @@ export const useProgressNoteStore = defineStore('progressNote', () => {
       return []
     } finally {
       loading.value = false
+    }
+  }
+
+  /**
+   * Lightweight prefetch for the hub card metric: fetches only the total count and the single
+   * most-recent note. Writes to the dedicated summary cache and total map — never the list map —
+   * so it cannot truncate a full list loaded by the drilled-in view (regardless of resolution order).
+   */
+  async function fetchProgressNotesSummary(admissionId: number): Promise<void> {
+    const response = await api.get<ApiResponse<PageResponse<ProgressNoteResponse>>>(
+      `/v1/admissions/${admissionId}/progress-notes`,
+      { params: { page: 0, size: 1, sort: 'createdAt,DESC' } }
+    )
+    if (response.data.success && response.data.data) {
+      latestNote.value.set(admissionId, response.data.data.content[0] ?? null)
+      totalNotes.value.set(admissionId, response.data.data.page.totalElements)
     }
   }
 
@@ -109,26 +128,39 @@ export const useProgressNoteStore = defineStore('progressNote', () => {
     return totalNotes.value.get(admissionId) || 0
   }
 
+  // Most-recent note for the hub metric: prefer the live list when a drilled-in view has loaded it
+  // (stays reactive to creates/edits), otherwise fall back to the summary cache.
+  function getLatestNote(admissionId: number): ProgressNoteResponse | null {
+    const list = progressNotes.value.get(admissionId)
+    if (list !== undefined) return list[0] ?? null
+    return latestNote.value.get(admissionId) ?? null
+  }
+
   function clearProgressNotes(admissionId: number): void {
     progressNotes.value.delete(admissionId)
     totalNotes.value.delete(admissionId)
+    latestNote.value.delete(admissionId)
   }
 
   function clearAll(): void {
     progressNotes.value.clear()
     totalNotes.value.clear()
+    latestNote.value.clear()
   }
 
   return {
     progressNotes,
     totalNotes,
+    latestNote,
     loading,
     fetchProgressNotes,
+    fetchProgressNotesSummary,
     fetchProgressNote,
     createProgressNote,
     updateProgressNote,
     getProgressNotes,
     getTotalNotes,
+    getLatestNote,
     clearProgressNotes,
     clearAll
   }

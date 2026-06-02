@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import Accordion from 'primevue/accordion'
-import AccordionPanel from 'primevue/accordionpanel'
-import AccordionHeader from 'primevue/accordionheader'
-import AccordionContent from 'primevue/accordioncontent'
+import Card from 'primevue/card'
 import Button from 'primevue/button'
 import { useClinicalHistoryStore } from '@/stores/clinicalHistory'
 import { useAuthStore } from '@/stores/auth'
@@ -113,8 +110,12 @@ function getFieldValue(field: ClinicalHistoryFieldName): string {
 }
 
 function hasFieldContent(field: ClinicalHistoryFieldName): boolean {
-  const value = getFieldValue(field)
-  return value !== null && value !== undefined && value.trim() !== ''
+  // Inspect the RAW stored value — getFieldValue() sanitizes empty input to the "-" placeholder,
+  // so deriving emptiness from it would mark every field as having content.
+  if (!clinicalHistory.value) return false
+  // eslint-disable-next-line security/detect-object-injection
+  const raw = (clinicalHistory.value[field] as string) || ''
+  return raw.trim() !== ''
 }
 
 function sectionHasContent(fields: ClinicalHistoryFieldName[]): boolean {
@@ -171,22 +172,22 @@ function handleFormCancelled() {
         />
       </div>
 
-      <Accordion multiple class="clinical-history-accordion">
-        <AccordionPanel
+      <div class="history-grid">
+        <Card
           v-for="section in fieldSections"
           :key="section.key"
-          :value="section.key"
-          :disabled="!sectionHasContent(section.fields)"
+          class="history-card"
+          :class="{ 'no-content': !sectionHasContent(section.fields) }"
         >
-          <AccordionHeader>
+          <template #title>
             <span class="section-title">
               {{ t(`medicalRecord.clinicalHistory.sections.${section.key}`) }}
             </span>
             <span v-if="!sectionHasContent(section.fields)" class="empty-badge">
               {{ t('medicalRecord.clinicalHistory.noData') }}
             </span>
-          </AccordionHeader>
-          <AccordionContent>
+          </template>
+          <template #content>
             <div class="fields-container">
               <div
                 v-for="field in section.fields"
@@ -201,9 +202,9 @@ function handleFormCancelled() {
                 <div class="field-value" v-html="getFieldValue(field) || '-'"></div>
               </div>
             </div>
-          </AccordionContent>
-        </AccordionPanel>
-      </Accordion>
+          </template>
+        </Card>
+      </div>
 
       <AuditInfo
         :createdAt="clinicalHistory.createdAt"
@@ -252,8 +253,15 @@ function handleFormCancelled() {
   margin-bottom: 1.5rem;
 }
 
-.clinical-history-accordion {
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
   margin-bottom: 1.5rem;
+}
+
+.history-card.no-content {
+  opacity: 0.6;
 }
 
 .section-title {

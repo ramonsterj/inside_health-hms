@@ -273,10 +273,8 @@ test.describe('Psychotherapy Activities - Hospitalization', () => {
     await page.goto('/admissions/100')
     await waitForMedicalRecordTabs(page)
 
-    // Should see the psychotherapy activities tab (in the tab list)
-    await expect(
-      page.getByRole('tab', { name: /Psychotherapeutic Activities|Actividades Psicoterapéuticas/i })
-    ).toBeVisible()
+    // Should see the psychotherapy activities section card in the hub
+    await expect(page.getByTestId('section-card-psychotherapyActivities')).toBeVisible()
   })
 
   test('psychotherapy tab is hidden for ambulatory patients', async ({ page }) => {
@@ -302,10 +300,8 @@ test.describe('Psychotherapy Activities - Hospitalization', () => {
     await page.goto('/admissions/200')
     await waitForMedicalRecordTabs(page)
 
-    // Should NOT see the psychotherapy activities tab (in the tab list)
-    await expect(
-      page.getByRole('tab', { name: /Psychotherapeutic Activities|Actividades Psicoterapéuticas/i })
-    ).not.toBeVisible()
+    // Should NOT see the psychotherapy activities section card in the hub
+    await expect(page.getByTestId('section-card-psychotherapyActivities')).not.toBeVisible()
   })
 
   test('can view activities list', async ({ page }) => {

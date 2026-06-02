@@ -203,6 +203,67 @@ describe('useNursingNoteStore', () => {
     })
   })
 
+  describe('fetchNursingNotesSummary', () => {
+    it('should fetch only the latest note (size=1) and set total + summary cache', async () => {
+      mockedApi.get.mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: { content: [mockNursingNotes[0]], page: { totalElements: 3 } }
+        }
+      })
+
+      const store = useNursingNoteStore()
+      await store.fetchNursingNotesSummary(100)
+
+      expect(mockedApi.get).toHaveBeenCalledWith('/v1/admissions/100/nursing-notes', {
+        params: { page: 0, size: 1, sort: 'createdAt,DESC' }
+      })
+      expect(store.getTotalNotes(100)).toBe(3)
+      expect(store.getLatestNote(100)?.id).toBe(3)
+      // List map is left untouched so a drilled-in view's full list is never clobbered.
+      expect(store.nursingNotes.has(100)).toBe(false)
+    })
+
+    it('should not truncate a full list when it resolves after the list fetch', async () => {
+      const store = useNursingNoteStore()
+
+      // Full list loaded first by the drilled-in view.
+      mockedApi.get.mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: { content: mockNursingNotes, page: { totalElements: 3 } }
+        }
+      })
+      await store.fetchNursingNotes(100)
+      expect(store.getNursingNotes(100)).toHaveLength(3)
+
+      // Late-resolving size=1 summary prefetch must not shrink the list.
+      mockedApi.get.mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: { content: [mockNursingNotes[0]], page: { totalElements: 3 } }
+        }
+      })
+      await store.fetchNursingNotesSummary(100)
+
+      expect(store.getNursingNotes(100)).toHaveLength(3)
+      // getLatestNote prefers the live list when present.
+      expect(store.getLatestNote(100)?.id).toBe(3)
+    })
+
+    it('should store null latest when there are no notes', async () => {
+      mockedApi.get.mockResolvedValueOnce({
+        data: { success: true, data: { content: [], page: { totalElements: 0 } } }
+      })
+
+      const store = useNursingNoteStore()
+      await store.fetchNursingNotesSummary(100)
+
+      expect(store.getTotalNotes(100)).toBe(0)
+      expect(store.getLatestNote(100)).toBeNull()
+    })
+  })
+
   describe('fetchNursingNote', () => {
     it('should fetch single nursing note', async () => {
       mockedApi.get.mockResolvedValueOnce({

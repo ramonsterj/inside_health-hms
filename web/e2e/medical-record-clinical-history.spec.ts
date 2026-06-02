@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 import {
   waitForOverlaysToClear,
   waitForMedicalRecordTabs,
+  selectMedicalRecordTab,
   expandAccordionPanel
 } from './utils/test-helpers'
 
@@ -252,6 +253,7 @@ test.describe('Medical Record - Clinical History', () => {
 
     await page.goto('/admissions/1')
     await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'clinicalHistory')
 
     // Should see the create button in empty state
     await expect(page.getByRole('button', { name: /Create Clinical History/i })).toBeVisible()
@@ -291,14 +293,12 @@ test.describe('Medical Record - Clinical History', () => {
 
     await page.goto('/admissions/1')
     await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'clinicalHistory')
 
     // Should see the clinical history title
     await expect(page.getByRole('heading', { name: /Clinical History/i })).toBeVisible()
 
-    // Should see the content - expand a section
-    await expandAccordionPanel(page, /Presentation|Presentación/i)
-
-    // Should see the field content
+    // Fields render as cards (no accordion to expand) — content is visible directly.
     await expect(page.getByText(/severe anxiety and depression/i)).toBeVisible()
   })
 
@@ -317,6 +317,7 @@ test.describe('Medical Record - Clinical History', () => {
 
     await page.goto('/admissions/1')
     await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'clinicalHistory')
 
     // Should NOT see edit button (doctor has clinical-history:read but not clinical-history:update)
     await expect(
@@ -339,6 +340,7 @@ test.describe('Medical Record - Clinical History', () => {
 
     await page.goto('/admissions/1')
     await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'clinicalHistory')
 
     // Should see empty state but no create button (nurse only has read permission)
     await expect(page.getByText(/No clinical history has been created/i)).toBeVisible()
@@ -360,6 +362,7 @@ test.describe('Medical Record - Clinical History', () => {
 
     await page.goto('/admissions/1')
     await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'clinicalHistory')
 
     // Should see the clinical history
     await expect(page.getByRole('heading', { name: /Clinical History/i })).toBeVisible()
@@ -399,6 +402,7 @@ test.describe('Medical Record - Clinical History', () => {
 
     await page.goto('/admissions/1')
     await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'clinicalHistory')
     await waitForOverlaysToClear(page)
 
     // Should see edit button (admin has clinical-history:update)
@@ -438,6 +442,7 @@ test.describe('Medical Record - Clinical History', () => {
 
     await page.goto('/admissions/1')
     await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'clinicalHistory')
 
     // Doctor should see create button
     await expect(page.getByRole('button', { name: /Create Clinical History/i })).toBeVisible()
@@ -464,10 +469,9 @@ test.describe('Medical Record - Clinical History', () => {
 
     await page.goto('/admissions/1')
     await waitForMedicalRecordTabs(page)
+    await selectMedicalRecordTab(page, 'clinicalHistory')
 
-    // Expand section
-    await expandAccordionPanel(page, /Presentation|Presentación/i)
-
+    // Fields render as cards (no accordion to expand) — formatted content is shown directly.
     // Check that formatted content is displayed (HTML is rendered)
     const fieldValue = page.locator('.field-value').first()
     await expect(fieldValue.locator('strong')).toHaveText('Bold text')
