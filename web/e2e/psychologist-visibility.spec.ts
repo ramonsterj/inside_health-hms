@@ -140,6 +140,83 @@ async function setupUserMocks(page: import('@playwright/test').Page, user: typeo
       })
     })
   })
+
+  await page.route('**/api/v1/admissions/doctors', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: [] })
+    })
+  })
+
+  await page.route('**/api/v1/document-types/summary', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: [] })
+    })
+  })
+
+  const emptyPage = {
+    content: [],
+    page: { totalElements: 0, totalPages: 0, size: 1, number: 0 }
+  }
+
+  await page.route('**/api/v1/admissions/*/clinical-history', async (route) => {
+    await route.fulfill({
+      status: 404,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: false, message: 'Clinical history not found' })
+    })
+  })
+
+  await page.route('**/api/v1/admissions/*/progress-notes*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: emptyPage })
+    })
+  })
+
+  await page.route('**/api/v1/admissions/*/medical-orders*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: { orders: {} } })
+    })
+  })
+
+  await page.route('**/api/v1/admissions/*/nursing-notes*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: emptyPage })
+    })
+  })
+
+  await page.route('**/api/v1/admissions/*/vital-signs*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: emptyPage })
+    })
+  })
+
+  await page.route('**/api/v1/admissions/*/documents', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: [] })
+    })
+  })
+
+  await page.route('**/api/v1/admissions/*/psychotherapy-activities*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: [] })
+    })
+  })
 }
 
 // ============================================================
@@ -619,7 +696,9 @@ test.describe('Psychologist vs Admin - Visibility Comparison', () => {
 
     // Admin can see discharged admission
     await expect(page.getByText('María López')).toBeVisible()
-    await expect(page.getByText(/DISCHARGED|Dado de alta/i)).toBeVisible()
+    await expect(
+      page.getByTestId('admission-hero').getByText(/Discharged|Dado de alta/i)
+    ).toBeVisible()
   })
 })
 

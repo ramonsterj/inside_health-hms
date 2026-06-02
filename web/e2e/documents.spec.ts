@@ -227,12 +227,17 @@ async function setupDocumentMocks(page: import('@playwright/test').Page) {
   })
 }
 
-// Helper function to click on the Documents tab in MedicalRecordTabs (needed for admin users
-// who have all permissions, making Clinical History the default tab instead of Documents)
+// Helper to drill into the Documents section of the medical-record card hub. The hub has no
+// default-open section, so every test must explicitly open the Documents card first.
 async function clickDocumentsTab(page: import('@playwright/test').Page) {
-  const documentsTab = page.getByRole('tab', { name: /Documents|Documentos/i })
-  await expect(documentsTab).toBeVisible({ timeout: 10000 })
-  await documentsTab.click()
+  const back = page.locator('[data-testid="section-back"]')
+  if (await back.isVisible().catch(() => false)) {
+    await back.click()
+  }
+  const card = page.locator('[data-testid="section-card-documents"]')
+  await expect(card).toBeVisible({ timeout: 10000 })
+  await card.click()
+  await expect(back).toBeVisible({ timeout: 10000 })
 }
 
 test.describe('Documents - Admin User', () => {
@@ -527,6 +532,7 @@ test.describe('Documents - Administrative Staff', () => {
     await setupDocumentMocks(page)
 
     await page.goto('/admissions/1')
+    await clickDocumentsTab(page)
 
     // Should see Documents section
     await expect(page.getByRole('heading', { name: /Documents/i })).toBeVisible()
@@ -539,6 +545,7 @@ test.describe('Documents - Administrative Staff', () => {
     await setupDocumentMocks(page)
 
     await page.goto('/admissions/1')
+    await clickDocumentsTab(page)
 
     // Admin staff should see upload button
     await expect(page.getByRole('button', { name: /Upload|Subir/i })).toBeVisible()
@@ -550,6 +557,7 @@ test.describe('Documents - Administrative Staff', () => {
     await setupDocumentMocks(page)
 
     await page.goto('/admissions/1')
+    await clickDocumentsTab(page)
 
     // Wait for documents to load
     await expect(page.getByText('General Consent Form')).toBeVisible()
@@ -577,6 +585,7 @@ test.describe('Documents - Administrative Staff', () => {
     })
 
     await page.goto('/admissions/1')
+    await clickDocumentsTab(page)
 
     // Wait for Documents section and documents to load
     await expect(page.getByRole('heading', { name: /Documents|Documentos/i })).toBeVisible({

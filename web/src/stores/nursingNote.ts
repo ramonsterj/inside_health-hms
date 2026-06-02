@@ -12,6 +12,9 @@ export const useNursingNoteStore = defineStore('nursingNote', () => {
   // State - Map by admissionId for caching lists
   const nursingNotes = ref<Map<number, NursingNoteResponse[]>>(new Map())
   const totalNotes = ref<Map<number, number>>(new Map())
+  // Summary cache (hub metric only) — kept separate from the list map above so a lightweight
+  // size=1 prefetch can never overwrite the full list a drilled-in view has loaded.
+  const latestNote = ref<Map<number, NursingNoteResponse | null>>(new Map())
   const loading = ref(false)
 
   async function fetchNursingNotes(
@@ -37,6 +40,22 @@ export const useNursingNoteStore = defineStore('nursingNote', () => {
       return []
     } finally {
       loading.value = false
+    }
+  }
+
+  /**
+   * Lightweight prefetch for the hub card metric: fetches only the total count and the single
+   * most-recent note. Writes to the dedicated summary cache and total map — never the list map —
+   * so it cannot truncate a full list loaded by the drilled-in view (regardless of resolution order).
+   */
+  async function fetchNursingNotesSummary(admissionId: number): Promise<void> {
+    const response = await api.get<ApiResponse<PageResponse<NursingNoteResponse>>>(
+      `/v1/admissions/${admissionId}/nursing-notes`,
+      { params: { page: 0, size: 1, sort: 'createdAt,DESC' } }
+    )
+    if (response.data.success && response.data.data) {
+      latestNote.value.set(admissionId, response.data.data.content[0] ?? null)
+      totalNotes.value.set(admissionId, response.data.data.page.totalElements)
     }
   }
 
@@ -109,26 +128,39 @@ export const useNursingNoteStore = defineStore('nursingNote', () => {
     return totalNotes.value.get(admissionId) || 0
   }
 
+  // Most-recent note for the hub metric: prefer the live list when a drilled-in view has loaded it
+  // (stays reactive to creates/edits), otherwise fall back to the summary cache.
+  function getLatestNote(admissionId: number): NursingNoteResponse | null {
+    const list = nursingNotes.value.get(admissionId)
+    if (list !== undefined) return list[0] ?? null
+    return latestNote.value.get(admissionId) ?? null
+  }
+
   function clearNursingNotes(admissionId: number): void {
     nursingNotes.value.delete(admissionId)
     totalNotes.value.delete(admissionId)
+    latestNote.value.delete(admissionId)
   }
 
   function clearAll(): void {
     nursingNotes.value.clear()
     totalNotes.value.clear()
+    latestNote.value.clear()
   }
 
   return {
     nursingNotes,
     totalNotes,
+    latestNote,
     loading,
     fetchNursingNotes,
+    fetchNursingNotesSummary,
     fetchNursingNote,
     createNursingNote,
     updateNursingNote,
     getNursingNotes,
     getTotalNotes,
+    getLatestNote,
     clearNursingNotes,
     clearAll
   }

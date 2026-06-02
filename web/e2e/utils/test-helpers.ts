@@ -87,31 +87,33 @@ export async function fillRichTextEditor(
 }
 
 /**
- * Select a tab in the Medical Record tabs component
+ * Drill into a Medical Record section from the card hub.
+ *
+ * The record is now a two-level card hub (grid of section cards -> drill-in) instead of a tab bar.
+ * Each section card carries a stable `data-testid="section-card-<key>"`. If a section is already
+ * open (the back control is visible), we return to the grid first so the target card is reachable —
+ * this covers same-test switching (e.g. nursingNotes <-> vitalSigns).
  */
 export async function selectMedicalRecordTab(
   page: Page,
   tabKey: 'clinicalHistory' | 'progressNotes' | 'medicalOrders' | 'psychotherapyActivities' | 'nursingNotes' | 'vitalSigns'
 ) {
-  const tabLabels: Record<string, RegExp> = {
-    clinicalHistory: /Clinical History|Historia Clínica/i,
-    progressNotes: /Progress Notes|Notas de Evolución/i,
-    medicalOrders: /Medical Orders|Órdenes Médicas/i,
-    psychotherapyActivities: /Psychotherapeutic Activities|Actividades Psicoterapéuticas/i,
-    nursingNotes: /Nursing Notes|Notas de Enfermería/i,
-    vitalSigns: /Vital Signs|Signos Vitales/i
+  const back = page.locator('[data-testid="section-back"]')
+  if (await back.isVisible().catch(() => false)) {
+    await back.click()
   }
-  const tab = page.locator('.p-tablist').getByText(tabLabels[tabKey])
-  await tab.click()
-  // Wait for animation
-  await page.waitForTimeout(300)
+  const card = page.locator(`[data-testid="section-card-${tabKey}"]`)
+  await expect(card).toBeVisible({ timeout: 10000 })
+  await card.click()
+  // Drill-in is confirmed by the back control appearing (replaces the old fixed timeout).
+  await expect(back).toBeVisible({ timeout: 10000 })
 }
 
 /**
- * Wait for Medical Record tabs to be visible
+ * Wait for the Medical Record card hub to be visible
  */
 export async function waitForMedicalRecordTabs(page: Page) {
-  await expect(page.getByText(/Medical Record|Expediente Médico/i).first()).toBeVisible({
+  await expect(page.getByText(/Medical Record|Expediente Medico/i).first()).toBeVisible({
     timeout: 10000
   })
 }

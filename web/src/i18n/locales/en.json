@@ -1548,6 +1548,18 @@
   "medicalRecord": {
     "title": "Medical Record",
     "dischargedReadOnly": "This admission has been discharged. The medical record is read-only and can no longer be modified.",
+    "backToRecord": "Back to record",
+    "openSection": "Open",
+    "metrics": {
+      "complete": "Complete",
+      "notRecorded": "Not recorded",
+      "notes": "{count} notes",
+      "activeOrders": "{count} active",
+      "bloodPressure": "BP {value}",
+      "files": "{count} files",
+      "consultations": "{count} consultations",
+      "sessions": "{count} sessions"
+    },
     "tabs": {
       "clinicalHistory": "Clinical History",
       "progressNotes": "Progress Notes",
