@@ -19,6 +19,7 @@ interface MedicalOrderRepository : JpaRepository<MedicalOrder, Long> {
         LEFT JOIN FETCH mo.admission a
         LEFT JOIN FETCH a.patient
         LEFT JOIN FETCH mo.inventoryItem
+        LEFT JOIN FETCH mo.labProvider
         WHERE mo.admission.id = :admissionId
         ORDER BY mo.category, mo.startDate DESC
         """,
@@ -31,6 +32,7 @@ interface MedicalOrderRepository : JpaRepository<MedicalOrder, Long> {
         LEFT JOIN FETCH mo.admission a
         LEFT JOIN FETCH a.patient
         LEFT JOIN FETCH mo.inventoryItem
+        LEFT JOIN FETCH mo.labProvider
         WHERE mo.id = :orderId AND mo.admission.id = :admissionId
         """,
     )
@@ -65,6 +67,7 @@ interface MedicalOrderRepository : JpaRepository<MedicalOrder, Long> {
         LEFT JOIN FETCH mo.admission a
         LEFT JOIN FETCH a.patient
         LEFT JOIN FETCH mo.inventoryItem
+        LEFT JOIN FETCH mo.labProvider
         WHERE (:statuses IS NULL OR mo.status IN :statuses)
         AND (:categories IS NULL OR mo.category IN :categories)
         """,

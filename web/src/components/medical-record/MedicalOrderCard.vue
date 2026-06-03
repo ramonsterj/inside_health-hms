@@ -353,6 +353,20 @@ async function deleteDocument(doc: MedicalOrderDocument) {
           <MedicalOrderStateBadge :status="order.status" />
         </div>
 
+        <!-- Lab requisition (provider + tests). Prices are a billing concern and are
+             deliberately not surfaced on the clinical record. -->
+        <div v-if="order.labProvider" class="lab-info">
+          <div class="lab-provider">
+            <label>{{ t('medicalRecord.medicalOrder.fields.labProvider') }}:</label>
+            <span>{{ order.labProvider.name }}</span>
+          </div>
+          <div class="lab-test-chips">
+            <span v-for="line in order.labTests" :key="line.id" class="lab-chip">
+              {{ line.displayName }}
+            </span>
+          </div>
+        </div>
+
         <!-- Observations -->
         <div v-if="order.observations" class="observations">
           <label>{{ t('medicalRecord.medicalOrder.fields.observations') }}:</label>
@@ -669,6 +683,34 @@ async function deleteDocument(doc: MedicalOrderDocument) {
 .schedule {
   font-size: 0.875rem;
   color: var(--p-text-muted-color);
+}
+
+.lab-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--p-surface-ground);
+  border-radius: var(--p-border-radius);
+  font-size: 0.875rem;
+}
+
+.lab-info label {
+  font-weight: 500;
+  margin-right: 0.25rem;
+}
+
+.lab-test-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.lab-chip {
+  padding: 0.15rem 0.5rem;
+  background: var(--p-surface-100);
+  border-radius: 999px;
+  font-size: 0.8rem;
 }
 
 .observations {

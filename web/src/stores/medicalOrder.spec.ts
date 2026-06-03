@@ -56,6 +56,9 @@ function makeOrder(overrides: Partial<MedicalOrderResponse> = {}): MedicalOrderR
     discontinuedBy: null,
     inventoryItemId: null,
     inventoryItemName: null,
+    labProvider: null,
+    labTests: [],
+    labTotal: null,
     documentCount: 0,
     createdAt: '2026-04-27T10:00:00Z',
     updatedAt: '2026-04-27T10:00:00Z',
@@ -90,6 +93,9 @@ function makeListItem(
     discontinuedAt: null,
     emergencyAuthorized: false,
     documentCount: 0,
+    labProviderName: null,
+    labTotal: null,
+    labTestCount: null,
     ...overrides
   }
 }

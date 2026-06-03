@@ -99,6 +99,26 @@ class BillingEventListener(private val billingService: BillingService, private v
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun handleLabOrderAuthorized(event: LabOrderAuthorizedEvent) {
+        log.info(
+            "Received LabOrderAuthorizedEvent for admission {} order {}",
+            event.admissionId,
+            event.medicalOrderId,
+        )
+        try {
+            billingService.createChargeFromLabOrder(event)
+        } catch (e: Exception) {
+            log.error(
+                "Failed to create charge from lab order {} for admission {}",
+                event.medicalOrderId,
+                event.admissionId,
+                e,
+            )
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun handleAdmissionCreated(event: AdmissionCreatedEvent) {
         log.info(
             "Received AdmissionCreatedEvent for admission {} type {}",

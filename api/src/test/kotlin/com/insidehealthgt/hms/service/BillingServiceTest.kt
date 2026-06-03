@@ -263,6 +263,55 @@ class BillingServiceTest {
     }
 
     @Test
+    fun `createChargeFromLabOrder creates one LAB charge per test, summing to the line total`() {
+        whenever(admissionRepository.findByIdWithRelations(10L)).thenReturn(testAdmission)
+        whenever(chargeRepository.saveAll(any<List<PatientCharge>>())).thenAnswer { it.arguments[0] }
+
+        val event = com.insidehealthgt.hms.event.LabOrderAuthorizedEvent(
+            admissionId = 10L,
+            medicalOrderId = 900L,
+            providerName = "CLONY",
+            lines = listOf(
+                com.insidehealthgt.hms.event.LabLineSnapshot(
+                    "Hemograma completo",
+                    BigDecimal("75.00"),
+                    BigDecimal("40.00"),
+                ),
+                com.insidehealthgt.hms.event.LabLineSnapshot("BUN", BigDecimal("55.00"), BigDecimal("30.00")),
+            ),
+            lineTotal = BigDecimal("130.00"),
+        )
+
+        billingService.createChargeFromLabOrder(event)
+
+        val captor = org.mockito.kotlin.argumentCaptor<List<PatientCharge>>()
+        verify(chargeRepository).saveAll(captor.capture())
+        val charges = captor.firstValue
+        assertEquals(2, charges.size)
+        assertEquals(true, charges.all { it.chargeType == ChargeType.LAB })
+        assertEquals(BigDecimal("130.00"), charges.sumOf { it.totalAmount })
+        assertEquals(setOf(BigDecimal("75.00"), BigDecimal("55.00")), charges.map { it.unitPrice }.toSet())
+        assertEquals(true, charges.all { it.inventoryItem == null })
+        assertEquals(true, charges.all { it.description.contains("CLONY") })
+        assertEquals(true, charges.any { it.description.contains("Hemograma completo") })
+    }
+
+    @Test
+    fun `createChargeFromLabOrder skips when the line total is zero`() {
+        val event = com.insidehealthgt.hms.event.LabOrderAuthorizedEvent(
+            admissionId = 10L,
+            medicalOrderId = 900L,
+            providerName = "CLONY",
+            lines = emptyList(),
+            lineTotal = BigDecimal.ZERO,
+        )
+
+        billingService.createChargeFromLabOrder(event)
+
+        org.mockito.kotlin.verify(chargeRepository, org.mockito.kotlin.never()).saveAll(any<List<PatientCharge>>())
+    }
+
+    @Test
     fun `createRoomCharge should skip if already exists`() {
         whenever(
             chargeRepository.existsByAdmissionIdAndChargeTypeAndChargeDateAndRoomId(

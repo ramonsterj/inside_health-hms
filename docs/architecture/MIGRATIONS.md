@@ -125,6 +125,18 @@ Pattern: when prod and dev need different seed values, V… writes the prod
 shape and R__seed_… writes the dev override on top, with a comment in both
 files cross-referencing the other.
 
+The lab catalog (V123–V126) follows the same split. The reference data
+(providers, canonical tests, per-provider priced tests, panels) is
+**production** data, so it lives in a versioned migration — `V126__seed_lab_catalog_data.sql`,
+idempotent via `WHERE NOT EXISTS`, mirroring V111's workbook load. (Its
+prices are flagged invented demo values in the file header; finance corrects
+them through the admin UI before production billing is trusted.) The dev
+seeds carry **no** catalog rows — V126 already populates them and the dev DB
+runs the same migrations. The only dev-seed touch was a permission grant:
+`lab-catalog:read` was added to the DOCTOR grant list in `R__seed_01` STEP 3
+(RESIDENT_DOCTOR clones it), which **did** trigger the seed-bundle rule — all
+nine `SEED-BUNDLE-VERSION` lines were bumped together.
+
 ---
 
 ## Backfills

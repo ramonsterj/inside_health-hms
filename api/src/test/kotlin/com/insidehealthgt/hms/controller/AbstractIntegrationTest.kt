@@ -219,7 +219,9 @@ abstract class AbstractIntegrationTest {
         jdbcTemplate.execute("DELETE FROM inventory_warehouse_stock")
         jdbcTemplate.execute("DELETE FROM inventory_transfers")
         // medical_orders.inventory_item_id references inventory_items, so orders must be
-        // removed first.
+        // removed first. Lab line items reference medical_orders + lab_provider_tests, so
+        // they come before both.
+        jdbcTemplate.execute("DELETE FROM medical_order_lab_tests")
         jdbcTemplate.execute("DELETE FROM medical_order_documents")
         jdbcTemplate.execute("DELETE FROM medical_orders")
         jdbcTemplate.execute("DELETE FROM inventory_lots")
@@ -248,6 +250,13 @@ abstract class AbstractIntegrationTest {
         jdbcTemplate.execute("DELETE FROM user_warehouses")
         jdbcTemplate.execute("DELETE FROM user_roles")
         jdbcTemplate.execute("DELETE FROM users")
+        // Lab catalog: V126 seeds reference rows (created_by IS NULL); keep those, drop only
+        // test-created rows. Children before parents.
+        jdbcTemplate.execute("DELETE FROM lab_panel_items WHERE created_by IS NOT NULL")
+        jdbcTemplate.execute("DELETE FROM lab_panels WHERE created_by IS NOT NULL")
+        jdbcTemplate.execute("DELETE FROM lab_provider_tests WHERE created_by IS NOT NULL")
+        jdbcTemplate.execute("DELETE FROM lab_tests WHERE created_by IS NOT NULL")
+        jdbcTemplate.execute("DELETE FROM lab_providers WHERE created_by IS NOT NULL")
     }
 
     // ============ AUTH HELPERS ============

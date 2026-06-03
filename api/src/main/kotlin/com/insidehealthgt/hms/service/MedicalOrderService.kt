@@ -9,14 +9,20 @@ import com.insidehealthgt.hms.dto.response.MedicalOrderListItemResponse
 import com.insidehealthgt.hms.dto.response.MedicalOrderResponse
 import com.insidehealthgt.hms.entity.MedicalOrder
 import com.insidehealthgt.hms.entity.MedicalOrderCategory
+import com.insidehealthgt.hms.entity.MedicalOrderLabTest
 import com.insidehealthgt.hms.entity.MedicalOrderStatus
 import com.insidehealthgt.hms.entity.User
+import com.insidehealthgt.hms.event.LabLineSnapshot
+import com.insidehealthgt.hms.event.LabOrderAuthorizedEvent
 import com.insidehealthgt.hms.event.MedicalOrderAuthorizedEvent
 import com.insidehealthgt.hms.exception.BadRequestException
 import com.insidehealthgt.hms.exception.ResourceNotFoundException
 import com.insidehealthgt.hms.repository.AdmissionRepository
 import com.insidehealthgt.hms.repository.InventoryItemRepository
+import com.insidehealthgt.hms.repository.LabProviderRepository
+import com.insidehealthgt.hms.repository.LabProviderTestRepository
 import com.insidehealthgt.hms.repository.MedicalOrderDocumentRepository
+import com.insidehealthgt.hms.repository.MedicalOrderLabTestRepository
 import com.insidehealthgt.hms.repository.MedicalOrderRepository
 import com.insidehealthgt.hms.repository.UserRepository
 import com.insidehealthgt.hms.security.CurrentUserProvider
@@ -26,6 +32,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 @Service
@@ -35,6 +42,9 @@ class MedicalOrderService(
     private val medicalOrderDocumentRepository: MedicalOrderDocumentRepository,
     private val admissionRepository: AdmissionRepository,
     private val inventoryItemRepository: InventoryItemRepository,
+    private val labProviderRepository: LabProviderRepository,
+    private val labProviderTestRepository: LabProviderTestRepository,
+    private val medicalOrderLabTestRepository: MedicalOrderLabTestRepository,
     private val userRepository: UserRepository,
     private val eventPublisher: ApplicationEventPublisher,
     private val currentUserProvider: CurrentUserProvider,
@@ -54,10 +64,12 @@ class MedicalOrderService(
         val orders = medicalOrderRepository.findByAdmissionIdWithRelations(admissionId)
             .filterNot { isPsychologistOutOfScope(it.category) }
         val users = loadAuditUsers(orders)
-        val documentCounts = loadDocumentCounts(orders.mapNotNull { it.id })
+        val orderIds = orders.mapNotNull { it.id }
+        val documentCounts = loadDocumentCounts(orderIds)
+        val labLines = loadLabLines(orderIds)
 
         val groupedOrders = orders
-            .map { buildResponse(it, users, documentCounts[it.id] ?: 0) }
+            .map { buildResponse(it, users, documentCounts[it.id] ?: 0, labLines[it.id].orEmpty()) }
             .groupBy { it.category }
 
         return GroupedMedicalOrdersResponse(orders = groupedOrders)
@@ -102,13 +114,23 @@ class MedicalOrderService(
         val page = medicalOrderRepository.findByFilters(statuses, effectiveCategories, pageable)
 
         val users = loadUsers(page.content.mapNotNull { it.createdBy })
-        val documentCounts = loadDocumentCounts(page.content.mapNotNull { it.id })
+        val orderIds = page.content.mapNotNull { it.id }
+        val documentCounts = loadDocumentCounts(orderIds)
+        val labAggregates = if (orderIds.isEmpty()) {
+            emptyMap()
+        } else {
+            medicalOrderLabTestRepository.aggregateByOrderIds(orderIds).associateBy { it.orderId }
+        }
 
         return page.map { order ->
+            val labAgg = labAggregates[order.id]
             MedicalOrderListItemResponse.from(
                 order = order,
                 createdByUser = order.createdBy?.let { users[it] },
                 documentCount = documentCounts[order.id] ?: 0,
+                labProviderName = order.labProvider?.name,
+                labTotal = labAgg?.total,
+                labTestCount = labAgg?.lineCount?.toInt(),
             )
         }
     }
@@ -122,9 +144,17 @@ class MedicalOrderService(
             throw BadRequestException(messageService.errorAdmissionDischargedRecords())
         }
 
-        val inventoryItem = request.inventoryItemId?.let { itemId ->
-            inventoryItemRepository.findById(itemId)
-                .orElseThrow { ResourceNotFoundException("Inventory item not found with id: $itemId") }
+        // Every LABORATORIOS order is provider-catalog backed (one provider + >= 1 line);
+        // there is no legacy single-inventory-item lab path. buildLabLines enforces the
+        // provider/lines invariants below. For lab orders the inventory item is unused.
+        val isLabOrder = request.category == MedicalOrderCategory.LABORATORIOS
+        val inventoryItem = if (isLabOrder) {
+            null
+        } else {
+            request.inventoryItemId?.let { itemId ->
+                inventoryItemRepository.findById(itemId)
+                    .orElseThrow { ResourceNotFoundException("Inventory item not found with id: $itemId") }
+            }
         }
 
         // Initial status is category-driven: directive → ACTIVA, auth-required → SOLICITADO.
@@ -143,11 +173,58 @@ class MedicalOrderService(
             inventoryItem = inventoryItem,
         )
 
+        if (isLabOrder) {
+            buildLabLines(request, order)
+        }
+
         val saved = medicalOrderRepository.save(order)
         return buildResponse(saved)
     }
 
+    /**
+     * Resolve and snapshot lab provider-test lines onto a `LABORATORIOS` order. Validates:
+     * a provider is given (400), at least one line (400, AC8), every referenced provider-test
+     * exists and is active (400, AC11), and every line belongs to the order's provider
+     * (400, AC7 — one order = one provider). Each line snapshots display name / cost / sales
+     * price so later catalog edits never change the recorded order or its bill (AC12).
+     */
+    @Suppress("ThrowsCount")
+    private fun buildLabLines(request: CreateMedicalOrderRequest, order: MedicalOrder) {
+        val providerId = request.labProviderId
+            ?: throw BadRequestException("A lab provider is required for laboratory orders")
+        val testIds = request.labProviderTestIds?.distinct().orEmpty()
+        if (testIds.isEmpty()) {
+            throw BadRequestException("At least one lab test is required for laboratory orders")
+        }
+
+        val provider = labProviderRepository.findById(providerId)
+            .orElseThrow { ResourceNotFoundException("Lab provider not found with id: $providerId") }
+
+        val providerTests = labProviderTestRepository.findAllByIdInAndActiveTrue(testIds)
+        if (providerTests.size != testIds.size) {
+            throw BadRequestException("One or more lab tests are invalid or inactive")
+        }
+        if (providerTests.any { it.provider.id != providerId }) {
+            throw BadRequestException("All lab tests must belong to the selected provider")
+        }
+
+        order.labProvider = provider
+        providerTests.forEach { pt ->
+            order.labTests.add(
+                MedicalOrderLabTest(
+                    medicalOrder = order,
+                    labProviderTestId = pt.id!!,
+                    labTestId = pt.labTest.id!!,
+                    displayName = pt.displayName,
+                    cost = pt.cost,
+                    salesPrice = pt.salesPrice,
+                ),
+            )
+        }
+    }
+
     @Transactional
+    @Suppress("ThrowsCount")
     fun updateMedicalOrder(
         admissionId: Long,
         orderId: Long,
@@ -162,9 +239,28 @@ class MedicalOrderService(
             throw BadRequestException("Cannot update a medical order in a terminal state (${order.status})")
         }
 
-        val inventoryItem = request.inventoryItemId?.let { itemId ->
-            inventoryItemRepository.findById(itemId)
-                .orElseThrow { ResourceNotFoundException("Inventory item not found with id: $itemId") }
+        val willBeLab = request.category == MedicalOrderCategory.LABORATORIOS
+        val wasLab = order.labProvider != null || order.labTests.isNotEmpty()
+
+        // AC14: provider/line snapshots are immutable once the order has produced its bill.
+        // Lab lines may only be (re)built or cleared while SOLICITADO (terminal states are
+        // already blocked above; this also rejects AUTORIZADO / EN_PROCESO /
+        // RESULTADOS_RECIBIDOS). Guards both becoming a lab order and an existing lab order
+        // changing to another category (which would drop its already-recorded lines).
+        if ((willBeLab || wasLab) && order.status != MedicalOrderStatus.SOLICITADO) {
+            throw BadRequestException(
+                "Lab provider and tests can only be changed while the order is in SOLICITADO; " +
+                    "current state is ${order.status}",
+            )
+        }
+
+        val inventoryItem = if (willBeLab) {
+            null
+        } else {
+            request.inventoryItemId?.let { itemId ->
+                inventoryItemRepository.findById(itemId)
+                    .orElseThrow { ResourceNotFoundException("Inventory item not found with id: $itemId") }
+            }
         }
 
         order.category = request.category
@@ -178,8 +274,26 @@ class MedicalOrderService(
         order.observations = request.observations
         order.inventoryItem = inventoryItem
 
+        if (willBeLab) {
+            softDeleteLabLines(order)
+            order.labProvider = null
+            buildLabLines(request, order)
+        } else if (wasLab) {
+            // Changing a lab order to another category: drop the now-stale provider/lines so
+            // the order is never left in a mixed shape.
+            softDeleteLabLines(order)
+            order.labProvider = null
+        }
+
         val saved = medicalOrderRepository.save(order)
         return buildResponse(saved)
+    }
+
+    private fun softDeleteLabLines(order: MedicalOrder) {
+        val now = LocalDateTime.now()
+        order.labTests
+            .filter { it.deletedAt == null }
+            .forEach { it.deletedAt = now }
     }
 
     @Transactional
@@ -279,11 +393,33 @@ class MedicalOrderService(
         }
     }
 
+    @Suppress("ReturnCount")
     private fun publishBillingEventIfNeeded(order: MedicalOrder) {
         // Only results-bearing categories (labs, referrals, psychometric tests) are billed
         // once on authorization. MEDICAMENTOS is billed per-administration via
         // InventoryDispensedEvent, so it must be excluded here to avoid double-charging.
         if (!order.category.supportsResults()) return
+
+        // Lab orders bill the sum of their line sales-price snapshots as a single LAB charge.
+        // REFERENCIAS / PRUEBAS fall through to the inventoryItem path below. The total guard
+        // ensures a zero/garbage charge is never published.
+        if (order.category == MedicalOrderCategory.LABORATORIOS && order.labTests.isNotEmpty()) {
+            val total = order.labTotal()
+            if (total <= BigDecimal.ZERO) {
+                log.warn("Authorized lab order {} has a non-positive total, no auto-charge created", order.id)
+                return
+            }
+            eventPublisher.publishEvent(
+                LabOrderAuthorizedEvent(
+                    admissionId = order.admission.id!!,
+                    medicalOrderId = order.id!!,
+                    providerName = order.labProvider?.name ?: "",
+                    lines = order.labTests.map { LabLineSnapshot(it.displayName, it.salesPrice, it.cost) },
+                    lineTotal = total,
+                ),
+            )
+            return
+        }
 
         val inventoryItem = order.inventoryItem
         if (inventoryItem == null) {
@@ -413,22 +549,36 @@ class MedicalOrderService(
         }
     }
 
-    private fun buildResponse(order: MedicalOrder): MedicalOrderResponse =
-        buildResponse(order, loadAuditUsers(listOf(order)), documentCount = 0)
+    private fun buildResponse(order: MedicalOrder): MedicalOrderResponse {
+        val labLines = loadLabLines(listOfNotNull(order.id))[order.id].orEmpty()
+        return buildResponse(order, loadAuditUsers(listOf(order)), documentCount = 0, labLines = labLines)
+    }
 
-    private fun buildResponse(order: MedicalOrder, users: Map<Long, User>, documentCount: Int): MedicalOrderResponse =
-        MedicalOrderResponse.from(
-            medicalOrder = order,
-            createdByUser = order.createdBy?.let { users[it] },
-            updatedByUser = order.updatedBy?.let { users[it] },
-            discontinuedByUser = order.discontinuedBy?.let { users[it] },
-            authorizedByUser = order.authorizedBy?.let { users[it] },
-            rejectedByUser = order.rejectedBy?.let { users[it] },
-            inProgressByUser = order.inProgressBy?.let { users[it] },
-            resultsReceivedByUser = order.resultsReceivedBy?.let { users[it] },
-            emergencyByUser = order.emergencyBy?.let { users[it] },
-            documentCount = documentCount,
-        )
+    private fun buildResponse(
+        order: MedicalOrder,
+        users: Map<Long, User>,
+        documentCount: Int,
+        labLines: List<MedicalOrderLabTest> = emptyList(),
+    ): MedicalOrderResponse = MedicalOrderResponse.from(
+        medicalOrder = order,
+        createdByUser = order.createdBy?.let { users[it] },
+        updatedByUser = order.updatedBy?.let { users[it] },
+        discontinuedByUser = order.discontinuedBy?.let { users[it] },
+        authorizedByUser = order.authorizedBy?.let { users[it] },
+        rejectedByUser = order.rejectedBy?.let { users[it] },
+        inProgressByUser = order.inProgressBy?.let { users[it] },
+        resultsReceivedByUser = order.resultsReceivedBy?.let { users[it] },
+        emergencyByUser = order.emergencyBy?.let { users[it] },
+        documentCount = documentCount,
+        labTests = labLines,
+    )
+
+    /** Batch-load lab line items grouped by order id (avoids N+1 and MultipleBagFetchException). */
+    private fun loadLabLines(orderIds: List<Long>): Map<Long, List<MedicalOrderLabTest>> {
+        if (orderIds.isEmpty()) return emptyMap()
+        return medicalOrderLabTestRepository.findByMedicalOrderIdIn(orderIds)
+            .groupBy { it.medicalOrder.id!! }
+    }
 
     private fun loadAuditUsers(orders: List<MedicalOrder>): Map<Long, User> = loadUsers(
         orders.flatMap {

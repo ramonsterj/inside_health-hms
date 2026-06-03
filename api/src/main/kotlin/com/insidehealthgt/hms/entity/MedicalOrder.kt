@@ -1,5 +1,6 @@
 package com.insidehealthgt.hms.entity
 
+import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -7,8 +8,10 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.hibernate.annotations.SQLRestriction
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -108,4 +111,17 @@ class MedicalOrder(
     @JoinColumn(name = "inventory_item_id")
     var inventoryItem: InventoryItem? = null,
 
-) : BaseEntity()
+    // Lab provider for LABORATORIOS orders. Shared catalog reference — no cascade.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lab_provider_id")
+    var labProvider: LabProvider? = null,
+
+    // Owned line items for LABORATORIOS orders; each snapshots provider-test pricing.
+    @OneToMany(mappedBy = "medicalOrder", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    var labTests: MutableList<MedicalOrderLabTest> = mutableListOf(),
+
+) : BaseEntity() {
+
+    /** Sum of the snapshotted line sales prices — the billable total for a lab order. */
+    fun labTotal(): BigDecimal = labTests.sumOf { it.salesPrice }
+}

@@ -1,7 +1,7 @@
 -- ============================================================================
 -- SEED FILE 07: Patient Charges, Invoices
 -- ============================================================================
--- SEED-BUNDLE-VERSION: 2026-05-29d (see R__seed_01 header for the rule)
+-- SEED-BUNDLE-VERSION: 2026-06-03b (see R__seed_01 header for the rule)
 
 SET session_replication_role = replica;
 
@@ -161,18 +161,21 @@ LEFT JOIN inventory_items ii ON mo.inventory_item_id = ii.id
 WHERE ma.status = 'GIVEN' AND ma.deleted_at IS NULL AND mo.deleted_at IS NULL;
 
 -- ============================================================================
--- LAB CHARGES (one per LABORATORIOS medical order)
+-- LAB CHARGES (one per lab test line — every billed test is itemized, matching
+-- BillingService.createChargeFromLabOrder; provider-line model, no inventory item)
 -- ============================================================================
-INSERT INTO patient_charges (admission_id, charge_type, description, quantity, unit_price, total_amount, charge_date, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LAB', 'Laboratorio: ' || COALESCE(mo.medication, mo.observations),
-  1, COALESCE(ii.price, 0), COALESCE(ii.price, 0),
-  mo.start_date, ii.id,
+INSERT INTO patient_charges (admission_id, charge_type, description, quantity, unit_price, total_amount, charge_date, created_at, updated_at, created_by)
+SELECT a.id, 'LAB',
+  'Laboratorio ' || COALESCE(prov.name, '') || ': ' || molt.display_name,
+  1, molt.sales_price, molt.sales_price,
+  mo.start_date,
   a.admission_date + INTERVAL '2 hours', a.admission_date + INTERVAL '2 hours',
   (SELECT id FROM users WHERE username = 'admin')
-FROM medical_orders mo
+FROM medical_order_lab_tests molt
+JOIN medical_orders mo ON molt.medical_order_id = mo.id
 JOIN admissions a ON mo.admission_id = a.id
-LEFT JOIN inventory_items ii ON mo.inventory_item_id = ii.id
-WHERE mo.category = 'LABORATORIOS' AND mo.deleted_at IS NULL;
+LEFT JOIN lab_providers prov ON mo.lab_provider_id = prov.id
+WHERE mo.category = 'LABORATORIOS' AND mo.deleted_at IS NULL AND molt.deleted_at IS NULL;
 
 -- ============================================================================
 -- SERVICE CHARGES (one per psychotherapy activity)

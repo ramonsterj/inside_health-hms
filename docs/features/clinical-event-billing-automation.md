@@ -101,6 +101,18 @@ Automatically generate billing charges and inventory deductions when clinical ev
 - Orders without a linked inventory item generate no automatic charge (log info message).
 - Orders that are rejected (`NO_AUTORIZADO`) never generate a charge. See the medical order workflow states feature in `medical-psychiatric-record.md` for the full state model.
 
+> **Lab line-total path (V123–V126).** A `LABORATORIOS` order created against the provider catalog
+> (`labProviderId` + ≥1 `labProviderTestIds`) no longer bills from a single `inventoryItem.unitPrice`.
+> On authorization, `MedicalOrderService.publishBillingEventIfNeeded` detects the lab lines and
+> publishes a **`LabOrderAuthorizedEvent`** (provider name + per-line `displayName`/`cost`/`salesPrice`
+> snapshots + `lineTotal`) instead of `MedicalOrderAuthorizedEvent`. `BillingEventListener.handleLabOrderAuthorized`
+> (`AFTER_COMMIT` / `REQUIRES_NEW`) calls `BillingService.createChargeFromLabOrder`, which creates exactly
+> **one** `ChargeType.LAB` `PatientCharge` with `unitPrice = totalAmount = Σ line sales prices`,
+> `quantity = 1`, `inventoryItem = null`, and a description of `Laboratorios - <provider>: <test names>`.
+> A zero/empty-line guard prevents a garbage charge. The line **cost** snapshots are retained for margin
+> reporting. Legacy lab orders (single `inventoryItem`, no lines) keep the `MedicalOrderAuthorizedEvent`
+> path above unchanged. See `docs/features/laboratory-orders-with-providers.md`.
+
 ### Phase 4: Procedure Admission Types → Billing + Inventory
 
 - When an admission of type `ELECTROSHOCK_THERAPY` or `KETAMINE_INFUSION` is created:

@@ -63,6 +63,7 @@
     "nursingKardex": "Nursing Kardex",
     "bedOccupancy": "Bed Occupancy",
     "medicalOrdersByState": "Medical Orders by State",
+    "labCatalog": "Lab Catalog",
     "users": "Users",
     "roles": "Roles",
     "triageCodes": "Triage Codes",
@@ -848,6 +849,54 @@
         },
         "schedule": {
           "max": "Schedule must be at most 255 characters"
+        },
+        "labProvider": {
+          "required": "A lab provider is required for laboratory orders"
+        },
+        "labTests": {
+          "required": "Select at least one test for laboratory orders"
+        }
+      }
+    },
+    "lab": {
+      "provider": {
+        "name": {
+          "required": "Provider name is required",
+          "max": "Provider name must be at most 150 characters"
+        },
+        "code": {
+          "max": "Provider code must be at most 50 characters"
+        }
+      },
+      "test": {
+        "name": {
+          "required": "Test name is required",
+          "max": "Test name must be at most 200 characters"
+        }
+      },
+      "providerTest": {
+        "labTest": {
+          "required": "Select a canonical test"
+        },
+        "displayName": {
+          "max": "Display name must be at most 200 characters"
+        },
+        "cost": {
+          "invalid": "Cost must be a number",
+          "min": "Cost must not be negative"
+        },
+        "salesPrice": {
+          "invalid": "Sales price must be a number",
+          "positive": "Sales price must be greater than zero"
+        }
+      },
+      "panel": {
+        "name": {
+          "required": "Panel name is required",
+          "max": "Panel name must be at most 200 characters"
+        },
+        "tests": {
+          "required": "Select at least one test"
         }
       }
     },
@@ -1728,7 +1777,8 @@
           "actions": "Actions"
         },
         "openAdmission": "Open Admission",
-        "empty": "No medical orders match the current filters."
+        "empty": "No medical orders match the current filters.",
+        "labTestCount": "{count} test(s)"
       },
       "routes": {
         "ORAL": "Oral",
@@ -1751,7 +1801,10 @@
         "frequency": "Frequency",
         "schedule": "Schedule",
         "observations": "Observations",
-        "inventoryItem": "Billable supply / service"
+        "inventoryItem": "Billable supply / service",
+        "labProvider": "Lab provider",
+        "labTests": "Tests",
+        "labPanel": "Apply panel"
       },
       "placeholders": {
         "medication": "Medication name",
@@ -1759,7 +1812,15 @@
         "frequency": "e.g., every 8 hours, 3 times a day",
         "schedule": "e.g., 8am, 4pm, 12am",
         "observations": "Special instructions, precautions...",
-        "inventoryItem": "Select item for billing/inventory tracking"
+        "inventoryItem": "Select item for billing/inventory tracking",
+        "labProvider": "Select a provider",
+        "labTests": "Select one or more tests",
+        "labPanel": "Select a panel to pre-fill tests"
+      },
+      "lab": {
+        "applyPanel": "Apply panel",
+        "unmatchedNotice": "{provider} does not offer: {tests}. Order these separately from another provider.",
+        "editLockedNotice": "Provider and tests can no longer be changed — this order has already been authorized and billed."
       },
       "documents": {
         "title": "Attachments",
@@ -1790,6 +1851,71 @@
       "MISSED": "Missed",
       "REFUSED": "Refused",
       "HELD": "Held"
+    }
+  },
+  "lab": {
+    "catalog": {
+      "title": "Lab Catalog",
+      "tabs": {
+        "providers": "Providers",
+        "tests": "Canonical Tests",
+        "providerTests": "Provider Catalog",
+        "panels": "Panels"
+      }
+    },
+    "provider": {
+      "new": "New Provider",
+      "edit": "Edit Provider",
+      "name": "Name",
+      "code": "Code",
+      "active": "Active",
+      "empty": "No providers yet.",
+      "created": "Provider created.",
+      "updated": "Provider updated.",
+      "deleted": "Provider deleted.",
+      "confirmDelete": "Delete this lab provider?"
+    },
+    "test": {
+      "new": "New Test",
+      "edit": "Edit Test",
+      "name": "Name",
+      "active": "Active",
+      "empty": "No canonical tests yet.",
+      "created": "Test created.",
+      "updated": "Test updated.",
+      "deleted": "Test deleted.",
+      "confirmDelete": "Delete this canonical test?"
+    },
+    "providerTest": {
+      "new": "Add Test",
+      "edit": "Edit Test",
+      "selectProvider": "Select a provider",
+      "selectTest": "Select a canonical test",
+      "canonicalTest": "Canonical test",
+      "displayName": "Display name",
+      "displayNamePlaceholder": "Defaults to the canonical name",
+      "cost": "Cost",
+      "salesPrice": "Sales price",
+      "active": "Active",
+      "empty": "This provider has no tests yet.",
+      "created": "Provider test created.",
+      "updated": "Provider test updated.",
+      "deleted": "Provider test deleted.",
+      "confirmDelete": "Delete this provider test? Existing orders keep their snapshotted prices."
+    },
+    "panel": {
+      "new": "New Panel",
+      "edit": "Edit Panel",
+      "name": "Name",
+      "active": "Active",
+      "tests": "Canonical tests",
+      "testsPlaceholder": "Select the tests in this panel",
+      "testCount": "Tests",
+      "empty": "No panels yet.",
+      "created": "Panel created.",
+      "updated": "Panel updated.",
+      "deleted": "Panel deleted.",
+      "confirmDelete": "Delete this panel?"
     }
   },
   "psychotherapy": {

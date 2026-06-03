@@ -77,7 +77,18 @@ All entities inherit from `BaseEntity` (providing `id`, `createdAt`, `updatedAt`
 |--------|-------|------------|---------------|
 | **ClinicalHistory** | `clinical_histories` | 21 TEXT fields (reasonForAdmission, historyOfPresentIllness, psychiatricHistory, medicalHistory, familyHistory, etc.) | OneToOne → Admission |
 | **ProgressNote** | `progress_notes` | `subjectiveData`, `objectiveData`, `analysis`, `actionPlans` (SOAP format) | ManyToOne → Admission |
-| **MedicalOrder** | `medical_orders` | `category`, `startDate`, `endDate`, `medication`, `dosage`, `route`, `frequency`, `schedule`, `observations`, `status`, `discontinuedAt`, `discontinuedBy` | ManyToOne → Admission, InventoryItem (optional) |
+| **MedicalOrder** | `medical_orders` | `category`, `startDate`, `endDate`, `medication`, `dosage`, `route`, `frequency`, `schedule`, `observations`, `status`, `discontinuedAt`, `discontinuedBy` | ManyToOne → Admission, InventoryItem (optional), LabProvider (optional, `LABORATORIOS` only); OneToMany → MedicalOrderLabTest (lab line items) |
+
+**Laboratory Catalog (provider-aware lab orders):**
+
+| Entity | Table | Key Fields | Relationships |
+|--------|-------|------------|---------------|
+| **LabProvider** | `lab_providers` | `name`, `code`, `active` | None (seed: CLONY, Hospital Herrera Llerandi) |
+| **LabTest** | `lab_tests` | `name`, `active` | None (canonical test concept) |
+| **LabProviderTest** | `lab_provider_tests` | `displayName`, `cost`, `salesPrice`, `active` | ManyToOne → LabProvider, LabTest — per-provider name/pricing for a canonical test; `UNIQUE(provider, test)` among non-deleted |
+| **LabPanel** | `lab_panels` | `name`, `active` | OneToMany → LabPanelItem (preset of canonical tests) |
+| **LabPanelItem** | `lab_panel_items` | — | ManyToOne → LabPanel, LabTest |
+| **MedicalOrderLabTest** | `medical_order_lab_tests` | `displayName`, `cost`, `salesPrice` (all **snapshots**) | ManyToOne → MedicalOrder; FK ids → LabProviderTest, LabTest — line item; catalog edits never mutate a recorded line (AC12) |
 
 **Psychotherapy:**
 
@@ -1773,6 +1784,11 @@ This architecture provides a solid, secure, and scalable foundation for building
 **Maintained By**: [Your Name/Team]
 
 **Changelog**:
+- v1.10: **Laboratory orders with providers (V123–V126)**
+  - Added the Laboratory Catalog entities (LabProvider, LabTest, LabProviderTest, LabPanel, LabPanelItem, MedicalOrderLabTest) to Backend Entities
+  - Recorded MedicalOrder's new optional `labProvider` relationship and `labTests` line collection (`LABORATORIOS` only)
+  - **Billing path divergence**: a `LABORATORIOS` order no longer bills from a single `InventoryItem.unitPrice`. On authorization, `MedicalOrderService.publishBillingEventIfNeeded` emits a `LabOrderAuthorizedEvent` (instead of `MedicalOrderAuthorizedEvent`) carrying the snapshotted line detail + summed total; `BillingService.createChargeFromLabOrder` (AFTER_COMMIT / REQUIRES_NEW) creates **one `ChargeType.LAB` `PatientCharge` per test line**, itemized at each line's snapshotted `salesPrice` (Σ = requisition total, zero-total guarded). The legacy single-`inventoryItem` `MedicalOrderAuthorizedEvent` path is retained only for `REFERENCIAS_MEDICAS` / `PRUEBAS_PSICOMETRICAS`.
+  - Two new permissions: `lab-catalog:read` (ADMIN/DOCTOR/RESIDENT_DOCTOR) and `lab-catalog:manage` (ADMIN)
 - v1.9: **Clinical event billing automation sync**
   - Added MedicationAdministration entity to Backend Entities (30 entities total)
   - Updated MedicalOrder with inventoryItem relationship

@@ -70,6 +70,12 @@ const router = createRouter({
           meta: { requiresPermission: 'medical-order:read' }
         },
         {
+          path: 'lab/catalog',
+          name: 'lab-catalog',
+          component: () => import('@/views/lab/LabCatalogView.vue'),
+          meta: { requiresPermission: 'lab-catalog:read' }
+        },
+        {
           path: 'profile',
           name: 'profile',
           component: () => import('@/views/ProfileView.vue')

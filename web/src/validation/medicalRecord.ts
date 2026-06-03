@@ -72,41 +72,62 @@ const administrationRouteValues = [
 ] as const
 
 // Medical Order schema
-export const medicalOrderSchema = z.object({
-  category: z.enum(medicalOrderCategoryValues, {
-    required_error: 'validation.medicalRecord.medicalOrder.category.required',
-    invalid_type_error: 'validation.medicalRecord.medicalOrder.category.required'
-  }),
-  startDate: z.string().min(1, 'validation.medicalRecord.medicalOrder.startDate.required'),
-  endDate: z.string().optional().or(z.literal('')),
-  medication: z
-    .string()
-    .max(255, 'validation.medicalRecord.medicalOrder.medication.max')
-    .optional()
-    .or(z.literal('')),
-  dosage: z
-    .string()
-    .max(100, 'validation.medicalRecord.medicalOrder.dosage.max')
-    .optional()
-    .or(z.literal('')),
-  route: z
-    .enum(administrationRouteValues, {
-      invalid_type_error: 'validation.medicalRecord.medicalOrder.route.invalid'
-    })
-    .nullable()
-    .optional(),
-  frequency: z
-    .string()
-    .max(100, 'validation.medicalRecord.medicalOrder.frequency.max')
-    .optional()
-    .or(z.literal('')),
-  schedule: z
-    .string()
-    .max(100, 'validation.medicalRecord.medicalOrder.schedule.max')
-    .optional()
-    .or(z.literal('')),
-  observations: z.string().optional().or(z.literal('')),
-  inventoryItemId: z.number().int().positive().optional().nullable()
-})
+export const medicalOrderSchema = z
+  .object({
+    category: z.enum(medicalOrderCategoryValues, {
+      required_error: 'validation.medicalRecord.medicalOrder.category.required',
+      invalid_type_error: 'validation.medicalRecord.medicalOrder.category.required'
+    }),
+    startDate: z.string().min(1, 'validation.medicalRecord.medicalOrder.startDate.required'),
+    endDate: z.string().optional().or(z.literal('')),
+    medication: z
+      .string()
+      .max(255, 'validation.medicalRecord.medicalOrder.medication.max')
+      .optional()
+      .or(z.literal('')),
+    dosage: z
+      .string()
+      .max(100, 'validation.medicalRecord.medicalOrder.dosage.max')
+      .optional()
+      .or(z.literal('')),
+    route: z
+      .enum(administrationRouteValues, {
+        invalid_type_error: 'validation.medicalRecord.medicalOrder.route.invalid'
+      })
+      .nullable()
+      .optional(),
+    frequency: z
+      .string()
+      .max(100, 'validation.medicalRecord.medicalOrder.frequency.max')
+      .optional()
+      .or(z.literal('')),
+    schedule: z
+      .string()
+      .max(100, 'validation.medicalRecord.medicalOrder.schedule.max')
+      .optional()
+      .or(z.literal('')),
+    observations: z.string().optional().or(z.literal('')),
+    inventoryItemId: z.number().int().positive().optional().nullable(),
+    // Lab fields — required only when category === LABORATORIOS (enforced in superRefine).
+    labProviderId: z.number().int().positive().optional().nullable(),
+    labProviderTestIds: z.array(z.number().int().positive()).optional().nullable()
+  })
+  .superRefine((data, ctx) => {
+    if (data.category !== MedicalOrderCategory.LABORATORIOS) return
+    if (data.labProviderId == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['labProviderId'],
+        message: 'validation.medicalRecord.medicalOrder.labProvider.required'
+      })
+    }
+    if (!data.labProviderTestIds || data.labProviderTestIds.length < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['labProviderTestIds'],
+        message: 'validation.medicalRecord.medicalOrder.labTests.required'
+      })
+    }
+  })
 
 export type MedicalOrderFormData = z.infer<typeof medicalOrderSchema>

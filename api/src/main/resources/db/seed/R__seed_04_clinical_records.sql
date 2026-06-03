@@ -2,7 +2,7 @@
 -- SEED FILE 04: Clínical Histories, Progress Notes, Medical Orders
 -- ============================================================================
 -- Last updated: 2026-05-13 (medical-order drug lookups switched to workbook SKUs)
--- SEED-BUNDLE-VERSION: 2026-05-29d (see R__seed_01 header for the rule)
+-- SEED-BUNDLE-VERSION: 2026-06-03b (see R__seed_01 header for the rule)
 --
 -- Legacy V052 drug catalog → workbook SKU remap (V110 hard-deletes V052; V111
 -- loads the workbook). Reviewer can audit each substitution here:
@@ -465,8 +465,8 @@ SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Quetiapina 300mg', '300mg'
 INSERT INTO medical_orders (admission_id, category, start_date, medication, dosage, route, frequency, schedule, observations, status, inventory_item_id, created_at, updated_at, created_by)
 SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Clonazepam 2mg', '2mg', 'ORAL', 'PRN', 'SOS', 'Para ansiedad severa o agitación, max 2 dosis/dia', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE kind = 'DRUG' AND sku = 'A27'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Juan' AND p.last_name = 'Pérez González' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
-INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso completos', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE name = 'KIT DE INGRESO'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Juan' AND p.last_name = 'Pérez González' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
+INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, lab_provider_id, created_at, updated_at, created_by)
+SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso completos', 'AUTORIZADO', (SELECT id FROM lab_providers WHERE code = 'CLONY' AND deleted_at IS NULL), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Juan' AND p.last_name = 'Pérez González' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
 INSERT INTO medical_orders (admission_id, category, start_date, observations, status, created_at, updated_at, created_by)
 SELECT a.id, 'DIETA', a.admission_date::DATE, 'Dieta regular, 3 comidas principales y 2 meriendas', 'ACTIVA', a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Juan' AND p.last_name = 'Pérez González' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
@@ -487,11 +487,11 @@ SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Biperiden 2mg', '2mg', 'OR
 INSERT INTO medical_orders (admission_id, category, start_date, medication, dosage, route, frequency, schedule, observations, status, inventory_item_id, created_at, updated_at, created_by)
 SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Midazolam 15mg', '15mg', 'IM', 'PRN', 'SOS', 'Para agitación severa, max 2 dosis/dia', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE kind = 'DRUG' AND sku = 'D44'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Maria' AND p.last_name = 'Santos López' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
-INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso completos', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE name = 'KIT DE INGRESO'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Maria' AND p.last_name = 'Santos López' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
+INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, lab_provider_id, created_at, updated_at, created_by)
+SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso completos', 'AUTORIZADO', (SELECT id FROM lab_providers WHERE code = 'CLONY' AND deleted_at IS NULL), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Maria' AND p.last_name = 'Santos López' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
-INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LABORATORIOS', (a.admission_date + INTERVAL '1 day')::DATE, 'T3-T4-TSH', 'Perfil tiroideo para descartar causa orgánica', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE name = 'T3-T4, TSH'), a.admission_date + INTERVAL '1 day', a.admission_date + INTERVAL '1 day', a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Maria' AND p.last_name = 'Santos López' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
+INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, lab_provider_id, created_at, updated_at, created_by)
+SELECT a.id, 'LABORATORIOS', (a.admission_date + INTERVAL '1 day')::DATE, 'T3-T4-TSH', 'Perfil tiroideo para descartar causa orgánica', 'AUTORIZADO', (SELECT id FROM lab_providers WHERE code = 'CLONY' AND deleted_at IS NULL), a.admission_date + INTERVAL '1 day', a.admission_date + INTERVAL '1 day', a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Maria' AND p.last_name = 'Santos López' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
 INSERT INTO medical_orders (admission_id, category, start_date, observations, status, created_at, updated_at, created_by)
 SELECT a.id, 'DIETA', a.admission_date::DATE, 'Dieta regular, 3 comidas y 2 meriendas', 'ACTIVA', a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Maria' AND p.last_name = 'Santos López' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
@@ -509,14 +509,14 @@ SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Diazepam 10mg', '10mg', 'I
 INSERT INTO medical_orders (admission_id, category, start_date, medication, dosage, route, frequency, schedule, observations, status, inventory_item_id, created_at, updated_at, created_by)
 SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Pregabalina 75mg', '75mg', 'ORAL', 'Cada 12 horas', '08:00, 20:00', 'Para ansiedad y neuropatía por abstinencia', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE kind = 'DRUG' AND sku = 'A129'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Pedro' AND p.last_name = 'García Hernández' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
-INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso completos', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE name = 'KIT DE INGRESO'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Pedro' AND p.last_name = 'García Hernández' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
+INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, lab_provider_id, created_at, updated_at, created_by)
+SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso completos', 'AUTORIZADO', (SELECT id FROM lab_providers WHERE code = 'CLONY' AND deleted_at IS NULL), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Pedro' AND p.last_name = 'García Hernández' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
-INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'PANEL DE DROGAS', 'Panel toxicológico en orina', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE name = 'PANEL DE DROGAS'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Pedro' AND p.last_name = 'García Hernández' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
+INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, lab_provider_id, created_at, updated_at, created_by)
+SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'PANEL DE DROGAS', 'Panel toxicológico en orina', 'AUTORIZADO', (SELECT id FROM lab_providers WHERE code = 'CLONY' AND deleted_at IS NULL), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Pedro' AND p.last_name = 'García Hernández' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
-INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'PRUEBAS HEPÁTICAS TGO-TGP-GGT', 'Evaluar función hepática por hepatopatía alcohólica', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE name = 'PRUEBAS HEPÁTICAS TGO-TGP-GGT'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Pedro' AND p.last_name = 'García Hernández' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
+INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, lab_provider_id, created_at, updated_at, created_by)
+SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'PRUEBAS HEPÁTICAS TGO-TGP-GGT', 'Evaluar función hepática por hepatopatía alcohólica', 'AUTORIZADO', (SELECT id FROM lab_providers WHERE code = 'CLONY' AND deleted_at IS NULL), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Pedro' AND p.last_name = 'García Hernández' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
 INSERT INTO medical_orders (admission_id, category, start_date, observations, status, created_at, updated_at, created_by)
 SELECT a.id, 'DIETA', a.admission_date::DATE, 'Dieta diabética, 3 comidas y 2 meriendas. Control de glucosa capilar antes de cada comida.', 'ACTIVA', a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Pedro' AND p.last_name = 'García Hernández' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
@@ -534,8 +534,8 @@ SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Biperiden 2mg', '2mg', 'OR
 INSERT INTO medical_orders (admission_id, category, start_date, medication, dosage, route, frequency, schedule, observations, status, inventory_item_id, created_at, updated_at, created_by)
 SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Clonazepam 2mg', '2mg', 'ORAL', 'PRN', 'SOS', 'Para ansiedad o agitación, max 2 dosis/dia', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE kind = 'DRUG' AND sku = 'A28'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Ana' AND p.last_name = 'Martínez Ruiz' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
-INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso completos', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE name = 'KIT DE INGRESO'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Ana' AND p.last_name = 'Martínez Ruiz' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
+INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, lab_provider_id, created_at, updated_at, created_by)
+SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso completos', 'AUTORIZADO', (SELECT id FROM lab_providers WHERE code = 'CLONY' AND deleted_at IS NULL), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Ana' AND p.last_name = 'Martínez Ruiz' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
 INSERT INTO medical_orders (admission_id, category, start_date, observations, status, created_at, updated_at, created_by)
 SELECT a.id, 'DIETA', a.admission_date::DATE, 'Dieta regular, 3 comidas y 2 meriendas', 'ACTIVA', a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Ana' AND p.last_name = 'Martínez Ruiz' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
@@ -553,11 +553,11 @@ SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Quetiapina 100mg', '100mg'
 INSERT INTO medical_orders (admission_id, category, start_date, medication, dosage, route, frequency, schedule, observations, status, inventory_item_id, created_at, updated_at, created_by)
 SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Biperiden 2mg', '2mg', 'ORAL', 'Cada 12 horas', '08:00, 20:00', 'Prevencion de efectos extrapiramidales', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE kind = 'DRUG' AND sku = 'A14'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Luis' AND p.last_name = 'Morales Castro' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
-INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso completos', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE name = 'KIT DE INGRESO'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Luis' AND p.last_name = 'Morales Castro' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
+INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, lab_provider_id, created_at, updated_at, created_by)
+SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso completos', 'AUTORIZADO', (SELECT id FROM lab_providers WHERE code = 'CLONY' AND deleted_at IS NULL), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Luis' AND p.last_name = 'Morales Castro' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
-INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'PANEL DE DROGAS', 'Panel toxicológico en orina', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE name = 'PANEL DE DROGAS'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Luis' AND p.last_name = 'Morales Castro' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
+INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, lab_provider_id, created_at, updated_at, created_by)
+SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'PANEL DE DROGAS', 'Panel toxicológico en orina', 'AUTORIZADO', (SELECT id FROM lab_providers WHERE code = 'CLONY' AND deleted_at IS NULL), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Luis' AND p.last_name = 'Morales Castro' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
 INSERT INTO medical_orders (admission_id, category, start_date, observations, status, created_at, updated_at, created_by)
 SELECT a.id, 'DIETA', a.admission_date::DATE, 'Dieta regular, 3 comidas y 2 meriendas', 'ACTIVA', a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Luis' AND p.last_name = 'Morales Castro' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
@@ -572,8 +572,8 @@ SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Sertralina 50mg', '50mg', 
 INSERT INTO medical_orders (admission_id, category, start_date, medication, dosage, route, frequency, schedule, observations, status, inventory_item_id, created_at, updated_at, created_by)
 SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Clonazepam 2mg', '2mg', 'ORAL', 'Cada noche', '21:00', 'Para insomnio y pesadillas asociadas a TEPT', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE kind = 'DRUG' AND sku = 'A27'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Carmen' AND p.last_name = 'Flores Mejía' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
-INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso completos', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE name = 'KIT DE INGRESO'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Carmen' AND p.last_name = 'Flores Mejía' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
+INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, lab_provider_id, created_at, updated_at, created_by)
+SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso completos', 'AUTORIZADO', (SELECT id FROM lab_providers WHERE code = 'CLONY' AND deleted_at IS NULL), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Carmen' AND p.last_name = 'Flores Mejía' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
 INSERT INTO medical_orders (admission_id, category, start_date, observations, status, created_at, updated_at, created_by)
 SELECT a.id, 'DIETA', a.admission_date::DATE, 'Dieta regular, 3 comidas y 2 meriendas', 'ACTIVA', a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Carmen' AND p.last_name = 'Flores Mejía' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
@@ -585,11 +585,11 @@ SELECT a.id, 'CUIDADOS_ESPECIALES', a.admission_date::DATE, 'Precauciones suicid
 INSERT INTO medical_orders (admission_id, category, start_date, medication, dosage, route, frequency, schedule, observations, status, inventory_item_id, created_at, updated_at, created_by)
 SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Quetiapina 300mg', '300mg', 'ORAL', 'Cada noche', '21:00', 'Estabilizador para episodio depresivo bipolar', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE kind = 'DRUG' AND sku = 'A150'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Roberto' AND p.last_name = 'Díaz Vargas' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
-INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso completos', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE name = 'KIT DE INGRESO'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Roberto' AND p.last_name = 'Díaz Vargas' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
+INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, lab_provider_id, created_at, updated_at, created_by)
+SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso completos', 'AUTORIZADO', (SELECT id FROM lab_providers WHERE code = 'CLONY' AND deleted_at IS NULL), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Roberto' AND p.last_name = 'Díaz Vargas' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
-INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LABORATORIOS', (a.admission_date + INTERVAL '1 day')::DATE, 'T3-T4-TSH', 'Perfil tiroideo, descartar hipotiroidismo', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE name = 'T3-T4, TSH'), a.admission_date + INTERVAL '1 day', a.admission_date + INTERVAL '1 day', a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Roberto' AND p.last_name = 'Díaz Vargas' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
+INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, lab_provider_id, created_at, updated_at, created_by)
+SELECT a.id, 'LABORATORIOS', (a.admission_date + INTERVAL '1 day')::DATE, 'T3-T4-TSH', 'Perfil tiroideo, descartar hipotiroidismo', 'AUTORIZADO', (SELECT id FROM lab_providers WHERE code = 'CLONY' AND deleted_at IS NULL), a.admission_date + INTERVAL '1 day', a.admission_date + INTERVAL '1 day', a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Roberto' AND p.last_name = 'Díaz Vargas' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
 INSERT INTO medical_orders (admission_id, category, start_date, observations, status, created_at, updated_at, created_by)
 SELECT a.id, 'DIETA', a.admission_date::DATE, 'Dieta regular baja en sodio (paciente con condición cardiaca)', 'ACTIVA', a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Roberto' AND p.last_name = 'Díaz Vargas' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
@@ -601,8 +601,8 @@ SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Sertralina 50mg', '50mg', 
 INSERT INTO medical_orders (admission_id, category, start_date, medication, dosage, route, frequency, schedule, observations, status, inventory_item_id, created_at, updated_at, created_by)
 SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Quetiapina 100mg', '100mg', 'ORAL', 'Cada noche', '21:00', 'Para insomnio y estabilización emocional', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE kind = 'DRUG' AND sku = 'A144'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Sofia' AND p.last_name = 'Ramírez Paz' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
-INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso completos', 'AUTORIZADO', (SELECT id FROM inventory_items WHERE name = 'KIT DE INGRESO'), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Sofia' AND p.last_name = 'Ramírez Paz' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
+INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, lab_provider_id, created_at, updated_at, created_by)
+SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso completos', 'AUTORIZADO', (SELECT id FROM lab_providers WHERE code = 'CLONY' AND deleted_at IS NULL), a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Sofia' AND p.last_name = 'Ramírez Paz' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
 INSERT INTO medical_orders (admission_id, category, start_date, observations, status, created_at, updated_at, created_by)
 SELECT a.id, 'DIETA', a.admission_date::DATE, 'Dieta regular, 3 comidas y 2 meriendas', 'ACTIVA', a.admission_date, a.admission_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Sofia' AND p.last_name = 'Ramírez Paz' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
@@ -621,8 +621,8 @@ SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Olanzapina 5mg', '5mg', 'O
 INSERT INTO medical_orders (admission_id, category, start_date, medication, dosage, route, frequency, schedule, observations, status, discontinued_at, discontinued_by, inventory_item_id, created_at, updated_at, created_by)
 SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Biperiden 2mg', '2mg', 'ORAL', 'Cada 12 horas', '08:00, 20:00', 'Prevencion de extrapiramidales', 'DESCONTINUADO', a.discharge_date, a.treating_physician_id, (SELECT id FROM inventory_items WHERE kind = 'DRUG' AND sku = 'A14'), a.admission_date, a.discharge_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Miguel' AND p.last_name = 'Torres Luna' AND a.status = 'DISCHARGED';
 
-INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, discontinued_at, discontinued_by, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso', 'DESCONTINUADO', a.discharge_date, a.treating_physician_id, (SELECT id FROM inventory_items WHERE name = 'KIT DE INGRESO'), a.admission_date, a.discharge_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Miguel' AND p.last_name = 'Torres Luna' AND a.status = 'DISCHARGED';
+INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, discontinued_at, discontinued_by, lab_provider_id, created_at, updated_at, created_by)
+SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso', 'DESCONTINUADO', a.discharge_date, a.treating_physician_id, (SELECT id FROM lab_providers WHERE code = 'CLONY' AND deleted_at IS NULL), a.admission_date, a.discharge_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Miguel' AND p.last_name = 'Torres Luna' AND a.status = 'DISCHARGED';
 
 INSERT INTO medical_orders (admission_id, category, start_date, observations, status, discontinued_at, discontinued_by, created_at, updated_at, created_by)
 SELECT a.id, 'DIETA', a.admission_date::DATE, 'Dieta regular', 'DESCONTINUADO', a.discharge_date, a.treating_physician_id, a.admission_date, a.discharge_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Miguel' AND p.last_name = 'Torres Luna' AND a.status = 'DISCHARGED';
@@ -637,11 +637,11 @@ SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Sertralina 50mg', '50mg', 
 INSERT INTO medical_orders (admission_id, category, start_date, medication, dosage, route, frequency, schedule, observations, status, discontinued_at, discontinued_by, inventory_item_id, created_at, updated_at, created_by)
 SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Clonazepam 2mg', '2mg', 'ORAL', 'PRN', 'SOS', 'Para crisis de pánico', 'DESCONTINUADO', a.discharge_date, a.treating_physician_id, (SELECT id FROM inventory_items WHERE kind = 'DRUG' AND sku = 'A27'), a.admission_date, a.discharge_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Elena' AND p.last_name = 'Sánchez Rivas' AND a.status = 'DISCHARGED';
 
-INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, discontinued_at, discontinued_by, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso', 'DESCONTINUADO', a.discharge_date, a.treating_physician_id, (SELECT id FROM inventory_items WHERE name = 'KIT DE INGRESO'), a.admission_date, a.discharge_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Elena' AND p.last_name = 'Sánchez Rivas' AND a.status = 'DISCHARGED';
+INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, discontinued_at, discontinued_by, lab_provider_id, created_at, updated_at, created_by)
+SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso', 'DESCONTINUADO', a.discharge_date, a.treating_physician_id, (SELECT id FROM lab_providers WHERE code = 'CLONY' AND deleted_at IS NULL), a.admission_date, a.discharge_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Elena' AND p.last_name = 'Sánchez Rivas' AND a.status = 'DISCHARGED';
 
-INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, discontinued_at, discontinued_by, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LABORATORIOS', (a.admission_date + INTERVAL '1 day')::DATE, 'T3-T4-TSH', 'Perfil tiroideo', 'DESCONTINUADO', a.discharge_date, a.treating_physician_id, (SELECT id FROM inventory_items WHERE name = 'T3-T4, TSH'), a.admission_date + INTERVAL '1 day', a.discharge_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Elena' AND p.last_name = 'Sánchez Rivas' AND a.status = 'DISCHARGED';
+INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, discontinued_at, discontinued_by, lab_provider_id, created_at, updated_at, created_by)
+SELECT a.id, 'LABORATORIOS', (a.admission_date + INTERVAL '1 day')::DATE, 'T3-T4-TSH', 'Perfil tiroideo', 'DESCONTINUADO', a.discharge_date, a.treating_physician_id, (SELECT id FROM lab_providers WHERE code = 'CLONY' AND deleted_at IS NULL), a.admission_date + INTERVAL '1 day', a.discharge_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Elena' AND p.last_name = 'Sánchez Rivas' AND a.status = 'DISCHARGED';
 
 INSERT INTO medical_orders (admission_id, category, start_date, observations, status, discontinued_at, discontinued_by, created_at, updated_at, created_by)
 SELECT a.id, 'DIETA', a.admission_date::DATE, 'Dieta regular, evitar cafeína', 'DESCONTINUADO', a.discharge_date, a.treating_physician_id, a.admission_date, a.discharge_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Elena' AND p.last_name = 'Sánchez Rivas' AND a.status = 'DISCHARGED';
@@ -653,11 +653,51 @@ SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Sertralina 50mg', '50mg', 
 INSERT INTO medical_orders (admission_id, category, start_date, medication, dosage, route, frequency, schedule, observations, status, discontinued_at, discontinued_by, inventory_item_id, created_at, updated_at, created_by)
 SELECT a.id, 'MEDICAMENTOS', a.admission_date::DATE, 'Quetiapina 100mg', '100mg', 'ORAL', 'Cada noche', '21:00', 'Coadyuvante para insomnio', 'DESCONTINUADO', a.discharge_date, a.treating_physician_id, (SELECT id FROM inventory_items WHERE kind = 'DRUG' AND sku = 'A144'), a.admission_date, a.discharge_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Francisco' AND p.last_name = 'Mendoza Aguilar' AND a.status = 'DISCHARGED';
 
-INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, discontinued_at, discontinued_by, inventory_item_id, created_at, updated_at, created_by)
-SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso', 'DESCONTINUADO', a.discharge_date, a.treating_physician_id, (SELECT id FROM inventory_items WHERE name = 'KIT DE INGRESO'), a.admission_date, a.discharge_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Francisco' AND p.last_name = 'Mendoza Aguilar' AND a.status = 'DISCHARGED';
+INSERT INTO medical_orders (admission_id, category, start_date, medication, observations, status, discontinued_at, discontinued_by, lab_provider_id, created_at, updated_at, created_by)
+SELECT a.id, 'LABORATORIOS', a.admission_date::DATE, 'KIT DE INGRESO', 'Laboratorios de ingreso', 'DESCONTINUADO', a.discharge_date, a.treating_physician_id, (SELECT id FROM lab_providers WHERE code = 'CLONY' AND deleted_at IS NULL), a.admission_date, a.discharge_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Francisco' AND p.last_name = 'Mendoza Aguilar' AND a.status = 'DISCHARGED';
 
 INSERT INTO medical_orders (admission_id, category, start_date, observations, status, discontinued_at, discontinued_by, created_at, updated_at, created_by)
 SELECT a.id, 'DIETA', a.admission_date::DATE, 'Dieta regular blanda, suplemento nutricional diario', 'DESCONTINUADO', a.discharge_date, a.treating_physician_id, a.admission_date, a.discharge_date, a.treating_physician_id FROM admissions a JOIN patients p ON a.patient_id = p.id WHERE p.first_name = 'Francisco' AND p.last_name = 'Mendoza Aguilar' AND a.status = 'DISCHARGED';
 
+
+-- ============================================================================
+-- STEP 19b: LAB ORDER LINES (provider-line model — no legacy single-item labs)
+-- Each LABORATORIOS order above carries a CLONY lab_provider_id and a `medication`
+-- marker identifying its test set. Snapshot the matching CLONY provider-tests into
+-- medical_order_lab_tests (display_name/cost/sales_price), mirroring what the service
+-- does on create. Markers map to canonical tests; KIT DE INGRESO expands to the
+-- "Laboratorios de ingreso" panel.
+-- ============================================================================
+WITH marker_tests AS (
+    -- KIT DE INGRESO = every canonical test in the "Laboratorios de ingreso" panel
+    SELECT 'KIT DE INGRESO'::text AS marker, t.name AS test_name
+    FROM lab_panels pa
+    JOIN lab_panel_items lpi ON lpi.panel_id = pa.id AND lpi.deleted_at IS NULL
+    JOIN lab_tests t ON t.id = lpi.lab_test_id AND t.deleted_at IS NULL
+    WHERE LOWER(pa.name) = LOWER('Laboratorios de ingreso') AND pa.deleted_at IS NULL
+    UNION ALL
+    SELECT v.marker, v.test_name
+    FROM (VALUES
+        ('T3-T4-TSH', 'T3'),
+        ('T3-T4-TSH', 'T4'),
+        ('T3-T4-TSH', 'TSH'),
+        ('PANEL DE DROGAS', 'Panel de drogas en orina'),
+        ('PRUEBAS HEPÁTICAS TGO-TGP-GGT', 'TGO'),
+        ('PRUEBAS HEPÁTICAS TGO-TGP-GGT', 'TGP')
+    ) AS v(marker, test_name)
+)
+INSERT INTO medical_order_lab_tests (medical_order_id, lab_provider_test_id, lab_test_id, display_name, cost, sales_price, created_at, updated_at, created_by)
+SELECT mo.id, lpt.id, lpt.lab_test_id, lpt.display_name, lpt.cost, lpt.sales_price, mo.created_at, mo.updated_at, mo.created_by
+FROM medical_orders mo
+JOIN marker_tests mt ON mt.marker = mo.medication
+JOIN lab_tests t ON LOWER(t.name) = LOWER(mt.test_name) AND t.deleted_at IS NULL
+JOIN lab_provider_tests lpt
+  ON lpt.lab_test_id = t.id AND lpt.provider_id = mo.lab_provider_id
+  AND lpt.active = TRUE AND lpt.deleted_at IS NULL
+WHERE mo.category = 'LABORATORIOS' AND mo.deleted_at IS NULL
+  AND NOT EXISTS (
+      SELECT 1 FROM medical_order_lab_tests x
+      WHERE x.medical_order_id = mo.id AND x.lab_provider_test_id = lpt.id AND x.deleted_at IS NULL
+  );
 
 SET session_replication_role = DEFAULT;

@@ -14,7 +14,7 @@
 -- repopulate it (we hit this in PR #53). Whenever any R__seed_*.sql is
 -- modified, bump the SEED-BUNDLE-VERSION line below in ALL nine files
 -- (01, 02, 02b, 03, 04, 05, 06, 07, 08) so they re-run together.
--- SEED-BUNDLE-VERSION: 2026-05-29d
+-- SEED-BUNDLE-VERSION: 2026-06-03b
 -- ============================================================================
 
 SET session_replication_role = replica;
@@ -162,11 +162,13 @@ WHERE r.code = 'DOCTOR'
     'vital-sign:read', 'vital-sign:create',
     'psychotherapy-activity:read', 'psychotherapy-category:read',
     'billing:read',
-    'medication-administration:read'
+    'medication-administration:read',
+    'lab-catalog:read'
   )
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
 -- RESIDENT_DOCTOR: clones DOCTOR plus admission:create (V114).
+-- lab-catalog:read is inherited via the DOCTOR clone below (V125).
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT
     (SELECT id FROM roles WHERE code = 'RESIDENT_DOCTOR'),

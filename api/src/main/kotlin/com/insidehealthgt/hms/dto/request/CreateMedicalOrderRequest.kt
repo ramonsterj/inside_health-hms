@@ -34,4 +34,11 @@ data class CreateMedicalOrderRequest(
 
     @field:Positive(message = "Inventory item ID must be positive")
     val inventoryItemId: Long? = null,
+
+    // Lab fields — meaningful only for LABORATORIOS. Category-conditional requiredness is
+    // enforced in MedicalOrderService, not bean validation.
+    @field:Positive(message = "Lab provider ID must be positive")
+    val labProviderId: Long? = null,
+
+    val labProviderTestIds: List<Long>? = null,
 )

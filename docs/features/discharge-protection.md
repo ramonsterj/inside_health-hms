@@ -78,7 +78,7 @@ before this feature.
 | Nursing notes | create / update | ◼ |
 | Vital signs | create / update | ◼ |
 | Medication administration | create | ◼ (`error.medication.admission.discharged`) |
-| Medical orders | **create / update** | ✅ |
+| Medical orders | **create / update** (incl. lab provider + line items) | ✅ |
 | Medical orders | **authorize / emergency-authorize / reject** | ✅ |
 | Medical orders | **mark-in-progress / discontinue** | ✅ |
 | Medical order result documents | **upload / delete** | ✅ |

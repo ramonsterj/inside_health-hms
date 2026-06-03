@@ -4,7 +4,7 @@
 -- Last updated: 2026-05-29 (legacy inventory_items.quantity column was dropped by
 -- V121; non-drug item stock now lands in inventory_warehouse_stock(ADMINISTRACION)
 -- via CTE+RETURNING, mirroring the V120 backfill, instead of the dropped column)
--- SEED-BUNDLE-VERSION: 2026-05-29d (see R__seed_01 header for the rule)
+-- SEED-BUNDLE-VERSION: 2026-06-03b (see R__seed_01 header for the rule)
 
 SET session_replication_role = replica;
 

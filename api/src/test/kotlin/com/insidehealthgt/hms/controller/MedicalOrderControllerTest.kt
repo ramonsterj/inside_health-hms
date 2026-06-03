@@ -66,7 +66,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
     fun `list medical orders returns grouped by category`() {
         createMedicalOrder(MedicalOrderCategory.MEDICAMENTOS, "Medication 1")
         createMedicalOrder(MedicalOrderCategory.MEDICAMENTOS, "Medication 2")
-        createMedicalOrder(MedicalOrderCategory.LABORATORIOS, "Lab test")
+        createMedicalOrder(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Lab test")
 
         mockMvc.perform(
             get("/api/v1/admissions/$admissionId/medical-orders")
@@ -75,7 +75,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.data.orders.MEDICAMENTOS.length()").value(2))
-            .andExpect(jsonPath("$.data.orders.LABORATORIOS.length()").value(1))
+            .andExpect(jsonPath("$.data.orders.REFERENCIAS_MEDICAS.length()").value(1))
     }
 
     // ============ CREATE MEDICAL ORDER TESTS ============
@@ -330,7 +330,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
 
     @Test
     fun `authorize medical order fails for discharged admission`() {
-        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Hemograma")
         dischargeAdmission(admissionId, adminToken)
 
         mockMvc.perform(
@@ -429,7 +429,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
 
     @Test
     fun `medical order includes audit fields`() {
-        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Audit test")
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Audit test")
 
         mockMvc.perform(
             get("/api/v1/admissions/$admissionId/medical-orders/$orderId")
@@ -445,7 +445,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
 
     @Test
     fun `newly created medical order is in SOLICITADO`() {
-        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Hemograma")
 
         mockMvc.perform(
             get("/api/v1/admissions/$admissionId/medical-orders/$orderId")
@@ -460,7 +460,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
     @Test
     fun `admin staff can authorize a SOLICITADO order`() {
         val (_, staffToken) = createAdminStaffUser()
-        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Glicemia")
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Glicemia")
 
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
@@ -509,7 +509,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
     @Test
     fun `cannot authorize an order that is not SOLICITADO`() {
         val (_, staffToken) = createAdminStaffUser()
-        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Glicemia")
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Glicemia")
 
         // First authorize - succeeds
         mockMvc.perform(
@@ -530,7 +530,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
     @Test
     fun `admin staff can reject a SOLICITADO order with reason`() {
         val (staffUser, staffToken) = createAdminStaffUser()
-        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Test")
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Test")
 
         val rejectBody = """{"reason":"Pendiente de cobertura del seguro"}"""
 
@@ -553,7 +553,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
     @Test
     fun `reject with no body is allowed`() {
         val (staffUser, staffToken) = createAdminStaffUser()
-        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Test")
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Test")
 
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/medical-orders/$orderId/reject")
@@ -596,9 +596,9 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `nurse can mark authorized lab order EN_PROCESO`() {
+    fun `nurse can mark an authorized results-bearing order EN_PROCESO`() {
         val (_, staffToken) = createAdminStaffUser()
-        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Hemograma")
 
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
@@ -638,7 +638,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
 
     @Test
     fun `cannot mark in progress when order is not AUTORIZADO`() {
-        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Test")
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Test")
 
         // Order is in SOLICITADO
         mockMvc.perform(
@@ -652,7 +652,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
     @Test
     fun `discontinue blocked from EN_PROCESO`() {
         val (_, staffToken) = createAdminStaffUser()
-        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Test")
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Test")
 
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
@@ -675,7 +675,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
     @Test
     fun `discontinue blocked from terminal NO_AUTORIZADO state`() {
         val (_, staffToken) = createAdminStaffUser()
-        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Test")
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Test")
 
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/medical-orders/$orderId/reject")
@@ -775,8 +775,8 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
     @Test
     fun `cross-admission listing returns orders filtered by status`() {
         val (_, staffToken) = createAdminStaffUser()
-        val solicitadoId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Lab requested")
-        val authorizedId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Lab authorized")
+        val solicitadoId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Lab requested")
+        val authorizedId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Lab authorized")
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/medical-orders/$authorizedId/authorize")
                 .header("Authorization", "Bearer $staffToken"),
@@ -805,7 +805,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
     @Test
     fun `cross-admission listing exposes parent admission status (discharged rows still listed)`() {
         val (_, staffToken) = createAdminStaffUser()
-        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Lab on discharged")
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Lab on discharged")
         dischargeAdmission(admissionId, adminToken)
 
         // The order is still listed (reads are never blocked by discharge) and the row
@@ -884,7 +884,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
     fun `psychologist mark-in-progress on non-psychometric order returns 400`() {
         val (_, staffToken) = createAdminStaffUser()
         val (_, psychTkn) = createPsychologistUser()
-        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Hemograma")
 
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
@@ -927,7 +927,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
     @Test
     fun `psychologist get single non-psychometric order returns 404 not 403`() {
         val (_, psychTkn) = createPsychologistUser()
-        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
+        val orderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Hemograma")
 
         mockMvc.perform(
             get("/api/v1/admissions/$admissionId/medical-orders/$orderId")
@@ -937,16 +937,16 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `psychologist listing with category filter for labs returns empty`() {
+    fun `psychologist listing with an out-of-scope category filter returns empty`() {
         // Out-of-scope category filter must intersect to nothing rather than silently
         // returning psychometric orders — that would break the filter contract.
         val (_, psychTkn) = createPsychologistUser()
         createMedicalOrderAndGetId(MedicalOrderCategory.PRUEBAS_PSICOMETRICAS, "MMPI")
-        val labOrderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
+        val labOrderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Referencia")
 
         mockMvc.perform(
             get("/api/v1/medical-orders")
-                .param("category", "LABORATORIOS")
+                .param("category", "REFERENCIAS_MEDICAS")
                 .header("Authorization", "Bearer $psychTkn"),
         )
             .andExpect(status().isOk)
@@ -967,7 +967,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
             MedicalOrderCategory.PRUEBAS_PSICOMETRICAS,
             "MMPI",
         )
-        val labOrderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
+        val labOrderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Hemograma")
 
         mockMvc.perform(
             get("/api/v1/medical-orders")
@@ -996,7 +996,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
         val (_, psychTkn) = createPsychologistUser()
         createMedicalOrderAndGetId(MedicalOrderCategory.PRUEBAS_PSICOMETRICAS, "MMPI")
         createMedicalOrderAndGetId(MedicalOrderCategory.MEDICAMENTOS, "Lorazepam")
-        createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
+        createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Hemograma")
 
         mockMvc.perform(
             get("/api/v1/admissions/$admissionId/medical-orders")
@@ -1005,7 +1005,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.data.orders.PRUEBAS_PSICOMETRICAS.length()").value(1))
             .andExpect(jsonPath("$.data.orders.MEDICAMENTOS").doesNotExist())
-            .andExpect(jsonPath("$.data.orders.LABORATORIOS").doesNotExist())
+            .andExpect(jsonPath("$.data.orders.REFERENCIAS_MEDICAS").doesNotExist())
     }
 
     @Test
@@ -1020,7 +1020,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
             extraRoleCodes = listOf("DOCTOR"),
         )
         createMedicalOrderAndGetId(MedicalOrderCategory.PRUEBAS_PSICOMETRICAS, "MMPI")
-        val labOrderId = createMedicalOrderAndGetId(MedicalOrderCategory.LABORATORIOS, "Hemograma")
+        val labOrderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Hemograma")
 
         mockMvc.perform(
             get("/api/v1/admissions/$admissionId/medical-orders")
@@ -1028,14 +1028,14 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.data.orders.PRUEBAS_PSICOMETRICAS.length()").value(1))
-            .andExpect(jsonPath("$.data.orders.LABORATORIOS.length()").value(1))
+            .andExpect(jsonPath("$.data.orders.REFERENCIAS_MEDICAS.length()").value(1))
 
         mockMvc.perform(
             get("/api/v1/admissions/$admissionId/medical-orders/$labOrderId")
                 .header("Authorization", "Bearer $dualTkn"),
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.data.category").value("LABORATORIOS"))
+            .andExpect(jsonPath("$.data.category").value("REFERENCIAS_MEDICAS"))
     }
 
     // ============ AUTHORIZATION-TIME BILLING TESTS ============
@@ -1062,9 +1062,9 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `authorize on LABORATORIOS with inventory item creates a LAB charge`() {
-        val item = saveTestInventoryItem("Hemograma")
-        val orderId = createMedicalOrderWithItemAndGetId(MedicalOrderCategory.LABORATORIOS, item.id!!)
+    fun `authorize on REFERENCIAS_MEDICAS with inventory item creates a SERVICE charge`() {
+        val item = saveTestInventoryItem("Referencia cardiología")
+        val orderId = createMedicalOrderWithItemAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, item.id!!)
 
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
@@ -1077,8 +1077,8 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.data.length()").value(1))
-            .andExpect(jsonPath("$.data[0].chargeType").value("LAB"))
-            .andExpect(jsonPath("$.data[0].description").value("Hemograma"))
+            .andExpect(jsonPath("$.data[0].chargeType").value("SERVICE"))
+            .andExpect(jsonPath("$.data[0].description").value("Referencia cardiología"))
     }
 
     private fun saveTestInventoryItem(name: String): InventoryItem {
