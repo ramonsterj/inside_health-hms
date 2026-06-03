@@ -278,11 +278,30 @@ export interface MedicalOrderResponse {
   discontinuedBy: MedicalStaffResponse | null
   inventoryItemId: number | null
   inventoryItemName: string | null
+  labProvider: MedicalOrderLabProvider | null
+  labTests: MedicalOrderLabTest[]
+  labTotal: number | null
   documentCount: number
   createdAt: string | null
   updatedAt: string | null
   createdBy: MedicalStaffResponse | null
   updatedBy: MedicalStaffResponse | null
+}
+
+// Slim provider reference embedded in a lab order response.
+export interface MedicalOrderLabProvider {
+  id: number
+  name: string
+}
+
+// A snapshotted lab line item on a medical order.
+export interface MedicalOrderLabTest {
+  id: number
+  labProviderTestId: number
+  labTestId: number
+  displayName: string
+  salesPrice: number
+  cost: number
 }
 
 // Lightweight item used by the cross-admission orders-by-state dashboard.
@@ -309,6 +328,10 @@ export interface MedicalOrderListItemResponse {
   discontinuedAt: string | null
   emergencyAuthorized: boolean
   documentCount: number
+  // Lab summary fields, populated for LABORATORIOS orders (null otherwise).
+  labProviderName: string | null
+  labTotal: number | null
+  labTestCount: number | null
 }
 
 export interface RejectMedicalOrderRequest {
@@ -331,6 +354,8 @@ export interface CreateMedicalOrderRequest {
   schedule?: string | null
   observations?: string | null
   inventoryItemId?: number | null
+  labProviderId?: number | null
+  labProviderTestIds?: number[] | null
 }
 
 export interface UpdateMedicalOrderRequest {
@@ -344,6 +369,8 @@ export interface UpdateMedicalOrderRequest {
   schedule?: string | null
   observations?: string | null
   inventoryItemId?: number | null
+  labProviderId?: number | null
+  labProviderTestIds?: number[] | null
 }
 
 // Grouped medical orders by category

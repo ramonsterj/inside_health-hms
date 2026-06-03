@@ -119,7 +119,7 @@ class AuxiliaryNurseRestrictionTest : AbstractIntegrationTest() {
 
     @Test
     fun `auxiliary nurse cannot administer medication even with the permission granted`() {
-        val orderId = createLabOrder()
+        val orderId = createResultsBearingOrder()
         val request = CreateMedicationAdministrationRequest(status = AdministrationStatus.GIVEN)
 
         mockMvc.perform(
@@ -134,7 +134,7 @@ class AuxiliaryNurseRestrictionTest : AbstractIntegrationTest() {
 
     @Test
     fun `auxiliary nurse cannot mark order in progress even with the permission granted`() {
-        val orderId = createLabOrder()
+        val orderId = createResultsBearingOrder()
         authorize(orderId)
 
         mockMvc.perform(
@@ -147,7 +147,7 @@ class AuxiliaryNurseRestrictionTest : AbstractIntegrationTest() {
 
     @Test
     fun `auxiliary nurse cannot upload result document even with the permission granted`() {
-        val orderId = createLabOrder()
+        val orderId = createResultsBearingOrder()
         val mockFile = MockMultipartFile(
             "file",
             "result.pdf",
@@ -231,7 +231,7 @@ class AuxiliaryNurseRestrictionTest : AbstractIntegrationTest() {
 
     @Test
     fun `graduate nurse can mark an authorized order in progress`() {
-        val orderId = createLabOrder()
+        val orderId = createResultsBearingOrder()
         authorize(orderId)
 
         mockMvc.perform(
@@ -244,7 +244,7 @@ class AuxiliaryNurseRestrictionTest : AbstractIntegrationTest() {
 
     @Test
     fun `nurse stacked with auxiliary role can mark an authorized order in progress`() {
-        val orderId = createLabOrder()
+        val orderId = createResultsBearingOrder()
         authorize(orderId)
 
         mockMvc.perform(
@@ -257,11 +257,11 @@ class AuxiliaryNurseRestrictionTest : AbstractIntegrationTest() {
 
     // ============ helpers ============
 
-    private fun createLabOrder(): Long {
+    private fun createResultsBearingOrder(): Long {
         val request = CreateMedicalOrderRequest(
-            category = MedicalOrderCategory.LABORATORIOS,
+            category = MedicalOrderCategory.REFERENCIAS_MEDICAS,
             startDate = LocalDate.now(),
-            medication = "Hemograma",
+            medication = "Referencia",
         )
         val result = mockMvc.perform(
             post("/api/v1/admissions/$admissionId/medical-orders")

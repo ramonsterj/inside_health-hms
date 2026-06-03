@@ -44,7 +44,7 @@ class MedicalOrderDocumentControllerTest : AbstractIntegrationTest() {
         // order is authorized, so most tests start with an AUTORIZADO order.
         val patientId = createPatient(adminToken)
         admissionId = createAdmission(adminToken, patientId, doctorUser.id!!)
-        orderId = createLabOrder()
+        orderId = createResultsBearingOrder()
         authorizeOrder(orderId)
     }
 
@@ -439,7 +439,7 @@ class MedicalOrderDocumentControllerTest : AbstractIntegrationTest() {
                 .header("Authorization", "Bearer $doctorToken"),
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.data.orders.LABORATORIOS[0].documentCount").value(2))
+            .andExpect(jsonPath("$.data.orders.REFERENCIAS_MEDICAS[0].documentCount").value(2))
     }
 
     // ============ AUTO-RESULTS-RECEIVED ON UPLOAD ============
@@ -484,7 +484,7 @@ class MedicalOrderDocumentControllerTest : AbstractIntegrationTest() {
 
     @Test
     fun `upload fails when order is still SOLICITADO`() {
-        val unauthorizedOrderId = createLabOrder()
+        val unauthorizedOrderId = createResultsBearingOrder()
         // Note: not authorized, so the order is in SOLICITADO
 
         val mockFile = MockMultipartFile(
@@ -504,7 +504,7 @@ class MedicalOrderDocumentControllerTest : AbstractIntegrationTest() {
 
     @Test
     fun `upload fails when order is NO_AUTORIZADO`() {
-        val rejectedOrderId = createLabOrder()
+        val rejectedOrderId = createResultsBearingOrder()
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/medical-orders/$rejectedOrderId/reject")
                 .header("Authorization", "Bearer $adminToken")
@@ -631,7 +631,7 @@ class MedicalOrderDocumentControllerTest : AbstractIntegrationTest() {
     @Test
     fun `psychologist cannot upload document to a non-psychometric order`() {
         val (_, psychTkn) = createPsychologistUser()
-        // Default orderId is LABORATORIOS in AUTORIZADO
+        // Default orderId is REFERENCIAS_MEDICAS in AUTORIZADO
 
         val mockFile = MockMultipartFile(
             "file",
@@ -657,11 +657,11 @@ class MedicalOrderDocumentControllerTest : AbstractIntegrationTest() {
         ).andExpect(status().isOk)
     }
 
-    private fun createLabOrder(): Long {
+    private fun createResultsBearingOrder(): Long {
         val request = CreateMedicalOrderRequest(
-            category = MedicalOrderCategory.LABORATORIOS,
+            category = MedicalOrderCategory.REFERENCIAS_MEDICAS,
             startDate = LocalDate.now(),
-            observations = "Complete blood count",
+            observations = "Referral to cardiology",
         )
 
         val result = mockMvc.perform(

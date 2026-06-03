@@ -14,6 +14,7 @@ import com.insidehealthgt.hms.entity.PatientCharge
 import com.insidehealthgt.hms.entity.Room
 import com.insidehealthgt.hms.event.AdmissionCreatedEvent
 import com.insidehealthgt.hms.event.InventoryDispensedEvent
+import com.insidehealthgt.hms.event.LabOrderAuthorizedEvent
 import com.insidehealthgt.hms.event.MedicalOrderAuthorizedEvent
 import com.insidehealthgt.hms.event.PsychotherapyActivityCreatedEvent
 import com.insidehealthgt.hms.event.WarehouseChargeCreatedEvent
@@ -286,6 +287,55 @@ class BillingService(
         )
     }
 
+    /**
+     * Billing path for provider-catalog `LABORATORIOS` orders. Creates **one
+     * [ChargeType.LAB] charge per requested test** so every billed test is itemized on the
+     * patient account; the charges sum to [LabOrderAuthorizedEvent.lineTotal]. The legacy
+     * single-item path ([createChargeFromMedicalOrder]) still serves REFERENCIAS / PRUEBAS.
+     * A guard skips any order that resolved to zero lines / zero total so garbage charges are
+     * never created.
+     */
+    @Transactional
+    fun createChargeFromLabOrder(event: LabOrderAuthorizedEvent) {
+        if (event.lines.isEmpty() || event.lineTotal <= BigDecimal.ZERO) {
+            log.warn(
+                "Lab order {} for admission {} has no billable lines (total {}); skipping charge",
+                event.medicalOrderId,
+                event.admissionId,
+                event.lineTotal,
+            )
+            return
+        }
+
+        val admission = admissionRepository.findByIdWithRelations(event.admissionId)
+            ?: throw ResourceNotFoundException(messageService.errorAdmissionNotFound(event.admissionId))
+
+        // One LAB charge per requested test so every billed test is itemized on the patient
+        // account (the sum still equals the requisition total). Each line carries its own
+        // snapshotted sales price.
+        val charges = event.lines.map { line ->
+            PatientCharge(
+                admission = admission,
+                chargeType = ChargeType.LAB,
+                description = "Laboratorio ${event.providerName}: ${line.displayName}"
+                    .take(CHARGE_DESCRIPTION_MAX_LENGTH),
+                quantity = 1,
+                unitPrice = line.salesPrice,
+                totalAmount = line.salesPrice,
+                inventoryItem = null,
+            )
+        }
+
+        chargeRepository.saveAll(charges)
+        log.info(
+            "Created {} LAB charge(s) for admission {} from lab order {} (total {})",
+            charges.size,
+            event.admissionId,
+            event.medicalOrderId,
+            event.lineTotal,
+        )
+    }
+
     @Transactional
     fun createChargeFromAdmission(event: AdmissionCreatedEvent) {
         val basePrice = when (event.admissionType) {
@@ -432,5 +482,10 @@ class BillingService(
         MedicalOrderCategory.PRUEBAS_PSICOMETRICAS -> ChargeType.SERVICE
         MedicalOrderCategory.ACTIVIDAD_FISICA -> ChargeType.SERVICE
         else -> ChargeType.SERVICE
+    }
+
+    companion object {
+        // Matches the patient_charges.description column length.
+        private const val CHARGE_DESCRIPTION_MAX_LENGTH = 500
     }
 }

@@ -332,7 +332,17 @@ async function onDocumentUploaded() {
           <Column :header="t('medicalRecord.medicalOrder.byState.columns.summary')">
             <template #body="{ data }">
               <div class="summary-cell">
-                <div v-if="data.medication" class="summary-medication">
+                <div v-if="data.labProviderName" class="summary-lab">
+                  <span class="summary-lab-provider">{{ data.labProviderName }}</span>
+                  <span class="summary-lab-meta">
+                    {{
+                      t('medicalRecord.medicalOrder.byState.labTestCount', {
+                        count: data.labTestCount ?? 0
+                      })
+                    }}
+                  </span>
+                </div>
+                <div v-else-if="data.medication" class="summary-medication">
                   {{ data.medication }}
                   <span v-if="data.dosage" class="summary-dosage">— {{ data.dosage }}</span>
                 </div>

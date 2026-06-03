@@ -284,6 +284,8 @@ Billing charges are created when a **results-bearing** order (`LABORATORIOS`, `R
 
 `MEDICAMENTOS` is intentionally **excluded** from this path even though it is auth-required and may carry an inventory item: medications bill per-administration via `InventoryDispensedEvent` from the medication administration flow, so authorizing a medication order on its own does not create a charge. Directive orders never produce charges via this path either (their billing, if any, is handled by other mechanisms — e.g., daily diet charges through the scheduler).
 
+> **Lab orders are now provider-aware multi-test requisitions (V123–V126).** A `LABORATORIOS` order no longer references a single `inventoryItem`; it carries one `labProvider` and one or more `MedicalOrderLabTest` line items, each snapshotting a `LabProviderTest`'s `displayName`/`cost`/`salesPrice` at creation time. On authorization the order bills **one** `ChargeType.LAB` charge equal to the sum of its line sales prices (via `LabOrderAuthorizedEvent`, not `MedicalOrderAuthorizedEvent`). Lines are only editable while `SOLICITADO`. The workflow states, result-document upload, and discharge protection are otherwise unchanged. Historical lab orders with `inventoryItem` and no lines keep the legacy single-item billing path. Full detail in `docs/features/laboratory-orders-with-providers.md`.
+
 #### Orders by State (cross-admission view)
 
 A new top-level screen lists medical orders across all admissions, grouped/filterable by workflow state. It is intended for:

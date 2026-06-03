@@ -4,8 +4,10 @@ import com.insidehealthgt.hms.entity.AdministrationRoute
 import com.insidehealthgt.hms.entity.EmergencyAuthorizationReason
 import com.insidehealthgt.hms.entity.MedicalOrder
 import com.insidehealthgt.hms.entity.MedicalOrderCategory
+import com.insidehealthgt.hms.entity.MedicalOrderLabTest
 import com.insidehealthgt.hms.entity.MedicalOrderStatus
 import com.insidehealthgt.hms.entity.User
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -45,6 +47,9 @@ data class MedicalOrderResponse(
     val updatedBy: MedicalStaffResponse?,
     val inventoryItemId: Long?,
     val inventoryItemName: String?,
+    val labProvider: LabProviderSummary? = null,
+    val labTests: List<MedicalOrderLabTestResponse> = emptyList(),
+    val labTotal: BigDecimal? = null,
     val documentCount: Int = 0,
 ) {
     companion object {
@@ -60,6 +65,7 @@ data class MedicalOrderResponse(
             resultsReceivedByUser: User? = null,
             emergencyByUser: User? = null,
             documentCount: Int = 0,
+            labTests: List<MedicalOrderLabTest> = emptyList(),
         ): MedicalOrderResponse = MedicalOrderResponse(
             id = medicalOrder.id!!,
             admissionId = medicalOrder.admission.id!!,
@@ -95,6 +101,9 @@ data class MedicalOrderResponse(
             updatedBy = updatedByUser.toStaff(),
             inventoryItemId = medicalOrder.inventoryItem?.id,
             inventoryItemName = medicalOrder.inventoryItem?.name,
+            labProvider = medicalOrder.labProvider?.let { LabProviderSummary.from(it) },
+            labTests = labTests.map { MedicalOrderLabTestResponse.from(it) },
+            labTotal = if (labTests.isEmpty()) null else labTests.sumOf { it.salesPrice },
             documentCount = documentCount,
         )
 

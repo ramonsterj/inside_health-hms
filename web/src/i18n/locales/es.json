@@ -63,6 +63,7 @@
     "nursingKardex": "Kardex de Enfermería",
     "bedOccupancy": "Ocupación de Camas",
     "medicalOrdersByState": "Órdenes Médicas por Estado",
+    "labCatalog": "Catálogo de Laboratorio",
     "users": "Usuarios",
     "roles": "Roles",
     "triageCodes": "Códigos de Triage",
@@ -848,6 +849,54 @@
         },
         "schedule": {
           "max": "El horario debe tener como máximo 255 caracteres"
+        },
+        "labProvider": {
+          "required": "Se requiere un proveedor de laboratorio para las órdenes de laboratorio"
+        },
+        "labTests": {
+          "required": "Seleccione al menos una prueba para las órdenes de laboratorio"
+        }
+      }
+    },
+    "lab": {
+      "provider": {
+        "name": {
+          "required": "El nombre del proveedor es requerido",
+          "max": "El nombre del proveedor debe tener como máximo 150 caracteres"
+        },
+        "code": {
+          "max": "El código del proveedor debe tener como máximo 50 caracteres"
+        }
+      },
+      "test": {
+        "name": {
+          "required": "El nombre de la prueba es requerido",
+          "max": "El nombre de la prueba debe tener como máximo 200 caracteres"
+        }
+      },
+      "providerTest": {
+        "labTest": {
+          "required": "Seleccione una prueba canónica"
+        },
+        "displayName": {
+          "max": "El nombre comercial debe tener como máximo 200 caracteres"
+        },
+        "cost": {
+          "invalid": "El costo debe ser un número",
+          "min": "El costo no puede ser negativo"
+        },
+        "salesPrice": {
+          "invalid": "El precio de venta debe ser un número",
+          "positive": "El precio de venta debe ser mayor que cero"
+        }
+      },
+      "panel": {
+        "name": {
+          "required": "El nombre del panel es requerido",
+          "max": "El nombre del panel debe tener como máximo 200 caracteres"
+        },
+        "tests": {
+          "required": "Seleccione al menos una prueba"
         }
       }
     },
@@ -1728,7 +1777,8 @@
           "actions": "Acciones"
         },
         "openAdmission": "Abrir Admisión",
-        "empty": "No hay órdenes médicas que coincidan con los filtros."
+        "empty": "No hay órdenes médicas que coincidan con los filtros.",
+        "labTestCount": "{count} prueba(s)"
       },
       "routes": {
         "ORAL": "Oral",
@@ -1751,7 +1801,10 @@
         "frequency": "Frecuencia",
         "schedule": "Horario",
         "observations": "Observacíones",
-        "inventoryItem": "Insumo/servicio a facturar"
+        "inventoryItem": "Insumo/servicio a facturar",
+        "labProvider": "Proveedor de laboratorio",
+        "labTests": "Pruebas",
+        "labPanel": "Aplicar panel"
       },
       "placeholders": {
         "medication": "Nombre del medicamento",
@@ -1759,7 +1812,15 @@
         "frequency": "ej. cada 8 horas, 3 veces al dia",
         "schedule": "ej. 8am, 4pm, 12am",
         "observations": "Indicaciones especiales, precauciones...",
-        "inventoryItem": "Seleccionar artículo para facturación/seguimiento de inventario"
+        "inventoryItem": "Seleccionar artículo para facturación/seguimiento de inventario",
+        "labProvider": "Seleccione un proveedor",
+        "labTests": "Seleccione una o más pruebas",
+        "labPanel": "Seleccione un panel para precargar pruebas"
+      },
+      "lab": {
+        "applyPanel": "Aplicar panel",
+        "unmatchedNotice": "{provider} no ofrece: {tests}. Solicítelas por separado con otro proveedor.",
+        "editLockedNotice": "El proveedor y las pruebas ya no se pueden modificar — esta orden ya fue autorizada y facturada."
       },
       "documents": {
         "title": "Adjuntos",
@@ -1790,6 +1851,71 @@
       "MISSED": "Omitido",
       "REFUSED": "Rechazado",
       "HELD": "Retenido"
+    }
+  },
+  "lab": {
+    "catalog": {
+      "title": "Catálogo de Laboratorio",
+      "tabs": {
+        "providers": "Proveedores",
+        "tests": "Pruebas Canónicas",
+        "providerTests": "Catálogo del Proveedor",
+        "panels": "Paneles"
+      }
+    },
+    "provider": {
+      "new": "Nuevo Proveedor",
+      "edit": "Editar Proveedor",
+      "name": "Nombre",
+      "code": "Código",
+      "active": "Activo",
+      "empty": "Aún no hay proveedores.",
+      "created": "Proveedor creado.",
+      "updated": "Proveedor actualizado.",
+      "deleted": "Proveedor eliminado.",
+      "confirmDelete": "¿Eliminar este proveedor de laboratorio?"
+    },
+    "test": {
+      "new": "Nueva Prueba",
+      "edit": "Editar Prueba",
+      "name": "Nombre",
+      "active": "Activo",
+      "empty": "Aún no hay pruebas canónicas.",
+      "created": "Prueba creada.",
+      "updated": "Prueba actualizada.",
+      "deleted": "Prueba eliminada.",
+      "confirmDelete": "¿Eliminar esta prueba canónica?"
+    },
+    "providerTest": {
+      "new": "Agregar Prueba",
+      "edit": "Editar Prueba",
+      "selectProvider": "Seleccione un proveedor",
+      "selectTest": "Seleccione una prueba canónica",
+      "canonicalTest": "Prueba canónica",
+      "displayName": "Nombre comercial",
+      "displayNamePlaceholder": "Por defecto el nombre canónico",
+      "cost": "Costo",
+      "salesPrice": "Precio de venta",
+      "active": "Activo",
+      "empty": "Este proveedor aún no tiene pruebas.",
+      "created": "Prueba del proveedor creada.",
+      "updated": "Prueba del proveedor actualizada.",
+      "deleted": "Prueba del proveedor eliminada.",
+      "confirmDelete": "¿Eliminar esta prueba del proveedor? Las órdenes existentes conservan sus precios capturados."
+    },
+    "panel": {
+      "new": "Nuevo Panel",
+      "edit": "Editar Panel",
+      "name": "Nombre",
+      "active": "Activo",
+      "tests": "Pruebas canónicas",
+      "testsPlaceholder": "Seleccione las pruebas de este panel",
+      "testCount": "Pruebas",
+      "empty": "Aún no hay paneles.",
+      "created": "Panel creado.",
+      "updated": "Panel actualizado.",
+      "deleted": "Panel eliminado.",
+      "confirmDelete": "¿Eliminar este panel?"
     }
   },
   "psychotherapy": {

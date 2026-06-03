@@ -5,6 +5,7 @@ import { useForm } from 'vee-validate'
 import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
+import MultiSelect from 'primevue/multiselect'
 import InputText from 'primevue/inputtext'
 import DatePicker from 'primevue/datepicker'
 import Message from 'primevue/message'
@@ -13,10 +14,15 @@ import { medicalOrderSchema, type MedicalOrderFormData } from '@/validation/medi
 import { useMedicalOrderStore } from '@/stores/medicalOrder'
 import { useInventoryItemStore } from '@/stores/inventoryItem'
 import { usePharmacyStore } from '@/stores/pharmacy'
+import { useLabCatalogStore } from '@/stores/labCatalog'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useFormDateField } from '@/composables/useFormDateField'
 import { toApiDate } from '@/utils/format'
-import { MedicalOrderCategory, AdministrationRoute } from '@/types/medicalRecord'
+import {
+  MedicalOrderCategory,
+  MedicalOrderStatus,
+  AdministrationRoute
+} from '@/types/medicalRecord'
 import { InventoryKind } from '@/types/inventoryItem'
 import type { MedicalOrderResponse } from '@/types/medicalRecord'
 import RichTextEditor from '@/components/common/RichTextEditor.vue'
@@ -37,19 +43,27 @@ const { showError } = useErrorHandler()
 const medicalOrderStore = useMedicalOrderStore()
 const inventoryItemStore = useInventoryItemStore()
 const pharmacyStore = usePharmacyStore()
+const labCatalogStore = useLabCatalogStore()
 
 const loading = ref(false)
 const isEditMode = computed(() => !!props.order)
 
-// Billable categories that should show inventory item selector
-const billableCategories = [
+// Inventory item selector is shown for these billable categories. LABORATORIOS is
+// deliberately excluded — labs use the provider + multi-test model instead.
+const inventoryItemCategories = [
   MedicalOrderCategory.MEDICAMENTOS,
-  MedicalOrderCategory.LABORATORIOS,
   MedicalOrderCategory.CUIDADOS_ESPECIALES,
   MedicalOrderCategory.REFERENCIAS_MEDICAS,
   MedicalOrderCategory.PRUEBAS_PSICOMETRICAS,
   MedicalOrderCategory.ACTIVIDAD_FISICA
 ]
+
+// Categories whose catalog the inventory picker can load.
+const billableCategories = [...inventoryItemCategories]
+
+// Apply-panel UI state.
+const selectedPanelId = ref<number | null>(null)
+const panelNotice = ref<{ provider: string; tests: string } | null>(null)
 
 // Category options
 const categoryOptions = computed(() =>
@@ -122,7 +136,9 @@ const { defineField, handleSubmit, errors, values, setValues, setFieldValue, res
       frequency: '',
       schedule: '',
       observations: '',
-      inventoryItemId: null
+      inventoryItemId: null,
+      labProviderId: null,
+      labProviderTestIds: []
     }
   })
 
@@ -136,18 +152,56 @@ const [frequency] = defineField('frequency')
 const [schedule] = defineField('schedule')
 const [observations] = defineField('observations')
 const [inventoryItemId] = defineField('inventoryItemId')
+const [labProviderId] = defineField('labProviderId')
+const [labProviderTestIds] = defineField('labProviderTestIds')
 
 // Show medication fields when MEDICAMENTOS category is selected
 const showMedicationFields = computed(() => values.category === MedicalOrderCategory.MEDICAMENTOS)
 
-// Show inventory item selector for billable categories
+// Show inventory item selector for billable categories (LABORATORIOS uses the lab fields)
 const showInventoryItemSelector = computed(() =>
-  billableCategories.includes(values.category as MedicalOrderCategory)
+  inventoryItemCategories.includes(values.category as MedicalOrderCategory)
+)
+
+// Lab provider + multi-test model for LABORATORIOS.
+const showLabFields = computed(() => values.category === MedicalOrderCategory.LABORATORIOS)
+
+// One order = one provider, so lab fields are locked after the order leaves SOLICITADO (AC14).
+const labFieldsEditable = computed(
+  () => !isEditMode.value || props.order?.status === MedicalOrderStatus.SOLICITADO
+)
+
+const providerOptions = computed(() =>
+  labCatalogStore.providers.filter(p => p.active).map(p => ({ label: p.name, value: p.id }))
+)
+
+// Prices are intentionally NOT surfaced in the ordering form — pricing is a
+// finance/billing concern, not a clinical one. The label is just the test name.
+const labTestOptions = computed(() =>
+  labCatalogStore.getProviderTests(values.labProviderId).map(pt => ({
+    label: pt.displayName,
+    value: pt.id
+  }))
+)
+
+const panelOptions = computed(() =>
+  labCatalogStore.panels.filter(p => p.active).map(p => ({ label: p.name, value: p.id }))
 )
 
 onMounted(() => {
   loadCatalog(values.category as MedicalOrderCategory)
+  if (values.category === MedicalOrderCategory.LABORATORIOS) loadLabCatalog()
 })
+
+// Load lab providers + panels (non-blocking, like loadCatalog). The order form only
+// needs active providers/panels for selection.
+async function loadLabCatalog(): Promise<void> {
+  try {
+    await Promise.all([labCatalogStore.fetchProviders(true), labCatalogStore.fetchPanels()])
+  } catch {
+    // Pickers are optional — don't block the form on a transient catalog fetch failure.
+  }
+}
 
 // Re-fetch the appropriate catalog whenever the user switches category, so
 // the picker is populated with the right kind of items (medications vs
@@ -158,8 +212,23 @@ onMounted(() => {
 // PRUEBAS_PSICOMETRICAS, and the backend would happily bill against it.
 watch(
   () => values.category,
-  async newCategory => {
+  async (newCategory, oldCategory) => {
     if (!newCategory) return
+
+    // Category-switch cleanup: leaving LABORATORIOS clears lab fields; entering it
+    // clears the inventory item (the two billing models are mutually exclusive).
+    if (oldCategory === MedicalOrderCategory.LABORATORIOS && newCategory !== oldCategory) {
+      setFieldValue('labProviderId', null)
+      setFieldValue('labProviderTestIds', [])
+      selectedPanelId.value = null
+      panelNotice.value = null
+    }
+    if (newCategory === MedicalOrderCategory.LABORATORIOS) {
+      setFieldValue('inventoryItemId', null)
+      await loadLabCatalog()
+      return
+    }
+
     await loadCatalog(newCategory as MedicalOrderCategory)
     const currentId = values.inventoryItemId
     if (currentId == null) return
@@ -174,6 +243,51 @@ watch(
     if (!stillValid) setFieldValue('inventoryItemId', null)
   }
 )
+
+// When the provider changes, fetch its tests and prune any selected test that the new
+// provider does not offer (one order = one provider, AC7). `hydratingProvider` suppresses
+// the prune during edit-mode hydration so we don't race the explicit id set.
+const hydratingProvider = ref(false)
+watch(
+  () => values.labProviderId,
+  async (providerId, previous) => {
+    panelNotice.value = null
+    if (providerId == null) return
+    try {
+      await labCatalogStore.fetchProviderTests(providerId, true)
+    } catch {
+      // Non-blocking — an empty test list just shows no options.
+    }
+    if (hydratingProvider.value || previous == null) return
+    // Provider actually changed — drop selections not offered by the new provider.
+    const valid = new Set(labCatalogStore.getProviderTests(providerId).map(pt => pt.id))
+    const pruned = (values.labProviderTestIds ?? []).filter(id => valid.has(id))
+    setFieldValue('labProviderTestIds', pruned)
+  }
+)
+
+async function applyPanel(): Promise<void> {
+  const panelId = selectedPanelId.value
+  const providerId = values.labProviderId
+  if (panelId == null || providerId == null) return
+  try {
+    const resolution = await labCatalogStore.resolvePanel(panelId, providerId)
+    // Merge matched provider-test ids into the current selection (additive, idempotent).
+    const merged = new Set(values.labProviderTestIds ?? [])
+    resolution.matched.forEach(m => merged.add(m.labProviderTestId))
+    setFieldValue('labProviderTestIds', Array.from(merged))
+
+    const provider = labCatalogStore.providers.find(p => p.id === providerId)
+    panelNotice.value = resolution.unmatchedTests.length
+      ? {
+          provider: provider?.name ?? '',
+          tests: resolution.unmatchedTests.map(u => u.name).join(', ')
+        }
+      : null
+  } catch (error) {
+    showError(error)
+  }
+}
 
 async function loadCatalog(category: MedicalOrderCategory): Promise<void> {
   if (!billableCategories.includes(category)) return
@@ -198,24 +312,47 @@ const endDatePicker = useFormDateField(endDate)
 
 watch(
   () => props.visible,
-  newValue => {
-    if (newValue) {
-      if (props.order) {
-        setValues({
-          category: props.order.category,
-          startDate: props.order.startDate,
-          endDate: props.order.endDate || '',
-          medication: props.order.medication || '',
-          dosage: props.order.dosage || '',
-          route: props.order.route || null,
-          frequency: props.order.frequency || '',
-          schedule: props.order.schedule || '',
-          observations: props.order.observations || '',
-          inventoryItemId: props.order.inventoryItemId || null
-        })
-      } else {
-        resetForm()
+  async newValue => {
+    if (!newValue) return
+    selectedPanelId.value = null
+    panelNotice.value = null
+    if (props.order) {
+      const labProviderId = props.order.labProvider?.id ?? null
+      setValues({
+        category: props.order.category,
+        startDate: props.order.startDate,
+        endDate: props.order.endDate || '',
+        medication: props.order.medication || '',
+        dosage: props.order.dosage || '',
+        route: props.order.route || null,
+        frequency: props.order.frequency || '',
+        schedule: props.order.schedule || '',
+        observations: props.order.observations || '',
+        inventoryItemId: props.order.inventoryItemId || null,
+        labProviderId,
+        labProviderTestIds: []
+      })
+
+      if (props.order.category === MedicalOrderCategory.LABORATORIOS) {
+        await loadLabCatalog()
+        if (labProviderId != null) {
+          // Hydrate the provider's tests first, then set the selected ids so the
+          // provider watcher's prune doesn't race the assignment.
+          hydratingProvider.value = true
+          try {
+            await labCatalogStore.fetchProviderTests(labProviderId, true)
+          } catch {
+            // Non-blocking.
+          }
+          setFieldValue(
+            'labProviderTestIds',
+            props.order.labTests.map(line => line.labProviderTestId)
+          )
+          hydratingProvider.value = false
+        }
       }
+    } else {
+      resetForm()
     }
   }
 )
@@ -223,7 +360,9 @@ watch(
 const onSubmit = handleSubmit(async formValues => {
   loading.value = true
   try {
-    // Convert empty strings to null for API
+    const isLab = formValues.category === MedicalOrderCategory.LABORATORIOS
+    // Convert empty strings to null for API. For labs, send provider + tests and clear the
+    // inventory item; for everything else, send the inventory item and clear lab fields.
     const data = {
       category: formValues.category,
       startDate: formValues.startDate,
@@ -234,7 +373,9 @@ const onSubmit = handleSubmit(async formValues => {
       frequency: formValues.frequency || null,
       schedule: formValues.schedule || null,
       observations: formValues.observations || null,
-      inventoryItemId: formValues.inventoryItemId || null
+      inventoryItemId: isLab ? null : formValues.inventoryItemId || null,
+      labProviderId: isLab ? (formValues.labProviderId ?? null) : null,
+      labProviderTestIds: isLab ? (formValues.labProviderTestIds ?? []) : null
     }
 
     if (isEditMode.value && props.order) {
@@ -286,8 +427,9 @@ function closeDialog() {
         </Message>
       </div>
 
-      <!-- Dates Row -->
-      <div class="form-row">
+      <!-- Dates Row — hidden for LABORATORIOS (a lab requisition has no start/end window;
+           its request date is the creation date and results arrive via document upload). -->
+      <div v-if="!showLabFields" class="form-row">
         <div class="form-field">
           <label for="startDate">{{ t('medicalRecord.medicalOrder.fields.startDate') }} *</label>
           <DatePicker
@@ -373,8 +515,8 @@ function closeDialog() {
         </div>
       </div>
 
-      <!-- Schedule (for non-medication orders) -->
-      <div v-else class="form-field">
+      <!-- Schedule / Horario (for non-medication, non-lab orders) -->
+      <div v-else-if="!showLabFields" class="form-field">
         <label for="schedule">{{ t('medicalRecord.medicalOrder.fields.schedule') }}</label>
         <InputText
           id="schedule"
@@ -401,6 +543,89 @@ function closeDialog() {
         />
         <Message v-if="errors.inventoryItemId" severity="error" :closable="false">
           {{ errors.inventoryItemId }}
+        </Message>
+      </div>
+
+      <!-- Lab provider + tests (for LABORATORIOS) -->
+      <div v-if="showLabFields" class="lab-fields">
+        <Message v-if="!labFieldsEditable" severity="info" :closable="false">
+          {{ t('medicalRecord.medicalOrder.lab.editLockedNotice') }}
+        </Message>
+
+        <div class="form-field">
+          <label for="labProviderId"
+            >{{ t('medicalRecord.medicalOrder.fields.labProvider') }} *</label
+          >
+          <Select
+            id="labProviderId"
+            v-model="labProviderId"
+            :options="providerOptions"
+            optionLabel="label"
+            optionValue="value"
+            filter
+            :disabled="!labFieldsEditable"
+            :placeholder="t('medicalRecord.medicalOrder.placeholders.labProvider')"
+            :class="{ 'p-invalid': errors.labProviderId }"
+            class="w-full"
+          />
+          <Message v-if="errors.labProviderId" severity="error" :closable="false">
+            {{ errors.labProviderId }}
+          </Message>
+        </div>
+
+        <div class="form-field">
+          <label for="labProviderTestIds"
+            >{{ t('medicalRecord.medicalOrder.fields.labTests') }} *</label
+          >
+          <MultiSelect
+            id="labProviderTestIds"
+            v-model="labProviderTestIds"
+            :options="labTestOptions"
+            optionLabel="label"
+            optionValue="value"
+            display="chip"
+            filter
+            :disabled="!labFieldsEditable || labProviderId == null"
+            :placeholder="t('medicalRecord.medicalOrder.placeholders.labTests')"
+            :class="{ 'p-invalid': errors.labProviderTestIds }"
+            class="w-full"
+          />
+          <Message v-if="errors.labProviderTestIds" severity="error" :closable="false">
+            {{ errors.labProviderTestIds }}
+          </Message>
+        </div>
+
+        <!-- Apply panel -->
+        <div v-if="labFieldsEditable" class="form-field">
+          <label for="labPanel">{{ t('medicalRecord.medicalOrder.fields.labPanel') }}</label>
+          <div class="panel-row">
+            <Select
+              id="labPanel"
+              v-model="selectedPanelId"
+              :options="panelOptions"
+              optionLabel="label"
+              optionValue="value"
+              :disabled="labProviderId == null"
+              :placeholder="t('medicalRecord.medicalOrder.placeholders.labPanel')"
+              class="w-full"
+            />
+            <Button
+              type="button"
+              :label="t('medicalRecord.medicalOrder.lab.applyPanel')"
+              severity="secondary"
+              :disabled="labProviderId == null || selectedPanelId == null"
+              @click="applyPanel"
+            />
+          </div>
+        </div>
+
+        <Message v-if="panelNotice" severity="warn" :closable="true">
+          {{
+            t('medicalRecord.medicalOrder.lab.unmatchedNotice', {
+              provider: panelNotice.provider,
+              tests: panelNotice.tests
+            })
+          }}
         </Message>
       </div>
 
@@ -460,6 +685,21 @@ function closeDialog() {
   padding: 1rem;
   background: var(--p-surface-ground);
   border-radius: var(--p-border-radius);
+}
+
+.lab-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--p-surface-ground);
+  border-radius: var(--p-border-radius);
+}
+
+.panel-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 .dialog-footer {

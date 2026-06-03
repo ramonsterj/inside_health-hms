@@ -5,6 +5,7 @@ import com.insidehealthgt.hms.entity.MedicalOrder
 import com.insidehealthgt.hms.entity.MedicalOrderCategory
 import com.insidehealthgt.hms.entity.MedicalOrderStatus
 import com.insidehealthgt.hms.entity.User
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -37,32 +38,47 @@ data class MedicalOrderListItemResponse(
     val discontinuedAt: LocalDateTime?,
     val emergencyAuthorized: Boolean,
     val documentCount: Int,
+    // Lab summary fields, populated for LABORATORIOS orders from a batch-loaded aggregate
+    // (no N+1 over line items). Null for non-lab orders or legacy lab orders without lines.
+    val labProviderName: String? = null,
+    val labTotal: BigDecimal? = null,
+    val labTestCount: Int? = null,
 ) {
     companion object {
-        fun from(order: MedicalOrder, createdByUser: User?, documentCount: Int): MedicalOrderListItemResponse =
-            MedicalOrderListItemResponse(
-                id = order.id!!,
-                admissionId = order.admission.id!!,
-                admissionStatus = order.admission.status,
-                patientId = order.admission.patient.id!!,
-                patientFirstName = order.admission.patient.firstName,
-                patientLastName = order.admission.patient.lastName,
-                category = order.category,
-                status = order.status,
-                startDate = order.startDate,
-                summary = order.observations?.take(SUMMARY_MAX_LENGTH),
-                medication = order.medication,
-                dosage = order.dosage,
-                createdAt = order.createdAt,
-                createdBy = createdByUser?.let { MedicalStaffResponse.from(it) },
-                authorizedAt = order.authorizedAt,
-                rejectedAt = order.rejectedAt,
-                inProgressAt = order.inProgressAt,
-                resultsReceivedAt = order.resultsReceivedAt,
-                discontinuedAt = order.discontinuedAt,
-                emergencyAuthorized = order.emergencyAuthorized,
-                documentCount = documentCount,
-            )
+        @Suppress("LongParameterList")
+        fun from(
+            order: MedicalOrder,
+            createdByUser: User?,
+            documentCount: Int,
+            labProviderName: String? = null,
+            labTotal: BigDecimal? = null,
+            labTestCount: Int? = null,
+        ): MedicalOrderListItemResponse = MedicalOrderListItemResponse(
+            id = order.id!!,
+            admissionId = order.admission.id!!,
+            admissionStatus = order.admission.status,
+            patientId = order.admission.patient.id!!,
+            patientFirstName = order.admission.patient.firstName,
+            patientLastName = order.admission.patient.lastName,
+            category = order.category,
+            status = order.status,
+            startDate = order.startDate,
+            summary = order.observations?.take(SUMMARY_MAX_LENGTH),
+            medication = order.medication,
+            dosage = order.dosage,
+            createdAt = order.createdAt,
+            createdBy = createdByUser?.let { MedicalStaffResponse.from(it) },
+            authorizedAt = order.authorizedAt,
+            rejectedAt = order.rejectedAt,
+            inProgressAt = order.inProgressAt,
+            resultsReceivedAt = order.resultsReceivedAt,
+            discontinuedAt = order.discontinuedAt,
+            emergencyAuthorized = order.emergencyAuthorized,
+            documentCount = documentCount,
+            labProviderName = labProviderName,
+            labTotal = labTotal,
+            labTestCount = labTestCount,
+        )
 
         private const val SUMMARY_MAX_LENGTH = 200
     }
