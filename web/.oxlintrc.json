@@ -4,7 +4,7 @@
     "no-debugger": "error",
     "no-empty": "warn",
     "no-empty-pattern": "error",
-    "eqeqeq": "warn",
+    "eqeqeq": ["warn", "always", { "null": "ignore" }],
     "no-array-constructor": "error",
     "no-caller": "error",
     "no-eval": "error",
