@@ -20,7 +20,7 @@ class CustomUserDetails(private val user: User) : UserDetails {
     override fun getAuthorities(): Collection<GrantedAuthority> {
         val authorities = mutableListOf<GrantedAuthority>()
 
-        // Add role-based authorities (ROLE_ADMIN, ROLE_USER, etc.)
+        // Add role-based authorities (ROLE_ADMINISTRADOR, ROLE_USUARIO, etc.)
         user.roles.forEach { role ->
             authorities.add(SimpleGrantedAuthority("ROLE_${role.code}"))
         }
@@ -42,15 +42,16 @@ class CustomUserDetails(private val user: User) : UserDetails {
     fun hasRole(roleCode: String): Boolean = user.hasRole(roleCode)
 
     /**
-     * True when the user's only nursing-or-better role is AUXILIARY_NURSE — i.e. they hold
-     * AUXILIARY_NURSE but none of NURSE / CHIEF_NURSE / DOCTOR / ADMIN. Used by the service-layer
-     * guards that block auxiliary nurses from administering medications, marking medical orders in
-     * progress, and uploading result documents (see docs/features/nursing-roles-split.md). Stacked
-     * roles pass: a graduate nurse covering an auxiliary shift still has NURSE, so the guard lets
+     * True when the user's only nursing-or-better role is AUXILIAR_ENFERMERIA — i.e. they hold
+     * AUXILIAR_ENFERMERIA but none of ENFERMERO / JEFE_ENFERMERIA / MEDICO / ADMINISTRADOR. Used by
+     * the service-layer guards that block auxiliary nurses from administering medications, marking
+     * medical orders in progress, and uploading result documents (see
+     * docs/features/nursing-roles-split.md). Stacked roles pass: a graduate nurse covering an
+     * auxiliary shift still has ENFERMERO, so the guard lets
      * them through.
      */
     fun isAuxiliaryNurseOnly(): Boolean {
-        if (!hasRole("AUXILIARY_NURSE")) return false
+        if (!hasRole("AUXILIAR_ENFERMERIA")) return false
         return getRoleCodes().none { it in ELEVATED_NURSING_ROLES }
     }
 
@@ -67,7 +68,8 @@ class CustomUserDetails(private val user: User) : UserDetails {
     override fun isEnabled(): Boolean = user.status == UserStatus.ACTIVE
 
     private companion object {
-        /** Roles that, when stacked with AUXILIARY_NURSE, lift the auxiliary-only restriction. */
-        val ELEVATED_NURSING_ROLES = setOf("NURSE", "CHIEF_NURSE", "DOCTOR", "RESIDENT_DOCTOR", "ADMIN")
+        /** Roles that, when stacked with AUXILIAR_ENFERMERIA, lift the auxiliary-only restriction. */
+        val ELEVATED_NURSING_ROLES =
+            setOf("ENFERMERO", "JEFE_ENFERMERIA", "MEDICO", "MEDICO_RESIDENTE", "ADMINISTRADOR")
     }
 }

@@ -88,7 +88,7 @@ class LabCatalogControllerTest : AbstractIntegrationTest() {
 
     @Test
     fun `auxiliary nurse and chief nurse and admin staff cannot read lab catalog`() {
-        val aux = createUserWithRole("AUXILIARY_NURSE", "aux", "aux@x.com", "password123").second
+        val aux = createUserWithRole("AUXILIAR_ENFERMERIA", "aux", "aux@x.com", "password123").second
         val chief = createChiefNurseUser().second
         val staff = createAdminStaffUser().second
         for (token in listOf(aux, chief, staff)) {

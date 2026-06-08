@@ -37,7 +37,7 @@ class ExpiryReportService(
 
         // Per-lot on-hand: scoped to a warehouse (FR-8/AC-15) or summed system-wide.
         val quantityByLot: Map<Long, Int> = if (warehouseId != null) {
-            // A warehouse-scoped caller (e.g. CHIEF_NURSE) cannot inspect another
+            // A warehouse-scoped caller (e.g. JEFE_ENFERMERIA) cannot inspect another
             // bodega's stock by passing its id (AC-13 parity with the stock view).
             scopeService.assertCanView(currentUserProvider.currentUserDetailsOrThrow(), warehouseId)
             stockRepository.findLotStockInWarehouse(warehouseId).associate { it.lotId to it.quantity.toInt() }

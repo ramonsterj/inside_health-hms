@@ -33,7 +33,7 @@ const mockDocument: MedicalOrderDocument = {
     salutation: 'DR',
     firstName: 'Maria',
     lastName: 'Garcia',
-    roles: ['DOCTOR']
+    roles: ['MEDICO']
   }
 }
 
@@ -54,7 +54,7 @@ const mockDocuments: MedicalOrderDocument[] = [
       salutation: null,
       firstName: 'Ana',
       lastName: 'Lopez',
-      roles: ['NURSE']
+      roles: ['ENFERMERO']
     }
   }
 ]

@@ -70,18 +70,18 @@ class AdmissionController(
         return ResponseEntity.ok(ApiResponse.success(admission))
     }
 
-    // Only the standalone DOCTOR role is scoped to own patients. A user who also
-    // carries RESIDENT_DOCTOR (or ADMIN) must see every admission, since residents
+    // Only the standalone MEDICO role is scoped to own patients. A user who also
+    // carries MEDICO_RESIDENTE (or ADMINISTRADOR) must see every admission, since residents
     // run the full ward — not just the patients they personally admitted.
     private fun resolveDoctorId(currentUser: CustomUserDetails): Long? {
-        val isStandaloneDoctor = currentUser.hasRole("DOCTOR") &&
-            !currentUser.hasRole("ADMIN") &&
-            !currentUser.hasRole("RESIDENT_DOCTOR")
+        val isStandaloneDoctor = currentUser.hasRole("MEDICO") &&
+            !currentUser.hasRole("ADMINISTRADOR") &&
+            !currentUser.hasRole("MEDICO_RESIDENTE")
         return if (isStandaloneDoctor) currentUser.id else null
     }
 
     private fun resolveActiveAdmissionsOnly(currentUser: CustomUserDetails): Boolean =
-        currentUser.hasRole("PSYCHOLOGIST") && !currentUser.hasRole("ADMIN")
+        currentUser.hasRole("PSICOLOGO") && !currentUser.hasRole("ADMINISTRADOR")
 
     @PostMapping
     @PreAuthorize("hasAuthority('admission:create')")

@@ -21,21 +21,21 @@ import org.springframework.transaction.annotation.Transactional
  *
  * [resolveDispensingWarehouse] consults, in order:
  *  1. The data-driven role -> default-warehouse mapping (`role_default_warehouses`).
- *     NURSE / AUXILIARY_NURSE / CHIEF_NURSE -> ENFERMERIA, PSYCHOLOGIST -> PSICOLOGIA.
+ *     ENFERMERO / AUXILIAR_ENFERMERIA / JEFE_ENFERMERIA -> ENFERMERIA, PSICOLOGO -> PSICOLOGIA.
  *     A single mapped warehouse wins; if several map (rare stacked roles) ENFERMERIA
  *     is preferred because that is the canonical medication-dispensing bodega.
- *  2. Otherwise, ADMIN / ADMINISTRATIVE_STAFF / DOCTOR / RESIDENT_DOCTOR fall back to
+ *  2. Otherwise, ADMINISTRADOR / PERSONAL_ADMINISTRATIVO / MEDICO / MEDICO_RESIDENTE fall back to
  *     ENFERMERIA — these roles dispense (or test-dispense) into the nursing bodega
  *     unless a caller passes an explicit warehouse elsewhere.
- *  3. Otherwise a MAINTENANCE user resolves to their single `user_warehouses`
+ *  3. Otherwise a MANTENIMIENTO user resolves to their single `user_warehouses`
  *     assignment (ambiguous when they own several -> 422).
  *  4. Otherwise 422 `error.warehouse.unassigned`.
  *
  * ## Why data-driven defaults
  *
  * The mapping lives in a lookup table, not in code, so adding a role's default
- * bodega is a data change. The two "all" roles (ADMIN/ADMINISTRATIVE_STAFF) and
- * the two "none" roles (DOCTOR/RESIDENT_DOCTOR) are represented by their absence
+ * bodega is a data change. The two "all" roles (ADMINISTRADOR/PERSONAL_ADMINISTRATIVO) and
+ * the two "none" roles (MEDICO/MEDICO_RESIDENTE) are represented by their absence
  * from the table plus the role checks below, rather than by enumerating every
  * warehouse.
  */
@@ -120,12 +120,12 @@ class WarehouseScopeService(
 
     private companion object {
         /** Roles that may use any warehouse as a transfer/charge source. */
-        val ALL_WAREHOUSE_ROLES = setOf("ADMIN", "ADMINISTRATIVE_STAFF")
+        val ALL_WAREHOUSE_ROLES = setOf("ADMINISTRADOR", "PERSONAL_ADMINISTRATIVO")
 
         /** Roles that fall back to ENFERMERIA when no default mapping exists. */
-        val ALL_OR_FALLBACK_ROLES = setOf("ADMIN", "ADMINISTRATIVE_STAFF", "DOCTOR", "RESIDENT_DOCTOR")
+        val ALL_OR_FALLBACK_ROLES = setOf("ADMINISTRADOR", "PERSONAL_ADMINISTRATIVO", "MEDICO", "MEDICO_RESIDENTE")
 
         /** Roles that can view every warehouse in the stock view. */
-        val READ_ALL_ROLES = setOf("ADMIN", "ADMINISTRATIVE_STAFF", "DOCTOR", "RESIDENT_DOCTOR")
+        val READ_ALL_ROLES = setOf("ADMINISTRADOR", "PERSONAL_ADMINISTRATIVO", "MEDICO", "MEDICO_RESIDENTE")
     }
 }

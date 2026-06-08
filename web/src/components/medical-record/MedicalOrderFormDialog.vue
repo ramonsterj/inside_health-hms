@@ -77,7 +77,7 @@ const categoryOptions = computed(() =>
 // For MEDICAMENTOS we show the pharmacy catalog (DRUG items, accessible to
 // doctors / nurses / chief nurses via `medication:read`) because the legacy
 // admin inventory endpoint is gated by `inventory-item:read`, which only
-// ADMIN holds today.
+// ADMINISTRADOR holds today.
 const inventoryItemOptions = computed(() => {
   if (values.category === MedicalOrderCategory.MEDICAMENTOS) {
     return [

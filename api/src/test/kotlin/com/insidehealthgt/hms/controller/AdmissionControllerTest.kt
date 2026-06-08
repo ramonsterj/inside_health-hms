@@ -143,7 +143,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
 
     @Test
     fun `create admission should fail with non-doctor treating physician`() {
-        val adminStaffRole = roleRepository.findByCode("ADMINISTRATIVE_STAFF")!!
+        val adminStaffRole = roleRepository.findByCode("PERSONAL_ADMINISTRATIVO")!!
         val nonDoctorUser = User(
             username = "nondoctor",
             email = "nondoctor@example.com",
@@ -163,7 +163,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
                 .content(objectMapper.writeValueAsString(request)),
         )
             .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error.message").value("Treating physician must have the DOCTOR role"))
+            .andExpect(jsonPath("$.error.message").value("Treating physician must have the MEDICO role"))
     }
 
     @Test
@@ -328,7 +328,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
     @Test
     fun `create admission as doctor without resident role returns 400`() {
         val (_, plainStaffToken) = createUserWithRole(
-            roleCode = "ADMINISTRATIVE_STAFF",
+            roleCode = "PERSONAL_ADMINISTRATIVO",
             username = "plainstaff",
             email = "plainstaff@example.com",
             password = "password123",
@@ -344,7 +344,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
             .andExpect(status().isBadRequest)
             .andExpect(
                 jsonPath("$.error.message")
-                    .value("Only users with the RESIDENT_DOCTOR role can register admissions"),
+                    .value("Only users with the MEDICO_RESIDENTE role can register admissions"),
             )
     }
 
@@ -473,7 +473,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
         ).andExpect(status().isCreated)
 
         val (_, otherResidentToken) = createUserWithRole(
-            roleCode = "RESIDENT_DOCTOR",
+            roleCode = "MEDICO_RESIDENTE",
             username = "resident2",
             email = "resident2@example.com",
             password = "password123",
@@ -904,7 +904,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
 
         // A different standalone doctor, not assigned to the patient, is blocked.
         val (_, otherDoctorToken) = createUserWithRole(
-            roleCode = "DOCTOR",
+            roleCode = "MEDICO",
             username = "doctor2",
             email = "doctor2@example.com",
             password = "password123",
@@ -957,7 +957,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
     fun `patient admissions history forbids a user without patient read`() {
         // The seeded USER role only holds user:read.
         val (_, userToken) = createUserWithRole(
-            roleCode = "USER",
+            roleCode = "USUARIO",
             username = "plainuser",
             email = "plainuser@example.com",
             password = "password123",

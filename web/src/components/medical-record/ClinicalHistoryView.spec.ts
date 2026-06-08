@@ -58,7 +58,7 @@ async function mountView(opts: {
 }) {
   setActivePinia(createPinia())
   const auth = useAuthStore()
-  auth.$patch({ user: { roles: ['DOCTOR'], permissions: opts.permissions } } as never)
+  auth.$patch({ user: { roles: ['MEDICO'], permissions: opts.permissions } } as never)
 
   const store = useClinicalHistoryStore()
   vi.spyOn(store, 'fetchClinicalHistory').mockResolvedValue(opts.history ?? null)

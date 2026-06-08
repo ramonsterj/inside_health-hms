@@ -19,12 +19,12 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * Edit policy: only ADMIN can update existing nursing notes; doctors, nurses, and
+ * Edit policy: only ADMINISTRADOR can update existing nursing notes; doctors, nurses, and
  * chief nurses are append-only. The `@PreAuthorize("hasAuthority('nursing-note:update')")`
- * on the controller is the first gate (only ADMIN holds the permission after V096).
+ * on the controller is the first gate (only ADMINISTRADOR holds the permission after V096).
  * `assertAdmin()` here is intentional defense-in-depth so the rule continues to hold
  * if the permission is later widened. Discharge protection blocks all writes — including
- * for ADMIN — and is enforced unconditionally.
+ * for ADMINISTRADOR — and is enforced unconditionally.
  *
  * Vital signs follow a different pattern (24h creator window with admin override) — see
  * VitalSignService.
@@ -118,13 +118,13 @@ class NursingNoteService(
     }
 
     private fun assertAdmin(currentUser: CustomUserDetails) {
-        if (!currentUser.hasRole("ADMIN")) {
+        if (!currentUser.hasRole("ADMINISTRADOR")) {
             throw ForbiddenException(messageService.errorForbidden())
         }
     }
 
     private fun computeCanEdit(currentUser: CustomUserDetails, admissionActive: Boolean): Boolean =
-        admissionActive && currentUser.hasRole("ADMIN")
+        admissionActive && currentUser.hasRole("ADMINISTRADOR")
 
     private fun buildResponse(
         note: NursingNote,

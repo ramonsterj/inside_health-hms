@@ -99,12 +99,12 @@ export function canUploadResultDocument(
 }
 
 const MEDICAL_ORDER_BROAD_ROLES = [
-  'ADMIN',
-  'DOCTOR',
-  'RESIDENT_DOCTOR',
-  'NURSE',
-  'CHIEF_NURSE',
-  'ADMINISTRATIVE_STAFF'
+  'ADMINISTRADOR',
+  'MEDICO',
+  'MEDICO_RESIDENTE',
+  'ENFERMERO',
+  'JEFE_ENFERMERIA',
+  'PERSONAL_ADMINISTRATIVO'
 ]
 
 export function isPsychologistOutOfOrderScope(
@@ -112,7 +112,7 @@ export function isPsychologistOutOfOrderScope(
   user: { roles?: string[] } | null | undefined
 ): boolean {
   const roles = user?.roles ?? []
-  if (!roles.includes('PSYCHOLOGIST')) return false
+  if (!roles.includes('PSICOLOGO')) return false
   if (MEDICAL_ORDER_BROAD_ROLES.some(r => roles.includes(r))) return false
   return category !== MedicalOrderCategory.PRUEBAS_PSICOMETRICAS
 }

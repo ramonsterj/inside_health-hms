@@ -203,7 +203,7 @@ class UserRepositoryTest {
 
     @Test
     fun `findByIdWithRolesAndPermissions should eagerly load roles and permissions`() {
-        val adminRole = roleRepository.findByCode("ADMIN")!!
+        val adminRole = roleRepository.findByCode("ADMINISTRADOR")!!
         testUser.roles.add(adminRole)
         userRepository.saveAndFlush(testUser)
         entityManager.clear()
@@ -212,7 +212,7 @@ class UserRepositoryTest {
 
         assertNotNull(found)
         assertTrue(found.roles.isNotEmpty())
-        assertEquals("ADMIN", found.roles.first().code)
+        assertEquals("ADMINISTRADOR", found.roles.first().code)
         assertTrue(found.roles.first().permissions.isNotEmpty())
     }
 
@@ -225,7 +225,7 @@ class UserRepositoryTest {
 
     @Test
     fun `findByIdentifierWithRolesAndPermissions should find by email with roles`() {
-        val adminRole = roleRepository.findByCode("ADMIN")!!
+        val adminRole = roleRepository.findByCode("ADMINISTRADOR")!!
         testUser.roles.add(adminRole)
         userRepository.saveAndFlush(testUser)
         entityManager.clear()
@@ -239,7 +239,7 @@ class UserRepositoryTest {
 
     @Test
     fun `findByIdentifierWithRolesAndPermissions should find by username with roles`() {
-        val adminRole = roleRepository.findByCode("ADMIN")!!
+        val adminRole = roleRepository.findByCode("ADMINISTRADOR")!!
         testUser.roles.add(adminRole)
         userRepository.saveAndFlush(testUser)
         entityManager.clear()
@@ -277,12 +277,12 @@ class UserRepositoryTest {
 
     @Test
     fun `findWithFilters should filter by roleCode only`() {
-        val doctorRole = roleRepository.findByCode("DOCTOR")!!
+        val doctorRole = roleRepository.findByCode("MEDICO")!!
         testUser.roles.add(doctorRole)
         userRepository.saveAndFlush(testUser)
         entityManager.flush()
 
-        val page = userRepository.findWithFilters(null, "DOCTOR", null, PageRequest.of(0, 10))
+        val page = userRepository.findWithFilters(null, "MEDICO", null, PageRequest.of(0, 10))
 
         assertEquals(1, page.totalElements)
         assertEquals("testuser", page.content[0].username)
@@ -308,7 +308,7 @@ class UserRepositoryTest {
 
     @Test
     fun `findWithFilters should combine all filters`() {
-        val doctorRole = roleRepository.findByCode("DOCTOR")!!
+        val doctorRole = roleRepository.findByCode("MEDICO")!!
         testUser.roles.add(doctorRole)
         userRepository.saveAndFlush(testUser)
 
@@ -323,7 +323,7 @@ class UserRepositoryTest {
         userRepository.saveAndFlush(otherUser)
         entityManager.flush()
 
-        val page = userRepository.findWithFilters("ACTIVE", "DOCTOR", "Test", PageRequest.of(0, 10))
+        val page = userRepository.findWithFilters("ACTIVE", "MEDICO", "Test", PageRequest.of(0, 10))
 
         assertEquals(1, page.totalElements)
         assertEquals("testuser", page.content[0].username)
@@ -405,7 +405,7 @@ class UserRepositoryTest {
 
     @Test
     fun `findByRoleCode should return users with the specified role`() {
-        val doctorRole = roleRepository.findByCode("DOCTOR")!!
+        val doctorRole = roleRepository.findByCode("MEDICO")!!
         testUser.roles.add(doctorRole)
         userRepository.saveAndFlush(testUser)
 
@@ -419,13 +419,13 @@ class UserRepositoryTest {
         secondDoctor.roles.add(doctorRole)
         userRepository.saveAndFlush(secondDoctor)
 
-        val doctors = userRepository.findByRoleCode("DOCTOR")
+        val doctors = userRepository.findByRoleCode("MEDICO")
 
         assertEquals(2, doctors.size)
     }
 
     @Test
     fun `findByRoleCode should return empty list when no users have the role`() {
-        assertTrue(userRepository.findByRoleCode("PSYCHOLOGIST").isEmpty())
+        assertTrue(userRepository.findByRoleCode("PSICOLOGO").isEmpty())
     }
 }

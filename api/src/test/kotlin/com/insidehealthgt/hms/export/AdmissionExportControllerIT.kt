@@ -184,7 +184,7 @@ class AdmissionExportControllerIT : AbstractIntegrationTest() {
             """.trimIndent(),
             String::class.java,
         ).toSet()
-        assertEquals(setOf("ADMIN", "ADMINISTRATIVE_STAFF"), rolesWithPermission)
+        assertEquals(setOf("ADMINISTRADOR", "PERSONAL_ADMINISTRATIVO"), rolesWithPermission)
     }
 
     @Test

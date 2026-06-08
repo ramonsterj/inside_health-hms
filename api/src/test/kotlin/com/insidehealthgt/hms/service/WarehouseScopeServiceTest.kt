@@ -60,9 +60,16 @@ class WarehouseScopeServiceTest {
     @Test
     fun `nurse resolves to her default ENFERMERIA via the lookup table`() {
         whenever(roleDefaultWarehouseRepository.findByRoleCodes(any()))
-            .thenReturn(listOf(RoleDefaultWarehouse(role = Role(code = "NURSE", name = "n"), warehouse = enfermeria)))
+            .thenReturn(
+                listOf(
+                    RoleDefaultWarehouse(
+                        role = Role(code = "ENFERMERO", name = "n"),
+                        warehouse = enfermeria,
+                    ),
+                ),
+            )
 
-        val resolved = scopeService.resolveDispensingWarehouse(user(1, "NURSE"))
+        val resolved = scopeService.resolveDispensingWarehouse(user(1, "ENFERMERO"))
 
         assertEquals("ENFERMERIA", resolved.code)
     }
@@ -71,7 +78,7 @@ class WarehouseScopeServiceTest {
     fun `admin without a mapping falls back to ENFERMERIA`() {
         whenever(warehouseRepository.findByCode("ENFERMERIA")).thenReturn(enfermeria)
 
-        val resolved = scopeService.resolveDispensingWarehouse(user(1, "ADMIN"))
+        val resolved = scopeService.resolveDispensingWarehouse(user(1, "ADMINISTRADOR"))
 
         assertEquals("ENFERMERIA", resolved.code)
     }
@@ -81,7 +88,7 @@ class WarehouseScopeServiceTest {
         whenever(userWarehouseRepository.findByUserId(9))
             .thenReturn(listOf(UserWarehouse(user = mock(), warehouse = mant1)))
 
-        val resolved = scopeService.resolveDispensingWarehouse(user(9, "MAINTENANCE"))
+        val resolved = scopeService.resolveDispensingWarehouse(user(9, "MANTENIMIENTO"))
 
         assertEquals("MANTENIMIENTO_1", resolved.code)
     }
@@ -89,20 +96,27 @@ class WarehouseScopeServiceTest {
     @Test
     fun `unassigned user with no mapping throws 422`() {
         assertThrows(UnprocessableEntityException::class.java) {
-            scopeService.resolveDispensingWarehouse(user(5, "USER"))
+            scopeService.resolveDispensingWarehouse(user(5, "USUARIO"))
         }
     }
 
     @Test
     fun `admin may use any warehouse as a transfer source`() {
-        scopeService.assertCanUseAsSource(user(1, "ADMIN"), administracion)
+        scopeService.assertCanUseAsSource(user(1, "ADMINISTRADOR"), administracion)
     }
 
     @Test
     fun `nurse may use her own ENFERMERIA as source but not ADMINISTRACION`() {
         whenever(roleDefaultWarehouseRepository.findByRoleCodes(any()))
-            .thenReturn(listOf(RoleDefaultWarehouse(role = Role(code = "NURSE", name = "n"), warehouse = enfermeria)))
-        val nurse = user(1, "NURSE")
+            .thenReturn(
+                listOf(
+                    RoleDefaultWarehouse(
+                        role = Role(code = "ENFERMERO", name = "n"),
+                        warehouse = enfermeria,
+                    ),
+                ),
+            )
+        val nurse = user(1, "ENFERMERO")
 
         scopeService.assertCanUseAsSource(nurse, enfermeria) // owned — no throw
 

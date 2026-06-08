@@ -16,7 +16,7 @@ function makeUser(id: number): User {
     lastName: 'User',
     salutation: null,
     salutationDisplay: null,
-    roles: ['ADMIN'],
+    roles: ['ADMINISTRADOR'],
     permissions: [],
     status: UserStatus.ACTIVE,
     emailVerified: true,

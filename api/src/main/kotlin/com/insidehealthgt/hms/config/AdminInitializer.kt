@@ -28,7 +28,7 @@ class AdminInitializer(
         val adminUsername = "admin"
 
         val existingAdmin = userRepository.findByEmail(adminEmail)
-        val adminRole = roleRepository.findByCode("ADMIN")
+        val adminRole = roleRepository.findByCode("ADMINISTRADOR")
 
         if (existingAdmin == null) {
             val admin = User(
@@ -57,10 +57,10 @@ class AdminInitializer(
                 logger.info("Admin password hash updated")
             }
 
-            if (adminRole != null && !existingAdmin.hasRole("ADMIN")) {
+            if (adminRole != null && !existingAdmin.hasRole("ADMINISTRADOR")) {
                 existingAdmin.roles.add(adminRole)
                 needsSave = true
-                logger.info("ADMIN role assigned to existing admin user")
+                logger.info("ADMINISTRADOR role assigned to existing admin user")
             }
 
             if (needsSave) {

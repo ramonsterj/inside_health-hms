@@ -29,7 +29,7 @@ class UserControllerTest : AbstractIntegrationTest() {
     @BeforeEach
     fun setUp() {
         // Create regular user (with permissions loaded)
-        val userRole = roleRepository.findByCodeWithPermissions("USER")!!
+        val userRole = roleRepository.findByCodeWithPermissions("USUARIO")!!
         val user = User(
             username = "user",
             email = "user@example.com",
@@ -43,7 +43,7 @@ class UserControllerTest : AbstractIntegrationTest() {
         userToken = loginAndGetToken("user@example.com", "password123")
 
         // Create admin user (with permissions loaded)
-        val adminRole = roleRepository.findByCodeWithPermissions("ADMIN")!!
+        val adminRole = roleRepository.findByCodeWithPermissions("ADMINISTRADOR")!!
         val adminUser = User(
             username = "admin",
             email = "admin@example.com",
@@ -446,7 +446,7 @@ class UserControllerTest : AbstractIntegrationTest() {
     @Test
     fun `assignRoles should succeed for admin`() {
         val request = AssignRolesRequest(
-            roleCodes = listOf("USER", "DOCTOR"),
+            roleCodes = listOf("USUARIO", "MEDICO"),
         )
 
         mockMvc.perform(
@@ -478,7 +478,7 @@ class UserControllerTest : AbstractIntegrationTest() {
     @Test
     fun `assignRoles should fail for regular user`() {
         val request = AssignRolesRequest(
-            roleCodes = listOf("ADMIN"),
+            roleCodes = listOf("ADMINISTRADOR"),
         )
 
         mockMvc.perform(

@@ -37,7 +37,7 @@ const mockVitalSign: VitalSignResponse = {
     salutation: 'LICDA',
     firstName: 'Ana',
     lastName: 'Lopez',
-    roles: ['NURSE']
+    roles: ['ENFERMERO']
   },
   updatedBy: null,
   canEdit: true
@@ -63,7 +63,7 @@ const mockVitalSigns: VitalSignResponse[] = [
       salutation: 'LICDA',
       firstName: 'Ana',
       lastName: 'Lopez',
-      roles: ['NURSE']
+      roles: ['ENFERMERO']
     },
     updatedBy: null,
     canEdit: true
@@ -87,7 +87,7 @@ const mockVitalSigns: VitalSignResponse[] = [
       salutation: 'LICDA',
       firstName: 'Ana',
       lastName: 'Lopez',
-      roles: ['NURSE']
+      roles: ['ENFERMERO']
     },
     updatedBy: null,
     canEdit: true
@@ -111,7 +111,7 @@ const mockVitalSigns: VitalSignResponse[] = [
       salutation: 'LICDA',
       firstName: 'Ana',
       lastName: 'Lopez',
-      roles: ['NURSE']
+      roles: ['ENFERMERO']
     },
     updatedBy: null,
     canEdit: true

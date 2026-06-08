@@ -336,9 +336,20 @@
       "mustBeDifferent": "New password must be different from current password"
     }
   },
+  "roleNames": {
+    "ADMINISTRADOR": "Administrator",
+    "USUARIO": "User",
+    "PERSONAL_ADMINISTRATIVO": "Administrative Staff",
+    "MEDICO": "Doctor",
+    "ENFERMERO": "Nurse",
+    "JEFE_ENFERMERIA": "Chief Nurse",
+    "PSICOLOGO": "Psychologist",
+    "MEDICO_RESIDENTE": "Resident Doctor",
+    "AUXILIAR_ENFERMERIA": "Auxiliary Nurse",
+    "MANTENIMIENTO": "Maintenance"
+  },
   "roles": {
     "title": "Role Management",
-    "MAINTENANCE": "Maintenance",
     "addRole": "Add Role",
     "editRole": "Edit Role",
     "managePermissions": "Manage Permissions",

@@ -72,9 +72,9 @@ class PsychotherapyActivityService(
     @Suppress("ThrowsCount")
     @Transactional
     fun createActivity(admissionId: Long, request: CreatePsychotherapyActivityRequest): PsychotherapyActivityResponse {
-        // Verify PSYCHOLOGIST role
+        // Verify PSICOLOGO role
         val currentUser = currentUserProvider.currentUserDetailsOrThrow()
-        if (!currentUser.hasRole("PSYCHOLOGIST")) {
+        if (!currentUser.hasRole("PSICOLOGO")) {
             throw ForbiddenException(messageService.errorPsychotherapyActivityOnlyPsychologist())
         }
 

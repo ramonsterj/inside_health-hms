@@ -44,7 +44,7 @@ class AdmissionConsultingPhysicianControllerTest : AbstractIntegrationTest() {
         doctorToken = doctorTkn
 
         val (secondDoctor, _) = createUserWithRole(
-            roleCode = "DOCTOR",
+            roleCode = "MEDICO",
             username = "doctor2",
             email = "doctor2@example.com",
             password = "password123",
@@ -166,7 +166,7 @@ class AdmissionConsultingPhysicianControllerTest : AbstractIntegrationTest() {
                 .content(objectMapper.writeValueAsString(consultingRequest)),
         )
             .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error.message").value("Consulting physician must have the DOCTOR role"))
+            .andExpect(jsonPath("$.error.message").value("Consulting physician must have the MEDICO role"))
     }
 
     @Test

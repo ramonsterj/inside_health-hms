@@ -3,7 +3,7 @@
 --               Inventory Movements
 -- ============================================================================
 -- Last updated: 2026-05-28 (lot-aware medication movements)
--- SEED-BUNDLE-VERSION: 2026-06-03b (see R__seed_01 header for the rule)
+-- SEED-BUNDLE-VERSION: 2026-06-08-roles-es (see R__seed_01 header for the rule)
 
 SET session_replication_role = replica;
 

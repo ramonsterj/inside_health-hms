@@ -47,39 +47,39 @@ Register hospital admissions starting from the patient list view. Staff selects 
 
 | Action | Required Role(s) | Permission | Notes |
 |--------|------------------|------------|-------|
-| View admissions | ADMINISTRATIVE_STAFF, ADMIN | `admission:read` | List and view details |
-| Create admission | RESIDENT_DOCTOR, ADMIN | `admission:create` | Register new admission. **Only a `RESIDENT_DOCTOR` may admit** — the resident slot is auto-bound to the authenticated user. `ADMIN` is the sole exception: an admin is not a resident, so they must explicitly pick the resident doctor (`residentId` in the request) and the picked user must carry `RESIDENT_DOCTOR`. `DOCTOR`, `ADMINISTRATIVE_STAFF`, and every other role are blocked: those holding `admission:create` but lacking the role get 400 `error.admission.resident.role.required`; those without the permission get 403. |
-| Update admission | ADMINISTRATIVE_STAFF, ADMIN | `admission:update` | Edit admission details |
-| Discharge patient | ADMINISTRATIVE_STAFF, ADMIN | `admission:update` | Change status to DISCHARGED |
-| Delete admission | ADMIN | `admission:delete` | Soft delete only |
-| Upload consent | ADMINISTRATIVE_STAFF, ADMIN | `admission:upload-consent` | Upload consent document |
-| View consent | ADMINISTRATIVE_STAFF, ADMIN | `admission:view-consent` | Download consent document |
+| View admissions | PERSONAL_ADMINISTRATIVO, ADMINISTRADOR | `admission:read` | List and view details |
+| Create admission | MEDICO_RESIDENTE, ADMINISTRADOR | `admission:create` | Register new admission. **Only a `MEDICO_RESIDENTE` may admit** — the resident slot is auto-bound to the authenticated user. `ADMINISTRADOR` is the sole exception: an admin is not a resident, so they must explicitly pick the resident doctor (`residentId` in the request) and the picked user must carry `MEDICO_RESIDENTE`. `MEDICO`, `PERSONAL_ADMINISTRATIVO`, and every other role are blocked: those holding `admission:create` but lacking the role get 400 `error.admission.resident.role.required`; those without the permission get 403. |
+| Update admission | PERSONAL_ADMINISTRATIVO, ADMINISTRADOR | `admission:update` | Edit admission details |
+| Discharge patient | PERSONAL_ADMINISTRATIVO, ADMINISTRADOR | `admission:update` | Change status to DISCHARGED |
+| Delete admission | ADMINISTRADOR | `admission:delete` | Soft delete only |
+| Upload consent | PERSONAL_ADMINISTRATIVO, ADMINISTRADOR | `admission:upload-consent` | Upload consent document |
+| View consent | PERSONAL_ADMINISTRATIVO, ADMINISTRADOR | `admission:view-consent` | Download consent document |
 
 ### Triage Code
 
 | Action | Required Role(s) | Permission | Notes |
 |--------|------------------|------------|-------|
-| View triage codes | ADMINISTRATIVE_STAFF, ADMIN | `triage-code:read` | For dropdown selection |
-| Create triage code | ADMIN | `triage-code:create` | |
-| Update triage code | ADMIN | `triage-code:update` | |
-| Delete triage code | ADMIN | `triage-code:delete` | Cannot delete if in use |
+| View triage codes | PERSONAL_ADMINISTRATIVO, ADMINISTRADOR | `triage-code:read` | For dropdown selection |
+| Create triage code | ADMINISTRADOR | `triage-code:create` | |
+| Update triage code | ADMINISTRADOR | `triage-code:update` | |
+| Delete triage code | ADMINISTRADOR | `triage-code:delete` | Cannot delete if in use |
 
 ### Room
 
 | Action | Required Role(s) | Permission | Notes |
 |--------|------------------|------------|-------|
-| View rooms | ADMINISTRATIVE_STAFF, ADMIN | `room:read` | For dropdown selection |
-| Create room | ADMIN | `room:create` | |
-| Update room | ADMIN | `room:update` | |
-| Delete room | ADMIN | `room:delete` | Cannot delete if has active patients |
+| View rooms | PERSONAL_ADMINISTRATIVO, ADMINISTRADOR | `room:read` | For dropdown selection |
+| Create room | ADMINISTRADOR | `room:create` | |
+| Update room | ADMINISTRADOR | `room:update` | |
+| Delete room | ADMINISTRADOR | `room:delete` | Cannot delete if has active patients |
 
 ### Consulting Physicians (Interconsultas)
 
 | Action | Required Role(s) | Permission | Notes |
 |--------|------------------|------------|-------|
-| View consulting physicians | ADMINISTRATIVE_STAFF, ADMIN | `admission:read` | Included in admission detail |
-| Add consulting physician | ADMINISTRATIVE_STAFF, ADMIN | `admission:update` | Only for existing admissions |
-| Remove consulting physician | ADMINISTRATIVE_STAFF, ADMIN | `admission:update` | Only for existing admissions |
+| View consulting physicians | PERSONAL_ADMINISTRATIVO, ADMINISTRADOR | `admission:read` | Included in admission detail |
+| Add consulting physician | PERSONAL_ADMINISTRATIVO, ADMINISTRADOR | `admission:update` | Only for existing admissions |
+| Remove consulting physician | PERSONAL_ADMINISTRATIVO, ADMINISTRADOR | `admission:update` | Only for existing admissions |
 
 ---
 
@@ -99,7 +99,7 @@ Register hospital admissions starting from the patient list view. Staff selects 
    - Admission date/time: pre-filled with current date/time, editable
    - Triage code: dropdown populated from TriageCode entity (show code + color indicator)
    - Room: dropdown showing only rooms with available capacity (show room number, type, available beds)
-   - Treating physician: dropdown of users with DOCTOR role (show salutation + name)
+   - Treating physician: dropdown of users with MEDICO role (show salutation + name)
 
 3. **Step 3 - Additional Information**
    - Inventory: optional textarea for patient belongings
@@ -151,7 +151,7 @@ Register hospital admissions starting from the patient list view. Staff selects 
 - **Only available after admission is created** - cannot be added during the admission wizard
 - Displayed on admission detail view as a list with add/remove actions
 - Add consulting physician:
-  - Dropdown of users with DOCTOR role (excluding the treating physician)
+  - Dropdown of users with MEDICO role (excluding the treating physician)
   - Optional reason/notes field (max 500 characters)
   - Optional requested date field (defaults to current date)
   - Same physician cannot be added twice to the same admission
@@ -185,12 +185,12 @@ Register hospital admissions starting from the patient list view. Staff selects 
 - When user lacks `admission:create` permission, then return 403 Forbidden.
 
 **Resident binding (who may admit):**
-- Given the caller is a `RESIDENT_DOCTOR`, when admission is created, then the resident slot is auto-bound to the authenticated user (`residentId` in the request is ignored).
-- Given the caller is an `ADMIN`, when admission is created with a `residentId` pointing to a `RESIDENT_DOCTOR`, then that user is recorded as the resident.
-- Given the caller is an `ADMIN` and `residentId` is omitted, then return 400 `error.admission.resident.required`.
-- Given the caller is an `ADMIN` and `residentId` points to a user without the `RESIDENT_DOCTOR` role, then return 400 `error.admission.resident.invalid.role`.
-- Given the caller holds `admission:create` but is neither `ADMIN` nor `RESIDENT_DOCTOR` (e.g. `ADMINISTRATIVE_STAFF`), then return 400 `error.admission.resident.role.required`.
-- `GET /api/v1/admissions/residents` returns the `RESIDENT_DOCTOR` users for the admin's resident picker (gated by `admission:create`).
+- Given the caller is a `MEDICO_RESIDENTE`, when admission is created, then the resident slot is auto-bound to the authenticated user (`residentId` in the request is ignored).
+- Given the caller is an `ADMINISTRADOR`, when admission is created with a `residentId` pointing to a `MEDICO_RESIDENTE`, then that user is recorded as the resident.
+- Given the caller is an `ADMINISTRADOR` and `residentId` is omitted, then return 400 `error.admission.resident.required`.
+- Given the caller is an `ADMINISTRADOR` and `residentId` points to a user without the `MEDICO_RESIDENTE` role, then return 400 `error.admission.resident.invalid.role`.
+- Given the caller holds `admission:create` but is neither `ADMINISTRADOR` nor `MEDICO_RESIDENTE` (e.g. `PERSONAL_ADMINISTRATIVO`), then return 400 `error.admission.resident.role.required`.
+- `GET /api/v1/admissions/residents` returns the `MEDICO_RESIDENTE` users for the admin's resident picker (gated by `admission:create`).
 
 ### Discharge
 
@@ -261,7 +261,7 @@ Register hospital admissions starting from the patient list view. Staff selects 
 | DELETE | `/api/v1/admissions/{id}` | - | - | Yes | Soft delete admission |
 | POST | `/api/v1/admissions/{id}/consent` | `MultipartFile` | `AdmissionDetailResponse` | Yes | Upload consent document |
 | GET | `/api/v1/admissions/{id}/consent` | - | `byte[]` | Yes | Download consent document |
-| GET | `/api/v1/admissions/residents` | - | `List<DoctorResponse>` | Yes | List `RESIDENT_DOCTOR` users for the admin resident picker (gated by `admission:create`) |
+| GET | `/api/v1/admissions/residents` | - | `List<DoctorResponse>` | Yes | List `MEDICO_RESIDENTE` users for the admin resident picker (gated by `admission:create`) |
 
 ### Triage Code Endpoints
 
@@ -569,23 +569,23 @@ INSERT INTO permissions (code, name, description, resource, action, created_at, 
 ('admission:upload-consent', 'Upload Consent', 'Upload consent documents', 'admission', 'upload-consent', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('admission:view-consent', 'View Consent', 'View consent documents', 'admission', 'view-consent', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
--- Assign ADMIN full access to all new resources
+-- Assign ADMINISTRADOR full access to all new resources
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r CROSS JOIN permissions p
-WHERE r.code = 'ADMIN' AND p.resource IN ('triage-code', 'room', 'admission');
+WHERE r.code = 'ADMINISTRADOR' AND p.resource IN ('triage-code', 'room', 'admission');
 
--- Assign ADMINISTRATIVE_STAFF read access to triage codes and rooms
+-- Assign PERSONAL_ADMINISTRATIVO read access to triage codes and rooms
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r CROSS JOIN permissions p
-WHERE r.code = 'ADMINISTRATIVE_STAFF' AND p.code IN ('triage-code:read', 'room:read');
+WHERE r.code = 'PERSONAL_ADMINISTRATIVO' AND p.code IN ('triage-code:read', 'room:read');
 
--- Assign ADMINISTRATIVE_STAFF admission permissions (except delete)
+-- Assign PERSONAL_ADMINISTRATIVO admission permissions (except delete)
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r CROSS JOIN permissions p
-WHERE r.code = 'ADMINISTRATIVE_STAFF' AND p.resource = 'admission' AND p.action != 'delete';
+WHERE r.code = 'PERSONAL_ADMINISTRATIVO' AND p.resource = 'admission' AND p.action != 'delete';
 
 -- V026__create_admission_consulting_physicians_table.sql
 CREATE TABLE admission_consulting_physicians (
@@ -726,7 +726,7 @@ export const addConsultingPhysicianSchema = z.object({
 - **File Storage Pattern**: Follow existing `PatientIdDocument` pattern - store file as binary in database with fileName, contentType, fileSize, fileData columns.
 - **Room Availability Query**: Use a custom repository method with `@Query` to calculate available beds efficiently.
 - **Multi-Step Form**: Use PrimeVue `Stepper` component for the admission wizard.
-- **Treating Physician Dropdown**: Query users filtered by DOCTOR role.
+- **Treating Physician Dropdown**: Query users filtered by MEDICO role.
 - **Color Picker**: Use PrimeVue `ColorPicker` for triage code color selection.
 - **Optimistic Locking**: Consider adding `@Version` to Room entity if concurrent booking issues arise.
 - **Existing Patterns**: Follow `PatientController`/`PatientService` patterns for new controllers and services.
@@ -749,7 +749,7 @@ export const addConsultingPhysicianSchema = z.object({
 - [ ] Discharge flow frees room capacity
 - [ ] Soft delete frees room capacity if ACTIVE
 - [ ] Cannot delete triage code/room if in use
-- [ ] Consulting physicians: add endpoint validates physician is DOCTOR role
+- [ ] Consulting physicians: add endpoint validates physician is MEDICO role
 - [ ] Consulting physicians: cannot add treating physician as consultant
 - [ ] Consulting physicians: cannot add same physician twice (unique constraint)
 - [ ] Consulting physicians: soft delete on remove

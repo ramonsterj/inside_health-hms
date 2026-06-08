@@ -76,7 +76,7 @@ class RoleService(private val roleRepository: RoleRepository, private val permis
             .orElseThrow { ResourceNotFoundException("Role not found with id: $id") }
 
         if (role.isSystem) {
-            throw BadRequestException("System roles (ADMIN, USER) cannot be deleted")
+            throw BadRequestException("System roles cannot be deleted")
         }
 
         role.deletedAt = LocalDateTime.now()

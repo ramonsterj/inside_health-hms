@@ -99,7 +99,7 @@ class MedicationAdministrationService(
         // Admin-only override: nurses sending lotId receive 403.
         if (request.lotId != null) {
             val ud = currentUserProvider.currentUserDetails()
-            val isAdmin = ud?.hasRole("ADMIN") == true || ud?.hasPermission("inventory-lot:update") == true
+            val isAdmin = ud?.hasRole("ADMINISTRADOR") == true || ud?.hasPermission("inventory-lot:update") == true
             if (!isAdmin) {
                 throw ForbiddenException(messageService.errorMedicationLotOverrideForbidden())
             }

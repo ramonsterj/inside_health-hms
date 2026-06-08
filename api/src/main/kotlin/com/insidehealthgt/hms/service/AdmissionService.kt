@@ -154,7 +154,7 @@ class AdmissionService(
             }
 
         // Validate that the user is a doctor
-        if (!treatingPhysician.hasRole("DOCTOR")) {
+        if (!treatingPhysician.hasRole("MEDICO")) {
             throw BadRequestException(messageService.errorAdmissionPhysicianRole())
         }
 
@@ -235,7 +235,7 @@ class AdmissionService(
             }
 
         // Validate that the user is a doctor
-        if (!treatingPhysician.hasRole("DOCTOR")) {
+        if (!treatingPhysician.hasRole("MEDICO")) {
             throw BadRequestException(messageService.errorAdmissionPhysicianRole())
         }
 
@@ -371,13 +371,13 @@ class AdmissionService(
 
     @Transactional(readOnly = true)
     fun listDoctors(): List<DoctorResponse> {
-        val doctors = userRepository.findByRoleCode("DOCTOR")
+        val doctors = userRepository.findByRoleCode("MEDICO")
         return doctors.map { DoctorResponse.from(it) }
     }
 
     @Transactional(readOnly = true)
     fun listResidents(): List<DoctorResponse> {
-        val residents = userRepository.findByRoleCode("RESIDENT_DOCTOR")
+        val residents = userRepository.findByRoleCode("MEDICO_RESIDENTE")
         return residents.map { DoctorResponse.from(it) }
     }
 
@@ -415,7 +415,7 @@ class AdmissionService(
             .orElseThrow { ResourceNotFoundException(messageService.errorAdmissionUserNotFound(request.physicianId)) }
 
         // Validate that the user is a doctor
-        if (!physician.hasRole("DOCTOR")) {
+        if (!physician.hasRole("MEDICO")) {
             throw BadRequestException(messageService.errorAdmissionConsultingPhysicianRole())
         }
 
@@ -463,21 +463,21 @@ class AdmissionService(
         val principal = SecurityContextHolder.getContext().authentication?.principal as? CustomUserDetails
             ?: throw BadRequestException(messageService.errorAdmissionResidentRoleRequired())
 
-        // ADMIN is the only exception: admins are not residents, so they must
+        // ADMINISTRADOR is the only exception: admins are not residents, so they must
         // explicitly pick the resident doctor the admission is recorded under.
-        if (principal.hasRole("ADMIN")) {
+        if (principal.hasRole("ADMINISTRADOR")) {
             val residentId = request.residentId
                 ?: throw BadRequestException(messageService.errorAdmissionResidentRequired())
             val resident = userRepository.findById(residentId)
                 .orElseThrow { ResourceNotFoundException(messageService.errorAdmissionUserNotFound(residentId)) }
-            if (!resident.hasRole("RESIDENT_DOCTOR")) {
+            if (!resident.hasRole("MEDICO_RESIDENTE")) {
                 throw BadRequestException(messageService.errorAdmissionResidentInvalidRole())
             }
             return resident
         }
 
         // Everyone else must be a resident; the resident is always themselves.
-        if (!principal.hasRole("RESIDENT_DOCTOR")) {
+        if (!principal.hasRole("MEDICO_RESIDENTE")) {
             throw BadRequestException(messageService.errorAdmissionResidentRoleRequired())
         }
         return userRepository.findById(principal.id)

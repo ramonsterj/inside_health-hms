@@ -58,7 +58,7 @@ describe('AdmissionExportButton', () => {
   it('is hidden when the user lacks the permission', () => {
     const wrapper = mountButton()
     const auth = useAuthStore()
-    auth.$patch({ user: { roles: ['DOCTOR'], permissions: [] } } as never)
+    auth.$patch({ user: { roles: ['MEDICO'], permissions: [] } } as never)
 
     expect(wrapper.find('[data-testid="admission-export-button"]').exists()).toBe(false)
   })
@@ -67,7 +67,7 @@ describe('AdmissionExportButton', () => {
     const wrapper = mountButton()
     const auth = useAuthStore()
     auth.$patch({
-      user: { roles: ['ADMINISTRATIVE_STAFF'], permissions: ['admission:export-pdf'] }
+      user: { roles: ['PERSONAL_ADMINISTRATIVO'], permissions: ['admission:export-pdf'] }
     } as never)
     await wrapper.vm.$nextTick()
 
@@ -77,7 +77,7 @@ describe('AdmissionExportButton', () => {
   it('calls the export endpoint with responseType blob on click', async () => {
     const wrapper = mountButton()
     const auth = useAuthStore()
-    auth.$patch({ user: { roles: ['ADMIN'], permissions: [] } } as never)
+    auth.$patch({ user: { roles: ['ADMINISTRADOR'], permissions: [] } } as never)
     await wrapper.vm.$nextTick()
     ;(api.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       data: new Blob(['%PDF-1.4']),
@@ -98,7 +98,7 @@ describe('AdmissionExportButton', () => {
   it('toggles loading around the download call', async () => {
     const wrapper = mountButton()
     const auth = useAuthStore()
-    auth.$patch({ user: { roles: ['ADMIN'], permissions: [] } } as never)
+    auth.$patch({ user: { roles: ['ADMINISTRADOR'], permissions: [] } } as never)
     await wrapper.vm.$nextTick()
 
     let resolveRequest!: (value: unknown) => void
@@ -121,7 +121,7 @@ describe('AdmissionExportButton', () => {
   it('passes rejected downloads to the shared error handler', async () => {
     const wrapper = mountButton()
     const auth = useAuthStore()
-    auth.$patch({ user: { roles: ['ADMIN'], permissions: [] } } as never)
+    auth.$patch({ user: { roles: ['ADMINISTRADOR'], permissions: [] } } as never)
     await wrapper.vm.$nextTick()
     const error = new Error('too large')
     ;(api.get as ReturnType<typeof vi.fn>).mockRejectedValue(error)
@@ -135,7 +135,7 @@ describe('AdmissionExportButton', () => {
   it('decodes blob error bodies before delegating to the error handler', async () => {
     const wrapper = mountButton()
     const auth = useAuthStore()
-    auth.$patch({ user: { roles: ['ADMIN'], permissions: [] } } as never)
+    auth.$patch({ user: { roles: ['ADMINISTRADOR'], permissions: [] } } as never)
     await wrapper.vm.$nextTick()
 
     const payload = { error: { code: 'PAYLOAD_TOO_LARGE', message: 'too large' } }

@@ -79,7 +79,7 @@ const model = computed<MenuItem[]>(() => {
       to: '/medical-orders'
     })
   }
-  // Lab catalog — gated by lab-catalog:read (DOCTOR/RESIDENT_DOCTOR/ADMIN), NOT isAdmin.
+  // Lab catalog — gated by lab-catalog:read (MEDICO/MEDICO_RESIDENTE/ADMINISTRADOR), NOT isAdmin.
   if (authStore.hasPermission('lab-catalog:read')) {
     clinicalItems.push({
       label: 'nav.labCatalog',

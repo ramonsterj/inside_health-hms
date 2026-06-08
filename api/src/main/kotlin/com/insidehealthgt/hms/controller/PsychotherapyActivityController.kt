@@ -49,7 +49,7 @@ class PsychotherapyActivityController(private val activityService: Psychotherapy
 
     /**
      * Create activity (psychologist only).
-     * Service layer enforces PSYCHOLOGIST role check.
+     * Service layer enforces PSICOLOGO role check.
      */
     @PostMapping
     @PreAuthorize("hasAuthority('psychotherapy-activity:create')")
