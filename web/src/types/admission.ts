@@ -74,7 +74,7 @@ export interface CreateAdmissionRequest {
   admissionDate: string
   type: AdmissionType
   inventory?: string | null
-  // Only sent when an ADMIN registers the admission (they must pick the resident
+  // Only sent when an ADMINISTRADOR registers the admission (they must pick the resident
   // doctor). Residents auto-bind to themselves and omit this field.
   residentId?: number | null
 }

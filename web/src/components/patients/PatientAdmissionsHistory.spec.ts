@@ -68,7 +68,7 @@ async function mountHistory(options: {
 
   const auth = useAuthStore()
   auth.$patch({
-    user: { roles: ['NURSE'], permissions: options.permissions ?? ['patient:read'] }
+    user: { roles: ['ENFERMERO'], permissions: options.permissions ?? ['patient:read'] }
   } as never)
 
   const store = useAdmissionStore()

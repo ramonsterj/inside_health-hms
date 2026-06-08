@@ -16,7 +16,7 @@ const emit = defineEmits<{
   delete: []
 }>()
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 const authorName = computed(() => {
   if (!props.activity.createdBy) return '-'
@@ -32,6 +32,11 @@ const authorRoles = computed(() => {
 })
 
 const createdAtFormatted = computed(() => formatDateTime(props.activity.createdAt))
+
+function roleLabel(code: string): string {
+  const key = `roleNames.${code}`
+  return te(key) ? t(key) : code
+}
 </script>
 
 <template>
@@ -46,7 +51,7 @@ const createdAtFormatted = computed(() => formatDateTime(props.activity.createdA
               <Tag
                 v-for="role in authorRoles"
                 :key="role"
-                :value="role"
+                :value="roleLabel(role)"
                 severity="secondary"
                 class="role-tag"
               />

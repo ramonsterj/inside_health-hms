@@ -13,22 +13,28 @@ import type {
 } from '@/types'
 import type { ForceChangePasswordFormData } from '@/validation/user'
 
-// Roles that, when stacked with AUXILIARY_NURSE, lift the auxiliary-only restriction.
+// Roles that, when stacked with AUXILIAR_ENFERMERIA, lift the auxiliary-only restriction.
 // Kept in sync with `CustomUserDetails.ELEVATED_NURSING_ROLES` on the backend.
-const ELEVATED_NURSING_ROLES = ['NURSE', 'CHIEF_NURSE', 'DOCTOR', 'RESIDENT_DOCTOR', 'ADMIN']
+const ELEVATED_NURSING_ROLES = [
+  'ENFERMERO',
+  'JEFE_ENFERMERIA',
+  'MEDICO',
+  'MEDICO_RESIDENTE',
+  'ADMINISTRADOR'
+]
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const loading = ref(false)
 
   const isAuthenticated = computed(() => !!user.value && tokenStorage.hasTokens())
-  const isAdmin = computed(() => user.value?.roles?.includes('ADMIN') ?? false)
+  const isAdmin = computed(() => user.value?.roles?.includes('ADMINISTRADOR') ?? false)
   const mustChangePassword = computed(() => user.value?.mustChangePassword ?? false)
 
   function hasPermission(permission: string): boolean {
     if (!user.value) return false
     // Admins have all permissions
-    if (user.value.roles?.includes('ADMIN')) return true
+    if (user.value.roles?.includes('ADMINISTRADOR')) return true
     return user.value.permissions?.includes(permission) ?? false
   }
 
@@ -38,13 +44,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * Mirrors the backend `CustomUserDetails.isAuxiliaryNurseOnly()` guard: true when the user holds
-   * AUXILIARY_NURSE but none of the elevated nursing-or-better roles. Used to hide the three
+   * AUXILIAR_ENFERMERIA but none of the elevated nursing-or-better roles. Used to hide the three
    * restricted nursing actions (administer medication, mark order in progress, upload result
    * document) that the backend service guards would otherwise reject with 403 — even when a custom
    * role grants the underlying permission. See docs/features/nursing-roles-split.md.
    */
   const isAuxiliaryNurseOnly = computed(() => {
-    if (!hasRole('AUXILIARY_NURSE')) return false
+    if (!hasRole('AUXILIAR_ENFERMERIA')) return false
     return !ELEVATED_NURSING_ROLES.some(role => hasRole(role))
   })
 

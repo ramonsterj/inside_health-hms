@@ -83,7 +83,7 @@ class AuxiliaryNurseRestrictionTest : AbstractIntegrationTest() {
         )
 
         val (_, auxPermsTkn) = createUserWithRole(
-            roleCode = "AUXILIARY_NURSE",
+            roleCode = "AUXILIAR_ENFERMERIA",
             username = "aux_with_perms",
             email = "aux_with_perms@example.com",
             password = "password123",
@@ -92,7 +92,7 @@ class AuxiliaryNurseRestrictionTest : AbstractIntegrationTest() {
         auxWithPermsToken = auxPermsTkn
 
         val (_, auxPlainTkn) = createUserWithRole(
-            roleCode = "AUXILIARY_NURSE",
+            roleCode = "AUXILIAR_ENFERMERIA",
             username = "aux_plain",
             email = "aux_plain@example.com",
             password = "password123",
@@ -103,11 +103,11 @@ class AuxiliaryNurseRestrictionTest : AbstractIntegrationTest() {
         nurseToken = nurseTkn
 
         val (_, stackedTkn) = createUserWithRole(
-            roleCode = "NURSE",
+            roleCode = "ENFERMERO",
             username = "graduate_covering_aux",
             email = "graduate_covering_aux@example.com",
             password = "password123",
-            extraRoleCodes = listOf("AUXILIARY_NURSE"),
+            extraRoleCodes = listOf("AUXILIAR_ENFERMERIA"),
         )
         stackedNurseAuxToken = stackedTkn
 

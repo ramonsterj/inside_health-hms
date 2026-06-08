@@ -133,7 +133,7 @@ describe('AdmissionFormView resident picker', () => {
   })
 
   it('shows the resident picker and fetches residents for an admin', async () => {
-    const wrapper = mountForm(['ADMIN'])
+    const wrapper = mountForm(['ADMINISTRADOR'])
     await flushPromises()
 
     expect(mockedApi.get).toHaveBeenCalledWith('/v1/admissions/residents')
@@ -141,7 +141,7 @@ describe('AdmissionFormView resident picker', () => {
   })
 
   it('hides the resident picker and does not fetch residents for a resident doctor', async () => {
-    const wrapper = mountForm(['RESIDENT_DOCTOR'])
+    const wrapper = mountForm(['MEDICO_RESIDENTE'])
     await flushPromises()
 
     expect(mockedApi.get).not.toHaveBeenCalledWith('/v1/admissions/residents')
@@ -149,7 +149,7 @@ describe('AdmissionFormView resident picker', () => {
   })
 
   it('blocks registration for a role that may not admit', async () => {
-    const wrapper = mountForm(['DOCTOR'])
+    const wrapper = mountForm(['MEDICO'])
     await flushPromises()
 
     expect(wrapper.find('[data-testid="resident-field"]').exists()).toBe(false)
@@ -158,7 +158,7 @@ describe('AdmissionFormView resident picker', () => {
   })
 
   it('requires an admin to select a resident before submit', async () => {
-    const wrapper = mountForm(['ADMIN'])
+    const wrapper = mountForm(['ADMINISTRADOR'])
     await flushPromises()
 
     Object.assign(wrapper.vm, {
@@ -174,7 +174,7 @@ describe('AdmissionFormView resident picker', () => {
   })
 
   it('sends residentId only for admin-created admissions', async () => {
-    const adminWrapper = mountForm(['ADMIN'])
+    const adminWrapper = mountForm(['ADMINISTRADOR'])
     await flushPromises()
 
     Object.assign(adminWrapper.vm, {
@@ -199,7 +199,7 @@ describe('AdmissionFormView resident picker', () => {
     )
 
     mockedApi.post.mockClear()
-    const residentWrapper = mountForm(['RESIDENT_DOCTOR'])
+    const residentWrapper = mountForm(['MEDICO_RESIDENTE'])
     await flushPromises()
 
     Object.assign(residentWrapper.vm, {
@@ -234,7 +234,7 @@ describe('AdmissionFormView resident picker', () => {
       return Promise.resolve(ok([]))
     })
 
-    mountForm(['ADMIN'])
+    mountForm(['ADMINISTRADOR'])
     await flushPromises()
 
     expect(routerPush).toHaveBeenCalledWith({ name: 'admission-detail', params: { id: 5 } })

@@ -5,30 +5,30 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Verifies the V117 migration: the AUXILIARY_NURSE role exists (AC-1) and its
+ * Verifies the V117 migration: the AUXILIAR_ENFERMERIA role exists (AC-1) and its
  * granted permission set matches the spec exactly (AC-2) — both the present
  * permissions and the deliberate exclusions. Spec: docs/features/nursing-roles-split.md.
  */
 class AuxiliaryNurseRoleMigrationTest : AbstractIntegrationTest() {
 
     @Test
-    fun `AUXILIARY_NURSE role exists after migration`() {
+    fun `AUXILIAR_ENFERMERIA role exists after migration`() {
         val count = jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM roles WHERE code = 'AUXILIARY_NURSE'",
+            "SELECT COUNT(*) FROM roles WHERE code = 'AUXILIAR_ENFERMERIA'",
             Int::class.java,
         )
         assertEquals(1, count)
     }
 
     @Test
-    fun `AUXILIARY_NURSE has exactly the expected permission grants`() {
+    fun `AUXILIAR_ENFERMERIA has exactly the expected permission grants`() {
         val granted = jdbcTemplate.queryForList(
             """
             SELECT p.code
             FROM role_permissions rp
             JOIN roles r ON r.id = rp.role_id
             JOIN permissions p ON p.id = rp.permission_id
-            WHERE r.code = 'AUXILIARY_NURSE'
+            WHERE r.code = 'AUXILIAR_ENFERMERIA'
             """.trimIndent(),
             String::class.java,
         ).toSet()
@@ -48,7 +48,7 @@ class AuxiliaryNurseRoleMigrationTest : AbstractIntegrationTest() {
             "warehouse-transfer:read",
         )
 
-        assertEquals(expected, granted, "AUXILIARY_NURSE grant set must match AC-2 exactly")
+        assertEquals(expected, granted, "AUXILIAR_ENFERMERIA grant set must match AC-2 exactly")
 
         // Explicit exclusions (AC-2): the three guarded actions, progress-note authoring, and
         // admission:update (which gates discharge / admission edit / consulting-physician changes —
@@ -61,7 +61,7 @@ class AuxiliaryNurseRoleMigrationTest : AbstractIntegrationTest() {
             "admission:update",
         )
         forbidden.forEach { code ->
-            assertTrue(code !in granted, "AUXILIARY_NURSE must NOT hold $code")
+            assertTrue(code !in granted, "AUXILIAR_ENFERMERIA must NOT hold $code")
         }
     }
 }

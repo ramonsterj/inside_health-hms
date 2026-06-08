@@ -19,7 +19,7 @@ class AuthControllerTest : AbstractIntegrationTest() {
         firstName: String? = null,
         lastName: String? = null,
     ): User {
-        val userRole = roleRepository.findByCode("USER")!!
+        val userRole = roleRepository.findByCode("USUARIO")!!
         val user = User(
             username = username,
             email = email,

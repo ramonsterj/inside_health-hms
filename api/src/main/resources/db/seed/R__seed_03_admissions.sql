@@ -1,7 +1,7 @@
 -- ============================================================================
 -- SEED FILE 03: Staff, Psych Categories, Patient Notes, Admissions
 -- ============================================================================
--- SEED-BUNDLE-VERSION: 2026-06-03b (see R__seed_01 header for the rule)
+-- SEED-BUNDLE-VERSION: 2026-06-08-roles-es (see R__seed_01 header for the rule)
 
 SET session_replication_role = replica;
 
@@ -27,12 +27,12 @@ INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
 SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users u, roles r
 WHERE u.username IN ('doctor3','doctor4','doctor5','doctor6','doctor7','doctor8','doctor9','doctor10')
-  AND r.code = 'DOCTOR';
+  AND r.code = 'MEDICO';
 
 INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
 SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users u, roles r
-WHERE u.username IN ('nurse3','nurse4') AND r.code = 'NURSE';
+WHERE u.username IN ('nurse3','nurse4') AND r.code = 'ENFERMERO';
 
 -- ============================================================================
 -- STEP 13: RESEED PSYCHOTHERAPY CATEGORIES WITH PRICES

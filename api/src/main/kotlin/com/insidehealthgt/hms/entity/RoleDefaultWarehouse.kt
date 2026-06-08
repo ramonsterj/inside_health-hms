@@ -9,8 +9,8 @@ import org.hibernate.annotations.SQLRestriction
 
 /**
  * Data-driven role -> default-warehouse mapping (FR-9). Adding a role's default
- * bodega is a data change, not a code change. ADMIN/ADMINISTRATIVE_STAFF (all)
- * and DOCTOR/RESIDENT_DOCTOR (none) are represented by absence + a role check in
+ * bodega is a data change, not a code change. ADMINISTRADOR/PERSONAL_ADMINISTRATIVO (all)
+ * and MEDICO/MEDICO_RESIDENTE (none) are represented by absence + a role check in
  * [com.insidehealthgt.hms.service.WarehouseScopeService].
  */
 @Entity

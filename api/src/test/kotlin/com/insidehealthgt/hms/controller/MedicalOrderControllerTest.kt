@@ -826,7 +826,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
     @Test
     fun `cross-admission listing requires medical-order read permission`() {
         val (_, basicTkn) = createUserWithRole(
-            roleCode = "USER",
+            roleCode = "USUARIO",
             username = "basicuser",
             email = "basicuser@example.com",
             password = "password123",
@@ -848,7 +848,7 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
         // Guards against accidental widening of the PSYCHOLOGIST grant in future
         // migrations or seed edits. V116 must add only read, mark-in-progress, and
         // upload-document — never authorize, reject, create, update, or discontinue.
-        val role = roleRepository.findByCodeWithPermissions("PSYCHOLOGIST")
+        val role = roleRepository.findByCodeWithPermissions("PSICOLOGO")
         assertNotNull(role, "PSYCHOLOGIST role must exist after migrations")
         val medicalOrderPerms = role!!.permissions
             .map { it.code }
@@ -1011,13 +1011,13 @@ class MedicalOrderControllerTest : AbstractIntegrationTest() {
     @Test
     fun `psychologist with doctor role sees all categories without scope restriction`() {
         val (_, dualTkn) = createUserWithRole(
-            roleCode = "PSYCHOLOGIST",
+            roleCode = "PSICOLOGO",
             username = "psychdoctor",
             email = "psychdoctor@example.com",
             password = "password123",
             firstName = "Dual",
             lastName = "Role",
-            extraRoleCodes = listOf("DOCTOR"),
+            extraRoleCodes = listOf("MEDICO"),
         )
         createMedicalOrderAndGetId(MedicalOrderCategory.PRUEBAS_PSICOMETRICAS, "MMPI")
         val labOrderId = createMedicalOrderAndGetId(MedicalOrderCategory.REFERENCIAS_MEDICAS, "Hemograma")

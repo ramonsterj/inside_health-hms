@@ -33,13 +33,13 @@ const authStore = useAuthStore()
 const triageCodeStore = useTriageCodeStore()
 const roomStore = useRoomStore()
 
-// Only a RESIDENT_DOCTOR (auto-bound to themselves) or an ADMIN may register an
+// Only a MEDICO_RESIDENTE (auto-bound to themselves) or an ADMINISTRADOR may register an
 // admission. Admins are not residents, so they must explicitly pick the resident
 // doctor the admission is recorded under. Everyone else sees a banner and a
 // disabled submit button.
-const isAdmin = computed(() => authStore.hasRole('ADMIN'))
+const isAdmin = computed(() => authStore.hasRole('ADMINISTRADOR'))
 const canRegisterAdmission = computed(
-  () => isAdmin.value || (authStore.user?.roles?.includes('RESIDENT_DOCTOR') ?? false)
+  () => isAdmin.value || (authStore.user?.roles?.includes('MEDICO_RESIDENTE') ?? false)
 )
 
 const loading = ref(false)

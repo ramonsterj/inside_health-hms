@@ -60,7 +60,7 @@ class MedicalOrderService(
         // Psychologists may only see PRUEBAS_PSICOMETRICAS orders, mirroring the per-order
         // scope guard. Without this filter the admission-scoped listing would leak meds,
         // labs, and referrals to anyone with the medical-order:read permission (granted to
-        // PSYCHOLOGIST by V116).
+        // PSICOLOGO by V116).
         val orders = medicalOrderRepository.findByAdmissionIdWithRelations(admissionId)
             .filterNot { isPsychologistOutOfScope(it.category) }
         val users = loadAuditUsers(orders)
@@ -517,7 +517,7 @@ class MedicalOrderService(
     private fun isPsychologistOnly(): Boolean {
         val details = currentUserProvider.currentUserDetails()
         return details != null &&
-            details.hasRole("PSYCHOLOGIST") &&
+            details.hasRole("PSICOLOGO") &&
             MEDICAL_ORDER_BROAD_ROLES.none { details.hasRole(it) }
     }
 
@@ -609,12 +609,12 @@ class MedicalOrderService(
 
     companion object {
         private val MEDICAL_ORDER_BROAD_ROLES = setOf(
-            "ADMIN",
-            "DOCTOR",
-            "RESIDENT_DOCTOR",
-            "NURSE",
-            "CHIEF_NURSE",
-            "ADMINISTRATIVE_STAFF",
+            "ADMINISTRADOR",
+            "MEDICO",
+            "MEDICO_RESIDENTE",
+            "ENFERMERO",
+            "JEFE_ENFERMERIA",
+            "PERSONAL_ADMINISTRATIVO",
         )
     }
 }

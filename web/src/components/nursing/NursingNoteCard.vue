@@ -17,7 +17,7 @@ const emit = defineEmits<{
   edit: [note: NursingNoteResponse]
 }>()
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 const expanded = ref(false)
 const isOverflowing = ref(false)
@@ -75,6 +75,11 @@ const wasEdited = computed(() => {
 
 const showEditButton = computed(() => props.canEdit)
 
+function roleLabel(code: string): string {
+  const key = `roleNames.${code}`
+  return te(key) ? t(key) : code
+}
+
 function toggleExpand() {
   expanded.value = !expanded.value
 }
@@ -94,7 +99,7 @@ function handleEdit() {
             <Badge
               v-for="role in authorRoles"
               :key="role"
-              :value="role"
+              :value="roleLabel(role)"
               severity="secondary"
               class="role-badge"
             />

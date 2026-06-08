@@ -23,12 +23,12 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
- * Edit policy: only ADMIN can update existing vital signs; doctors, nurses, and
+ * Edit policy: only ADMINISTRADOR can update existing vital signs; doctors, nurses, and
  * chief nurses are append-only. The `@PreAuthorize("hasAuthority('vital-sign:update')")`
- * on the controller is the first gate (only ADMIN holds the permission after V097).
+ * on the controller is the first gate (only ADMINISTRADOR holds the permission after V097).
  * `assertAdmin()` here is intentional defense-in-depth so the rule continues to hold
  * if the permission is later widened. Discharge protection blocks all writes — including
- * for ADMIN — and is enforced unconditionally.
+ * for ADMINISTRADOR — and is enforced unconditionally.
  *
  * This matches the policy already in place for nursing notes and progress notes — see
  * `docs/features/nursing-module.md` revision 1.4 for the rationale.
@@ -207,13 +207,13 @@ class VitalSignService(
     }
 
     private fun assertAdmin(currentUser: CustomUserDetails) {
-        if (!currentUser.hasRole("ADMIN")) {
+        if (!currentUser.hasRole("ADMINISTRADOR")) {
             throw ForbiddenException(messageService.errorForbidden())
         }
     }
 
     private fun computeCanEdit(currentUser: CustomUserDetails, admissionActive: Boolean): Boolean =
-        admissionActive && currentUser.hasRole("ADMIN")
+        admissionActive && currentUser.hasRole("ADMINISTRADOR")
 
     private fun buildResponse(
         vitalSign: VitalSign,

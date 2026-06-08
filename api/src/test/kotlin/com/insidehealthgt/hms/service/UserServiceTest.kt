@@ -70,7 +70,7 @@ class UserServiceTest {
         )
 
         adminRole = Role(
-            code = "ADMIN",
+            code = "ADMINISTRADOR",
             name = "Administrator",
         ).apply { id = 1L }
 
@@ -106,7 +106,7 @@ class UserServiceTest {
             password = "password123",
             firstName = "New",
             lastName = "User",
-            roleCodes = listOf("ADMIN"),
+            roleCodes = listOf("ADMINISTRADOR"),
             phoneNumbers = listOf(
                 PhoneNumberRequest(phoneNumber = "12345678", phoneType = PhoneType.MOBILE, isPrimary = true),
             ),
@@ -115,7 +115,7 @@ class UserServiceTest {
         whenever(userRepository.existsByEmail("new@example.com")).thenReturn(false)
         whenever(userRepository.existsByUsername("newuser")).thenReturn(false)
         whenever(passwordEncoder.encode("password123")).thenReturn("encodedpassword")
-        whenever(roleRepository.findAllByCodeIn(listOf("ADMIN"))).thenReturn(listOf(adminRole))
+        whenever(roleRepository.findAllByCodeIn(listOf("ADMINISTRADOR"))).thenReturn(listOf(adminRole))
         whenever(userRepository.save(any<User>())).thenAnswer { invocation ->
             (invocation.arguments[0] as User).apply {
                 id = 2L
@@ -271,16 +271,16 @@ class UserServiceTest {
 
     @Test
     fun `assignRoles should replace user roles`() {
-        val doctorRole = Role(code = "DOCTOR", name = "Doctor").apply { id = 2L }
+        val doctorRole = Role(code = "MEDICO", name = "Doctor").apply { id = 2L }
         testUser.roles.add(adminRole)
 
         whenever(userRepository.findByIdWithRolesAndPermissions(1L)).thenReturn(testUser)
-        whenever(roleRepository.findAllByCodeIn(listOf("DOCTOR"))).thenReturn(listOf(doctorRole))
+        whenever(roleRepository.findAllByCodeIn(listOf("MEDICO"))).thenReturn(listOf(doctorRole))
         whenever(userRepository.save(any<User>())).thenAnswer { it.arguments[0] }
 
-        val result = userService.assignRoles(1L, listOf("DOCTOR"))
+        val result = userService.assignRoles(1L, listOf("MEDICO"))
 
-        assertEquals(listOf("DOCTOR"), result.roles)
+        assertEquals(listOf("MEDICO"), result.roles)
     }
 
     @Test

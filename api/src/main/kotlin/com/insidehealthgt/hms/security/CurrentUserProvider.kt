@@ -24,7 +24,7 @@ class CurrentUserProvider(private val messageService: MessageService) {
     /**
      * Belt-and-suspenders guard for the three nursing actions auxiliary nurses may not perform
      * (administer medication, mark order in progress, upload result document). Throws 403
-     * [ForbiddenException] when the caller's only nursing-or-better role is AUXILIARY_NURSE — even
+     * [ForbiddenException] when the caller's only nursing-or-better role is AUXILIAR_ENFERMERIA — even
      * if a custom role granted the underlying permission. See docs/features/nursing-roles-split.md.
      */
     fun requireNotAuxiliaryNurseOnly() {

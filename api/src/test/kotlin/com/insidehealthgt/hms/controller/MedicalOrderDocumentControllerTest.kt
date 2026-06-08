@@ -120,7 +120,7 @@ class MedicalOrderDocumentControllerTest : AbstractIntegrationTest() {
         // role's cloned DOCTOR perms include medical-order:upload-document, which
         // would defeat the boundary this test guards.
         val (_, plainStaffToken) = createUserWithRole(
-            roleCode = "ADMINISTRATIVE_STAFF",
+            roleCode = "PERSONAL_ADMINISTRATIVO",
             username = "plainstaff",
             email = "plainstaff@example.com",
             password = "password123",

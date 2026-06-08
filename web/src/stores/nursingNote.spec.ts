@@ -29,7 +29,7 @@ const mockNursingNote: NursingNoteResponse = {
     salutation: 'LICDA',
     firstName: 'Ana',
     lastName: 'Lopez',
-    roles: ['NURSE']
+    roles: ['ENFERMERO']
   },
   updatedBy: null,
   canEdit: true
@@ -47,7 +47,7 @@ const mockNursingNotes: NursingNoteResponse[] = [
       salutation: 'LICDA',
       firstName: 'Ana',
       lastName: 'Lopez',
-      roles: ['NURSE']
+      roles: ['ENFERMERO']
     },
     updatedBy: null,
     canEdit: true
@@ -63,7 +63,7 @@ const mockNursingNotes: NursingNoteResponse[] = [
       salutation: 'LICDA',
       firstName: 'Ana',
       lastName: 'Lopez',
-      roles: ['NURSE']
+      roles: ['ENFERMERO']
     },
     updatedBy: null,
     canEdit: true
@@ -79,7 +79,7 @@ const mockNursingNotes: NursingNoteResponse[] = [
       salutation: 'LICDA',
       firstName: 'Ana',
       lastName: 'Lopez',
-      roles: ['NURSE']
+      roles: ['ENFERMERO']
     },
     updatedBy: null,
     canEdit: true

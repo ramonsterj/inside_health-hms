@@ -336,9 +336,20 @@
       "mustBeDifferent": "La nueva contraseña debe ser diferente a la actual"
     }
   },
+  "roleNames": {
+    "ADMINISTRADOR": "Administrador",
+    "USUARIO": "Usuario",
+    "PERSONAL_ADMINISTRATIVO": "Personal Administrativo",
+    "MEDICO": "Médico",
+    "ENFERMERO": "Enfermero",
+    "JEFE_ENFERMERIA": "Jefe de Enfermería",
+    "PSICOLOGO": "Psicólogo",
+    "MEDICO_RESIDENTE": "Médico Residente",
+    "AUXILIAR_ENFERMERIA": "Auxiliar de Enfermería",
+    "MANTENIMIENTO": "Mantenimiento"
+  },
   "roles": {
     "title": "Gestión de Roles",
-    "MAINTENANCE": "Mantenimiento",
     "addRole": "Agregar Rol",
     "editRole": "Editar Rol",
     "managePermissions": "Gestionar Permisos",

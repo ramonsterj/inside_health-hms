@@ -23,7 +23,13 @@ import { extractApiErrorMessage } from '@/utils/errorUtils'
 import { formatDate } from '@/utils/format'
 import PhoneNumberInput from '@/components/users/PhoneNumberInput.vue'
 import UserWarehousesAssignmentField from '@/components/users/UserWarehousesAssignmentField.vue'
-import type { User, CreateUserRequest, AdminUpdateUserRequest, PhoneNumberRequest } from '@/types'
+import type {
+  User,
+  CreateUserRequest,
+  AdminUpdateUserRequest,
+  PhoneNumberRequest,
+  Role
+} from '@/types'
 import { UserStatus, Salutation, PhoneType } from '@/types'
 
 // Constants
@@ -73,7 +79,7 @@ const newUser = reactive<Omit<CreateUserRequest, 'phoneNumbers'>>({
   firstName: '',
   lastName: '',
   salutation: null,
-  roleCodes: ['USER'],
+  roleCodes: ['USUARIO'],
   status: UserStatus.ACTIVE
 })
 const newUserUsername = toRef(newUser, 'username')
@@ -92,7 +98,7 @@ const editUserAssignedWarehouseIds = ref<number[]>([])
 const editUserLoading = ref(false)
 
 const editUserHasMaintenanceRole = computed(() =>
-  (editUser.roleCodes ?? []).includes('MAINTENANCE')
+  (editUser.roleCodes ?? []).includes('MANTENIMIENTO')
 )
 const editUser = reactive<Omit<AdminUpdateUserRequest, 'phoneNumbers'>>({
   firstName: '',
@@ -111,7 +117,7 @@ const {
 // Dynamic role options from roleStore
 const roleOptions = computed(() =>
   roleStore.roles.map(role => ({
-    label: role.name,
+    label: roleOptionLabel(role),
     value: role.code
   }))
 )
@@ -129,7 +135,7 @@ const salutationOptions = computed(() => {
 const roleFilterOptions = computed(() => [
   { label: t('user.allRoles'), value: null },
   ...roleStore.roles.map(role => ({
-    label: role.name,
+    label: roleOptionLabel(role),
     value: role.code
   }))
 ])
@@ -267,7 +273,22 @@ async function restoreUser(user: User) {
 }
 
 function getRoleSeverity(role: string): 'danger' | 'info' {
-  return role === 'ADMIN' ? 'danger' : 'info'
+  return role === 'ADMINISTRADOR' ? 'danger' : 'info'
+}
+
+// Locale-aware display label for a role code. Falls back to the raw code
+// if no translation exists (e.g. a future role not yet in roleNames).
+function roleLabel(code: string): string {
+  const key = `roleNames.${code}`
+  return te(key) ? t(key) : code
+}
+
+// Display label for a full role object. Prefers the translated system-role
+// name, but falls back to the API-provided role.name (the configured display
+// name for custom roles) rather than the raw code.
+function roleOptionLabel(role: Role): string {
+  const key = `roleNames.${role.code}`
+  return te(key) ? t(key) : role.name
 }
 
 function getStatusSeverity(status: UserStatus): 'success' | 'warn' | 'danger' {
@@ -291,7 +312,7 @@ function openAddUserDialog() {
   newUser.firstName = ''
   newUser.lastName = ''
   newUser.salutation = null
-  newUser.roleCodes = ['USER']
+  newUser.roleCodes = ['USUARIO']
   newUser.status = UserStatus.ACTIVE
   // Initialize with one empty phone entry to make it clear at least one is required
   newUserPhoneNumbers.value = [
@@ -653,7 +674,7 @@ async function saveEditedUser() {
                 <Tag
                   v-for="role in data.roles"
                   :key="role"
-                  :value="role"
+                  :value="roleLabel(role)"
                   :severity="getRoleSeverity(role)"
                   class="role-tag"
                 />

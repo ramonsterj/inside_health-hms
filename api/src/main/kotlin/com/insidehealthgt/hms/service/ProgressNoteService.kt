@@ -19,12 +19,12 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * Edit policy: only ADMIN can update existing progress notes; doctors, nurses, and
+ * Edit policy: only ADMINISTRADOR can update existing progress notes; doctors, nurses, and
  * chief nurses are append-only. The `@PreAuthorize("hasAuthority('progress-note:update')")`
- * on the controller is the first gate (only ADMIN holds the permission after V096).
+ * on the controller is the first gate (only ADMINISTRADOR holds the permission after V096).
  * `assertAdmin()` here is intentional defense-in-depth so the rule continues to hold
  * if the permission is later widened. Discharge protection blocks all writes — including
- * for ADMIN — and is enforced unconditionally.
+ * for ADMINISTRADOR — and is enforced unconditionally.
  */
 @Service
 class ProgressNoteService(
@@ -121,13 +121,13 @@ class ProgressNoteService(
     }
 
     private fun assertAdmin(currentUser: CustomUserDetails) {
-        if (!currentUser.hasRole("ADMIN")) {
+        if (!currentUser.hasRole("ADMINISTRADOR")) {
             throw ForbiddenException(messageService.errorForbidden())
         }
     }
 
     private fun computeCanEdit(currentUser: CustomUserDetails, admissionActive: Boolean): Boolean =
-        admissionActive && currentUser.hasRole("ADMIN")
+        admissionActive && currentUser.hasRole("ADMINISTRADOR")
 
     private fun buildResponse(
         note: ProgressNote,

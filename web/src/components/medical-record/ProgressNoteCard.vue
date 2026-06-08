@@ -17,7 +17,7 @@ const emit = defineEmits<{
   edit: []
 }>()
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 const expanded = ref(false)
 
@@ -44,6 +44,11 @@ function renderedHtml(html: string | null): string {
   if (!html) return '-'
   return sanitizeHtml(html)
 }
+
+function roleLabel(code: string): string {
+  const key = `roleNames.${code}`
+  return te(key) ? t(key) : code
+}
 </script>
 
 <template>
@@ -56,7 +61,7 @@ function renderedHtml(html: string | null): string {
             <Tag
               v-for="role in authorRoles"
               :key="role"
-              :value="role"
+              :value="roleLabel(role)"
               severity="secondary"
               class="role-tag"
             />

@@ -43,7 +43,7 @@ async function mountHub(opts: {
   type?: AdmissionType
 }) {
   setActivePinia(createPinia())
-  setAuth(opts.roles ?? ['ADMIN'], opts.permissions ?? [])
+  setAuth(opts.roles ?? ['ADMINISTRADOR'], opts.permissions ?? [])
 
   const wrapper = mount(MedicalRecordHub, {
     props: {
@@ -64,7 +64,7 @@ describe('MedicalRecordHub', () => {
   })
 
   it('renders a section card per permitted section for an admin', async () => {
-    const wrapper = await mountHub({ roles: ['ADMIN'] })
+    const wrapper = await mountHub({ roles: ['ADMINISTRADOR'] })
     for (const key of [
       'clinicalHistory',
       'progressNotes',
@@ -80,13 +80,13 @@ describe('MedicalRecordHub', () => {
   })
 
   it('opens on the grid with no default-open section (no back control)', async () => {
-    const wrapper = await mountHub({ roles: ['ADMIN'] })
+    const wrapper = await mountHub({ roles: ['ADMINISTRADOR'] })
     expect(wrapper.find('.section-grid').exists()).toBe(true)
     expect(wrapper.find('[data-testid="section-back"]').exists()).toBe(false)
   })
 
   it('drills into a section and back returns to the grid', async () => {
-    const wrapper = await mountHub({ roles: ['ADMIN'] })
+    const wrapper = await mountHub({ roles: ['ADMINISTRADOR'] })
 
     await wrapper.find('[data-testid="section-card-clinicalHistory"]').trigger('click')
     expect(wrapper.find('[data-testid="section-back"]').exists()).toBe(true)
@@ -99,23 +99,26 @@ describe('MedicalRecordHub', () => {
   })
 
   it('shows the discharged banner only when discharged', async () => {
-    const active = await mountHub({ roles: ['ADMIN'], status: AdmissionStatus.ACTIVE })
+    const active = await mountHub({ roles: ['ADMINISTRADOR'], status: AdmissionStatus.ACTIVE })
     expect(active.find('.discharged-banner').exists()).toBe(false)
 
-    const discharged = await mountHub({ roles: ['ADMIN'], status: AdmissionStatus.DISCHARGED })
+    const discharged = await mountHub({
+      roles: ['ADMINISTRADOR'],
+      status: AdmissionStatus.DISCHARGED
+    })
     expect(discharged.find('.discharged-banner').exists()).toBe(true)
   })
 
   it('gates the psychotherapy card behind a HOSPITALIZATION admission', async () => {
     const hosp = await mountHub({
-      roles: ['PSYCHOLOGIST'],
+      roles: ['PSICOLOGO'],
       permissions: ['psychotherapy-activity:read'],
       type: AdmissionType.HOSPITALIZATION
     })
     expect(hosp.find('[data-testid="section-card-psychotherapyActivities"]').exists()).toBe(true)
 
     const ambulatory = await mountHub({
-      roles: ['PSYCHOLOGIST'],
+      roles: ['PSICOLOGO'],
       permissions: ['psychotherapy-activity:read'],
       type: AdmissionType.AMBULATORY
     })
@@ -126,7 +129,7 @@ describe('MedicalRecordHub', () => {
 
   it('only shows section cards the user has permission to view', async () => {
     const wrapper = await mountHub({
-      roles: ['NURSE'],
+      roles: ['ENFERMERO'],
       permissions: ['nursing-note:read', 'vital-sign:read']
     })
     expect(wrapper.find('[data-testid="section-card-nursingNotes"]').exists()).toBe(true)

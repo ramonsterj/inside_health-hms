@@ -29,7 +29,7 @@ const mockActivity: PsychotherapyActivity = {
     salutation: 'LIC',
     firstName: 'Sofia',
     lastName: 'Martinez',
-    roles: ['PSYCHOLOGIST']
+    roles: ['PSICOLOGO']
   }
 }
 
@@ -45,7 +45,7 @@ const mockActivities: PsychotherapyActivity[] = [
       salutation: 'LIC',
       firstName: 'Sofia',
       lastName: 'Martinez',
-      roles: ['PSYCHOLOGIST']
+      roles: ['PSICOLOGO']
     }
   },
   {
@@ -59,7 +59,7 @@ const mockActivities: PsychotherapyActivity[] = [
       salutation: 'LIC',
       firstName: 'Sofia',
       lastName: 'Martinez',
-      roles: ['PSYCHOLOGIST']
+      roles: ['PSICOLOGO']
     }
   },
   {
@@ -73,7 +73,7 @@ const mockActivities: PsychotherapyActivity[] = [
       salutation: 'LIC',
       firstName: 'Sofia',
       lastName: 'Martinez',
-      roles: ['PSYCHOLOGIST']
+      roles: ['PSICOLOGO']
     }
   }
 ]

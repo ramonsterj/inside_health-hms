@@ -172,7 +172,7 @@ class UserService(
         )
 
         // Assign roles
-        val roleCodes = request.roleCodes.ifEmpty { listOf("USER") }
+        val roleCodes = request.roleCodes.ifEmpty { listOf("USUARIO") }
         val roles = roleRepository.findAllByCodeIn(roleCodes)
         validateRoleCodes(roleCodes, roles.map { it.code })
         user.roles.addAll(roles)
@@ -317,6 +317,6 @@ class UserService(
     }
 
     private companion object {
-        const val MAINTENANCE_ROLE = "MAINTENANCE"
+        const val MAINTENANCE_ROLE = "MANTENIMIENTO"
     }
 }

@@ -29,7 +29,7 @@ function i18n() {
 
 function setAuth(permissions: string[]) {
   const auth = useAuthStore()
-  auth.$patch({ user: { roles: ['ADMIN'], permissions } } as never)
+  auth.$patch({ user: { roles: ['ADMINISTRADOR'], permissions } } as never)
 }
 
 async function mountComponent(

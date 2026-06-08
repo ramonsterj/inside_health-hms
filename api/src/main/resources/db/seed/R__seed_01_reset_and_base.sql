@@ -14,7 +14,7 @@
 -- repopulate it (we hit this in PR #53). Whenever any R__seed_*.sql is
 -- modified, bump the SEED-BUNDLE-VERSION line below in ALL nine files
 -- (01, 02, 02b, 03, 04, 05, 06, 07, 08) so they re-run together.
--- SEED-BUNDLE-VERSION: 2026-06-03b
+-- SEED-BUNDLE-VERSION: 2026-06-08-roles-es
 -- ============================================================================
 
 SET session_replication_role = replica;
@@ -58,22 +58,22 @@ TRUNCATE TABLE users CASCADE;
 -- ============================================================================
 -- Add PSYCHOLOGIST role if it doesn't exist
 INSERT INTO roles (code, name, description, is_system, created_at, updated_at)
-VALUES ('PSYCHOLOGIST', 'Psychologist', 'Mental health professionals', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+VALUES ('PSICOLOGO', 'Psicólogo', 'Mental health professionals', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
 
--- Add RESIDENT_DOCTOR role if it doesn't exist (mirrors V114)
+-- Add MEDICO_RESIDENTE role if it doesn't exist (mirrors V114)
 INSERT INTO roles (code, name, description, is_system, created_at, updated_at)
-VALUES ('RESIDENT_DOCTOR', 'Resident Doctor', 'Medical resident in charge of admissions', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+VALUES ('MEDICO_RESIDENTE', 'Médico Residente', 'Medical resident in charge of admissions', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
 
 -- Add AUXILIARY_NURSE role if it doesn't exist (mirrors V117)
 INSERT INTO roles (code, name, description, is_system, created_at, updated_at)
-VALUES ('AUXILIARY_NURSE', 'Auxiliary Nurse', 'Enfermero auxiliar — notes and vital signs only', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+VALUES ('AUXILIAR_ENFERMERIA', 'Auxiliar de Enfermería', 'Enfermero auxiliar — notes and vital signs only', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
 
 -- Add MAINTENANCE role if it doesn't exist (mirrors V119)
 INSERT INTO roles (code, name, description, is_system, created_at, updated_at)
-VALUES ('MAINTENANCE', 'Maintenance', 'Mantenimiento — manages maintenance bodegas, transfers supplies, charges non-medical consumables', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+VALUES ('MANTENIMIENTO', 'Mantenimiento', 'Mantenimiento — manages maintenance bodegas, transfers supplies, charges non-medical consumables', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
 
 -- Ensure the six warehouses exist (mirrors V119; warehouses survive the reset
@@ -92,8 +92,8 @@ INSERT INTO role_default_warehouses (role_id, warehouse_id, created_at, updated_
 SELECT r.id, w.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN warehouses w
-WHERE ((r.code IN ('NURSE', 'AUXILIARY_NURSE', 'CHIEF_NURSE') AND w.code = 'ENFERMERIA')
-    OR (r.code = 'PSYCHOLOGIST' AND w.code = 'PSICOLOGIA'))
+WHERE ((r.code IN ('ENFERMERO', 'AUXILIAR_ENFERMERIA', 'JEFE_ENFERMERIA') AND w.code = 'ENFERMERIA')
+    OR (r.code = 'PSICOLOGO' AND w.code = 'PSICOLOGIA'))
   AND r.deleted_at IS NULL AND w.deleted_at IS NULL
 ON CONFLICT DO NOTHING;
 
@@ -111,14 +111,14 @@ INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
-WHERE r.code = 'ADMIN' AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
+WHERE r.code = 'ADMINISTRADOR' AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
 -- USER gets minimal permissions
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
-WHERE r.code = 'USER' AND p.code IN ('user:read') AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
+WHERE r.code = 'USUARIO' AND p.code IN ('user:read') AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
 -- ADMINISTRATIVE_STAFF: patient management + admission + documents
 -- Sources: V020, V025, V034, V091, V093
@@ -126,7 +126,7 @@ INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
-WHERE r.code = 'ADMINISTRATIVE_STAFF'
+WHERE r.code = 'PERSONAL_ADMINISTRATIVO'
   AND p.code IN (
     'user:read',
     'patient:create', 'patient:read', 'patient:update',
@@ -147,7 +147,7 @@ INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
-WHERE r.code = 'DOCTOR'
+WHERE r.code = 'MEDICO'
   AND p.code IN (
     'user:read',
     'patient:read', 'patient:update',
@@ -171,17 +171,17 @@ WHERE r.code = 'DOCTOR'
 -- lab-catalog:read is inherited via the DOCTOR clone below (V125).
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT
-    (SELECT id FROM roles WHERE code = 'RESIDENT_DOCTOR'),
+    (SELECT id FROM roles WHERE code = 'MEDICO_RESIDENTE'),
     rp.permission_id,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
 FROM role_permissions rp
 JOIN roles r ON r.id = rp.role_id
-WHERE r.code = 'DOCTOR';
+WHERE r.code = 'MEDICO';
 
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT
-    (SELECT id FROM roles WHERE code = 'RESIDENT_DOCTOR'),
+    (SELECT id FROM roles WHERE code = 'MEDICO_RESIDENTE'),
     p.id,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
@@ -193,7 +193,7 @@ WHERE p.code = 'admission:create';
 -- is deliberately excluded from this permission.
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT
-    (SELECT id FROM roles WHERE code = 'RESIDENT_DOCTOR'),
+    (SELECT id FROM roles WHERE code = 'MEDICO_RESIDENTE'),
     p.id,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
@@ -208,7 +208,7 @@ INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
-WHERE r.code = 'PSYCHOLOGIST'
+WHERE r.code = 'PSICOLOGO'
   AND p.code IN (
     'patient:read', 'patient:update',
     'triage-code:read', 'room:read',
@@ -227,7 +227,7 @@ INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
-WHERE r.code = 'NURSE'
+WHERE r.code = 'ENFERMERO'
   AND p.code IN (
     'user:read',
     'patient:read',
@@ -256,7 +256,7 @@ INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
-WHERE r.code = 'AUXILIARY_NURSE'
+WHERE r.code = 'AUXILIAR_ENFERMERIA'
   AND p.code IN (
     'nursing-note:read', 'nursing-note:create',
     'vital-sign:read', 'vital-sign:create',
@@ -281,7 +281,7 @@ INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r
 CROSS JOIN permissions p
-WHERE r.code = 'CHIEF_NURSE'
+WHERE r.code = 'JEFE_ENFERMERIA'
   AND p.code IN (
     'user:read',
     'patient:read', 'patient:update',
@@ -304,7 +304,7 @@ WHERE r.code = 'CHIEF_NURSE'
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r CROSS JOIN permissions p
-WHERE r.code = 'MAINTENANCE'
+WHERE r.code = 'MANTENIMIENTO'
   AND p.code IN ('warehouse:read', 'warehouse-transfer:create', 'warehouse-transfer:read',
                  'warehouse-charge:create', 'inventory-item:read', 'admission:read', 'patient:read')
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
@@ -312,7 +312,7 @@ WHERE r.code = 'MAINTENANCE'
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r CROSS JOIN permissions p
-WHERE r.code = 'ADMINISTRATIVE_STAFF'
+WHERE r.code = 'PERSONAL_ADMINISTRATIVO'
   AND p.code IN ('warehouse:read', 'warehouse-transfer:create', 'warehouse-transfer:read',
                  'warehouse-transfer:receive', 'warehouse-charge:create')
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
@@ -320,7 +320,7 @@ WHERE r.code = 'ADMINISTRATIVE_STAFF'
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r CROSS JOIN permissions p
-WHERE r.code = 'CHIEF_NURSE'
+WHERE r.code = 'JEFE_ENFERMERIA'
   AND p.code IN ('warehouse:read', 'warehouse-transfer:create', 'warehouse-transfer:read',
                  'warehouse-transfer:receive')
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
@@ -328,28 +328,28 @@ WHERE r.code = 'CHIEF_NURSE'
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r CROSS JOIN permissions p
-WHERE r.code = 'NURSE'
+WHERE r.code = 'ENFERMERO'
   AND p.code IN ('warehouse:read', 'warehouse-transfer:read', 'warehouse-transfer:receive')
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r CROSS JOIN permissions p
-WHERE r.code = 'AUXILIARY_NURSE'
+WHERE r.code = 'AUXILIAR_ENFERMERIA'
   AND p.code IN ('warehouse:read', 'warehouse-transfer:read')
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r CROSS JOIN permissions p
-WHERE r.code IN ('DOCTOR', 'RESIDENT_DOCTOR')
+WHERE r.code IN ('MEDICO', 'MEDICO_RESIDENTE')
   AND p.code = 'warehouse:read'
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM roles r CROSS JOIN permissions p
-WHERE r.code = 'PSYCHOLOGIST'
+WHERE r.code = 'PSICOLOGO'
   AND p.code IN ('warehouse:read', 'warehouse-transfer:create', 'warehouse-transfer:read',
                  'warehouse-transfer:receive')
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
@@ -379,7 +379,7 @@ INSERT INTO users (username, email, password_hash, first_name, last_name, saluta
 ('doctor1', 'doctor1@example.com', '$2b$10$PYXULrV.BlNnIPSz8HRFJeId5axQ/qoAQNhEldlY/H7xlqIpH35YC', 'Roberto', 'Hernandez', 'DR', 'ACTIVE', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('doctor2', 'doctor2@example.com', '$2b$10$PYXULrV.BlNnIPSz8HRFJeId5axQ/qoAQNhEldlY/H7xlqIpH35YC', 'Patricia', 'Morales', 'DRA', 'ACTIVE', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
--- RESIDENT_DOCTOR role users (2)
+-- MEDICO_RESIDENTE role users (2)
 INSERT INTO users (username, email, password_hash, first_name, last_name, salutation, status, email_verified, must_change_password, created_at, updated_at) VALUES
 ('resident1', 'resident1@example.com', '$2b$10$PYXULrV.BlNnIPSz8HRFJeId5axQ/qoAQNhEldlY/H7xlqIpH35YC', 'Andrea', 'Pineda', 'DRA', 'ACTIVE', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('resident2', 'resident2@example.com', '$2b$10$PYXULrV.BlNnIPSz8HRFJeId5axQ/qoAQNhEldlY/H7xlqIpH35YC', 'Javier', 'Cabrera', 'DR', 'ACTIVE', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
@@ -414,7 +414,7 @@ INSERT INTO users (username, email, password_hash, first_name, last_name, saluta
 INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
 SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users u, roles r
-WHERE u.username = 'admin' AND r.code = 'ADMIN';
+WHERE u.username = 'admin' AND r.code = 'ADMINISTRADOR';
 
 -- NOTE: admin does NOT carry RESIDENT_DOCTOR. ADMIN is a first-class exception
 -- in AdmissionService.resolveResident(): an admin registering an admission must
@@ -425,55 +425,55 @@ WHERE u.username = 'admin' AND r.code = 'ADMIN';
 INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
 SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users u, roles r
-WHERE u.username IN ('user1', 'user2') AND r.code = 'USER';
+WHERE u.username IN ('user1', 'user2') AND r.code = 'USUARIO';
 
 -- ADMINISTRATIVE_STAFF role assignments
 INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
 SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users u, roles r
-WHERE u.username IN ('staff1', 'staff2') AND r.code = 'ADMINISTRATIVE_STAFF';
+WHERE u.username IN ('staff1', 'staff2') AND r.code = 'PERSONAL_ADMINISTRATIVO';
 
 -- DOCTOR role assignments
 INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
 SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users u, roles r
-WHERE u.username IN ('doctor1', 'doctor2') AND r.code = 'DOCTOR';
+WHERE u.username IN ('doctor1', 'doctor2') AND r.code = 'MEDICO';
 
--- RESIDENT_DOCTOR role assignments
+-- MEDICO_RESIDENTE role assignments
 INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
 SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users u, roles r
-WHERE u.username IN ('resident1', 'resident2') AND r.code = 'RESIDENT_DOCTOR';
+WHERE u.username IN ('resident1', 'resident2') AND r.code = 'MEDICO_RESIDENTE';
 
 -- PSYCHOLOGIST role assignments
 INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
 SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users u, roles r
-WHERE u.username IN ('psych1', 'psych2') AND r.code = 'PSYCHOLOGIST';
+WHERE u.username IN ('psych1', 'psych2') AND r.code = 'PSICOLOGO';
 
 -- NURSE role assignments
 INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
 SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users u, roles r
-WHERE u.username IN ('nurse1', 'nurse2') AND r.code = 'NURSE';
+WHERE u.username IN ('nurse1', 'nurse2') AND r.code = 'ENFERMERO';
 
 -- CHIEF_NURSE role assignments
 INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
 SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users u, roles r
-WHERE u.username IN ('chiefnurse1', 'chiefnurse2') AND r.code = 'CHIEF_NURSE';
+WHERE u.username IN ('chiefnurse1', 'chiefnurse2') AND r.code = 'JEFE_ENFERMERIA';
 
 -- AUXILIARY_NURSE role assignment
 INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
 SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users u, roles r
-WHERE u.username = 'aux_nurse' AND r.code = 'AUXILIARY_NURSE';
+WHERE u.username = 'aux_nurse' AND r.code = 'AUXILIAR_ENFERMERIA';
 
 -- MAINTENANCE role assignment + warehouse assignment (MANTENIMIENTO_1)
 INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
 SELECT u.id, r.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users u, roles r
-WHERE u.username = 'maint1' AND r.code = 'MAINTENANCE';
+WHERE u.username = 'maint1' AND r.code = 'MANTENIMIENTO';
 
 INSERT INTO user_warehouses (user_id, warehouse_id, created_at, updated_at)
 SELECT u.id, w.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP

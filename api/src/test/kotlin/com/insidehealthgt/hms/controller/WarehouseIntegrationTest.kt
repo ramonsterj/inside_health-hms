@@ -174,7 +174,7 @@ class WarehouseIntegrationTest : AbstractIntegrationTest() {
     fun `AC-9 maintenance user charges a consumable and a SERVICE patient charge is created`() {
         val (_, adminToken) = createAdminUser()
         val (maint, maintToken) = createUserWithRole(
-            roleCode = "MAINTENANCE",
+            roleCode = "MANTENIMIENTO",
             username = "maint",
             email = "maint@example.com",
             password = "password123",
@@ -263,7 +263,7 @@ class WarehouseIntegrationTest : AbstractIntegrationTest() {
     fun `AC-13 maintenance user can view assigned warehouse stock but is denied an unassigned one`() {
         createAdminUser()
         val (maint, maintToken) = createUserWithRole(
-            roleCode = "MAINTENANCE",
+            roleCode = "MANTENIMIENTO",
             username = "maint",
             email = "maint@example.com",
             password = "password123",
@@ -293,7 +293,7 @@ class WarehouseIntegrationTest : AbstractIntegrationTest() {
     fun `AC-13 single warehouse get is scoped - maintenance user denied an unassigned warehouse`() {
         createAdminUser()
         val (maint, maintToken) = createUserWithRole(
-            roleCode = "MAINTENANCE",
+            roleCode = "MANTENIMIENTO",
             username = "maint",
             email = "maint@example.com",
             password = "password123",
@@ -335,7 +335,7 @@ class WarehouseIntegrationTest : AbstractIntegrationTest() {
     fun `AC-13 catalog list and low-stock filtered to a warehouse enforce view scope`() {
         val (_, adminToken) = createAdminUser()
         val (maint, maintToken) = createUserWithRole(
-            roleCode = "MAINTENANCE",
+            roleCode = "MANTENIMIENTO",
             username = "maint",
             email = "maint@example.com",
             password = "password123",

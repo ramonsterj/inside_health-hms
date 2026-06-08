@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
 class PasswordResetControllerTest : AbstractIntegrationTest() {
 
     private fun createUser(username: String, email: String, password: String): User {
-        val userRole = roleRepository.findByCode("USER")!!
+        val userRole = roleRepository.findByCode("USUARIO")!!
         val user = User(
             username = username,
             email = email,
