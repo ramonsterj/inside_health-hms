@@ -77,7 +77,7 @@ function close() {
           accept=".xlsx,.csv"
           :max-file-size="10000000"
           :auto="false"
-          choose-label="Choose File"
+          :choose-label="t('treasury.reconciliation.chooseFile')"
           @select="onFileSelect"
           @clear="onFileClear"
         />
