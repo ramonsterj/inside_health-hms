@@ -1,7 +1,7 @@
 -- ============================================================================
 -- SEED FILE 07: Patient Charges, Invoices
 -- ============================================================================
--- SEED-BUNDLE-VERSION: 2026-06-09-refdata-es (see R__seed_01 header for the rule)
+-- SEED-BUNDLE-VERSION: 2026-06-09-real-rooms (see R__seed_01 header for the rule)
 
 SET session_replication_role = replica;
 
@@ -20,7 +20,7 @@ FROM admissions a JOIN patients p ON a.patient_id = p.id JOIN rooms rm ON a.room
 CROSS JOIN generate_series(0, (CURRENT_DATE - 1 - a.admission_date::DATE)::INT) AS gs(d)
 WHERE p.first_name = 'Juan' AND p.last_name = 'Pérez González' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
--- Maria Santos López (room 101, Q950)
+-- Maria Santos López (room 101-102, Q950)
 INSERT INTO patient_charges (admission_id, charge_type, description, quantity, unit_price, total_amount, charge_date, room_id, created_at, updated_at, created_by)
 SELECT a.id, 'ROOM', 'Cargo diario de habitación ' || rm.number, 1, rm.price, rm.price,
   (a.admission_date::DATE + gs.d), rm.id,
@@ -30,7 +30,7 @@ FROM admissions a JOIN patients p ON a.patient_id = p.id JOIN rooms rm ON a.room
 CROSS JOIN generate_series(0, (CURRENT_DATE - 1 - a.admission_date::DATE)::INT) AS gs(d)
 WHERE p.first_name = 'Maria' AND p.last_name = 'Santos López' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
--- Pedro García Hernández (room 303, Q950)
+-- Pedro García Hernández (room 303, Q1100)
 INSERT INTO patient_charges (admission_id, charge_type, description, quantity, unit_price, total_amount, charge_date, room_id, created_at, updated_at, created_by)
 SELECT a.id, 'ROOM', 'Cargo diario de habitación ' || rm.number, 1, rm.price, rm.price,
   (a.admission_date::DATE + gs.d), rm.id,
@@ -40,7 +40,7 @@ FROM admissions a JOIN patients p ON a.patient_id = p.id JOIN rooms rm ON a.room
 CROSS JOIN generate_series(0, (CURRENT_DATE - 1 - a.admission_date::DATE)::INT) AS gs(d)
 WHERE p.first_name = 'Pedro' AND p.last_name = 'García Hernández' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
--- Ana Martínez Ruiz (room 102, Q950)
+-- Ana Martínez Ruiz (room 101-102, Q950)
 INSERT INTO patient_charges (admission_id, charge_type, description, quantity, unit_price, total_amount, charge_date, room_id, created_at, updated_at, created_by)
 SELECT a.id, 'ROOM', 'Cargo diario de habitación ' || rm.number, 1, rm.price, rm.price,
   (a.admission_date::DATE + gs.d), rm.id,
@@ -60,7 +60,7 @@ FROM admissions a JOIN patients p ON a.patient_id = p.id JOIN rooms rm ON a.room
 CROSS JOIN generate_series(0, (CURRENT_DATE - 1 - a.admission_date::DATE)::INT) AS gs(d)
 WHERE p.first_name = 'Luis' AND p.last_name = 'Morales Castro' AND a.type = 'HOSPITALIZATION' AND a.status = 'ACTIVE';
 
--- Carmen Flores Mejía (room 103, Q950)
+-- Carmen Flores Mejía (room 103-104, Q950)
 INSERT INTO patient_charges (admission_id, charge_type, description, quantity, unit_price, total_amount, charge_date, room_id, created_at, updated_at, created_by)
 SELECT a.id, 'ROOM', 'Cargo diario de habitación ' || rm.number, 1, rm.price, rm.price,
   (a.admission_date::DATE + gs.d), rm.id,
@@ -100,7 +100,7 @@ FROM admissions a JOIN patients p ON a.patient_id = p.id JOIN rooms rm ON a.room
 CROSS JOIN generate_series(0, (a.discharge_date::DATE - 1 - a.admission_date::DATE)::INT) AS gs(d)
 WHERE p.first_name = 'Miguel' AND p.last_name = 'Torres Luna' AND a.type = 'HOSPITALIZATION' AND a.status = 'DISCHARGED';
 
--- Discharged: Elena Sánchez Rivas (room 104, Q950, 11-day stay)
+-- Discharged: Elena Sánchez Rivas (room 103-104, Q950, 11-day stay)
 INSERT INTO patient_charges (admission_id, charge_type, description, quantity, unit_price, total_amount, charge_date, room_id, created_at, updated_at, created_by)
 SELECT a.id, 'ROOM', 'Cargo diario de habitación ' || rm.number, 1, rm.price, rm.price,
   (a.admission_date::DATE + gs.d), rm.id,

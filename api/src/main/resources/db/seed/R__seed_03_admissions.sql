@@ -1,7 +1,7 @@
 -- ============================================================================
 -- SEED FILE 03: Staff, Psych Categories, Patient Notes, Admissions
 -- ============================================================================
--- SEED-BUNDLE-VERSION: 2026-06-09-refdata-es (see R__seed_01 header for the rule)
+-- SEED-BUNDLE-VERSION: 2026-06-09-real-rooms (see R__seed_01 header for the rule)
 
 SET session_replication_role = replica;
 
@@ -92,7 +92,7 @@ SELECT p.id, tc.id, rm.id, u.id, (SELECT id FROM users WHERE username = 'residen
   (CURRENT_DATE - INTERVAL '12 days') + TIME '14:15', CURRENT_TIMESTAMP, u.id
 FROM patients p, triage_codes tc, rooms rm, users u
 WHERE p.first_name = 'Maria' AND p.last_name = 'Santos López'
-  AND tc.code = 'A' AND rm.number = '101' AND u.username = 'doctor4';
+  AND tc.code = 'A' AND rm.number = '101-102' AND u.username = 'doctor4';
 
 -- Pedro Garcia - Alcohol withdrawal severe - 10 days
 INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, resident_id, admission_date, status, type, created_at, updated_at, created_by)
@@ -112,7 +112,7 @@ SELECT p.id, tc.id, rm.id, u.id, (SELECT id FROM users WHERE username = 'residen
   (CURRENT_DATE - INTERVAL '8 days') + TIME '09:00', CURRENT_TIMESTAMP, u.id
 FROM patients p, triage_codes tc, rooms rm, users u
 WHERE p.first_name = 'Ana' AND p.last_name = 'Martínez Ruiz'
-  AND tc.code = 'C' AND rm.number = '102' AND u.username = 'doctor5';
+  AND tc.code = 'C' AND rm.number = '101-102' AND u.username = 'doctor5';
 
 -- Luis Morales - Polysubstance + psychosis - 7 days
 INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, resident_id, admission_date, status, type, created_at, updated_at, created_by)
@@ -132,7 +132,7 @@ SELECT p.id, tc.id, rm.id, u.id, (SELECT id FROM users WHERE username = 'residen
   (CURRENT_DATE - INTERVAL '5 days') + TIME '16:00', CURRENT_TIMESTAMP, u.id
 FROM patients p, triage_codes tc, rooms rm, users u
 WHERE p.first_name = 'Carmen' AND p.last_name = 'Flores Mejía'
-  AND tc.code = 'B' AND rm.number = '103' AND u.username = 'doctor4';
+  AND tc.code = 'B' AND rm.number = '103-104' AND u.username = 'doctor4';
 
 -- Roberto Diaz - Bipolar II depressive - 4 days
 INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, resident_id, admission_date, status, type, created_at, updated_at, created_by)
@@ -178,7 +178,7 @@ SELECT p.id, tc.id, rm.id, u.id, (SELECT id FROM users WHERE username = 'residen
   (CURRENT_DATE - INTERVAL '14 days') + TIME '11:00', u.id
 FROM patients p, triage_codes tc, rooms rm, users u
 WHERE p.first_name = 'Elena' AND p.last_name = 'Sánchez Rivas'
-  AND tc.code = 'C' AND rm.number = '104' AND u.username = 'doctor4';
+  AND tc.code = 'C' AND rm.number = '103-104' AND u.username = 'doctor4';
 
 -- Francisco Mendoza - MDD recurrent geriatric - admitted 21d ago, discharged 10d ago
 INSERT INTO admissions (patient_id, triage_code_id, room_id, treating_physician_id, resident_id, admission_date, discharge_date, status, type, created_at, updated_at, created_by)
