@@ -14,7 +14,7 @@
 -- repopulate it (we hit this in PR #53). Whenever any R__seed_*.sql is
 -- modified, bump the SEED-BUNDLE-VERSION line below in ALL nine files
 -- (01, 02, 02b, 03, 04, 05, 06, 07, 08) so they re-run together.
--- SEED-BUNDLE-VERSION: 2026-06-09-refdata-es
+-- SEED-BUNDLE-VERSION: 2026-06-09-real-rooms
 -- ============================================================================
 
 SET session_replication_role = replica;

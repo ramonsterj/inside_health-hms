@@ -4,7 +4,7 @@
 -- Last updated: 2026-05-29 (legacy inventory_items.quantity column was dropped by
 -- V121; non-drug item stock now lands in inventory_warehouse_stock(ADMINISTRACION)
 -- via CTE+RETURNING, mirroring the V120 backfill, instead of the dropped column)
--- SEED-BUNDLE-VERSION: 2026-06-09-refdata-es (see R__seed_01 header for the rule)
+-- SEED-BUNDLE-VERSION: 2026-06-09-real-rooms (see R__seed_01 header for the rule)
 
 SET session_replication_role = replica;
 
@@ -24,32 +24,31 @@ ON CONFLICT (code) DO NOTHING;
 -- ============================================================================
 -- STEP 9: ENSURE ROOMS EXIST
 -- ============================================================================
--- Rooms are reference data seeded by V056. Use ON CONFLICT DO NOTHING
--- so this is idempotent whether the versioned migration already ran or not.
--- Room types: PRIVATE (1 bed), SHARED (multiple beds)
--- Room gender: MALE, FEMALE
+-- Rooms are reference data reconciled by V129 to the real hospital layout.
+-- Use ON CONFLICT DO NOTHING so this is idempotent whether the versioned
+-- migration already ran or not.
+-- Room types: PRIVATE (1 bed), SHARED (2 beds, numbered as the pair).
+-- Room gender: MALE, FEMALE (number-prefix heuristic: 1xx -> FEMALE, else MALE).
+-- Canonical set: 16 rooms / 19 beds (see V129).
 INSERT INTO rooms (number, type, gender, capacity, price, created_at, updated_at) VALUES
--- First floor - Women's rooms
-('101', 'SHARED', 'FEMALE', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('102', 'SHARED', 'FEMALE', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('103', 'SHARED', 'FEMALE', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('104', 'SHARED', 'FEMALE', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('105', 'SHARED', 'FEMALE', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('106', 'SHARED', 'FEMALE', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('107', 'SHARED', 'FEMALE', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('108', 'SHARED', 'FEMALE', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+-- Women's rooms
+('101-102', 'SHARED', 'FEMALE', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('103-104', 'SHARED', 'FEMALE', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('105', 'PRIVATE', 'FEMALE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('106', 'PRIVATE', 'FEMALE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('108', 'PRIVATE', 'FEMALE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('109', 'PRIVATE', 'FEMALE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('110', 'PRIVATE', 'FEMALE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
--- Second floor - Men's rooms
+-- Men's rooms
 ('201', 'PRIVATE', 'MALE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('202', 'PRIVATE', 'MALE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('203', 'PRIVATE', 'MALE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('204', 'PRIVATE', 'MALE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
--- Third floor - Men's rooms
+('205', 'PRIVATE', 'MALE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('301', 'PRIVATE', 'MALE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('302', 'PRIVATE', 'MALE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('303', 'SHARED', 'MALE', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('304', 'SHARED', 'MALE', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+('303', 'PRIVATE', 'MALE', 1, 1100.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('304-305', 'SHARED', 'MALE', 2, 950.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (number) DO NOTHING;
 
 -- ============================================================================
