@@ -79,7 +79,6 @@ function refreshAdmissions() {
           :status-filter="AdmissionStatus.ACTIVE"
           :type-filter="typeFilter"
           :empty-label="t('dashboard.noPatients')"
-          show-treating-physician
         />
       </template>
     </Card>

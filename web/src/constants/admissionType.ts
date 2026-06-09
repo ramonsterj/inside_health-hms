@@ -31,9 +31,9 @@ export const ADMISSION_TYPE_META: Record<AdmissionType, AdmissionTypeMeta> = {
 }
 
 export const ADMISSION_TYPE_ORDER: AdmissionType[] = [
-  AdmissionType.HOSPITALIZATION,
   AdmissionType.AMBULATORY,
   AdmissionType.ELECTROSHOCK_THERAPY,
   AdmissionType.KETAMINE_INFUSION,
-  AdmissionType.EMERGENCY
+  AdmissionType.EMERGENCY,
+  AdmissionType.HOSPITALIZATION
 ]

@@ -3,26 +3,46 @@ import { ref, watch } from 'vue'
 import { z } from 'zod'
 import { useAuthStore } from '@/stores/auth'
 
-export type AdmissionsListViewMode = 'cards' | 'table'
 export type AdmissionsListGroupBy = 'none' | 'gender' | 'type' | 'triage'
 
 export interface AdmissionsListPreferences {
-  viewMode: AdmissionsListViewMode
-  groupBy: AdmissionsListGroupBy
+  primaryGroupBy: AdmissionsListGroupBy
+  secondaryGroupBy: AdmissionsListGroupBy
 }
 
 // Versioned suffix lets us evolve the schema later without surprising parses.
-const STORAGE_KEY_PREFIX = 'hms.admissionsListView.v1'
+// Bumped v1 → v2 when the single `groupBy` (plus a removed `viewMode`) was
+// replaced by two-level `primaryGroupBy` / `secondaryGroupBy` grouping; old v1
+// payloads simply fail the v2 schema and fall back to defaults.
+const STORAGE_KEY_PREFIX = 'hms.admissionsListView.v2'
 
 const DEFAULTS: AdmissionsListPreferences = {
-  viewMode: 'cards',
-  groupBy: 'gender'
+  primaryGroupBy: 'type',
+  secondaryGroupBy: 'none'
 }
 
 const preferencesSchema = z.object({
-  viewMode: z.enum(['cards', 'table']),
-  groupBy: z.enum(['none', 'gender', 'type', 'triage'])
+  primaryGroupBy: z.enum(['none', 'gender', 'type', 'triage']),
+  secondaryGroupBy: z.enum(['none', 'gender', 'type', 'triage'])
 })
+
+/**
+ * Enforces the two-level grouping invariants so the render layer never needs
+ * defensive checks:
+ * - if the primary level is `none`, there is nothing to subdivide → secondary
+ *   collapses to `none`;
+ * - the secondary level may never repeat the primary dimension → collapses to
+ *   `none`.
+ */
+function normalize(prefs: AdmissionsListPreferences): AdmissionsListPreferences {
+  if (prefs.primaryGroupBy === 'none') {
+    return { primaryGroupBy: 'none', secondaryGroupBy: 'none' }
+  }
+  if (prefs.secondaryGroupBy === prefs.primaryGroupBy) {
+    return { primaryGroupBy: prefs.primaryGroupBy, secondaryGroupBy: 'none' }
+  }
+  return prefs
+}
 
 function storageKeyForUser(userId: number | null | undefined): string | null {
   if (userId === null || userId === undefined) return null
@@ -37,7 +57,7 @@ function readFromStorage(userId: number): AdmissionsListPreferences {
     if (!raw) return { ...DEFAULTS }
     const parsed = preferencesSchema.safeParse(JSON.parse(raw))
     if (!parsed.success) return { ...DEFAULTS }
-    return parsed.data
+    return normalize(parsed.data)
   } catch {
     return { ...DEFAULTS }
   }
@@ -54,8 +74,8 @@ function writeToStorage(userId: number, prefs: AdmissionsListPreferences): void 
 }
 
 export const useAdmissionsListPreferencesStore = defineStore('admissionsListPreferences', () => {
-  const viewMode = ref<AdmissionsListViewMode>(DEFAULTS.viewMode)
-  const groupBy = ref<AdmissionsListGroupBy>(DEFAULTS.groupBy)
+  const primaryGroupBy = ref<AdmissionsListGroupBy>(DEFAULTS.primaryGroupBy)
+  const secondaryGroupBy = ref<AdmissionsListGroupBy>(DEFAULTS.secondaryGroupBy)
   const hydratedUserId = ref<number | null>(null)
 
   function hydrate(): void {
@@ -63,33 +83,37 @@ export const useAdmissionsListPreferencesStore = defineStore('admissionsListPref
     const userId = auth.user?.id
     if (userId === null || userId === undefined) {
       // Pre-login: keep defaults but don't write to storage.
-      viewMode.value = DEFAULTS.viewMode
-      groupBy.value = DEFAULTS.groupBy
+      primaryGroupBy.value = DEFAULTS.primaryGroupBy
+      secondaryGroupBy.value = DEFAULTS.secondaryGroupBy
       hydratedUserId.value = null
       return
     }
     if (hydratedUserId.value === userId) return
     const stored = readFromStorage(userId)
-    viewMode.value = stored.viewMode
-    groupBy.value = stored.groupBy
+    primaryGroupBy.value = stored.primaryGroupBy
+    secondaryGroupBy.value = stored.secondaryGroupBy
     hydratedUserId.value = userId
   }
 
   function persist(): void {
     if (hydratedUserId.value === null) return
     writeToStorage(hydratedUserId.value, {
-      viewMode: viewMode.value,
-      groupBy: groupBy.value
+      primaryGroupBy: primaryGroupBy.value,
+      secondaryGroupBy: secondaryGroupBy.value
     })
   }
 
-  function setViewMode(mode: AdmissionsListViewMode): void {
-    viewMode.value = mode
+  function setPrimaryGroupBy(value: AdmissionsListGroupBy): void {
+    const next = normalize({ primaryGroupBy: value, secondaryGroupBy: secondaryGroupBy.value })
+    primaryGroupBy.value = next.primaryGroupBy
+    secondaryGroupBy.value = next.secondaryGroupBy
     persist()
   }
 
-  function setGroupBy(group: AdmissionsListGroupBy): void {
-    groupBy.value = group
+  function setSecondaryGroupBy(value: AdmissionsListGroupBy): void {
+    const next = normalize({ primaryGroupBy: primaryGroupBy.value, secondaryGroupBy: value })
+    // `normalize` is a no-op for the primary; only the secondary can change here.
+    secondaryGroupBy.value = next.secondaryGroupBy
     persist()
   }
 
@@ -104,10 +128,10 @@ export const useAdmissionsListPreferencesStore = defineStore('admissionsListPref
   )
 
   return {
-    viewMode,
-    groupBy,
+    primaryGroupBy,
+    secondaryGroupBy,
     hydrate,
-    setViewMode,
-    setGroupBy
+    setPrimaryGroupBy,
+    setSecondaryGroupBy
   }
 })

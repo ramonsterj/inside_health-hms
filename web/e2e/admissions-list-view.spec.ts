@@ -24,7 +24,7 @@ const mockAdminStaffUser = {
 }
 
 // User-scoped localStorage key used by useAdmissionsListPreferencesStore.
-const PREFS_KEY = `hms.admissionsListView.v1.user.${mockAdminStaffUser.id}`
+const PREFS_KEY = `hms.admissionsListView.v2.user.${mockAdminStaffUser.id}`
 
 // ── Test Data Helpers ────────────────────────────────────────────────────────
 
@@ -88,7 +88,10 @@ const triageB = {
 
 // ── Page Setup ───────────────────────────────────────────────────────────────
 
-async function setupAuth(page: Page, prefs?: { viewMode?: string; groupBy?: string }) {
+async function setupAuth(
+  page: Page,
+  prefs?: { primaryGroupBy?: string; secondaryGroupBy?: string }
+) {
   await page.addInitScript(
     ({ user, prefsKey, prefs }) => {
       localStorage.setItem('access_token', 'mock-access-token')
@@ -98,8 +101,8 @@ async function setupAuth(page: Page, prefs?: { viewMode?: string; groupBy?: stri
         localStorage.setItem(
           prefsKey,
           JSON.stringify({
-            viewMode: prefs.viewMode ?? 'cards',
-            groupBy: prefs.groupBy ?? 'gender'
+            primaryGroupBy: prefs.primaryGroupBy ?? 'type',
+            secondaryGroupBy: prefs.secondaryGroupBy ?? 'none'
           })
         )
       }
@@ -187,9 +190,10 @@ test.describe('Admissions list view — cards, grouping, and card click', () => 
     await page.addInitScript(() => localStorage.clear())
   })
 
-  test('first visit renders cards grouped by gender (no DataTable)', async ({ page }) => {
+  test('first visit renders cards grouped by type (default)', async ({ page }) => {
     await setupAuth(page)
     await setupCommonMocks(page)
+    // Both mock rows are HOSPITALIZATION → a single Type group.
     await mockAdmissionsList(page, [
       makeAdmission({
         id: 1,
@@ -213,10 +217,10 @@ test.describe('Admissions list view — cards, grouping, and card click', () => 
     await expect(page.locator('.admission-card').first()).toBeVisible()
     await expect(page.locator('.admission-card')).toHaveCount(2)
 
-    // Group headers for both genders.
+    // A single Type group header (Hospitalization), no second level.
     const headers = page.locator('.p-panel-header')
-    await expect(headers.filter({ hasText: /Female|Femenino/ })).toBeVisible()
-    await expect(headers.filter({ hasText: /^Male|Masculino/ })).toBeVisible()
+    await expect(headers).toHaveCount(1)
+    await expect(headers.first()).toContainText(/Hospitalization|Hospitalización/)
 
     // Triage row inside the card shows the short label inside a colored pill,
     // not the long description and not the code letter.
@@ -226,8 +230,41 @@ test.describe('Admissions list view — cards, grouping, and card click', () => 
       'Immediate attention required'
     )
 
-    // No DataTable rows (table view is not active).
+    // No DataTable rows (the table view has been removed).
     await expect(page.locator('table tbody tr')).toHaveCount(0)
+  })
+
+  test('two-level grouping (Type → Sex) nests gender panels inside the type panel', async ({
+    page
+  }) => {
+    await setupAuth(page, { primaryGroupBy: 'type', secondaryGroupBy: 'gender' })
+    await setupCommonMocks(page)
+    await mockAdmissionsList(page, [
+      makeAdmission({
+        id: 1,
+        firstName: 'Juana',
+        lastName: 'Pérez',
+        sex: 'FEMALE',
+        triage: triageA
+      }),
+      makeAdmission({
+        id: 2,
+        firstName: 'Pedro',
+        lastName: 'García',
+        sex: 'MALE',
+        triage: triageB
+      })
+    ])
+
+    await page.goto('/admissions')
+
+    // One outer Type panel + two inner Sex panels = three panel headers.
+    const headers = page.locator('.p-panel-header')
+    await expect(headers).toHaveCount(3)
+    await expect(headers.filter({ hasText: /Hospitalization|Hospitalización/ })).toBeVisible()
+    await expect(headers.filter({ hasText: /Female|Femenino/ })).toBeVisible()
+    await expect(headers.filter({ hasText: /^Male|Masculino/ })).toBeVisible()
+    await expect(page.locator('.admission-card')).toHaveCount(2)
   })
 
   test('clicking anywhere on a card navigates to admission detail', async ({ page }) => {
@@ -267,32 +304,8 @@ test.describe('Admissions list view — cards, grouping, and card click', () => 
     await expect(page).toHaveURL(/\/admissions\/7$/)
   })
 
-  test('view-mode preference persists across Dashboard ↔ Admissions screens', async ({ page }) => {
-    await setupAuth(page, { viewMode: 'table', groupBy: 'none' })
-    await setupCommonMocks(page)
-    await mockAdmissionsList(page, [
-      makeAdmission({
-        id: 1,
-        firstName: 'Juana',
-        lastName: 'Pérez',
-        sex: 'FEMALE',
-        triage: triageA
-      })
-    ])
-
-    // Dashboard opens in Table mode (no card grid).
-    await page.goto('/dashboard')
-    await expect(page.locator('table tbody tr').first()).toBeVisible()
-    await expect(page.locator('.admission-card')).toHaveCount(0)
-
-    // Navigating to Admissions keeps Table mode (preference is shared).
-    await page.goto('/admissions')
-    await expect(page.locator('table tbody tr').first()).toBeVisible()
-    await expect(page.locator('.admission-card')).toHaveCount(0)
-  })
-
   test('group-by Triage renders groups in code order with untriaged last', async ({ page }) => {
-    await setupAuth(page, { viewMode: 'cards', groupBy: 'triage' })
+    await setupAuth(page, { primaryGroupBy: 'triage' })
     await setupCommonMocks(page)
     await mockAdmissionsList(page, [
       makeAdmission({
@@ -330,7 +343,7 @@ test.describe('Admissions list view — cards, grouping, and card click', () => 
   })
 
   test('cards are sorted by triage code within an ungrouped list', async ({ page }) => {
-    await setupAuth(page, { viewMode: 'cards', groupBy: 'none' })
+    await setupAuth(page, { primaryGroupBy: 'none' })
     await setupCommonMocks(page)
     // Server returns the admissions in deliberately wrong order:
     //   B, untriaged, A — the UI must reorder to A, B, untriaged.
@@ -368,7 +381,7 @@ test.describe('Admissions list view — cards, grouping, and card click', () => 
   })
 
   test('card view exposes pagination for result sets larger than one page', async ({ page }) => {
-    await setupAuth(page, { viewMode: 'cards', groupBy: 'none' })
+    await setupAuth(page, { primaryGroupBy: 'none' })
     await setupCommonMocks(page)
     await mockPagedAdmissionsList(
       page,

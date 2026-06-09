@@ -4,17 +4,11 @@ import { useI18n } from 'vue-i18n'
 import SelectButton from 'primevue/selectbutton'
 import {
   useAdmissionsListPreferencesStore,
-  type AdmissionsListViewMode,
   type AdmissionsListGroupBy
 } from '@/stores/admissionsListPreferences'
 
 const { t } = useI18n()
 const preferences = useAdmissionsListPreferencesStore()
-
-const viewModeOptions = computed(() => [
-  { label: t('admission.listView.viewModes.cards'), value: 'cards' as AdmissionsListViewMode },
-  { label: t('admission.listView.viewModes.table'), value: 'table' as AdmissionsListViewMode }
-])
 
 const groupByOptions = computed(() => [
   { label: t('admission.listView.groupByOptions.none'), value: 'none' as AdmissionsListGroupBy },
@@ -29,43 +23,54 @@ const groupByOptions = computed(() => [
   }
 ])
 
-const viewMode = computed<AdmissionsListViewMode>({
-  get: () => preferences.viewMode,
+// Secondary options exclude the current primary value so the two levels can
+// never select the same dimension from the UI.
+const secondaryGroupByOptions = computed(() =>
+  groupByOptions.value.filter(
+    option => option.value === 'none' || option.value !== preferences.primaryGroupBy
+  )
+)
+
+const primaryGroupBy = computed<AdmissionsListGroupBy>({
+  get: () => preferences.primaryGroupBy,
   set: value => {
-    if (value) preferences.setViewMode(value)
+    if (value) preferences.setPrimaryGroupBy(value)
   }
 })
 
-const groupBy = computed<AdmissionsListGroupBy>({
-  get: () => preferences.groupBy,
+const secondaryGroupBy = computed<AdmissionsListGroupBy>({
+  get: () => preferences.secondaryGroupBy,
   set: value => {
-    if (value) preferences.setGroupBy(value)
+    if (value) preferences.setSecondaryGroupBy(value)
   }
 })
+
+// The second level only makes sense once a primary dimension is chosen.
+const showSecondary = computed(() => preferences.primaryGroupBy !== 'none')
 </script>
 
 <template>
   <div class="admissions-list-toolbar">
     <div class="toolbar-field">
-      <label class="toolbar-label">{{ t('admission.listView.view') }}</label>
-      <SelectButton
-        v-model="viewMode"
-        :options="viewModeOptions"
-        optionLabel="label"
-        optionValue="value"
-        :allowEmpty="false"
-        :aria-label="t('admission.listView.view')"
-      />
-    </div>
-    <div class="toolbar-field">
       <label class="toolbar-label">{{ t('admission.listView.groupBy') }}</label>
       <SelectButton
-        v-model="groupBy"
+        v-model="primaryGroupBy"
         :options="groupByOptions"
         optionLabel="label"
         optionValue="value"
         :allowEmpty="false"
         :aria-label="t('admission.listView.groupBy')"
+      />
+    </div>
+    <div v-if="showSecondary" class="toolbar-field">
+      <label class="toolbar-label">{{ t('admission.listView.thenBy') }}</label>
+      <SelectButton
+        v-model="secondaryGroupBy"
+        :options="secondaryGroupByOptions"
+        optionLabel="label"
+        optionValue="value"
+        :allowEmpty="false"
+        :aria-label="t('admission.listView.thenBy')"
       />
     </div>
   </div>
