@@ -50,7 +50,10 @@
     "present": "Presente",
     "date": "Fecha",
     "type": "Tipo",
-    "reference": "Referencia"
+    "reference": "Referencia",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "notes": "Notas"
   },
   "nav": {
     "home": "Inicio",
@@ -474,6 +477,7 @@
     },
     "empty": "No se encontraron registros de auditoria.",
     "system": "Sistema",
+    "userIdLabel": "ID: {id}",
     "moreFields": "+{count} mas",
     "loadFailed": "Error al cargar registros de auditoria"
   },
@@ -1595,6 +1599,7 @@
     "new": "Nuevo Tipo de Documento",
     "edit": "Editar Tipo de Documento",
     "code": "Código",
+    "codePlaceholder": "ej., CONSENTIMIENTO",
     "codeHelp": "Solo letras mayúsculas y guiones bajos (ej. CONSENTIMIENTO_ADMISION)",
     "name": "Nombre",
     "description": "Descripción",
@@ -2473,6 +2478,7 @@
       "statementDate": "Fecha del Estado",
       "fileName": "Nombre de Archivo",
       "file": "Archivo",
+      "chooseFile": "Elegir archivo",
       "status": "Estado",
       "progress": "Progreso",
       "summary": "Resumen",

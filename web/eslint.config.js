@@ -1,6 +1,7 @@
 import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import pluginVue from 'eslint-plugin-vue'
+import pluginVueI18n from '@intlify/eslint-plugin-vue-i18n'
 import pluginSecurity from 'eslint-plugin-security'
 import eslintConfigPrettier from 'eslint-config-prettier'
 import globals from 'globals'
@@ -12,12 +13,77 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   ...pluginVue.configs['flat/recommended'],
+  ...pluginVueI18n.configs['flat/base'],
   pluginSecurity.configs.recommended,
   {
     languageOptions: {
       globals: {
         ...globals.browser
       }
+    },
+    settings: {
+      'vue-i18n': {
+        localeDir: './src/i18n/locales/*.json',
+        messageSyntaxVersion: '^10.0.0'
+      }
+    }
+  },
+  {
+    // i18n guards: no new hardcoded UI text, and every t() key must exist.
+    // The locale parity test (src/i18n/locales.parity.spec.ts) is what keeps
+    // the two locale files key-for-key in sync; these rules stop drift at the
+    // source. no-unused-keys is intentionally omitted — this codebase builds
+    // many keys dynamically (e.g. t('common.time.' + unit)), which the static
+    // rule cannot resolve and would false-positive on.
+    files: ['**/*.vue'],
+    rules: {
+      '@intlify/vue-i18n/no-missing-keys': 'error',
+      '@intlify/vue-i18n/no-raw-text': [
+        'error',
+        {
+          // Also scan common label-ish props on any element (PrimeVue & native).
+          attributes: {
+            '/.+/': [
+              'label',
+              'placeholder',
+              'title',
+              'aria-label',
+              'header',
+              'choose-label',
+              'chooseLabel',
+              'upload-label',
+              'cancel-label',
+              'empty-message',
+              'emptyMessage'
+            ]
+          },
+          // Strings made up solely of whitespace, digits, punctuation or symbols
+          // are not translatable prose (e.g. "*", "/", ":", "mmHg" units live in
+          // the locale files already).
+          ignorePattern: '^[\\s\\d\\p{P}\\p{S}]+$',
+          ignoreText: [
+            '*',
+            '/',
+            '-',
+            ':',
+            '|',
+            '·',
+            '×',
+            '%',
+            '#',
+            '@',
+            '&',
+            // "x" multiplier in "{qty} x {price}" rows.
+            'x',
+            // SOAP note section mnemonics — identical in Spanish (Subjetivo,
+            // Objetivo, Análisis, Plan), so not translatable prose.
+            'S',
+            'O',
+            'A',
+            'P'
+          ]
+        }
+      ]
     }
   },
   {

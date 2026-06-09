@@ -105,7 +105,7 @@ function cancel() {
               id="code"
               v-model="code"
               :class="{ 'p-invalid': errors.code }"
-              placeholder="CONSENT_EXAMPLE"
+              :placeholder="t('documentType.codePlaceholder')"
             />
             <small class="field-help">{{ t('documentType.codeHelp') }}</small>
             <Message v-if="errors.code" severity="error" :closable="false">

@@ -50,7 +50,10 @@
     "present": "Present",
     "date": "Date",
     "type": "Type",
-    "reference": "Reference"
+    "reference": "Reference",
+    "active": "Active",
+    "inactive": "Inactive",
+    "notes": "Notes"
   },
   "nav": {
     "home": "Home",
@@ -474,6 +477,7 @@
     },
     "empty": "No audit logs found.",
     "system": "System",
+    "userIdLabel": "ID: {id}",
     "moreFields": "+{count} more",
     "loadFailed": "Failed to load audit logs"
   },
@@ -1595,6 +1599,7 @@
     "new": "New Document Type",
     "edit": "Edit Document Type",
     "code": "Code",
+    "codePlaceholder": "e.g., CONSENT",
     "codeHelp": "Uppercase letters and underscores only (e.g., CONSENT_ADMISSION)",
     "name": "Name",
     "description": "Description",
@@ -2473,6 +2478,7 @@
       "statementDate": "Statement Date",
       "fileName": "File Name",
       "file": "File",
+      "chooseFile": "Choose File",
       "status": "Status",
       "progress": "Progress",
       "summary": "Summary",

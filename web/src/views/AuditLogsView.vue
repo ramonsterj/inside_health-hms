@@ -289,7 +289,9 @@ function getChangedFields(oldValues: string | null, newValues: string | null): s
           <Column field="username" :header="t('auditLogs.columns.user')">
             <template #body="{ data }">
               <span v-if="data.username">{{ data.username }}</span>
-              <span v-else-if="data.userId" class="text-muted">ID: {{ data.userId }}</span>
+              <span v-else-if="data.userId" class="text-muted">{{
+                t('auditLogs.userIdLabel', { id: data.userId })
+              }}</span>
               <span v-else class="text-muted">{{ t('auditLogs.system') }}</span>
             </template>
           </Column>
