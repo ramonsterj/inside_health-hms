@@ -7,50 +7,55 @@
 | 1.0 | 2026-04-27 | @paniagua | Initial draft |
 | 1.1 | 2026-04-27 | @paniagua | Revised card visual spec to avatar-centric layout (reference: `image-v1.png`) — gender icon as avatar, type color as small dot in subtitle, no left stripe / no corner chip. |
 | 1.2 | 2026-04-27 | @paniagua | Type rendered as a filled colored **pill** with white text instead of a small dot. Added **Triage** as a Group-by option. Cards are sorted by triage code within each group (untriaged at the end), and the entire card is the click target — the redundant footer "View" button has been removed. |
+| 1.3 | 2026-06-09 | @paniagua | **Removed the Table view entirely** (cards-only). Introduced **two-level additive grouping**: a primary "Group by" plus a "Then by" secondary level (None/Sex/Type/Triage), where the secondary excludes the primary dimension and is hidden when primary = None. Default grouping is **Type** (single level). Persistence migrated to a `v2` key with shape `{primaryGroupBy, secondaryGroupBy}` (no migration — old `v1` payloads fall back to defaults). |
 
 ---
 
 ## Overview
 
-Adds an alternate **card view** and **grouping controls** to the admissions list, used both on the Dashboard landing page (for users whose dashboard is the admissions list) and on the Admissions screen. The user can toggle between **Cards** and **Table** views and group entries by **None**, **Gender**, or **Type of Admission**. Their choice is remembered across sessions via `localStorage` and is **shared** between the Dashboard and the Admissions screen so the experience stays consistent. This is a frontend-only enhancement — no backend, database, or permission changes.
+Renders the admissions list as **cards** with **two-level grouping controls**, used both on the Dashboard landing page (for users whose dashboard is the admissions list) and on the Admissions screen. The user groups entries by a **primary** dimension (**None**, **Sex**, **Type**, or **Triage**) and, optionally, a **secondary** "Then by" dimension (e.g. Type → Sex) — at most two levels, and the second level can never repeat the first. Their choice is remembered across sessions via `localStorage` and is **shared** between the Dashboard and the Admissions screen so the experience stays consistent. This is a frontend-only enhancement — no backend, database, or permission changes.
+
+> The original Table view was removed in v1.3 (confirmed unused); the card view is the only list rendering. Removing the table also lifted the single-level grouping constraint imposed by PrimeVue `DataTable`, making nested grouping a clean change to our own card rendering.
 
 ---
 
 ## Use Case / User Story
 
-1. As a **doctor**, I want to see my admitted patients as visual cards grouped by gender so that I can scan my caseload faster than reading a dense table.
+1. As a **doctor**, I want to see my admitted patients as visual cards grouped by sex so that I can scan my caseload faster than reading a dense table.
 2. As an **administrative staff member**, I want to group admissions by type (Hospitalization, Ambulatory, Emergency, etc.) so that I can quickly find patients in a given workflow.
-3. As any **user of the admissions list**, I want my view-mode and grouping choice to be remembered between sessions so that I don't have to reconfigure the screen every time.
-4. As a **user who prefers density**, I want to switch back to the existing table view at any time so that I can see more rows at once.
+3. As any **user of the admissions list**, I want my grouping choice to be remembered between sessions so that I don't have to reconfigure the screen every time.
+4. As a **supervisor**, I want to add a second grouping level (e.g. group by Type, then by Sex) so I can break a large group into meaningful sub-sections at a glance.
 
 ---
 
 ## Authorization / Role Access
 
-No new permissions. The list contents continue to honor existing `admission:read` rules (doctors see only their patients; psychologists see only ACTIVE admissions; admin/administrative staff see all). View-mode and grouping are purely client-side preferences and have no authorization gating.
+No new permissions. The list contents continue to honor existing `admission:read` rules (doctors see only their patients; psychologists see only ACTIVE admissions; admin/administrative staff see all). Grouping is purely a client-side preference and has no authorization gating.
 
 ---
 
 ## Functional Requirements
 
-### View Mode Toggle
+### Grouping Selectors (Two Levels)
 
-- A `SelectButton` (or equivalent) labeled **View** with two options: **Cards** and **Table**.
-- Visible on both the Dashboard (when the user's dashboard is the admissions list) and the Admissions screen.
-- The Table option renders the existing `DataTable` unchanged, with the same columns, filters, and pagination behavior currently in `DashboardView.vue` and `AdmissionsView.vue`.
-- The Cards option renders the new card layout described below.
+The list is always rendered as cards (no view-mode toggle). Two `SelectButton` controls drive grouping:
 
-### Group-By Selector
+- **Group by** (primary) — four options: **None**, **Sex**, **Type**, **Triage**.
+- **Then by** (secondary) — the same dimensions **excluding the current primary value**, plus **None**. The control is **hidden when the primary is None** (there is nothing to subdivide). Selecting the same dimension at both levels is therefore impossible from the UI, and is defensively collapsed to a single level by the store's `normalize()` (see Persistence).
 
-- A `SelectButton` labeled **Group by** with four options: **None**, **Gender**, **Type**, **Triage**.
-- Applies to **both** the Cards view and the Table view.
-  - In Cards view: groups appear as collapsible sections (`Panel` or `Fieldset`) each containing the cards belonging to that group.
-  - In Table view: groups appear as section headers between row groups (PrimeVue `DataTable` row grouping with `groupRowsBy` and `rowGroupMode="subheader"`).
-- **None**: flat list, no grouping.
-- **Gender**: groups are `Female`, `Male`, and (if applicable) `Other / Unknown`. Headers show the Venus/Mars icon and a count badge (e.g. "♀ Female · 8").
-- **Type**: groups are the five `AdmissionType` enum values (HOSPITALIZATION, AMBULATORY, ELECTROSHOCK_THERAPY, KETAMINE_INFUSION, EMERGENCY). Headers show the type label, the type color as a small swatch, and a count badge.
-- **Triage**: groups are the configured triage codes used by admissions in the current page (e.g. `A`, `B`, `C`), plus an "No triage" group that collects ambulatory / un-triaged admissions. Headers render the triage badge (color background, code letter), the triage description, and a count badge. Groups are ordered by code (A, B, C, …) with the untriaged bucket last.
-- Default sort within a group is by triage code ascending (most-urgent first), with untriaged entries last; ties preserve the original list ordering (most recent first). The same sort is applied globally when **None** is selected.
+Grouping renders as nested collapsible `Panel`s:
+
+- **Primary None**: a flat grid of cards, no group headers.
+- **Primary set, Secondary None**: one outer `Panel` per primary group, each containing that group's card grid.
+- **Primary + Secondary set**: one outer `Panel` per primary group; inside each, one inner `Panel` per secondary bucket, each containing the leaf card grid.
+
+Each level shows its own header (dimension icon/swatch/badge + label) and its own member-count `Badge`. Group dimensions:
+
+- **Sex**: groups are `Female`, `Male`, and (if applicable) `Other / Unknown`. Headers show the Venus/Mars icon and a count badge.
+- **Type**: groups are the `AdmissionType` enum values, ordered by `ADMISSION_TYPE_ORDER` (Hospitalization last). Headers show the type label, the type color as a small swatch, and a count badge.
+- **Triage**: groups are the configured triage codes used by admissions in the current page (e.g. `A`, `B`, `C`), plus an "No triage" group that collects un-triaged admissions. Headers render the triage badge (color background, code letter), the triage description, and a count badge. Groups are ordered by code (A, B, C, …) with the untriaged bucket last.
+- **Empty groups are hidden at both levels.**
+- Sort within the **innermost (leaf) grid** is by triage code ascending (most-urgent first), with untriaged entries last; ties preserve the original list ordering (most recent first). The same sort is applied globally when **None** is selected.
 
 ### Card Visual Spec
 
@@ -111,19 +116,23 @@ The 500 shade is used for the **subtitle dot** on the card and for the **swatch 
 
 ### Persistence (localStorage)
 
-- A single Pinia store, e.g. `useAdmissionsListPreferencesStore`, holds the preference and persists to `localStorage`.
-- **Storage key**: `hms.admissionsListView.v1`. Versioned suffix lets us evolve the schema later without surprising parses.
+- A single Pinia store, `useAdmissionsListPreferencesStore`, holds the preference and persists to `localStorage`.
+- **Storage key**: `hms.admissionsListView.v2`. Bumped from `v1` when `viewMode` was dropped and the single `groupBy` became two fields. **No migration** — an old `v1` payload simply fails the `v2` zod schema and falls back to defaults.
 - **Stored shape**:
   ```ts
   {
-    viewMode: 'cards' | 'table',
-    groupBy: 'none' | 'gender' | 'type'
+    primaryGroupBy: 'none' | 'gender' | 'type' | 'triage',
+    secondaryGroupBy: 'none' | 'gender' | 'type' | 'triage'
   }
   ```
-- **Scope**: per-browser, per-logged-in user. Key is namespaced by `authStore.user.id` to avoid collisions on shared workstations: `hms.admissionsListView.v1.user.{userId}`.
-- **Defaults on first visit** (no stored value): `viewMode: 'cards'`, `groupBy: 'gender'`.
+- **Invariants** — enforced by a `normalize()` applied on read and in both setters, so the render layer never needs defensive checks:
+  - if `primaryGroupBy === 'none'` → `secondaryGroupBy` is forced to `'none'`;
+  - if `secondaryGroupBy === primaryGroupBy` (and not `'none'`) → `secondaryGroupBy` collapses to `'none'`.
+  - `setPrimaryGroupBy` re-normalizes the secondary; `setSecondaryGroupBy` is a no-op when the value would equal the primary or when primary is `'none'`.
+- **Scope**: per-browser, per-logged-in user. Key is namespaced by `authStore.user.id` to avoid collisions on shared workstations: `hms.admissionsListView.v2.user.{userId}`.
+- **Defaults on first visit** (no stored value): `{ primaryGroupBy: 'type', secondaryGroupBy: 'none' }`.
 - **Shared between screens**: the same store + key is read/written by both the Dashboard's admissions list and the Admissions screen, so changing the preference in one place updates both.
-- **Read failure / corrupt JSON**: fall back to defaults, do not crash.
+- **Read failure / corrupt JSON / legacy v1 payload**: fall back to defaults, do not crash.
 
 ### Backend Behavior
 
@@ -135,27 +144,26 @@ Unchanged. The list endpoint already returns the patient's gender via `PatientSu
 
 ## Acceptance Criteria / Scenarios
 
-- **Default state**: When a user logs in and visits the Dashboard or Admissions screen for the first time, the list is rendered as cards grouped by gender.
-- **View switch persists**: When a user switches from Cards to Table on the Dashboard, then navigates to the Admissions screen, the Admissions screen also opens in Table view. Same in reverse.
-- **Group switch persists**: When a user changes Group by from Gender to Type on the Admissions screen, then logs out and logs back in, the same screen opens grouped by Type.
-- **Cards in cards view, grouped by type**: Each group section header shows the type label, the type's color swatch, and a count of cards inside; cards within the group all show the same colored subtitle dot matching their type.
-- **Cards in cards view, grouped by gender**: Section headers show ♀/♂ icon and label; cards inside continue to show their type-colored subtitle dot (gender does not change card colors).
-- **Group by None**: A flat list of cards (or rows) is shown without group headers.
-- **Table view continues to work**: The existing `DataTable` columns, filters (`statusFilter`, `typeFilter` on the Admissions screen), pagination, and lazy loading remain functional in Table view, including when grouping is enabled.
-- **Empty groups**: Groups with zero items are not rendered.
-- **Permission filtering**: Cards/table both respect existing role filtering — a doctor sees only their patients regardless of view mode.
-- **Action parity**: Clicking the `View` button on a card navigates to the same admission detail route as clicking `View` on the table row.
-- **Accessibility**: Card type information is conveyed by the subtitle's text label, not color alone — verified by removing color in dev tools (the dot disappears, the label "Hospitalization" / "Emergency" / etc. remains readable).
-- **Storage corruption**: Manually setting `localStorage` value to invalid JSON results in the user seeing the defaults (cards / gender), not a blank page or error.
+- **Default state**: When a user logs in and visits the Dashboard or Admissions screen for the first time, the list is rendered as cards grouped by **Type** (single level).
+- **Group switch persists**: When a user changes Group by from Type to Sex on the Admissions screen, then logs out and logs back in, the same screen opens grouped by Sex.
+- **Two-level grouping**: Selecting **Group by = Type** and **Then by = Sex** renders an outer `Panel` per type (Hospitalization last), each containing inner `Panel`s per sex, each with its own count badge. The leaf grid within each inner panel is triage-sorted.
+- **Secondary excludes primary**: The "Then by" options never include the current primary dimension; choosing the same dimension twice is impossible, and any persisted payload that violates this collapses to a single level.
+- **Secondary hidden for None**: When Group by = None, the "Then by" control is not shown and the list is a flat, triage-sorted grid of cards.
+- **Cards grouped by type**: Each group section header shows the type label, the type's color swatch, and a count of cards inside; cards within the group all show the same colored subtitle pill matching their type.
+- **Empty groups**: Groups with zero items are not rendered, at either level.
+- **Permission filtering**: Cards respect existing role filtering — a doctor sees only their patients.
+- **Action parity**: Clicking anywhere on a card navigates to the admission detail route.
+- **Accessibility**: Card type information is conveyed by the subtitle's text label, not color alone — verified by removing color in dev tools (the pill background disappears, the label "Hospitalization" / "Emergency" / etc. remains readable).
+- **Storage corruption / legacy data**: Manually setting the `localStorage` value to invalid JSON (or leaving only an old `v1` payload) results in the user seeing the defaults (cards grouped by Type), not a blank page or error.
 
 ---
 
 ## Non-Functional Requirements
 
 - **Performance**: Card rendering for up to 100 admissions on a single screen (no virtualization needed at this scale; Dashboard typically shows fewer).
-- **Responsiveness**: Cards reflow into 1, 2, or 3 columns based on viewport width (mobile / tablet / desktop). Table view keeps its current responsive behavior.
-- **i18n**: All new user-facing strings (View, Cards, Table, Group by, None, Gender, Type, Female, Male, etc.) added to existing locale files (`en`, `es`).
-- **No regression**: The existing table experience must remain unchanged in all aspects (column set, filters, pagination, lazy loading, role filtering) when the user keeps Table view.
+- **Responsiveness**: Cards reflow into 1, 2, or 3 columns based on viewport width (mobile / tablet / desktop), at every grouping depth.
+- **i18n**: All user-facing strings (Group by, Then by, None, Sex, Type, Triage, Female, Male, etc.) live in the existing locale files (`en`, `es`).
+- **No regression**: Filters (`statusFilter`, `typeFilter`), pagination, and role-based list filtering continue to work unchanged with the card list.
 
 ---
 
@@ -177,21 +185,25 @@ None.
 
 | Component | Location | Description |
 |-----------|----------|-------------|
-| `AdmissionsListToolbar.vue` | `web/src/components/admissions/` | Houses the View and Group by `SelectButton`s. Used by both Dashboard and Admissions screen. |
+| `AdmissionsListToolbar.vue` | `web/src/components/admissions/` | Houses the "Group by" (primary) and "Then by" (secondary) `SelectButton`s. Used by both Dashboard and Admissions screen. |
 | `AdmissionCard.vue` | `web/src/components/admissions/` | Single admission card matching the visual spec above. |
-| `AdmissionCardGrid.vue` | `web/src/components/admissions/` | Renders cards in a responsive grid, with optional grouped collapsible sections. |
+| `AdmissionCardGrid.vue` | `web/src/components/admissions/` | Renders cards in a responsive grid; flat when primary = None, else one outer `Panel` per primary group containing either a leaf grid or an `AdmissionCardSubGroup`. |
+| `AdmissionCardSubGroup.vue` | `web/src/components/admissions/` | Buckets a primary group's items by the secondary dimension into inner `Panel`s (fixed depth 2, no recursion). |
+| `AdmissionGroupHeader.vue` | `web/src/components/admissions/` | Shared group header (icon/swatch/triage badge + label + count badge) used at both grouping levels. |
 | `GenderIcon.vue` | `web/src/components/icons/` | Inline SVG component rendering ♀ or ♂ in a single neutral color. |
+
+The single-dimension bucketing is a pure, vue-i18n-free helper `bucketAdmissions(items, dimension, labelers)` in `web/src/composables/useAdmissionsGrouping.ts` (renamed from the former `useAdmissionsTableGrouping.ts`); i18n labels are injected via `labelers` so it stays unit-testable. The table-only `AdmissionsGroupRowHeader.vue` and the `useAdmissionsTableGrouping` function were removed with the table view.
 
 ### Pinia Stores
 
 | Store | Location | Description |
 |-------|----------|-------------|
-| `useAdmissionsListPreferencesStore` | `web/src/stores/admissionsListPreferences.ts` | Holds `{ viewMode, groupBy }`, hydrates from and writes to `localStorage` keyed by user id. Initialization on `authStore.user` load. |
+| `useAdmissionsListPreferencesStore` | `web/src/stores/admissionsListPreferences.ts` | Holds `{ primaryGroupBy, secondaryGroupBy }`, hydrates from and writes to `localStorage` keyed by user id, and enforces the two-level invariants via `normalize()`. Initialization on `authStore.user` load. |
 
 ### Modified Views
 
-- `web/src/views/DashboardView.vue` — keep existing `DataTable`, wrap it in a conditional that switches to `AdmissionCardGrid` based on the preference store. Add `AdmissionsListToolbar` above the list.
-- `web/src/views/admissions/AdmissionsView.vue` — same pattern: existing toolbar already has filters; add the new `AdmissionsListToolbar` controls (View / Group by) alongside them. Switch list rendering between table and cards.
+- `web/src/views/DashboardView.vue` — renders `AdmissionsListSection` (cards + paginator) with `AdmissionsListToolbar` above the list. No table.
+- `web/src/views/admissions/AdmissionsView.vue` — same pattern: existing filters plus the `AdmissionsListToolbar` grouping controls above the card list.
 
 ### Routes
 
@@ -202,12 +214,12 @@ No route changes.
 ```ts
 // web/src/stores/admissionsListPreferences.ts
 const preferencesSchema = z.object({
-  viewMode: z.enum(['cards', 'table']),
-  groupBy: z.enum(['none', 'gender', 'type'])
+  primaryGroupBy: z.enum(['none', 'gender', 'type', 'triage']),
+  secondaryGroupBy: z.enum(['none', 'gender', 'type', 'triage'])
 });
 ```
 
-Used to validate the `localStorage` payload on hydration; on parse failure, fall back to defaults.
+Used to validate the `localStorage` payload on hydration; on parse failure (including any legacy `v1` shape), fall back to defaults. A `normalize()` step then enforces the two-level invariants.
 
 ---
 
@@ -216,7 +228,7 @@ Used to validate the `localStorage` payload on hydration; on parse failure, fall
 - **Gender icon source**: PrimeIcons does not include Venus/Mars symbols. Use an inline SVG component (`GenderIcon.vue`) with two paths/glyphs selected by prop. Avoid Unicode `♀` / `♂` glyphs — their rendering varies across operating systems and may not match the rest of the icon set in weight/size.
 - **Color tokens**: Reuse Tailwind color utility classes (`bg-indigo-500`, `bg-emerald-500`, etc.) for the subtitle dot and group-header swatch so the palette stays in sync with the rest of the app's theme. If a `theme.ts` token map exists for the admission type, extend it; otherwise create one in `web/src/constants/admissionType.ts` mapping `AdmissionType` → Tailwind class name. The map should expose both the dot color and the human-readable label key for i18n.
 - **Card aesthetic**: Match `image-v1.png` reference — white background, rounded corners (~`rounded-xl`), subtle shadow (~`shadow-sm`), no colored borders, ample internal padding (~`p-5`). The card's only color comes from the small subtitle dot and the optional triage badge.
-- **Table grouping**: PrimeVue `DataTable` supports row grouping via `groupRowsBy="patient.gender"` (or a computed key) with `rowGroupMode="subheader"`. The subheader template renders the same group header used by the cards grid for visual consistency.
+- **Nested grouping depth**: Grouping is fixed at two levels by design (`AdmissionCardSubGroup` is non-recursive). The pure `bucketAdmissions` helper is reused at both levels; the leaf grid triage-sorts its members.
 - **Preference store hydration**: The store should hydrate after `authStore.user.id` is available; before then, use defaults but do not write to `localStorage`. On user logout, leave the previous user's key in place — it will be re-read on their next login on the same machine.
 - **Dashboard scope**: The Dashboard already filters to ACTIVE admissions only. Group-by Type on the Dashboard will likely show a single `EMERGENCY` group rarely populated; that is acceptable — empty groups are hidden.
 - **Existing patient-admission spec**: A one-line cross-reference will be added to `docs/features/patient-admission.md` under the section that mentions admission viewing, pointing here.
@@ -229,29 +241,26 @@ Used to validate the `localStorage` payload on hydration; on parse failure, fall
 - [ ] N/A — no backend changes (verify `AdmissionListItem` already includes `patient.gender`; if not, add to response and confirm tests still pass)
 
 ### Frontend
-- [ ] `AdmissionCard.vue`, `AdmissionCardGrid.vue`, `AdmissionsListToolbar.vue`, `GenderIcon.vue` created
-- [ ] `useAdmissionsListPreferencesStore` implemented with Zod validation on hydrate
-- [ ] Dashboard and Admissions screen both use the toolbar and switch list mode based on the store
-- [ ] Default preferences (cards / gender) applied on first visit
-- [ ] Preference persists across page reloads (verified by inspecting `localStorage`)
-- [ ] Preference shared: setting on Dashboard takes effect on Admissions screen and vice versa
-- [ ] Storage corruption handling: invalid JSON does not break the page
-- [ ] Table view + grouping renders subheaders correctly
-- [ ] Cards view + grouping renders collapsible group panels with counts
-- [ ] i18n keys added to `en` and `es`
-- [ ] ESLint/oxlint passes
-- [ ] Vitest unit tests for the preferences store (hydrate, persist, invalid payload, default fallback)
-- [ ] Vitest unit tests for `AdmissionCard.vue` rendering (gender avatar icon, subtitle type label + colored dot, conditional rows)
+- [x] `AdmissionCard.vue`, `AdmissionCardGrid.vue`, `AdmissionCardSubGroup.vue`, `AdmissionGroupHeader.vue`, `AdmissionsListToolbar.vue`, `GenderIcon.vue` present
+- [x] `useAdmissionsListPreferencesStore` implemented with Zod validation + `normalize()` on hydrate
+- [x] Dashboard and Admissions screen both use the toolbar and render cards from the store
+- [x] Default preferences (cards grouped by Type, single level) applied on first visit
+- [x] Storage corruption / legacy `v1` handling: invalid or old JSON falls back to defaults
+- [x] Cards + two-level grouping renders nested collapsible panels with per-level counts
+- [x] Secondary "Then by" excludes the primary dimension and is hidden when primary = None
+- [x] i18n keys present in `en` and `es` (`thenBy` added; `view`/`viewModes` removed)
+- [x] ESLint/oxlint passes
+- [x] Vitest unit tests for the preferences store (hydrate, persist, invariants, invalid/legacy payload)
+- [x] Vitest unit tests for `bucketAdmissions` (gender/type/triage ordering, empty-bucket dropping, leaf triage sort)
 
 ### E2E Tests (Playwright)
-- [ ] First-visit default: cards grouped by gender
-- [ ] Toggle to Table view on Dashboard, navigate to Admissions screen, verify Table view active
-- [ ] Change Group by to Type, log out and back in, verify preference restored
-- [ ] Card `View` button navigates to admission detail route
+- [x] First-visit default: cards grouped by Type
+- [x] Two-level grouping (Type → Sex) nests gender panels inside the type panel
+- [x] Group by Triage renders code order with untriaged last
+- [x] Card click navigates to admission detail route
 
 ### General
-- [ ] Existing table behavior unchanged when Table view selected (filters, pagination, lazy loading)
-- [ ] Role-based filtering still applied (verified for DOCTOR and ADMIN)
+- [x] Filters, pagination, and role-based filtering still work with the card list
 - [ ] Reviewed by project owner
 
 ---

@@ -2033,14 +2033,10 @@
       "invalidPatient": "Patient not found. Please select a patient from the list."
     },
     "listView": {
-      "view": "View",
       "viewAction": "View",
       "viewActionFor": "View admission for {name}",
-      "viewModes": {
-        "cards": "Cards",
-        "table": "Table"
-      },
       "groupBy": "Group by",
+      "thenBy": "Then by",
       "groupByOptions": {
         "none": "None",
         "gender": "Gender",

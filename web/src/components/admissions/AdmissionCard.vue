@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import Tag from 'primevue/tag'
 import { useRelativeTime } from '@/composables/useRelativeTime'
 import { useCodeLabels } from '@/composables/useCodeLabels'
-import { shortLabelFromDescription } from '@/composables/useAdmissionsTableGrouping'
+import { shortLabelFromDescription } from '@/composables/useAdmissionsGrouping'
 import { getContrastColor, getFullName } from '@/utils/format'
 import { ADMISSION_TYPE_META } from '@/constants/admissionType'
 import { type AdmissionListItem, AdmissionStatus } from '@/types/admission'
@@ -83,7 +83,7 @@ function onActivate() {
   >
     <header class="card-header">
       <div class="avatar" aria-hidden="true">
-        <GenderIcon :sex="admission.patient.sex" :size="28" />
+        <GenderIcon :sex="admission.patient.sex" :size="24" />
       </div>
       <div class="header-text">
         <h3 class="patient-name">{{ patientName }}</h3>
@@ -94,22 +94,22 @@ function onActivate() {
     </header>
 
     <dl class="card-body">
-      <template v-if="doctorName">
+      <div v-if="doctorName" class="field">
         <dt>{{ t('admission.listView.labels.doctor') }}</dt>
         <dd>{{ doctorName }}</dd>
-      </template>
+      </div>
 
-      <template v-if="residentName">
+      <div v-if="residentName" class="field">
         <dt>{{ t('admission.listView.labels.resident') }}</dt>
         <dd>{{ residentName }}</dd>
-      </template>
+      </div>
 
-      <template v-if="admission.room">
+      <div v-if="admission.room" class="field">
         <dt>{{ t('admission.listView.labels.room') }}</dt>
         <dd>{{ admission.room.number }}</dd>
-      </template>
+      </div>
 
-      <template v-if="admission.triageCode">
+      <div v-if="admission.triageCode" class="field">
         <dt>{{ t('admission.listView.labels.triage') }}</dt>
         <dd class="triage-cell">
           <span
@@ -122,17 +122,19 @@ function onActivate() {
             {{ triageShortLabel }}
           </span>
         </dd>
-      </template>
+      </div>
 
-      <dt>{{ t('admission.listView.labels.admitted') }}</dt>
-      <dd>{{ getRelativeTime(admission.admissionDate) }}</dd>
+      <div class="field">
+        <dt>{{ t('admission.listView.labels.admitted') }}</dt>
+        <dd>{{ getRelativeTime(admission.admissionDate) }}</dd>
+      </div>
 
-      <template v-if="showStatus">
+      <div v-if="showStatus" class="field">
         <dt>{{ t('admission.listView.labels.status') }}</dt>
         <dd>
           <Tag :value="t(`admission.statuses.${admission.status}`)" :severity="statusSeverity" />
         </dd>
-      </template>
+      </div>
     </dl>
   </article>
 </template>
@@ -175,8 +177,8 @@ function onActivate() {
 }
 
 .avatar {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 999px;
   background-color: var(--p-surface-100, #f1f5f9);
   color: var(--p-text-muted-color, #64748b);
@@ -189,7 +191,7 @@ function onActivate() {
 .header-text {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.3rem;
   min-width: 0;
 }
 
@@ -198,10 +200,8 @@ function onActivate() {
   font-size: 1rem;
   font-weight: 600;
   color: var(--p-text-color);
-  line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
+  overflow-wrap: break-word;
 }
 
 .type-subtitle {
@@ -226,22 +226,28 @@ function onActivate() {
 }
 
 .card-body {
-  display: grid;
-  grid-template-columns: minmax(5rem, auto) 1fr;
-  column-gap: 1rem;
-  row-gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
   margin: 0;
   font-size: 0.875rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
 }
 
 .card-body dt {
   color: var(--p-text-muted-color);
   font-weight: 500;
+  font-size: 0.8rem;
 }
 
 .card-body dd {
   margin: 0;
-  text-align: right;
+  text-align: left;
   color: var(--p-text-color);
   font-weight: 500;
   word-break: break-word;
@@ -249,7 +255,7 @@ function onActivate() {
 
 .triage-cell {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .triage-pill {
