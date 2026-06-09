@@ -14,6 +14,7 @@ import {
   formatTriageGroupLabel,
   sortByTriage
 } from '@/composables/useAdmissionsTableGrouping'
+import { useCodeLabels } from '@/composables/useCodeLabels'
 import type { AdmissionsListGroupBy } from '@/stores/admissionsListPreferences'
 
 interface CardGroup {
@@ -48,6 +49,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { triageCodeLabel } = useCodeLabels()
 
 const groups = computed<CardGroup[]>(() => {
   if (props.groupBy === 'none') {
@@ -127,7 +129,8 @@ const groups = computed<CardGroup[]>(() => {
       }
       return {
         key: `triage-${id}`,
-        label: formatTriageGroupLabel(tc) ?? tc.code,
+        label:
+          formatTriageGroupLabel(tc, triageCodeLabel(tc.code, tc.description ?? '')) ?? tc.code,
         kind: 'triage',
         triageColor: tc.color,
         triageCode: tc.code,

@@ -6,6 +6,7 @@ import type { AdmissionsListGroupBy } from '@/stores/admissionsListPreferences'
 import { Sex } from '@/types/patient'
 import { getContrastColor } from '@/utils/format'
 import { formatTriageGroupLabel } from '@/composables/useAdmissionsTableGrouping'
+import { useCodeLabels } from '@/composables/useCodeLabels'
 import GenderIcon from '@/components/icons/GenderIcon.vue'
 
 defineProps<{
@@ -14,6 +15,7 @@ defineProps<{
 }>()
 
 const { t } = useI18n()
+const { triageCodeLabel } = useCodeLabels()
 
 function genderGroupLabel(sex: Sex | null | undefined): string {
   if (sex === Sex.FEMALE) return t('admission.listView.groups.female')
@@ -22,7 +24,9 @@ function genderGroupLabel(sex: Sex | null | undefined): string {
 }
 
 function triageGroupLabel(item: AdmissionListItem): string {
-  return formatTriageGroupLabel(item.triageCode) ?? t('admission.listView.groups.untriaged')
+  const tc = item.triageCode
+  const localized = tc ? triageCodeLabel(tc.code, tc.description ?? '') : null
+  return formatTriageGroupLabel(tc, localized) ?? t('admission.listView.groups.untriaged')
 }
 </script>
 

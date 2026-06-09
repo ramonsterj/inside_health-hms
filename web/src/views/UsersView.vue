@@ -19,6 +19,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useRoleStore } from '@/stores/role'
 import { useUsernameAvailability } from '@/composables/useUsernameAvailability'
 import { usePhoneNumberList } from '@/composables/usePhoneNumberList'
+import { useCodeLabels } from '@/composables/useCodeLabels'
 import { extractApiErrorMessage } from '@/utils/errorUtils'
 import { formatDate } from '@/utils/format'
 import PhoneNumberInput from '@/components/users/PhoneNumberInput.vue'
@@ -36,6 +37,7 @@ import { UserStatus, Salutation, PhoneType } from '@/types'
 const SEARCH_DEBOUNCE_MS = 300
 
 const { t, te } = useI18n()
+const { roleName } = useCodeLabels()
 const toast = useToast()
 const confirm = useConfirm()
 const userStore = useUserStore()
@@ -279,16 +281,14 @@ function getRoleSeverity(role: string): 'danger' | 'info' {
 // Locale-aware display label for a role code. Falls back to the raw code
 // if no translation exists (e.g. a future role not yet in roleNames).
 function roleLabel(code: string): string {
-  const key = `roleNames.${code}`
-  return te(key) ? t(key) : code
+  return roleName(code)
 }
 
 // Display label for a full role object. Prefers the translated system-role
 // name, but falls back to the API-provided role.name (the configured display
 // name for custom roles) rather than the raw code.
 function roleOptionLabel(role: Role): string {
-  const key = `roleNames.${role.code}`
-  return te(key) ? t(key) : role.name
+  return roleName(role.code, role.name)
 }
 
 function getStatusSeverity(status: UserStatus): 'success' | 'warn' | 'danger' {

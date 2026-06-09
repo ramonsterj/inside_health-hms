@@ -6,6 +6,7 @@ import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import type { PsychotherapyActivity } from '@/types/psychotherapy'
 import { formatDateTime } from '@/utils/format'
+import { useCodeLabels } from '@/composables/useCodeLabels'
 
 const props = defineProps<{
   activity: PsychotherapyActivity
@@ -16,7 +17,8 @@ const emit = defineEmits<{
   delete: []
 }>()
 
-const { t, te } = useI18n()
+const { t } = useI18n()
+const { roleName } = useCodeLabels()
 
 const authorName = computed(() => {
   if (!props.activity.createdBy) return '-'
@@ -34,8 +36,7 @@ const authorRoles = computed(() => {
 const createdAtFormatted = computed(() => formatDateTime(props.activity.createdAt))
 
 function roleLabel(code: string): string {
-  const key = `roleNames.${code}`
-  return te(key) ? t(key) : code
+  return roleName(code)
 }
 </script>
 

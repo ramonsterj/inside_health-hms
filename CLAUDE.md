@@ -231,6 +231,39 @@ date.toISOString().substring(0, 10)        // UTC-shift bug for local dates
 
 ESLint blocks the wrong patterns — if lint fails, use the helpers above. Treat any drift as a bug.
 
+### 10. i18n / Reference-Data Labels (Spanish-default app)
+
+Any label derived from a **stable backend code** (role code, role description,
+permission code, permission *resource*, document-type code, triage code,
+warehouse code) MUST be rendered through a vue-i18n key derived from that code.
+The DB `name`/`description` is a **fallback only** (admin-created rows not yet in
+the bundle). Full guide + key-naming map: [`docs/architecture/I18N.md`](docs/architecture/I18N.md).
+
+- **Use `useCodeLabels`** (`web/src/composables/useCodeLabels.ts`) — `roleName`,
+  `roleDescription`, `permissionName`, `permissionDescription`,
+  `permissionGroupLabel`, `documentTypeName`, `triageCodeLabel`, `warehouseName`,
+  `warehouseDescription`. **Never** render `role.name`, `permission.name`,
+  `permission.description`, a warehouse `name`/`description`, etc. raw.
+- **Admin-authored free-text without a stable code** (inventory *item* names, lab
+  test names, admin-renamable inventory/psychotherapy *categories*) is rendered
+  **directly from the DB** and stored in Spanish — explicitly *out* of this rule.
+- **Two guards enforce it** (ESLint `no-raw-text` does NOT catch `{{ permission.name }}`
+  DB bindings): the backend Testcontainers coverage test
+  (`I18nReferenceDataCoverageTest` — DB is the source of truth for codes) and the
+  frontend catalog vitest (`web/src/i18n/catalogs.ts` + `catalogs.spec.ts`). Adding
+  a role/permission/warehouse means adding its code to `catalogs.ts`, its key(s) to
+  both `es.json`/`en.json`, and Spanishizing the DB text in the migration + seed.
+
+```ts
+// ✅ CORRECT
+const { roleName, permissionName } = useCodeLabels()
+roleName(role.code, role.name)            // roleNames.<CODE>, DB name as fallback
+permissionName(p.code, p.name)            // permissions.<code>.name
+
+// ❌ WRONG — leaks seeded English to Spanish users, invisible to no-raw-text
+{{ role.description }}    {{ permission.name }}    optionLabel="name"
+```
+
 ---
 
 ## 🔒 SECURITY RULES

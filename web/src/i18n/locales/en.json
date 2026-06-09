@@ -351,6 +351,468 @@
     "AUXILIAR_ENFERMERIA": "Auxiliary Nurse",
     "MANTENIMIENTO": "Maintenance"
   },
+  "roleDescriptions": {
+    "ADMINISTRADOR": "Full system access with all permissions",
+    "USUARIO": "Basic user with limited permissions",
+    "PERSONAL_ADMINISTRATIVO": "Front desk and registration staff",
+    "MEDICO": "Medical doctors",
+    "ENFERMERO": "Nursing staff",
+    "JEFE_ENFERMERIA": "Head of nursing department",
+    "PSICOLOGO": "Mental health professionals",
+    "MEDICO_RESIDENTE": "Medical resident in charge of admissions",
+    "AUXILIAR_ENFERMERIA": "Auxiliary nurse — notes and vital signs only",
+    "MANTENIMIENTO": "Maintenance — manages maintenance warehouses, transfers supplies, charges non-medical consumables"
+  },
+  "permissions": {
+    "user:create": {
+      "name": "Create User",
+      "description": "Create new user accounts"
+    },
+    "user:read": {
+      "name": "Read User",
+      "description": "View user details"
+    },
+    "user:update": {
+      "name": "Update User",
+      "description": "Modify user information"
+    },
+    "user:delete": {
+      "name": "Delete User",
+      "description": "Soft delete user accounts"
+    },
+    "user:reset-password": {
+      "name": "Reset User Password",
+      "description": "Reset password for any user"
+    },
+    "user:list-deleted": {
+      "name": "List Deleted Users",
+      "description": "View soft-deleted user accounts"
+    },
+    "user:restore": {
+      "name": "Restore User",
+      "description": "Restore soft-deleted user accounts"
+    },
+    "role:create": {
+      "name": "Create Role",
+      "description": "Create new roles"
+    },
+    "role:read": {
+      "name": "Read Role",
+      "description": "View role details"
+    },
+    "role:update": {
+      "name": "Update Role",
+      "description": "Modify role information"
+    },
+    "role:delete": {
+      "name": "Delete Role",
+      "description": "Delete non-system roles"
+    },
+    "role:assign-permissions": {
+      "name": "Assign Permissions",
+      "description": "Modify role permissions"
+    },
+    "audit:read": {
+      "name": "Read Audit Logs",
+      "description": "View audit log entries"
+    },
+    "patient:create": {
+      "name": "Create Patient",
+      "description": "Register new patients"
+    },
+    "patient:read": {
+      "name": "Read Patient",
+      "description": "View patient information"
+    },
+    "patient:update": {
+      "name": "Update Patient",
+      "description": "Modify patient information"
+    },
+    "patient:upload-id": {
+      "name": "Upload Patient ID",
+      "description": "Upload patient ID document"
+    },
+    "patient:view-id": {
+      "name": "View Patient ID",
+      "description": "View patient ID document"
+    },
+    "patient:delete": {
+      "name": "Delete Patient",
+      "description": "Delete patients (soft delete)"
+    },
+    "triage-code:create": {
+      "name": "Create Triage Code",
+      "description": "Create new triage codes"
+    },
+    "triage-code:read": {
+      "name": "Read Triage Code",
+      "description": "View triage codes"
+    },
+    "triage-code:update": {
+      "name": "Update Triage Code",
+      "description": "Modify triage codes"
+    },
+    "triage-code:delete": {
+      "name": "Delete Triage Code",
+      "description": "Delete triage codes"
+    },
+    "room:create": {
+      "name": "Create Room",
+      "description": "Create new rooms"
+    },
+    "room:read": {
+      "name": "Read Room",
+      "description": "View rooms"
+    },
+    "room:update": {
+      "name": "Update Room",
+      "description": "Modify rooms"
+    },
+    "room:delete": {
+      "name": "Delete Room",
+      "description": "Delete rooms"
+    },
+    "room:occupancy-view": {
+      "name": "View Bed Occupancy",
+      "description": "View hospital-wide bed occupancy screen"
+    },
+    "admission:create": {
+      "name": "Create Admission",
+      "description": "Register new admissions"
+    },
+    "admission:read": {
+      "name": "Read Admission",
+      "description": "View admissions"
+    },
+    "admission:update": {
+      "name": "Update Admission",
+      "description": "Modify admissions"
+    },
+    "admission:delete": {
+      "name": "Delete Admission",
+      "description": "Delete admissions"
+    },
+    "admission:upload-consent": {
+      "name": "Upload Consent",
+      "description": "Upload consent documents"
+    },
+    "admission:view-consent": {
+      "name": "View Consent",
+      "description": "View consent documents"
+    },
+    "admission:view-documents": {
+      "name": "View Admission Documents",
+      "description": "View documents for admissions"
+    },
+    "admission:upload-documents": {
+      "name": "Upload Admission Documents",
+      "description": "Upload documents for admissions"
+    },
+    "admission:download-documents": {
+      "name": "Download Admission Documents",
+      "description": "Download documents from admissions"
+    },
+    "admission:delete-documents": {
+      "name": "Delete Admission Documents",
+      "description": "Delete documents from admissions"
+    },
+    "admission:export-pdf": {
+      "name": "Export Admission PDF",
+      "description": "Generate and download the full admission PDF"
+    },
+    "document-type:create": {
+      "name": "Create Document Type",
+      "description": "Create new document types"
+    },
+    "document-type:read": {
+      "name": "Read Document Type",
+      "description": "View document types"
+    },
+    "document-type:update": {
+      "name": "Update Document Type",
+      "description": "Modify document types"
+    },
+    "document-type:delete": {
+      "name": "Delete Document Type",
+      "description": "Delete document types"
+    },
+    "clinical-history:create": {
+      "name": "Create Clinical History",
+      "description": "Create clinical history for admissions"
+    },
+    "clinical-history:read": {
+      "name": "Read Clinical History",
+      "description": "View clinical history for admissions"
+    },
+    "clinical-history:update": {
+      "name": "Update Clinical History",
+      "description": "Modify clinical history for admissions"
+    },
+    "progress-note:create": {
+      "name": "Create Progress Note",
+      "description": "Create progress notes for admissions"
+    },
+    "progress-note:read": {
+      "name": "Read Progress Note",
+      "description": "View progress notes for admissions"
+    },
+    "progress-note:update": {
+      "name": "Update Progress Note",
+      "description": "Modify progress notes for admissions"
+    },
+    "medical-order:create": {
+      "name": "Create Medical Order",
+      "description": "Create medical orders for admissions"
+    },
+    "medical-order:read": {
+      "name": "Read Medical Order",
+      "description": "View medical orders for admissions"
+    },
+    "medical-order:update": {
+      "name": "Update Medical Order",
+      "description": "Modify medical orders for admissions"
+    },
+    "medical-order:discontinue": {
+      "name": "Discontinue Medical Order",
+      "description": "Discontinue active medical orders"
+    },
+    "medical-order:upload-document": {
+      "name": "Upload Medical Order Document",
+      "description": "Upload documents to medical orders"
+    },
+    "medical-order:delete-document": {
+      "name": "Delete Medical Order Document",
+      "description": "Delete documents from medical orders"
+    },
+    "medical-order:authorize": {
+      "name": "Authorize Medical Order",
+      "description": "Approve or reject medical orders"
+    },
+    "medical-order:emergency-authorize": {
+      "name": "Emergency Authorize Medical Order",
+      "description": "Doctor self-authorization for crisis or after-hours scenarios"
+    },
+    "medical-order:mark-in-progress": {
+      "name": "Mark Medical Order In Progress",
+      "description": "Mark a results-bearing order as executed (sample taken / referred / administered)"
+    },
+    "nursing-note:read": {
+      "name": "Read Nursing Note",
+      "description": "View nursing notes"
+    },
+    "nursing-note:create": {
+      "name": "Create Nursing Note",
+      "description": "Create nursing notes"
+    },
+    "nursing-note:update": {
+      "name": "Update Nursing Note",
+      "description": "Update nursing notes"
+    },
+    "vital-sign:read": {
+      "name": "Read Vital Sign",
+      "description": "View vital signs"
+    },
+    "vital-sign:create": {
+      "name": "Create Vital Sign",
+      "description": "Record vital signs"
+    },
+    "vital-sign:update": {
+      "name": "Update Vital Sign",
+      "description": "Update vital signs"
+    },
+    "psychotherapy-activity:create": {
+      "name": "Create Psychotherapy Activity",
+      "description": "Register psychotherapy activities"
+    },
+    "psychotherapy-activity:read": {
+      "name": "Read Psychotherapy Activity",
+      "description": "View psychotherapy activities"
+    },
+    "psychotherapy-activity:delete": {
+      "name": "Delete Psychotherapy Activity",
+      "description": "Delete psychotherapy activities"
+    },
+    "psychotherapy-category:create": {
+      "name": "Create Psychotherapy Category",
+      "description": "Create activity categories"
+    },
+    "psychotherapy-category:read": {
+      "name": "Read Psychotherapy Category",
+      "description": "View activity categories"
+    },
+    "psychotherapy-category:update": {
+      "name": "Update Psychotherapy Category",
+      "description": "Modify activity categories"
+    },
+    "psychotherapy-category:delete": {
+      "name": "Delete Psychotherapy Category",
+      "description": "Delete activity categories"
+    },
+    "inventory-category:create": {
+      "name": "Create Inventory Category",
+      "description": "Create inventory categories"
+    },
+    "inventory-category:read": {
+      "name": "Read Inventory Category",
+      "description": "View inventory categories"
+    },
+    "inventory-category:update": {
+      "name": "Update Inventory Category",
+      "description": "Modify inventory categories"
+    },
+    "inventory-category:delete": {
+      "name": "Delete Inventory Category",
+      "description": "Delete inventory categories"
+    },
+    "inventory-item:create": {
+      "name": "Create Inventory Item",
+      "description": "Create inventory items"
+    },
+    "inventory-item:read": {
+      "name": "Read Inventory Item",
+      "description": "View inventory items"
+    },
+    "inventory-item:update": {
+      "name": "Update Inventory Item",
+      "description": "Modify inventory items"
+    },
+    "inventory-item:delete": {
+      "name": "Delete Inventory Item",
+      "description": "Delete inventory items"
+    },
+    "inventory-movement:create": {
+      "name": "Create Inventory Movement",
+      "description": "Record stock movements"
+    },
+    "inventory-movement:read": {
+      "name": "Read Inventory Movement",
+      "description": "View stock movement history"
+    },
+    "inventory-lot:read": {
+      "name": "View Inventory Lots",
+      "description": "List and view lots for an item"
+    },
+    "inventory-lot:create": {
+      "name": "Create Inventory Lot",
+      "description": "Register a new lot (entry)"
+    },
+    "inventory-lot:update": {
+      "name": "Update Inventory Lot",
+      "description": "Edit lot metadata, recall a lot, override FEFO"
+    },
+    "billing:read": {
+      "name": "Read Billing",
+      "description": "View patient charges and balances"
+    },
+    "billing:create": {
+      "name": "Create Billing Charge",
+      "description": "Create manual patient charges"
+    },
+    "billing:adjust": {
+      "name": "Create Billing Adjustment",
+      "description": "Create billing adjustments and credits"
+    },
+    "billing:configure": {
+      "name": "Configure Billing Settings",
+      "description": "Configure system-level billing settings"
+    },
+    "invoice:read": {
+      "name": "Read Invoice",
+      "description": "View invoices"
+    },
+    "invoice:create": {
+      "name": "Create Invoice",
+      "description": "Generate invoices"
+    },
+    "medication-administration:create": {
+      "name": "Create Medication Administration",
+      "description": "Record a medication administration"
+    },
+    "medication-administration:read": {
+      "name": "View Medication Administrations",
+      "description": "View medication administration records"
+    },
+    "medication:read": {
+      "name": "View Medications",
+      "description": "View structured medication catalog"
+    },
+    "medication:create": {
+      "name": "Create Medication",
+      "description": "Attach MedicationDetails to a DRUG item"
+    },
+    "medication:update": {
+      "name": "Update Medication",
+      "description": "Edit MedicationDetails fields"
+    },
+    "medication:expiry-report": {
+      "name": "View Expiry Report",
+      "description": "View the color-coded expiry dashboard"
+    },
+    "treasury:read": {
+      "name": "View Treasury",
+      "description": "View treasury records"
+    },
+    "treasury:write": {
+      "name": "Write Treasury",
+      "description": "Create and edit treasury records"
+    },
+    "treasury:delete": {
+      "name": "Delete Treasury",
+      "description": "Delete treasury records"
+    },
+    "treasury:configure": {
+      "name": "Configure Treasury",
+      "description": "Configure bank accounts and employees"
+    },
+    "treasury:reconcile": {
+      "name": "Reconcile Treasury",
+      "description": "Upload and reconcile bank statements"
+    },
+    "treasury:report": {
+      "name": "Treasury Reports",
+      "description": "View financial reports"
+    },
+    "warehouse:read": {
+      "name": "View Warehouses",
+      "description": "List warehouses and view per-warehouse stock"
+    },
+    "warehouse:create": {
+      "name": "Create Warehouse",
+      "description": "Create a new warehouse"
+    },
+    "warehouse:update": {
+      "name": "Update Warehouse",
+      "description": "Rename / activate / deactivate a warehouse"
+    },
+    "warehouse:delete": {
+      "name": "Delete Warehouse",
+      "description": "Soft-delete a warehouse (only if empty of stock)"
+    },
+    "warehouse-transfer:create": {
+      "name": "Create Transfer",
+      "description": "Issue a transfer from a warehouse you have access to"
+    },
+    "warehouse-transfer:read": {
+      "name": "View Transfers",
+      "description": "View transfer history"
+    },
+    "warehouse-transfer:receive": {
+      "name": "Receive Transfer",
+      "description": "Acknowledge receipt of an inbound transfer"
+    },
+    "warehouse-charge:create": {
+      "name": "Create Warehouse Charge",
+      "description": "Charge a non-medical consumable to an admission"
+    },
+    "lab-catalog:read": {
+      "name": "Read Lab Catalog",
+      "description": "View lab providers, tests, provider-tests, and panels"
+    },
+    "lab-catalog:manage": {
+      "name": "Manage Lab Catalog",
+      "description": "Full CRUD on lab providers, tests, provider-tests, and panels"
+    }
+  },
   "roles": {
     "title": "Role Management",
     "addRole": "Add Role",
@@ -399,7 +861,32 @@
     "permissionGroups": {
       "user": "User Management",
       "role": "Role Management",
-      "audit": "Audit"
+      "audit": "Audit",
+      "patient": "Patients",
+      "admission": "Admissions",
+      "triage-code": "Triage Codes",
+      "room": "Rooms",
+      "document-type": "Document Types",
+      "clinical-history": "Clinical History",
+      "progress-note": "Progress Notes",
+      "medical-order": "Medical Orders",
+      "nursing-note": "Nursing Notes",
+      "vital-sign": "Vital Signs",
+      "psychotherapy-activity": "Psychotherapy Activities",
+      "psychotherapy-category": "Psychotherapy Categories",
+      "inventory-category": "Inventory Categories",
+      "inventory-item": "Inventory Items",
+      "inventory-movement": "Inventory Movements",
+      "inventory-lot": "Inventory Lots",
+      "billing": "Billing",
+      "invoice": "Invoices",
+      "medication-administration": "Medication Administration",
+      "medication": "Medications",
+      "treasury": "Treasury",
+      "warehouse": "Warehouses",
+      "warehouse-transfer": "Warehouse Transfers",
+      "warehouse-charge": "Warehouse Charges",
+      "lab-catalog": "Lab Catalog"
     },
     "badges": {
       "system": "System",
@@ -1258,6 +1745,22 @@
     "es": "Spanish"
   },
   "warehouse": {
+    "names": {
+      "ADMINISTRACION": "Administration",
+      "ENFERMERIA": "Nursing",
+      "MANTENIMIENTO_1": "Maintenance 1",
+      "MANTENIMIENTO_2": "Maintenance 2",
+      "COCINA": "Kitchen",
+      "PSICOLOGIA": "Psychology"
+    },
+    "descriptions": {
+      "ADMINISTRACION": "Master / receiving warehouse. Deliveries land here.",
+      "ENFERMERIA": "Nursing warehouse.",
+      "MANTENIMIENTO_1": "Maintenance warehouse 1.",
+      "MANTENIMIENTO_2": "Maintenance warehouse 2.",
+      "COCINA": "Kitchen warehouse.",
+      "PSICOLOGIA": "Psychology warehouse."
+    },
     "title": "Warehouses",
     "new": "New Warehouse",
     "edit": "Edit Warehouse",
@@ -1592,6 +2095,15 @@
       "INVENTORY_LIST": "Inventory List",
       "INVENTORY_PHOTO": "Inventory Photos",
       "OTHER": "Other Document"
+    },
+    "typeDescriptions": {
+      "CONSENT_ADMISSION": "General admission consent form",
+      "CONSENT_ISOLATION": "Consent for patient isolation/seclusion",
+      "CONSENT_RESTRAINT": "Consent for physical restraints (immobilization)",
+      "CONSENT_SEDATION": "Consent for sedation/medication administration",
+      "INVENTORY_LIST": "Written inventory of patient belongings",
+      "INVENTORY_PHOTO": "Photos of patient belongings",
+      "OTHER": "Other admission-related documents"
     }
   },
   "documentType": {

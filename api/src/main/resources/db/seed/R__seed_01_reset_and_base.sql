@@ -14,7 +14,7 @@
 -- repopulate it (we hit this in PR #53). Whenever any R__seed_*.sql is
 -- modified, bump the SEED-BUNDLE-VERSION line below in ALL nine files
 -- (01, 02, 02b, 03, 04, 05, 06, 07, 08) so they re-run together.
--- SEED-BUNDLE-VERSION: 2026-06-08-roles-es
+-- SEED-BUNDLE-VERSION: 2026-06-09-refdata-es
 -- ============================================================================
 
 SET session_replication_role = replica;
@@ -58,33 +58,33 @@ TRUNCATE TABLE users CASCADE;
 -- ============================================================================
 -- Add PSYCHOLOGIST role if it doesn't exist
 INSERT INTO roles (code, name, description, is_system, created_at, updated_at)
-VALUES ('PSICOLOGO', 'Psicólogo', 'Mental health professionals', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+VALUES ('PSICOLOGO', 'Psicólogo', 'Profesionales de salud mental', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
 
 -- Add MEDICO_RESIDENTE role if it doesn't exist (mirrors V114)
 INSERT INTO roles (code, name, description, is_system, created_at, updated_at)
-VALUES ('MEDICO_RESIDENTE', 'Médico Residente', 'Medical resident in charge of admissions', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+VALUES ('MEDICO_RESIDENTE', 'Médico Residente', 'Médico residente a cargo de las admisiones', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
 
 -- Add AUXILIARY_NURSE role if it doesn't exist (mirrors V117)
 INSERT INTO roles (code, name, description, is_system, created_at, updated_at)
-VALUES ('AUXILIAR_ENFERMERIA', 'Auxiliar de Enfermería', 'Enfermero auxiliar — notes and vital signs only', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+VALUES ('AUXILIAR_ENFERMERIA', 'Auxiliar de Enfermería', 'Auxiliar de enfermería — solo notas y signos vitales', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
 
 -- Add MAINTENANCE role if it doesn't exist (mirrors V119)
 INSERT INTO roles (code, name, description, is_system, created_at, updated_at)
-VALUES ('MANTENIMIENTO', 'Mantenimiento', 'Mantenimiento — manages maintenance bodegas, transfers supplies, charges non-medical consumables', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+VALUES ('MANTENIMIENTO', 'Mantenimiento', 'Mantenimiento — gestiona bodegas de mantenimiento, traslada insumos y carga consumibles no médicos', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
 
 -- Ensure the six warehouses exist (mirrors V119; warehouses survive the reset
 -- but re-assert so a fresh DB seeded without migrations is still consistent).
 INSERT INTO warehouses (code, name, description, active, created_at, updated_at) VALUES
-('ADMINISTRACION',  'Administración',  'Master / receiving warehouse. Deliveries land here.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('ENFERMERIA',      'Enfermería',      'Nursing warehouse.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('MANTENIMIENTO_1', 'Mantenimiento 1', 'Maintenance warehouse 1.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('MANTENIMIENTO_2', 'Mantenimiento 2', 'Maintenance warehouse 2.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('COCINA',          'Cocina',          'Kitchen warehouse.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('PSICOLOGIA',      'Psicología',      'Psychology warehouse.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+('ADMINISTRACION',  'Administración',  'Bodega maestra / de recepción. Las entregas llegan aquí.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('ENFERMERIA',      'Enfermería',      'Bodega de enfermería.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('MANTENIMIENTO_1', 'Mantenimiento 1', 'Bodega de mantenimiento 1.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('MANTENIMIENTO_2', 'Mantenimiento 2', 'Bodega de mantenimiento 2.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('COCINA',          'Cocina',          'Bodega de cocina.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('PSICOLOGIA',      'Psicología',      'Bodega de psicología.', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
 
 -- Role -> default-warehouse mapping (mirrors V119).

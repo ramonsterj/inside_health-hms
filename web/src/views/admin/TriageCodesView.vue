@@ -3,6 +3,7 @@ import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { useCodeLabels } from '@/composables/useCodeLabels'
 import { useConfirm } from 'primevue/useconfirm'
 import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
@@ -13,6 +14,7 @@ import { useTriageCodeStore } from '@/stores/triageCode'
 import { useAuthStore } from '@/stores/auth'
 
 const { t } = useI18n()
+const { triageCodeLabel } = useCodeLabels()
 const router = useRouter()
 const confirm = useConfirm()
 const { showError, showSuccess } = useErrorHandler()
@@ -113,7 +115,7 @@ async function deleteTriageCode(id: number) {
 
           <Column :header="t('triageCode.description')">
             <template #body="{ data }">
-              {{ t(`triageCode.codes.${data.code}`, data.description || '') }}
+              {{ triageCodeLabel(data.code, data.description || '') }}
             </template>
           </Column>
 

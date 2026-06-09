@@ -4,7 +4,7 @@
 -- Last updated: 2026-05-29 (legacy inventory_items.quantity column was dropped by
 -- V121; non-drug item stock now lands in inventory_warehouse_stock(ADMINISTRACION)
 -- via CTE+RETURNING, mirroring the V120 backfill, instead of the dropped column)
--- SEED-BUNDLE-VERSION: 2026-06-08-roles-es (see R__seed_01 header for the rule)
+-- SEED-BUNDLE-VERSION: 2026-06-09-refdata-es (see R__seed_01 header for the rule)
 
 SET session_replication_role = replica;
 
@@ -14,11 +14,11 @@ SET session_replication_role = replica;
 -- Triage codes are reference data seeded by V021. Use ON CONFLICT DO NOTHING
 -- so this is idempotent whether the versioned migration already ran or not.
 INSERT INTO triage_codes (code, color, description, display_order, created_at, updated_at) VALUES
-('A', '#FF0000', 'Critical - Immediate attention required', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('B', '#FFA500', 'Urgent - Requires prompt attention', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('C', '#FFFF00', 'Less Urgent - Can wait for care', 3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('D', '#00FF00', 'Non-Urgent - Minor issues', 4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('E', '#0000FF', 'Referral - Scheduled admission', 5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+('A', '#FF0000', 'Crítico - Atención inmediata requerida', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('B', '#FFA500', 'Urgente - Requiere atención pronta', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('C', '#FFFF00', 'Menos Urgente - Puede esperar para atención', 3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('D', '#00FF00', 'No Urgente - Problemas menores', 4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('E', '#0000FF', 'Referencia - Admisión programada', 5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (code) DO NOTHING;
 
 -- ============================================================================
@@ -64,13 +64,13 @@ ON CONFLICT (number) DO NOTHING;
 -- V113 backfilled this once, but TRUNCATE above wipes the row and we must
 -- re-set the flag on reseed.
 INSERT INTO inventory_categories (name, description, display_order, active, default_for_kind, created_at, updated_at) VALUES
-('Medicamentos', 'Medication and pharmaceutical supplies', 1, true, 'DRUG', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Material y Equipo', 'Materials and equipment', 2, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Laboratorios', 'Laboratory services and supplies', 3, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Servicios', 'Hospital services', 4, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Personal Especial', 'Specialized personnel services', 5, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Ingredientes de Cocina', 'Kitchen ingredients', 6, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('Alimentación', 'Food served to patients', 7, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+('Medicamentos', 'Medicamentos e insumos farmacéuticos', 1, true, 'DRUG', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('Material y Equipo', 'Materiales y equipo', 2, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('Laboratorios', 'Servicios e insumos de laboratorio', 3, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('Servicios', 'Servicios hospitalarios', 4, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('Personal Especial', 'Servicios de personal especializado', 5, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('Ingredientes de Cocina', 'Ingredientes de cocina', 6, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('Alimentación', 'Alimentos servidos a los pacientes', 7, true, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Medicamentos: workbook-sourced catalog loaded by
 -- R__seed_02b_pharmacy_from_workbook.sql (mirrors V111). The legacy V052

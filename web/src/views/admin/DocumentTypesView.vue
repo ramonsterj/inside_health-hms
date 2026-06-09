@@ -10,8 +10,10 @@ import Column from 'primevue/column'
 import Button from 'primevue/button'
 import { useDocumentTypeStore } from '@/stores/documentType'
 import { useAuthStore } from '@/stores/auth'
+import { useCodeLabels } from '@/composables/useCodeLabels'
 
 const { t } = useI18n()
+const { documentTypeName, documentTypeDescription } = useCodeLabels()
 const router = useRouter()
 const confirm = useConfirm()
 const { showError, showSuccess } = useErrorHandler()
@@ -101,9 +103,15 @@ async function deleteDocumentType(id: number) {
 
           <Column field="code" :header="t('documentType.code')" style="width: 180px" />
 
-          <Column field="name" :header="t('documentType.name')" />
+          <Column field="name" :header="t('documentType.name')">
+            <template #body="{ data }">{{ documentTypeName(data.code, data.name) }}</template>
+          </Column>
 
-          <Column field="description" :header="t('documentType.description')" />
+          <Column field="description" :header="t('documentType.description')">
+            <template #body="{ data }">{{
+              documentTypeDescription(data.code, data.description ?? '') || '-'
+            }}</template>
+          </Column>
 
           <Column
             field="displayOrder"

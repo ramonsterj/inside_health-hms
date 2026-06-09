@@ -7,6 +7,7 @@ import Tag from 'primevue/tag'
 import type { ProgressNoteResponse } from '@/types/medicalRecord'
 import { formatDateTime } from '@/utils/format'
 import { sanitizeHtml } from '@/utils/sanitize'
+import { useCodeLabels } from '@/composables/useCodeLabels'
 
 const props = defineProps<{
   note: ProgressNoteResponse
@@ -17,7 +18,8 @@ const emit = defineEmits<{
   edit: []
 }>()
 
-const { t, te } = useI18n()
+const { t } = useI18n()
+const { roleName } = useCodeLabels()
 
 const expanded = ref(false)
 
@@ -46,8 +48,7 @@ function renderedHtml(html: string | null): string {
 }
 
 function roleLabel(code: string): string {
-  const key = `roleNames.${code}`
-  return te(key) ? t(key) : code
+  return roleName(code)
 }
 </script>
 

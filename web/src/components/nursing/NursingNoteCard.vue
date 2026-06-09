@@ -7,6 +7,7 @@ import Badge from 'primevue/badge'
 import { sanitizeHtml } from '@/utils/sanitize'
 import type { NursingNoteResponse } from '@/types/nursing'
 import { formatDateTime } from '@/utils/format'
+import { useCodeLabels } from '@/composables/useCodeLabels'
 
 const props = defineProps<{
   note: NursingNoteResponse
@@ -17,7 +18,8 @@ const emit = defineEmits<{
   edit: [note: NursingNoteResponse]
 }>()
 
-const { t, te } = useI18n()
+const { t } = useI18n()
+const { roleName } = useCodeLabels()
 
 const expanded = ref(false)
 const isOverflowing = ref(false)
@@ -76,8 +78,7 @@ const wasEdited = computed(() => {
 const showEditButton = computed(() => props.canEdit)
 
 function roleLabel(code: string): string {
-  const key = `roleNames.${code}`
-  return te(key) ? t(key) : code
+  return roleName(code)
 }
 
 function toggleExpand() {
