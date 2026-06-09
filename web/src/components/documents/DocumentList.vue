@@ -8,10 +8,12 @@ import DocumentThumbnail from './DocumentThumbnail.vue'
 import { useDocumentStore } from '@/stores/document'
 import { useAuthStore } from '@/stores/auth'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { useCodeLabels } from '@/composables/useCodeLabels'
 import type { AdmissionDocument } from '@/types/document'
 import { AdmissionStatus } from '@/types/admission'
 
 const { t } = useI18n()
+const { documentTypeName } = useCodeLabels()
 const confirm = useConfirm()
 const { showError, showSuccess } = useErrorHandler()
 const documentStore = useDocumentStore()
@@ -79,7 +81,7 @@ function confirmDelete(document: AdmissionDocument) {
 function getDocumentTypeName(document: AdmissionDocument): string {
   if (!document.documentType) return ''
   const code = document.documentType.code
-  return t(`document.types.${code}`, document.documentType.name)
+  return documentTypeName(code, document.documentType.name)
 }
 
 async function deleteDocument(document: AdmissionDocument) {

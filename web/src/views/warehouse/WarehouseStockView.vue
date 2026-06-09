@@ -12,10 +12,12 @@ import InputText from 'primevue/inputtext'
 import ToggleSwitch from 'primevue/toggleswitch'
 import { useWarehouseStore } from '@/stores/warehouse'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { useCodeLabels } from '@/composables/useCodeLabels'
 import { formatPrice } from '@/utils/format'
 import type { Warehouse } from '@/types/warehouse'
 
 const { t } = useI18n()
+const { warehouseName } = useCodeLabels()
 const route = useRoute()
 const { showError } = useErrorHandler()
 const warehouseStore = useWarehouseStore()
@@ -83,7 +85,9 @@ function onPageChange() {
     <div class="page-header">
       <h1 class="page-title">
         {{ t('warehouse.stock.title') }}
-        <span v-if="warehouse" class="warehouse-name">— {{ warehouse.name }}</span>
+        <span v-if="warehouse" class="warehouse-name"
+          >— {{ warehouseName(warehouse.code, warehouse.name) }}</span
+        >
       </h1>
       <div class="header-actions">
         <Select
@@ -95,7 +99,15 @@ function onPageChange() {
           :placeholder="t('warehouse.stock.title')"
           @change="onWarehouseChange"
           style="min-width: 220px"
-        />
+        >
+          <template #value="{ value, placeholder }">
+            <span v-if="value">{{ warehouseName(value.code, value.name) }}</span>
+            <span v-else>{{ placeholder }}</span>
+          </template>
+          <template #option="{ option }">
+            {{ warehouseName(option.code, option.name) }}
+          </template>
+        </Select>
         <Button
           icon="pi pi-refresh"
           :label="t('common.refresh')"

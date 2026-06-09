@@ -62,14 +62,19 @@ export function sortByTriage(items: AdmissionListItem[]): AdmissionListItem[] {
  * Formats a triage group's display label: "{code} · {description}" when the
  * description is present, otherwise just the code. Returns `null` for an
  * absent triage code, leaving the caller to render its own "untriaged" label.
+ *
+ * Per the i18n reference-data standard (docs/architecture/I18N.md), callers
+ * pass the locale-aware description from `useCodeLabels().triageCodeLabel(code,
+ * raw)`; the raw `triageCode.description` is only a last-resort fallback for
+ * admin-created codes not yet in the bundle.
  */
 export function formatTriageGroupLabel(
-  triageCode: { code: string; description: string | null } | null | undefined
+  triageCode: { code: string; description: string | null } | null | undefined,
+  localizedDescription?: string | null
 ): string | null {
   if (!triageCode) return null
-  return triageCode.description?.trim()
-    ? `${triageCode.code} · ${triageCode.description}`
-    : triageCode.code
+  const description = (localizedDescription ?? triageCode.description)?.trim()
+  return description ? `${triageCode.code} · ${description}` : triageCode.code
 }
 
 /**

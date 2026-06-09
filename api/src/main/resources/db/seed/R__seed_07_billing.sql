@@ -1,7 +1,7 @@
 -- ============================================================================
 -- SEED FILE 07: Patient Charges, Invoices
 -- ============================================================================
--- SEED-BUNDLE-VERSION: 2026-06-08-roles-es (see R__seed_01 header for the rule)
+-- SEED-BUNDLE-VERSION: 2026-06-09-refdata-es (see R__seed_01 header for the rule)
 
 SET session_replication_role = replica;
 

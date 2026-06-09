@@ -12,9 +12,11 @@ import Message from 'primevue/message'
 import { useDocumentStore } from '@/stores/document'
 import { useDocumentTypeStore } from '@/stores/documentType'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { useCodeLabels } from '@/composables/useCodeLabels'
 import { uploadDocumentSchema, type UploadDocumentFormData } from '@/validation/document'
 
 const { t } = useI18n()
+const { documentTypeName } = useCodeLabels()
 const { showError, showSuccess, setFieldErrorsFromResponse } = useErrorHandler()
 const documentStore = useDocumentStore()
 const documentTypeStore = useDocumentTypeStore()
@@ -46,7 +48,7 @@ const [displayName] = defineField('displayName')
 
 const documentTypeOptions = computed(() =>
   documentTypeStore.documentTypeSummaries.map(dt => ({
-    label: t(`document.types.${dt.code}`, dt.name),
+    label: documentTypeName(dt.code, dt.name),
     value: dt.id
   }))
 )

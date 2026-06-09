@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Tag from 'primevue/tag'
 import { useRelativeTime } from '@/composables/useRelativeTime'
+import { useCodeLabels } from '@/composables/useCodeLabels'
 import { shortLabelFromDescription } from '@/composables/useAdmissionsTableGrouping'
 import { getContrastColor, getFullName } from '@/utils/format'
 import { ADMISSION_TYPE_META } from '@/constants/admissionType'
@@ -20,6 +21,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { triageCodeLabel } = useCodeLabels()
 const { getRelativeTime } = useRelativeTime()
 
 const typeMeta = computed(() => ADMISSION_TYPE_META[props.admission.type])
@@ -31,7 +33,7 @@ const triageShortLabel = computed(() => {
   // Resolve the locale-aware description (falls back to the raw value for
   // admin-created codes that aren't in the i18n bundle), then extract the
   // short label before " - ".
-  const localizedDescription = t(`triageCode.codes.${tc.code}`, tc.description ?? '')
+  const localizedDescription = triageCodeLabel(tc.code, tc.description ?? '')
   return shortLabelFromDescription(localizedDescription, tc.code)
 })
 

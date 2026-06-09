@@ -351,6 +351,468 @@
     "AUXILIAR_ENFERMERIA": "Auxiliar de Enfermería",
     "MANTENIMIENTO": "Mantenimiento"
   },
+  "roleDescriptions": {
+    "ADMINISTRADOR": "Acceso total al sistema con todos los permisos",
+    "USUARIO": "Usuario básico con permisos limitados",
+    "PERSONAL_ADMINISTRATIVO": "Personal de recepción y registro",
+    "MEDICO": "Médicos",
+    "ENFERMERO": "Personal de enfermería",
+    "JEFE_ENFERMERIA": "Jefe del departamento de enfermería",
+    "PSICOLOGO": "Profesionales de salud mental",
+    "MEDICO_RESIDENTE": "Médico residente a cargo de las admisiones",
+    "AUXILIAR_ENFERMERIA": "Auxiliar de enfermería — solo notas y signos vitales",
+    "MANTENIMIENTO": "Mantenimiento — gestiona bodegas de mantenimiento, traslada insumos y carga consumibles no médicos"
+  },
+  "permissions": {
+    "user:create": {
+      "name": "Crear Usuario",
+      "description": "Crear nuevas cuentas de usuario"
+    },
+    "user:read": {
+      "name": "Ver Usuario",
+      "description": "Ver detalles de usuario"
+    },
+    "user:update": {
+      "name": "Actualizar Usuario",
+      "description": "Modificar información de usuario"
+    },
+    "user:delete": {
+      "name": "Eliminar Usuario",
+      "description": "Eliminar cuentas de usuario"
+    },
+    "user:reset-password": {
+      "name": "Restablecer Contraseña",
+      "description": "Restablecer la contraseña de cualquier usuario"
+    },
+    "user:list-deleted": {
+      "name": "Listar Usuarios Eliminados",
+      "description": "Ver cuentas de usuario eliminadas"
+    },
+    "user:restore": {
+      "name": "Restaurar Usuario",
+      "description": "Restaurar cuentas de usuario eliminadas"
+    },
+    "role:create": {
+      "name": "Crear Rol",
+      "description": "Crear nuevos roles"
+    },
+    "role:read": {
+      "name": "Ver Rol",
+      "description": "Ver detalles de rol"
+    },
+    "role:update": {
+      "name": "Actualizar Rol",
+      "description": "Modificar información de rol"
+    },
+    "role:delete": {
+      "name": "Eliminar Rol",
+      "description": "Eliminar roles que no son del sistema"
+    },
+    "role:assign-permissions": {
+      "name": "Asignar Permisos",
+      "description": "Modificar los permisos de un rol"
+    },
+    "audit:read": {
+      "name": "Ver Auditoría",
+      "description": "Ver entradas del registro de auditoría"
+    },
+    "patient:create": {
+      "name": "Crear Paciente",
+      "description": "Registrar nuevos pacientes"
+    },
+    "patient:read": {
+      "name": "Ver Paciente",
+      "description": "Ver información del paciente"
+    },
+    "patient:update": {
+      "name": "Actualizar Paciente",
+      "description": "Modificar información del paciente"
+    },
+    "patient:upload-id": {
+      "name": "Subir Documento de Identidad",
+      "description": "Subir el documento de identidad del paciente"
+    },
+    "patient:view-id": {
+      "name": "Ver Documento de Identidad",
+      "description": "Ver el documento de identidad del paciente"
+    },
+    "patient:delete": {
+      "name": "Eliminar Paciente",
+      "description": "Eliminar pacientes (eliminación lógica)"
+    },
+    "triage-code:create": {
+      "name": "Crear Código de Triage",
+      "description": "Crear nuevos códigos de triage"
+    },
+    "triage-code:read": {
+      "name": "Ver Código de Triage",
+      "description": "Ver códigos de triage"
+    },
+    "triage-code:update": {
+      "name": "Actualizar Código de Triage",
+      "description": "Modificar códigos de triage"
+    },
+    "triage-code:delete": {
+      "name": "Eliminar Código de Triage",
+      "description": "Eliminar códigos de triage"
+    },
+    "room:create": {
+      "name": "Crear Habitación",
+      "description": "Crear nuevas habitaciones"
+    },
+    "room:read": {
+      "name": "Ver Habitación",
+      "description": "Ver habitaciones"
+    },
+    "room:update": {
+      "name": "Actualizar Habitación",
+      "description": "Modificar habitaciones"
+    },
+    "room:delete": {
+      "name": "Eliminar Habitación",
+      "description": "Eliminar habitaciones"
+    },
+    "room:occupancy-view": {
+      "name": "Ver Ocupación de Camas",
+      "description": "Ver la pantalla de ocupación de camas del hospital"
+    },
+    "admission:create": {
+      "name": "Crear Admisión",
+      "description": "Registrar nuevas admisiones"
+    },
+    "admission:read": {
+      "name": "Ver Admisión",
+      "description": "Ver admisiones"
+    },
+    "admission:update": {
+      "name": "Actualizar Admisión",
+      "description": "Modificar admisiones"
+    },
+    "admission:delete": {
+      "name": "Eliminar Admisión",
+      "description": "Eliminar admisiones"
+    },
+    "admission:upload-consent": {
+      "name": "Subir Consentimiento",
+      "description": "Subir documentos de consentimiento"
+    },
+    "admission:view-consent": {
+      "name": "Ver Consentimiento",
+      "description": "Ver documentos de consentimiento"
+    },
+    "admission:view-documents": {
+      "name": "Ver Documentos de Admisión",
+      "description": "Ver documentos de las admisiones"
+    },
+    "admission:upload-documents": {
+      "name": "Subir Documentos de Admisión",
+      "description": "Subir documentos a las admisiones"
+    },
+    "admission:download-documents": {
+      "name": "Descargar Documentos de Admisión",
+      "description": "Descargar documentos de las admisiones"
+    },
+    "admission:delete-documents": {
+      "name": "Eliminar Documentos de Admisión",
+      "description": "Eliminar documentos de las admisiones"
+    },
+    "admission:export-pdf": {
+      "name": "Exportar PDF de Admisión",
+      "description": "Generar y descargar el PDF completo de la admisión"
+    },
+    "document-type:create": {
+      "name": "Crear Tipo de Documento",
+      "description": "Crear nuevos tipos de documento"
+    },
+    "document-type:read": {
+      "name": "Ver Tipo de Documento",
+      "description": "Ver tipos de documento"
+    },
+    "document-type:update": {
+      "name": "Actualizar Tipo de Documento",
+      "description": "Modificar tipos de documento"
+    },
+    "document-type:delete": {
+      "name": "Eliminar Tipo de Documento",
+      "description": "Eliminar tipos de documento"
+    },
+    "clinical-history:create": {
+      "name": "Crear Historia Clínica",
+      "description": "Crear la historia clínica de las admisiones"
+    },
+    "clinical-history:read": {
+      "name": "Ver Historia Clínica",
+      "description": "Ver la historia clínica de las admisiones"
+    },
+    "clinical-history:update": {
+      "name": "Actualizar Historia Clínica",
+      "description": "Modificar la historia clínica de las admisiones"
+    },
+    "progress-note:create": {
+      "name": "Crear Nota de Evolución",
+      "description": "Crear notas de evolución para las admisiones"
+    },
+    "progress-note:read": {
+      "name": "Ver Nota de Evolución",
+      "description": "Ver notas de evolución de las admisiones"
+    },
+    "progress-note:update": {
+      "name": "Actualizar Nota de Evolución",
+      "description": "Modificar notas de evolución de las admisiones"
+    },
+    "medical-order:create": {
+      "name": "Crear Orden Médica",
+      "description": "Crear órdenes médicas para las admisiones"
+    },
+    "medical-order:read": {
+      "name": "Ver Orden Médica",
+      "description": "Ver órdenes médicas de las admisiones"
+    },
+    "medical-order:update": {
+      "name": "Actualizar Orden Médica",
+      "description": "Modificar órdenes médicas de las admisiones"
+    },
+    "medical-order:discontinue": {
+      "name": "Suspender Orden Médica",
+      "description": "Suspender órdenes médicas activas"
+    },
+    "medical-order:upload-document": {
+      "name": "Subir Documento de Orden Médica",
+      "description": "Subir documentos a las órdenes médicas"
+    },
+    "medical-order:delete-document": {
+      "name": "Eliminar Documento de Orden Médica",
+      "description": "Eliminar documentos de las órdenes médicas"
+    },
+    "medical-order:authorize": {
+      "name": "Autorizar Orden Médica",
+      "description": "Aprobar o rechazar órdenes médicas"
+    },
+    "medical-order:emergency-authorize": {
+      "name": "Autorización de Emergencia de Orden Médica",
+      "description": "Autoautorización del médico para escenarios de crisis o fuera de horario"
+    },
+    "medical-order:mark-in-progress": {
+      "name": "Marcar Orden Médica En Proceso",
+      "description": "Marcar una orden con resultados como ejecutada (muestra tomada / referido / administrado)"
+    },
+    "nursing-note:read": {
+      "name": "Ver Nota de Enfermería",
+      "description": "Ver notas de enfermería"
+    },
+    "nursing-note:create": {
+      "name": "Crear Nota de Enfermería",
+      "description": "Crear notas de enfermería"
+    },
+    "nursing-note:update": {
+      "name": "Actualizar Nota de Enfermería",
+      "description": "Actualizar notas de enfermería"
+    },
+    "vital-sign:read": {
+      "name": "Ver Signos Vitales",
+      "description": "Ver signos vitales"
+    },
+    "vital-sign:create": {
+      "name": "Registrar Signos Vitales",
+      "description": "Registrar signos vitales"
+    },
+    "vital-sign:update": {
+      "name": "Actualizar Signos Vitales",
+      "description": "Actualizar signos vitales"
+    },
+    "psychotherapy-activity:create": {
+      "name": "Crear Actividad de Psicoterapia",
+      "description": "Registrar actividades de psicoterapia"
+    },
+    "psychotherapy-activity:read": {
+      "name": "Ver Actividad de Psicoterapia",
+      "description": "Ver actividades de psicoterapia"
+    },
+    "psychotherapy-activity:delete": {
+      "name": "Eliminar Actividad de Psicoterapia",
+      "description": "Eliminar actividades de psicoterapia"
+    },
+    "psychotherapy-category:create": {
+      "name": "Crear Categoría de Psicoterapia",
+      "description": "Crear categorías de actividades"
+    },
+    "psychotherapy-category:read": {
+      "name": "Ver Categoría de Psicoterapia",
+      "description": "Ver categorías de actividades"
+    },
+    "psychotherapy-category:update": {
+      "name": "Actualizar Categoría de Psicoterapia",
+      "description": "Modificar categorías de actividades"
+    },
+    "psychotherapy-category:delete": {
+      "name": "Eliminar Categoría de Psicoterapia",
+      "description": "Eliminar categorías de actividades"
+    },
+    "inventory-category:create": {
+      "name": "Crear Categoría de Inventario",
+      "description": "Crear categorías de inventario"
+    },
+    "inventory-category:read": {
+      "name": "Ver Categoría de Inventario",
+      "description": "Ver categorías de inventario"
+    },
+    "inventory-category:update": {
+      "name": "Actualizar Categoría de Inventario",
+      "description": "Modificar categorías de inventario"
+    },
+    "inventory-category:delete": {
+      "name": "Eliminar Categoría de Inventario",
+      "description": "Eliminar categorías de inventario"
+    },
+    "inventory-item:create": {
+      "name": "Crear Artículo de Inventario",
+      "description": "Crear artículos de inventario"
+    },
+    "inventory-item:read": {
+      "name": "Ver Artículo de Inventario",
+      "description": "Ver artículos de inventario"
+    },
+    "inventory-item:update": {
+      "name": "Actualizar Artículo de Inventario",
+      "description": "Modificar artículos de inventario"
+    },
+    "inventory-item:delete": {
+      "name": "Eliminar Artículo de Inventario",
+      "description": "Eliminar artículos de inventario"
+    },
+    "inventory-movement:create": {
+      "name": "Crear Movimiento de Inventario",
+      "description": "Registrar movimientos de existencias"
+    },
+    "inventory-movement:read": {
+      "name": "Ver Movimiento de Inventario",
+      "description": "Ver el historial de movimientos de existencias"
+    },
+    "inventory-lot:read": {
+      "name": "Ver Lotes de Inventario",
+      "description": "Listar y ver los lotes de un artículo"
+    },
+    "inventory-lot:create": {
+      "name": "Crear Lote de Inventario",
+      "description": "Registrar un nuevo lote (entrada)"
+    },
+    "inventory-lot:update": {
+      "name": "Actualizar Lote de Inventario",
+      "description": "Editar metadatos del lote, retirar un lote, anular FEFO"
+    },
+    "billing:read": {
+      "name": "Ver Facturación",
+      "description": "Ver cargos y saldos del paciente"
+    },
+    "billing:create": {
+      "name": "Crear Cargo de Facturación",
+      "description": "Crear cargos manuales al paciente"
+    },
+    "billing:adjust": {
+      "name": "Crear Ajuste de Facturación",
+      "description": "Crear ajustes y créditos de facturación"
+    },
+    "billing:configure": {
+      "name": "Configurar Facturación",
+      "description": "Configurar parámetros de facturación a nivel de sistema"
+    },
+    "invoice:read": {
+      "name": "Ver Factura",
+      "description": "Ver facturas"
+    },
+    "invoice:create": {
+      "name": "Crear Factura",
+      "description": "Generar facturas"
+    },
+    "medication-administration:create": {
+      "name": "Registrar Administración de Medicamento",
+      "description": "Registrar una administración de medicamento"
+    },
+    "medication-administration:read": {
+      "name": "Ver Administraciones de Medicamentos",
+      "description": "Ver registros de administración de medicamentos"
+    },
+    "medication:read": {
+      "name": "Ver Medicamentos",
+      "description": "Ver el catálogo estructurado de medicamentos"
+    },
+    "medication:create": {
+      "name": "Crear Medicamento",
+      "description": "Asociar detalles de medicamento a un artículo de tipo medicamento"
+    },
+    "medication:update": {
+      "name": "Actualizar Medicamento",
+      "description": "Editar los campos de detalle del medicamento"
+    },
+    "medication:expiry-report": {
+      "name": "Ver Reporte de Vencimientos",
+      "description": "Ver el panel de vencimientos por colores"
+    },
+    "treasury:read": {
+      "name": "Ver Tesorería",
+      "description": "Ver registros de tesorería"
+    },
+    "treasury:write": {
+      "name": "Editar Tesorería",
+      "description": "Crear y editar registros de tesorería"
+    },
+    "treasury:delete": {
+      "name": "Eliminar Tesorería",
+      "description": "Eliminar registros de tesorería"
+    },
+    "treasury:configure": {
+      "name": "Configurar Tesorería",
+      "description": "Configurar cuentas bancarias y empleados"
+    },
+    "treasury:reconcile": {
+      "name": "Conciliar Tesorería",
+      "description": "Cargar y conciliar estados de cuenta bancarios"
+    },
+    "treasury:report": {
+      "name": "Reportes de Tesorería",
+      "description": "Ver reportes financieros"
+    },
+    "warehouse:read": {
+      "name": "Ver Bodegas",
+      "description": "Listar bodegas y ver existencias por bodega"
+    },
+    "warehouse:create": {
+      "name": "Crear Bodega",
+      "description": "Crear una nueva bodega"
+    },
+    "warehouse:update": {
+      "name": "Actualizar Bodega",
+      "description": "Renombrar / activar / desactivar una bodega"
+    },
+    "warehouse:delete": {
+      "name": "Eliminar Bodega",
+      "description": "Eliminar una bodega (solo si no tiene existencias)"
+    },
+    "warehouse-transfer:create": {
+      "name": "Crear Traslado",
+      "description": "Emitir un traslado desde una bodega a la que tiene acceso"
+    },
+    "warehouse-transfer:read": {
+      "name": "Ver Traslados",
+      "description": "Ver el historial de traslados"
+    },
+    "warehouse-transfer:receive": {
+      "name": "Recibir Traslado",
+      "description": "Confirmar la recepción de un traslado entrante"
+    },
+    "warehouse-charge:create": {
+      "name": "Crear Cargo de Bodega",
+      "description": "Cargar un consumible no médico a una admisión"
+    },
+    "lab-catalog:read": {
+      "name": "Ver Catálogo de Laboratorio",
+      "description": "Ver proveedores, pruebas, pruebas por proveedor y paneles de laboratorio"
+    },
+    "lab-catalog:manage": {
+      "name": "Gestionar Catálogo de Laboratorio",
+      "description": "CRUD completo de proveedores, pruebas, pruebas por proveedor y paneles de laboratorio"
+    }
+  },
   "roles": {
     "title": "Gestión de Roles",
     "addRole": "Agregar Rol",
@@ -399,7 +861,32 @@
     "permissionGroups": {
       "user": "Gestión de Usuarios",
       "role": "Gestión de Roles",
-      "audit": "Auditoria"
+      "audit": "Auditoría",
+      "patient": "Pacientes",
+      "admission": "Admisiones",
+      "triage-code": "Códigos de Triage",
+      "room": "Habitaciones",
+      "document-type": "Tipos de Documento",
+      "clinical-history": "Historia Clínica",
+      "progress-note": "Notas de Evolución",
+      "medical-order": "Órdenes Médicas",
+      "nursing-note": "Notas de Enfermería",
+      "vital-sign": "Signos Vitales",
+      "psychotherapy-activity": "Actividades de Psicoterapia",
+      "psychotherapy-category": "Categorías de Psicoterapia",
+      "inventory-category": "Categorías de Inventario",
+      "inventory-item": "Artículos de Inventario",
+      "inventory-movement": "Movimientos de Inventario",
+      "inventory-lot": "Lotes de Inventario",
+      "billing": "Facturación",
+      "invoice": "Facturas",
+      "medication-administration": "Administración de Medicamentos",
+      "medication": "Medicamentos",
+      "treasury": "Tesorería",
+      "warehouse": "Bodegas",
+      "warehouse-transfer": "Traslados de Bodega",
+      "warehouse-charge": "Cargos de Bodega",
+      "lab-catalog": "Catálogo de Laboratorio"
     },
     "badges": {
       "system": "Sistema",
@@ -1258,6 +1745,22 @@
     "es": "Espanol"
   },
   "warehouse": {
+    "names": {
+      "ADMINISTRACION": "Administración",
+      "ENFERMERIA": "Enfermería",
+      "MANTENIMIENTO_1": "Mantenimiento 1",
+      "MANTENIMIENTO_2": "Mantenimiento 2",
+      "COCINA": "Cocina",
+      "PSICOLOGIA": "Psicología"
+    },
+    "descriptions": {
+      "ADMINISTRACION": "Bodega maestra / de recepción. Las entregas llegan aquí.",
+      "ENFERMERIA": "Bodega de enfermería.",
+      "MANTENIMIENTO_1": "Bodega de mantenimiento 1.",
+      "MANTENIMIENTO_2": "Bodega de mantenimiento 2.",
+      "COCINA": "Bodega de cocina.",
+      "PSICOLOGIA": "Bodega de psicología."
+    },
     "title": "Bodegas",
     "new": "Nueva Bodega",
     "edit": "Editar Bodega",
@@ -1592,6 +2095,15 @@
       "INVENTORY_LIST": "Lista de Inventario",
       "INVENTORY_PHOTO": "Fotos de Inventario",
       "OTHER": "Otro Documento"
+    },
+    "typeDescriptions": {
+      "CONSENT_ADMISSION": "Formulario general de consentimiento de admisión",
+      "CONSENT_ISOLATION": "Consentimiento para aislamiento/reclusión del paciente",
+      "CONSENT_RESTRAINT": "Consentimiento para sujeción física (inmovilización)",
+      "CONSENT_SEDATION": "Consentimiento para sedación/administración de medicamentos",
+      "INVENTORY_LIST": "Inventario escrito de las pertenencias del paciente",
+      "INVENTORY_PHOTO": "Fotos de las pertenencias del paciente",
+      "OTHER": "Otros documentos relacionados con la admisión"
     }
   },
   "documentType": {

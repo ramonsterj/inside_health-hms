@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { useCodeLabels } from '@/composables/useCodeLabels'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
@@ -25,6 +26,7 @@ import {
 } from '@/types/admission'
 
 const { t } = useI18n()
+const { triageCodeLabel } = useCodeLabels()
 const router = useRouter()
 const route = useRoute()
 const { showError, showSuccess } = useErrorHandler()
@@ -195,7 +197,7 @@ function getDoctorLabel(doctor: Doctor): string {
 }
 
 function getTriageCodeLabel(triageCode: { code: string; description: string | null }): string {
-  const description = t(`triageCode.codes.${triageCode.code}`, triageCode.description || '')
+  const description = triageCodeLabel(triageCode.code, triageCode.description || '')
   return `${triageCode.code}${description ? ` - ${description}` : ''}`
 }
 

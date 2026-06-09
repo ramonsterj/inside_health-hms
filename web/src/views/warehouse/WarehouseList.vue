@@ -11,10 +11,12 @@ import Tag from 'primevue/tag'
 import { useWarehouseStore } from '@/stores/warehouse'
 import { useAuthStore } from '@/stores/auth'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { useCodeLabels } from '@/composables/useCodeLabels'
 import WarehouseFormDialog from '@/components/warehouse/WarehouseFormDialog.vue'
 import type { Warehouse } from '@/types/warehouse'
 
 const { t } = useI18n()
+const { warehouseName, warehouseDescription } = useCodeLabels()
 const router = useRouter()
 const confirm = useConfirm()
 const { showError, showSuccess } = useErrorHandler()
@@ -54,7 +56,7 @@ function viewStock(warehouse: Warehouse) {
 
 function confirmDelete(warehouse: Warehouse) {
   confirm.require({
-    message: t('warehouse.confirmDelete', { name: warehouse.name }),
+    message: t('warehouse.confirmDelete', { name: warehouseName(warehouse.code, warehouse.name) }),
     header: t('common.confirm'),
     icon: 'pi pi-exclamation-triangle',
     acceptClass: 'p-button-danger',
@@ -112,9 +114,13 @@ function onSaved() {
           </template>
 
           <Column field="code" :header="t('warehouse.code')" style="width: 140px" />
-          <Column field="name" :header="t('warehouse.name')" />
+          <Column field="name" :header="t('warehouse.name')">
+            <template #body="{ data }">{{ warehouseName(data.code, data.name) }}</template>
+          </Column>
           <Column :header="t('warehouse.description')">
-            <template #body="{ data }">{{ data.description || '-' }}</template>
+            <template #body="{ data }">{{
+              warehouseDescription(data.code, data.description ?? '') || '-'
+            }}</template>
           </Column>
           <Column :header="t('warehouse.active')" style="width: 100px">
             <template #body="{ data }">

@@ -13,9 +13,12 @@ import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Checkbox from 'primevue/checkbox'
 import { useRoleStore } from '@/stores/role'
+import { useCodeLabels } from '@/composables/useCodeLabels'
 import type { Role, CreateRoleRequest, UpdateRoleRequest } from '@/types'
 
 const { t } = useI18n()
+const { roleName, roleDescription, permissionName, permissionDescription, permissionGroupLabel } =
+  useCodeLabels()
 const toast = useToast()
 const confirm = useConfirm()
 const roleStore = useRoleStore()
@@ -140,7 +143,7 @@ async function saveEditedRole() {
 
 function openPermissionsDialog(role: Role) {
   permissionsRoleId.value = role.id
-  permissionsRoleName.value = role.name
+  permissionsRoleName.value = roleName(role.code, role.name)
   selectedPermissions.value = role.permissions.map(p => p.code)
   showPermissionsDialog.value = true
 }
@@ -210,11 +213,8 @@ async function deleteRole(role: Role) {
   }
 }
 
-function getPermissionGroupLabel(resource: string): string {
-  const key = `roles.permissionGroups.${resource}`
-  const translated = t(key)
-  // If no translation found, capitalize the resource name
-  return translated === key ? resource.charAt(0).toUpperCase() + resource.slice(1) : translated
+function displayRoleName(role: Role): string {
+  return roleName(role.code, role.name)
 }
 </script>
 
@@ -256,11 +256,15 @@ function getPermissionGroupLabel(resource: string): string {
             </template>
           </Column>
 
-          <Column field="name" :header="t('roles.columns.name')" sortable />
+          <Column field="name" :header="t('roles.columns.name')" sortable>
+            <template #body="{ data }">
+              {{ displayRoleName(data) }}
+            </template>
+          </Column>
 
           <Column field="description" :header="t('roles.columns.description')">
             <template #body="{ data }">
-              {{ data.description || '-' }}
+              {{ roleDescription(data.code, data.description ?? '') || '-' }}
             </template>
           </Column>
 
@@ -475,7 +479,7 @@ function getPermissionGroupLabel(resource: string): string {
             :key="resource"
             class="permission-group"
           >
-            <h4 class="group-title">{{ getPermissionGroupLabel(resource) }}</h4>
+            <h4 class="group-title">{{ permissionGroupLabel(resource) }}</h4>
             <div class="permission-list">
               <div v-for="permission in perms" :key="permission.code" class="permission-item">
                 <Checkbox
@@ -484,10 +488,12 @@ function getPermissionGroupLabel(resource: string): string {
                   :value="permission.code"
                 />
                 <label :for="permission.code" class="permission-label">
-                  <span class="permission-name">{{ permission.name }}</span>
+                  <span class="permission-name">{{
+                    permissionName(permission.code, permission.name)
+                  }}</span>
                   <span class="permission-code">{{ permission.code }}</span>
                   <span v-if="permission.description" class="permission-description">
-                    {{ permission.description }}
+                    {{ permissionDescription(permission.code, permission.description) }}
                   </span>
                 </label>
               </div>
