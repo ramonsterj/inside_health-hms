@@ -8,7 +8,7 @@ const mockAdminUser = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: [
     'psychotherapy-category:read',
     'psychotherapy-category:create',
@@ -28,7 +28,7 @@ const mockPsychologistUser = {
   firstName: 'Sofia',
   lastName: 'Martinez',
   salutation: 'LICDA',
-  roles: ['PSYCHOLOGIST'],
+  roles: ['PSICOLOGO'],
   permissions: ['psychotherapy-category:read'],
   status: 'ACTIVE',
   emailVerified: true,

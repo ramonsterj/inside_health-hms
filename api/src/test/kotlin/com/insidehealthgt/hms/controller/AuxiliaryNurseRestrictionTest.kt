@@ -203,8 +203,8 @@ class AuxiliaryNurseRestrictionTest : AbstractIntegrationTest() {
 
     @Test
     fun `auxiliary nurse cannot discharge a patient`() {
-        // admission:update is not granted to AUXILIARY_NURSE, so @PreAuthorize blocks the
-        // discharge endpoint (which is gated by admission:update). Notes/vitals-only scope.
+        // admission:discharge is not granted to AUXILIARY_NURSE, so @PreAuthorize blocks
+        // the discharge endpoint. Notes/vitals-only scope.
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/discharge")
                 .header("Authorization", "Bearer $auxPlainToken"),

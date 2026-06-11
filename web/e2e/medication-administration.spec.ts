@@ -16,7 +16,7 @@ const mockNurseUser = {
   firstName: 'Ana',
   lastName: 'Lopez',
   salutation: 'Lic.',
-  roles: ['NURSE'],
+  roles: ['ENFERMERO'],
   permissions: [
     'admission:read',
     'medical-order:read',
@@ -36,7 +36,7 @@ const mockDoctorUser = {
   firstName: 'Maria',
   lastName: 'Garcia',
   salutation: 'Dra.',
-  roles: ['DOCTOR'],
+  roles: ['MEDICO'],
   permissions: [
     'admission:read',
     'medical-order:read',
@@ -95,7 +95,7 @@ const mockMedicationOrderWithInventory = {
   discontinuedAt: null,
   discontinuedBy: null,
   createdAt: '2026-01-24T10:00:00',
-  createdBy: { id: 2, salutation: 'Dra.', firstName: 'Maria', lastName: 'Garcia', roles: ['DOCTOR'] },
+  createdBy: { id: 2, salutation: 'Dra.', firstName: 'Maria', lastName: 'Garcia', roles: ['MEDICO'] },
   updatedAt: '2026-01-24T10:00:00',
   updatedBy: null
 }
@@ -117,7 +117,7 @@ const mockMedicationOrderWithoutInventory = {
   discontinuedAt: null,
   discontinuedBy: null,
   createdAt: '2026-01-24T11:00:00',
-  createdBy: { id: 2, salutation: 'Dra.', firstName: 'Maria', lastName: 'Garcia', roles: ['DOCTOR'] },
+  createdBy: { id: 2, salutation: 'Dra.', firstName: 'Maria', lastName: 'Garcia', roles: ['MEDICO'] },
   updatedAt: '2026-01-24T11:00:00',
   updatedBy: null
 }
@@ -137,9 +137,9 @@ const mockDiscontinuedOrder = {
   status: 'DESCONTINUADO',
   inventoryItemId: 11,
   discontinuedAt: '2026-01-25T14:00:00',
-  discontinuedBy: { id: 2, salutation: 'Dra.', firstName: 'Maria', lastName: 'Garcia', roles: ['DOCTOR'] },
+  discontinuedBy: { id: 2, salutation: 'Dra.', firstName: 'Maria', lastName: 'Garcia', roles: ['MEDICO'] },
   createdAt: '2026-01-23T10:00:00',
-  createdBy: { id: 2, salutation: 'Dra.', firstName: 'Maria', lastName: 'Garcia', roles: ['DOCTOR'] },
+  createdBy: { id: 2, salutation: 'Dra.', firstName: 'Maria', lastName: 'Garcia', roles: ['MEDICO'] },
   updatedAt: '2026-01-25T14:00:00',
   updatedBy: null
 }

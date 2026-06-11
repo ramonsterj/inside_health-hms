@@ -249,7 +249,7 @@ class AdmissionConsultingPhysicianControllerTest : AbstractIntegrationTest() {
     @Test
     fun `add consulting physician fails for discharged admission`() {
         val admissionId = createAdmissionAndGetId()
-        dischargeAdmission(admissionId, administrativeStaffToken)
+        dischargeAdmission(admissionId, residentToken)
 
         val consultingRequest = AddConsultingPhysicianRequest(
             physicianId = secondDoctorUser.id!!,
@@ -285,7 +285,7 @@ class AdmissionConsultingPhysicianControllerTest : AbstractIntegrationTest() {
         val consultingPhysicianId = objectMapper.readTree(addResult.response.contentAsString)
             .get("data").get("id").asLong()
 
-        dischargeAdmission(admissionId, administrativeStaffToken)
+        dischargeAdmission(admissionId, residentToken)
 
         mockMvc.perform(
             delete("/api/v1/admissions/$admissionId/consulting-physicians/$consultingPhysicianId")

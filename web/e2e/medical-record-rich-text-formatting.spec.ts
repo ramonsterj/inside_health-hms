@@ -31,7 +31,7 @@ const mockDoctorUser = {
   firstName: 'Maria',
   lastName: 'Garcia',
   salutation: 'Dra.',
-  roles: ['DOCTOR'],
+  roles: ['MEDICO'],
   permissions: [
     'admission:read',
     'clinical-history:read',
@@ -90,7 +90,7 @@ const formattedProgressNote = {
     salutation: 'Dra.',
     firstName: 'Maria',
     lastName: 'Garcia',
-    roles: ['DOCTOR']
+    roles: ['MEDICO']
   },
   updatedAt: '2026-01-24T09:00:00',
   updatedBy: {
@@ -98,7 +98,7 @@ const formattedProgressNote = {
     salutation: 'Dra.',
     firstName: 'Maria',
     lastName: 'Garcia',
-    roles: ['DOCTOR']
+    roles: ['MEDICO']
   },
   canEdit: false
 }
@@ -126,7 +126,7 @@ const formattedMedicationOrder = {
     salutation: 'Dra.',
     firstName: 'Maria',
     lastName: 'Garcia',
-    roles: ['DOCTOR']
+    roles: ['MEDICO']
   },
   updatedAt: '2026-01-24T10:00:00',
   updatedBy: null

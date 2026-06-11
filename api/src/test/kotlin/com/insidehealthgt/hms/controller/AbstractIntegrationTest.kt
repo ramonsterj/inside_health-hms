@@ -546,9 +546,13 @@ abstract class AbstractIntegrationTest {
     }
 
     protected fun dischargeAdmission(id: Long, token: String) {
+        // Discharge is restricted to ADMINISTRADOR / MEDICO_RESIDENTE and requires a note;
+        // callers must pass a discharge-capable token (e.g. adminToken / residentToken).
         mockMvc.perform(
             post("/api/v1/admissions/$id/discharge")
-                .header("Authorization", "Bearer $token"),
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"dischargeNote": "Discharged (test)"}"""),
         ).andExpect(status().isOk)
     }
 

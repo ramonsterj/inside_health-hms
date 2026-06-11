@@ -7,7 +7,7 @@ const mockPsychologistUser = {
   email: 'psychologist@example.com',
   firstName: 'Ana',
   lastName: 'Martínez',
-  roles: ['PSYCHOLOGIST'],
+  roles: ['PSICOLOGO'],
   permissions: ['patient:read', 'admission:read'],
   status: 'ACTIVE',
   emailVerified: true,
@@ -21,7 +21,7 @@ const mockAdminUser = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: [
     'patient:read',
     'patient:create',
@@ -29,6 +29,7 @@ const mockAdminUser = {
     'admission:read',
     'admission:create',
     'admission:update',
+    'admission:discharge',
     'admission:delete'
   ],
   status: 'ACTIVE',
@@ -510,7 +511,7 @@ test.describe('Psychologist - Admission Visibility', () => {
     ).toBeVisible({ timeout: 10000 })
   })
 
-  test('cannot see discharge button (no admission:update permission)', async ({ page }) => {
+  test('cannot see discharge button (no admission:discharge permission)', async ({ page }) => {
     await setupAuth(page, mockPsychologistUser)
     await setupUserMocks(page, mockPsychologistUser)
 

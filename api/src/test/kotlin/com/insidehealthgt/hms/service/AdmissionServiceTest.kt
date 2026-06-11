@@ -8,6 +8,7 @@ import com.insidehealthgt.hms.repository.PatientRepository
 import com.insidehealthgt.hms.repository.RoomRepository
 import com.insidehealthgt.hms.repository.TriageCodeRepository
 import com.insidehealthgt.hms.repository.UserRepository
+import com.insidehealthgt.hms.security.CurrentUserProvider
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -55,6 +56,7 @@ class AdmissionServiceTest {
             eventPublisher = mock<ApplicationEventPublisher>(),
             messageService = mock<MessageService>(),
             patientService = patientService,
+            currentUserProvider = mock<CurrentUserProvider>(),
         )
     }
 

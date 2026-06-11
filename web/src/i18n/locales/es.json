@@ -488,6 +488,10 @@
       "name": "Actualizar Admisión",
       "description": "Modificar admisiones"
     },
+    "admission:discharge": {
+      "name": "Dar Alta de Admisión",
+      "description": "Dar de alta a pacientes admitidos"
+    },
     "admission:delete": {
       "name": "Eliminar Admisión",
       "description": "Eliminar admisiones"
@@ -1979,6 +1983,15 @@
     "discharged": "Paciente dado de alta éxitosamente.",
     "confirmDischarge": "¿Está seguro de que desea dar de alta a este paciente?",
     "confirmDelete": "¿Está seguro de que desea eliminar esta admisión?",
+    "dischargeDialog": {
+      "title": "Dar de Alta al Paciente"
+    },
+    "dischargeNote": {
+      "title": "Comentario de Alta",
+      "label": "Comentario de alta",
+      "placeholder": "Ingrese el comentario de alta del paciente",
+      "required": "Se requiere un comentario al dar de alta al paciente."
+    },
     "statuses": {
       "ACTIVE": "Activo",
       "DISCHARGED": "De Alta"

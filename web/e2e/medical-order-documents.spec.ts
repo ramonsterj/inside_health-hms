@@ -14,7 +14,7 @@ const mockDoctorUser = {
   firstName: 'Maria',
   lastName: 'Garcia',
   salutation: 'Dra.',
-  roles: ['DOCTOR'],
+  roles: ['MEDICO'],
   permissions: [
     'admission:read',
     'clinical-history:read',
@@ -37,7 +37,7 @@ const mockNurseUser = {
   firstName: 'Ana',
   lastName: 'Lopez',
   salutation: 'Lic.',
-  roles: ['NURSE'],
+  roles: ['ENFERMERO'],
   permissions: [
     'admission:read',
     'clinical-history:read',
@@ -57,7 +57,7 @@ const mockAdminUser = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: [
     'admission:read',
     'clinical-history:read',
@@ -125,7 +125,7 @@ const mockLabOrder = {
     salutation: 'Dra.',
     firstName: 'Maria',
     lastName: 'Garcia',
-    roles: ['DOCTOR']
+    roles: ['MEDICO']
   },
   updatedAt: '2026-01-24T10:00:00',
   updatedBy: null
@@ -152,7 +152,7 @@ const mockDocuments = [
       salutation: 'Dra.',
       firstName: 'Maria',
       lastName: 'Garcia',
-      roles: ['DOCTOR']
+      roles: ['MEDICO']
     }
   },
   {
@@ -170,7 +170,7 @@ const mockDocuments = [
       salutation: 'Lic.',
       firstName: 'Ana',
       lastName: 'Lopez',
-      roles: ['NURSE']
+      roles: ['ENFERMERO']
     }
   }
 ]

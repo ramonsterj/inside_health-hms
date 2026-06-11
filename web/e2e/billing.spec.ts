@@ -6,7 +6,7 @@ const mockAdminUser = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: [
     'admission:read',
     'billing:read',
@@ -27,7 +27,7 @@ const mockReadOnlyUser = {
   email: 'nurse@example.com',
   firstName: 'Nurse',
   lastName: 'User',
-  roles: ['NURSE'],
+  roles: ['ENFERMERO'],
   permissions: ['admission:read', 'billing:read', 'invoice:read'],
   status: 'ACTIVE',
   emailVerified: true,

@@ -13,7 +13,7 @@ const mockAdminUser = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: [
     'admission:read',
     'clinical-history:create',
@@ -40,7 +40,7 @@ const mockDoctorUser = {
   firstName: 'Maria',
   lastName: 'Garcia',
   salutation: 'Dra.',
-  roles: ['DOCTOR'],
+  roles: ['MEDICO'],
   permissions: [
     'admission:read',
     'clinical-history:create',
@@ -64,7 +64,7 @@ const mockNurseUser = {
   firstName: 'Ana',
   lastName: 'Lopez',
   salutation: 'Lic.',
-  roles: ['NURSE'],
+  roles: ['ENFERMERO'],
   permissions: [
     'admission:read',
     'clinical-history:read',
@@ -125,7 +125,7 @@ const mockMedicationOrder = {
     salutation: 'Dra.',
     firstName: 'Maria',
     lastName: 'Garcia',
-    roles: ['DOCTOR']
+    roles: ['MEDICO']
   },
   updatedAt: '2026-01-24T10:00:00',
   updatedBy: {
@@ -133,7 +133,7 @@ const mockMedicationOrder = {
     salutation: 'Dra.',
     firstName: 'Maria',
     lastName: 'Garcia',
-    roles: ['DOCTOR']
+    roles: ['MEDICO']
   }
 }
 
@@ -158,7 +158,7 @@ const mockDietOrder = {
     salutation: 'Dra.',
     firstName: 'Maria',
     lastName: 'Garcia',
-    roles: ['DOCTOR']
+    roles: ['MEDICO']
   },
   updatedAt: '2026-01-24T11:00:00',
   updatedBy: null
@@ -183,7 +183,7 @@ const mockDiscontinuedOrder = {
     salutation: 'Dra.',
     firstName: 'Maria',
     lastName: 'Garcia',
-    roles: ['DOCTOR']
+    roles: ['MEDICO']
   },
   createdAt: '2026-01-23T10:00:00',
   createdBy: {
@@ -191,7 +191,7 @@ const mockDiscontinuedOrder = {
     salutation: 'Dra.',
     firstName: 'Maria',
     lastName: 'Garcia',
-    roles: ['DOCTOR']
+    roles: ['MEDICO']
   },
   updatedAt: '2026-01-25T14:00:00',
   updatedBy: null
@@ -851,7 +851,7 @@ const mockAdminStaffUser = {
   firstName: 'Maria',
   lastName: 'Garcia',
   salutation: 'Sra.',
-  roles: ['ADMINISTRATIVE_STAFF'],
+  roles: ['PERSONAL_ADMINISTRATIVO'],
   permissions: [
     'admission:read',
     'medical-order:read',
@@ -932,7 +932,7 @@ const mockSolicitadoLabOrder = {
     salutation: 'Dra.',
     firstName: 'Maria',
     lastName: 'Garcia',
-    roles: ['DOCTOR']
+    roles: ['MEDICO']
   },
   updatedAt: '2026-01-24T10:00:00',
   updatedBy: null
@@ -947,7 +947,7 @@ const mockAutorizadoLabOrder = {
     salutation: 'Sra.',
     firstName: 'Maria',
     lastName: 'Garcia',
-    roles: ['ADMINISTRATIVE_STAFF']
+    roles: ['PERSONAL_ADMINISTRATIVO']
   }
 }
 
@@ -960,7 +960,7 @@ const mockEnProcesoLabOrder = {
     salutation: 'Lic.',
     firstName: 'Ana',
     lastName: 'Lopez',
-    roles: ['NURSE']
+    roles: ['ENFERMERO']
   }
 }
 

@@ -13,7 +13,7 @@ const mockAdminUser = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: ['patient:read', 'patient:view-id', 'admission:read'],
   status: 'ACTIVE',
   emailVerified: true,
@@ -29,7 +29,7 @@ const mockNurseUser = {
   email: 'chiefnurse@example.com',
   firstName: 'Carmen',
   lastName: 'Díaz',
-  roles: ['CHIEF_NURSE'],
+  roles: ['JEFE_ENFERMERIA'],
   permissions: ['patient:read', 'admission:read']
 }
 
@@ -41,7 +41,7 @@ const mockStaffUser = {
   email: 'receptionist@example.com',
   firstName: 'Reception',
   lastName: 'Staff',
-  roles: ['ADMINISTRATIVE_STAFF'],
+  roles: ['PERSONAL_ADMINISTRATIVO'],
   permissions: ['patient:read']
 }
 
@@ -53,7 +53,7 @@ const mockDoctorUser = {
   email: 'doctor@example.com',
   firstName: 'Dr.',
   lastName: 'Smith',
-  roles: ['DOCTOR'],
+  roles: ['MEDICO'],
   permissions: ['patient:read', 'admission:read']
 }
 
@@ -65,7 +65,7 @@ const mockPsychologistUser = {
   email: 'psychologist@example.com',
   firstName: 'Ana',
   lastName: 'Martínez',
-  roles: ['PSYCHOLOGIST'],
+  roles: ['PSICOLOGO'],
   permissions: ['patient:read', 'admission:read']
 }
 

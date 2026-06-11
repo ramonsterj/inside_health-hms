@@ -6,7 +6,11 @@ import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useConfirm } from 'primevue/useconfirm'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
+import Dialog from 'primevue/dialog'
+import Message from 'primevue/message'
 import AuditInfo from '@/components/common/AuditInfo.vue'
+import RichTextEditor from '@/components/common/RichTextEditor.vue'
+import { htmlToPlainText } from '@/utils/sanitize'
 import { useAdmissionStore } from '@/stores/admission'
 import { useAuthStore } from '@/stores/auth'
 import { AdmissionStatus } from '@/types/admission'
@@ -28,11 +32,20 @@ const authStore = useAuthStore()
 const loading = ref(false)
 const showAddConsultingPhysicianDialog = ref(false)
 const showDocumentUploadDialog = ref(false)
+const showDischargeDialog = ref(false)
+const dischargeNote = ref('')
+const dischargeAttempted = ref(false)
+
+// A discharge comment is mandatory for everyone permitted to discharge (server enforces too).
+// The note is rich text, so validate against its projected plain text — a visually empty
+// editor (e.g. `<p><br></p>`) must still count as blank.
+const dischargeNoteInvalid = computed(() => !htmlToPlainText(dischargeNote.value))
 
 const admissionId = computed(() => Number(route.params.id))
 const admission = computed(() => admissionStore.currentAdmission)
 
 const canUpdate = computed(() => authStore.hasPermission('admission:update'))
+const canDischarge = computed(() => authStore.hasPermission('admission:discharge'))
 const canDelete = computed(() => authStore.hasPermission('admission:delete'))
 const canViewBilling = computed(() => authStore.hasPermission('billing:read'))
 const canViewInvoice = computed(() => authStore.hasPermission('invoice:read'))
@@ -79,21 +92,21 @@ function editAdmission() {
 }
 
 function confirmDischarge() {
-  confirm.require({
-    message: t('admission.confirmDischarge'),
-    header: t('common.confirm'),
-    icon: 'pi pi-exclamation-triangle',
-    accept: () => {
-      dischargePatient()
-    }
-  })
+  dischargeNote.value = ''
+  dischargeAttempted.value = false
+  showDischargeDialog.value = true
 }
 
 async function dischargePatient() {
-  confirm.close()
+  dischargeAttempted.value = true
+  if (dischargeNoteInvalid.value) {
+    return
+  }
   loading.value = true
   try {
-    await admissionStore.dischargePatient(admissionId.value)
+    const note = dischargeNote.value.trim()
+    await admissionStore.dischargePatient(admissionId.value, note)
+    showDischargeDialog.value = false
     showSuccess('admission.discharged')
   } catch (error) {
     showError(error)
@@ -174,7 +187,7 @@ function handleDocumentUploaded() {
           @click="editAdmission"
         />
         <Button
-          v-if="canUpdate && admission.status === AdmissionStatus.ACTIVE"
+          v-if="canDischarge && admission.status === AdmissionStatus.ACTIVE"
           icon="pi pi-sign-out"
           :label="t('admission.discharge')"
           severity="warning"
@@ -198,6 +211,14 @@ function handleDocumentUploaded() {
 
     <div v-else-if="admission" class="detail-grid">
       <AdmissionHeroHeader :admission="admission" :admissionStatus="admission.status" />
+
+      <!-- Discharge note (read-only, shown for discharged admissions that captured one) -->
+      <Card v-if="admission.status === AdmissionStatus.DISCHARGED && admission.dischargeNote">
+        <template #title>{{ t('admission.dischargeNote.title') }}</template>
+        <template #content>
+          <RichTextEditor :modelValue="admission.dischargeNote" readonly />
+        </template>
+      </Card>
 
       <!-- Medical Record Section (includes Documents, Consulting Physicians, Nursing, etc.) -->
       <MedicalRecordHub
@@ -270,6 +291,49 @@ function handleDocumentUploaded() {
 
     <!-- Document Viewer Modal -->
     <DocumentViewer />
+
+    <!-- Discharge Dialog -->
+    <Dialog
+      v-model:visible="showDischargeDialog"
+      modal
+      :header="t('admission.dischargeDialog.title')"
+      :style="{ width: '700px' }"
+      :breakpoints="{ '768px': '90vw' }"
+    >
+      <p class="discharge-dialog-message">{{ t('admission.confirmDischarge') }}</p>
+      <div class="discharge-field">
+        <RichTextEditor
+          v-model="dischargeNote"
+          :label="t('admission.dischargeNote.label')"
+          :placeholder="t('admission.dischargeNote.placeholder')"
+          :rows="8"
+          required
+          :invalid="dischargeAttempted && dischargeNoteInvalid"
+        />
+        <Message
+          v-if="dischargeAttempted && dischargeNoteInvalid"
+          severity="error"
+          variant="simple"
+          size="small"
+        >
+          {{ t('admission.dischargeNote.required') }}
+        </Message>
+      </div>
+      <template #footer>
+        <Button
+          :label="t('common.cancel')"
+          text
+          severity="secondary"
+          @click="showDischargeDialog = false"
+        />
+        <Button
+          :label="t('admission.discharge')"
+          severity="warning"
+          :loading="loading"
+          @click="dischargePatient"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -317,5 +381,15 @@ function handleDocumentUploaded() {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+.discharge-dialog-message {
+  margin: 0 0 1rem;
+}
+
+.discharge-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 </style>

@@ -77,6 +77,7 @@ const mockAdmissionDetail: AdmissionDetail = {
   type: AdmissionType.HOSPITALIZATION,
   admissionDate: '2026-01-23T10:30:00',
   dischargeDate: null,
+  dischargeNote: null,
   status: AdmissionStatus.ACTIVE,
   inventory: 'Wallet, phone, glasses',
   hasConsentDocument: false,
@@ -378,10 +379,25 @@ describe('useAdmissionStore', () => {
       const store = useAdmissionStore()
       const result = await store.dischargePatient(1)
 
-      expect(mockedApi.post).toHaveBeenCalledWith('/v1/admissions/1/discharge')
+      expect(mockedApi.post).toHaveBeenCalledWith('/v1/admissions/1/discharge', {
+        dischargeNote: undefined
+      })
       expect(result.status).toBe(AdmissionStatus.DISCHARGED)
       expect(result.dischargeDate).toBe('2026-01-23T15:00:00')
       expect(store.currentAdmission?.status).toBe(AdmissionStatus.DISCHARGED)
+    })
+
+    it('should send the discharge note in the request body', async () => {
+      mockedApi.post.mockResolvedValueOnce({
+        data: { success: true, data: mockAdmissionDetail }
+      })
+
+      const store = useAdmissionStore()
+      await store.dischargePatient(1, 'Stable, follow up in 2 weeks')
+
+      expect(mockedApi.post).toHaveBeenCalledWith('/v1/admissions/1/discharge', {
+        dischargeNote: 'Stable, follow up in 2 weeks'
+      })
     })
 
     it('should throw error if already discharged', async () => {

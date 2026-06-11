@@ -8,11 +8,12 @@ const mockAdminUser = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: [
     'admission:create',
     'admission:read',
     'admission:update',
+    'admission:discharge',
     'admission:delete',
     'admission:upload-consent',
     'admission:view-consent',
@@ -39,11 +40,12 @@ const mockAdminStaffUser = {
   email: 'receptionist@example.com',
   firstName: 'Reception',
   lastName: 'Staff',
-  roles: ['ADMINISTRATIVE_STAFF'],
+  roles: ['PERSONAL_ADMINISTRATIVO'],
   permissions: [
     'admission:create',
     'admission:read',
     'admission:update',
+    'admission:discharge',
     'admission:upload-consent',
     'admission:view-consent',
     'patient:read',
@@ -63,7 +65,7 @@ const mockDoctorUser = {
   email: 'doctor@example.com',
   firstName: 'Dr. Maria',
   lastName: 'Garcia',
-  roles: ['DOCTOR'],
+  roles: ['MEDICO'],
   permissions: ['patient:read'],
   status: 'ACTIVE',
   emailVerified: true,
@@ -377,8 +379,9 @@ test.describe('Admissions - Administrative Staff', () => {
     // Click discharge button
     await page.getByRole('button', { name: /Discharge|Alta/i }).click()
 
-    // Confirm discharge using shared helper
-    await confirmDialogAccept(page)
+    // A discharge comment is mandatory for everyone, so fill the rich-text note before confirming.
+    await page.locator('.rich-text-editor .ql-editor').fill('Stable, discharged home')
+    await page.getByRole('button', { name: /Discharge|Alta/i }).last().click()
 
     // Should see success message or status change
     await expect(page.getByText(/discharged|dado de alta/i).first()).toBeVisible({ timeout: 10000 })

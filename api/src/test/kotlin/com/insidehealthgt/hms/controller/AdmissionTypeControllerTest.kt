@@ -345,11 +345,8 @@ class AdmissionTypeControllerTest : AbstractIntegrationTest() {
         val ambulatoryId = objectMapper.readTree(ambulatoryResult.response.contentAsString)
             .get("data").get("id").asLong()
 
-        // Discharge AMBULATORY admission
-        mockMvc.perform(
-            post("/api/v1/admissions/$ambulatoryId/discharge")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
-        ).andExpect(status().isOk)
+        // Discharge AMBULATORY admission (discharge is restricted to resident/admin + needs a note)
+        dischargeAdmission(ambulatoryId, residentToken)
 
         // Create another AMBULATORY admission (active)
         val patient2Id = createSecondPatient(administrativeStaffToken)

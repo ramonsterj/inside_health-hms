@@ -8,7 +8,7 @@ const mockAdminUser = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: [
     'document-type:read',
     'document-type:create',
@@ -27,7 +27,7 @@ const mockAdminStaffUser = {
   email: 'receptionist@example.com',
   firstName: 'Reception',
   lastName: 'Staff',
-  roles: ['ADMINISTRATIVE_STAFF'],
+  roles: ['PERSONAL_ADMINISTRATIVO'],
   permissions: ['document-type:read'],
   status: 'ACTIVE',
   emailVerified: true,

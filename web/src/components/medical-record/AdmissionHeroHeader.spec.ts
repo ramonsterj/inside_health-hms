@@ -46,6 +46,7 @@ function makeAdmission(overrides: Partial<AdmissionDetail> = {}): AdmissionDetai
     },
     admissionDate: '2026-05-20T14:15:00',
     dischargeDate: null,
+    dischargeNote: null,
     status: AdmissionStatus.ACTIVE,
     type: AdmissionType.HOSPITALIZATION,
     inventory: null,

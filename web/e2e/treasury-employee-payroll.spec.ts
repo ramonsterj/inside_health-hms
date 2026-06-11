@@ -6,7 +6,7 @@ const mockAdminUser = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: ['treasury:read', 'treasury:write', 'treasury:delete', 'treasury:configure'],
   status: 'ACTIVE',
   emailVerified: true,
@@ -20,7 +20,7 @@ const mockReadOnlyUser = {
   email: 'viewer@example.com',
   firstName: 'View',
   lastName: 'Only',
-  roles: ['NURSE'],
+  roles: ['ENFERMERO'],
   permissions: ['treasury:read'],
   status: 'ACTIVE',
   emailVerified: true,
@@ -219,8 +219,11 @@ test.describe('Employee Payroll View - Payroll Employee', () => {
   test('should display payroll schedule table', async ({ page }) => {
     await page.goto('/treasury/employees/1/payroll')
     await expect(page.getByText('Payroll Schedule')).toBeVisible()
-    await expect(page.getByText('Enero 2026 - Quincena 1')).toBeVisible()
-    await expect(page.getByText('Enero 2026 - Quincena 2')).toBeVisible()
+    // 'Quincena 1' also appears as a reference in the Payment History table, so scope
+    // this assertion to the Payroll Schedule card to avoid a strict-mode (2 matches) violation.
+    const scheduleCard = page.locator('.section-card').filter({ hasText: 'Payroll Schedule' })
+    await expect(scheduleCard.getByText('Enero 2026 - Quincena 1')).toBeVisible()
+    await expect(scheduleCard.getByText('Enero 2026 - Quincena 2')).toBeVisible()
   })
 
   test('should show pay button only for pending entries', async ({ page }) => {

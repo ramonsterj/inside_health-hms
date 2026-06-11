@@ -12,7 +12,7 @@ const mockAdminUser = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: [
     'triage-code:read',
     'triage-code:create',
@@ -31,7 +31,7 @@ const mockAdminStaffUser = {
   email: 'receptionist@example.com',
   firstName: 'Reception',
   lastName: 'Staff',
-  roles: ['ADMINISTRATIVE_STAFF'],
+  roles: ['PERSONAL_ADMINISTRATIVO'],
   permissions: ['triage-code:read'],
   status: 'ACTIVE',
   emailVerified: true,

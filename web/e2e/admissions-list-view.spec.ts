@@ -8,11 +8,12 @@ const mockAdminStaffUser = {
   email: 'receptionist@example.com',
   firstName: 'Reception',
   lastName: 'Staff',
-  roles: ['ADMINISTRATIVE_STAFF'],
+  roles: ['PERSONAL_ADMINISTRATIVO'],
   permissions: [
     'admission:read',
     'admission:create',
     'admission:update',
+    'admission:discharge',
     'patient:read',
     'room:read',
     'triage-code:read'

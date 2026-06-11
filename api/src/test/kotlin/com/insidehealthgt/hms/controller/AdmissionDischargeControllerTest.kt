@@ -18,6 +18,7 @@ class AdmissionDischargeControllerTest : AbstractIntegrationTest() {
 
     private lateinit var administrativeStaffToken: String
     private lateinit var residentToken: String
+    private lateinit var adminToken: String
     private lateinit var doctorUser: User
     private var patientId: Long = 0
     private var triageCodeId: Long = 0
@@ -31,6 +32,10 @@ class AdmissionDischargeControllerTest : AbstractIntegrationTest() {
         // Admissions are registered through a resident (auto-bound to self).
         val (_, residentTkn) = createResidentUser()
         residentToken = residentTkn
+
+        // Only ADMINISTRADOR and MEDICO_RESIDENTE may discharge.
+        val (_, adminTkn) = createAdminUser()
+        adminToken = adminTkn
 
         val (doctorUsr, _) = createDoctorUser()
         doctorUser = doctorUsr
@@ -75,7 +80,9 @@ class AdmissionDischargeControllerTest : AbstractIntegrationTest() {
 
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/discharge")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
+                .header("Authorization", "Bearer $residentToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"dischargeNote": "Stable, discharged home"}"""),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.data.status").value("DISCHARGED"))
@@ -98,16 +105,119 @@ class AdmissionDischargeControllerTest : AbstractIntegrationTest() {
         // First discharge
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/discharge")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
+                .header("Authorization", "Bearer $residentToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"dischargeNote": "Stable, discharged home"}"""),
         ).andExpect(status().isOk)
 
         // Second discharge should fail
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/discharge")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
+                .header("Authorization", "Bearer $residentToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"dischargeNote": "Stable, discharged home"}"""),
         )
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.error.message").value("Patient is already discharged"))
+    }
+
+    @Test
+    fun `resident discharge with blank note should fail with 400`() {
+        val admissionId = createAdmission()
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/discharge")
+                .header("Authorization", "Bearer $residentToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"dischargeNote": "   "}"""),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(
+                jsonPath("$.error.message")
+                    .value("A comment is required when discharging the patient"),
+            )
+    }
+
+    @Test
+    fun `resident discharge with no body should fail with 400`() {
+        val admissionId = createAdmission()
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/discharge")
+                .header("Authorization", "Bearer $residentToken"),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `resident discharge with note should set status DISCHARGED and persist the note`() {
+        val admissionId = createAdmission()
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/discharge")
+                .header("Authorization", "Bearer $residentToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"dischargeNote": "  Stable, follow up in 2 weeks  "}"""),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("DISCHARGED"))
+            .andExpect(jsonPath("$.data.dischargeNote").value("Stable, follow up in 2 weeks"))
+    }
+
+    @Test
+    fun `admin discharge with note should set status DISCHARGED and persist the note`() {
+        val admissionId = createAdmission()
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/discharge")
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"dischargeNote": "  Cleared by attending  "}"""),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("DISCHARGED"))
+            .andExpect(jsonPath("$.data.dischargeNote").value("Cleared by attending"))
+    }
+
+    @Test
+    fun `admin discharge with blank note should fail with 400`() {
+        val admissionId = createAdmission()
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/discharge")
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"dischargeNote": "   "}"""),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(
+                jsonPath("$.error.message")
+                    .value("A comment is required when discharging the patient"),
+            )
+    }
+
+    @Test
+    fun `administrative staff cannot discharge and gets 403`() {
+        val admissionId = createAdmission()
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/discharge")
+                .header("Authorization", "Bearer $administrativeStaffToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"dischargeNote": "Attempt by admin staff"}"""),
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    private fun createAdmission(): Long {
+        val createResult = mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $residentToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createValidAdmissionRequest())),
+        ).andReturn()
+        return objectMapper.readTree(createResult.response.contentAsString)
+            .get("data").get("id").asLong()
     }
 
     @Test
@@ -146,7 +256,9 @@ class AdmissionDischargeControllerTest : AbstractIntegrationTest() {
         // Discharge first patient
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/discharge")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
+                .header("Authorization", "Bearer $residentToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"dischargeNote": "Stable, discharged home"}"""),
         ).andExpect(status().isOk)
 
         // Now third admission should succeed

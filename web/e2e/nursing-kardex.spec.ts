@@ -9,7 +9,7 @@ const mockNurseUser = {
   firstName: 'Ana',
   lastName: 'Lopez',
   salutation: 'LICDA',
-  roles: ['NURSE'],
+  roles: ['ENFERMERO'],
   permissions: [
     'admission:read',
     'nursing-note:read',
@@ -33,7 +33,7 @@ const mockChiefNurseUser = {
   email: 'chief_nurse@example.com',
   firstName: 'Maria',
   lastName: 'Garcia',
-  roles: ['CHIEF_NURSE'],
+  roles: ['JEFE_ENFERMERIA'],
 }
 
 const mockDoctorUser = {
@@ -43,7 +43,7 @@ const mockDoctorUser = {
   firstName: 'Carlos',
   lastName: 'Ramirez',
   salutation: 'DR',
-  roles: ['DOCTOR'],
+  roles: ['MEDICO'],
   permissions: [
     'admission:read',
     'medical-order:read',
@@ -62,7 +62,7 @@ const mockResidentDoctorUser = {
   firstName: 'Sofia',
   lastName: 'Mendez',
   salutation: 'DRA',
-  roles: ['RESIDENT_DOCTOR'],
+  roles: ['MEDICO_RESIDENTE'],
   permissions: [
     'admission:read',
     'admission:create',

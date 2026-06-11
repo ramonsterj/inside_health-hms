@@ -51,7 +51,8 @@ The reason we are not renaming `ENFERMERO → GRADUATE_NURSE` is purely pragmati
 | `medical-order:upload-document` | ✓ | — | ✓ | **Restricted from auxiliary** (V073 already excludes JEFE_ENFERMERIA; only ENFERMERO / MEDICO / ADMINISTRADOR can upload today — the auxiliary stays excluded). |
 | `clinical-history:read` | ✓ | ✓ | ✓ | |
 | `patient:read`, `admission:read`, `room:occupancy-view` | inherit current ENFERMERO grants | ✓ | inherit | The kardex/patient/admission **read** visibility surface is intentionally the same so the auxiliary can do her job. |
-| `admission:update` | ✓ | — | ✓ | **Restricted from auxiliary.** This single permission gates discharge (`POST /admissions/{id}/discharge`), admission metadata edit (`PUT /admissions/{id}`), and consulting-physician add/remove — none of which are in the notes/vitals-only scope. `admission:read` alone gives the auxiliary all the visibility she needs. |
+| `admission:update` | ✓ | — | ✓ | **Restricted from auxiliary.** Gates admission metadata edit (`PUT /admissions/{id}`) and consulting-physician add/remove — none of which are in the notes/vitals-only scope. |
+| `admission:discharge` | ✓ | — | ✓ | **Restricted from auxiliary.** Gates `POST /admissions/{id}/discharge`; discharge is outside the notes/vitals-only scope. `admission:read` alone gives the auxiliary all the visibility she needs. |
 
 ### Explicit denials (rejected by service-layer guard even if a custom role somehow grants the underlying permission to AUXILIAR_ENFERMERIA)
 
@@ -82,7 +83,7 @@ This mirrors the way `PsychotherapyActivityService.create` already enforces the 
 ## Acceptance Criteria / Scenarios
 
 - **AC-1 — Grant default.** After running the migration, `SELECT code FROM roles WHERE code='AUXILIAR_ENFERMERIA'` returns one row.
-- **AC-2 — Permission set.** The AUXILIAR_ENFERMERIA role has `nursing-note:read/create`, `vital-sign:read/create`, `medication-administration:read`, `medical-order:read`, `progress-note:read`, `clinical-history:read`, `patient:read`, `admission:read`, `room:occupancy-view`. It does **not** have `medication-administration:create`, `medical-order:mark-in-progress`, `medical-order:upload-document`, `progress-note:create`, or `admission:update` (the latter would authorize discharge / admission edit / consulting-physician changes).
+- **AC-2 — Permission set.** The AUXILIAR_ENFERMERIA role has `nursing-note:read/create`, `vital-sign:read/create`, `medication-administration:read`, `medical-order:read`, `progress-note:read`, `clinical-history:read`, `patient:read`, `admission:read`, `room:occupancy-view`. It does **not** have `medication-administration:create`, `medical-order:mark-in-progress`, `medical-order:upload-document`, `progress-note:create`, `admission:update`, or `admission:discharge` (the latter two would authorize admission edit / consulting-physician changes / discharge).
 - **AC-3 — Service guard on administer.** Logged in as a user whose only nursing role is `AUXILIAR_ENFERMERIA`, `POST /api/v1/admissions/{id}/medical-orders/{orderId}/medication-administrations` returns 403 `error.nursing.auxiliary.denied`. (Even if a custom role accidentally grants the underlying permission, the service guard still blocks.)
 - **AC-4 — Service guard on mark-in-progress.** Same role, `POST /api/v1/admissions/{id}/medical-orders/{orderId}/mark-in-progress` returns 403.
 - **AC-5 — Service guard on upload-document.** Same role, document upload endpoint returns 403.

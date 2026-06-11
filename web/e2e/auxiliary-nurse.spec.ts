@@ -20,7 +20,7 @@ const auxNurseUser = {
   firstName: 'Lucia',
   lastName: 'Gomez',
   salutation: 'SRTA',
-  roles: ['AUXILIARY_NURSE'],
+  roles: ['AUXILIAR_ENFERMERIA'],
   permissions: [
     'admission:read',
     'patient:read',
@@ -47,7 +47,7 @@ const auxNurseWithAdministerPerm = {
   id: 41,
   username: 'aux_with_perms',
   email: 'aux_with_perms@example.com',
-  roles: ['AUXILIARY_NURSE', 'CUSTOM_NURSE_PERMS'],
+  roles: ['AUXILIAR_ENFERMERIA', 'CUSTOM_NURSE_PERMS'],
   permissions: [...auxNurseUser.permissions, 'medication-administration:create'],
 }
 
@@ -58,7 +58,7 @@ const graduateNurseUser = {
   email: 'nurse@example.com',
   firstName: 'Ana',
   lastName: 'Lopez',
-  roles: ['NURSE'],
+  roles: ['ENFERMERO'],
   permissions: [...auxNurseUser.permissions, 'medication-administration:create'],
 }
 
@@ -68,7 +68,7 @@ const stackedNurseAuxUser = {
   id: 43,
   username: 'graduate_covering_aux',
   email: 'graduate_covering_aux@example.com',
-  roles: ['NURSE', 'AUXILIARY_NURSE'],
+  roles: ['ENFERMERO', 'AUXILIAR_ENFERMERIA'],
 }
 
 // ── Mock Kardex Data ──

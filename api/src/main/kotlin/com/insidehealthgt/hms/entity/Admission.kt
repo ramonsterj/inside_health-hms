@@ -45,6 +45,9 @@ class Admission(
     @Column(name = "discharge_date")
     var dischargeDate: LocalDateTime? = null,
 
+    @Column(name = "discharge_note", columnDefinition = "TEXT")
+    var dischargeNote: String? = null,
+
     @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     var status: AdmissionStatus = AdmissionStatus.ACTIVE,

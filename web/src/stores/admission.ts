@@ -115,11 +115,12 @@ export const useAdmissionStore = defineStore('admission', () => {
     }
   }
 
-  async function dischargePatient(id: number): Promise<AdmissionDetail> {
+  async function dischargePatient(id: number, dischargeNote?: string): Promise<AdmissionDetail> {
     loading.value = true
     try {
       const response = await api.post<ApiResponse<AdmissionDetail>>(
-        `/v1/admissions/${id}/discharge`
+        `/v1/admissions/${id}/discharge`,
+        { dischargeNote }
       )
       if (response.data.success && response.data.data) {
         currentAdmission.value = response.data.data

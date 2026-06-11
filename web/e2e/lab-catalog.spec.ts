@@ -27,7 +27,7 @@ const mockDoctorReadOnly = {
   firstName: 'Maria',
   lastName: 'Garcia',
   salutation: 'Dra.',
-  roles: ['DOCTOR'],
+  roles: ['MEDICO'],
   permissions: READ_ONLY,
   status: 'ACTIVE',
   emailVerified: true,
@@ -41,7 +41,7 @@ const mockResidentReadOnly = {
   username: 'resident',
   firstName: 'Roberto',
   lastName: 'Hernandez',
-  roles: ['RESIDENT_DOCTOR']
+  roles: ['MEDICO_RESIDENTE']
 }
 
 const mockAdmin = {
@@ -50,7 +50,7 @@ const mockAdmin = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: MANAGE,
   status: 'ACTIVE',
   emailVerified: true,
@@ -70,7 +70,7 @@ const mockDeniedStaff = {
   firstName: 'Lucia',
   lastName: 'Morales',
   salutation: 'Sra.',
-  roles: ['ADMINISTRATIVE_STAFF'],
+  roles: ['PERSONAL_ADMINISTRATIVO'],
   permissions: ['admission:read', 'medical-order:read'],
   status: 'ACTIVE',
   emailVerified: true,
