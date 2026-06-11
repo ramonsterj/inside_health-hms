@@ -13,7 +13,7 @@ const mockNurseUser = {
   firstName: 'Ana',
   lastName: 'Lopez',
   salutation: 'LICDA',
-  roles: ['NURSE'],
+  roles: ['ENFERMERO'],
   permissions: [
     'admission:read',
     'nursing-note:read',
@@ -35,7 +35,7 @@ const mockAdminUser = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: [
     'admission:read',
     'nursing-note:read',
@@ -60,7 +60,7 @@ const mockDoctorUser = {
   firstName: 'Maria',
   lastName: 'Garcia',
   salutation: 'DRA',
-  roles: ['DOCTOR'],
+  roles: ['MEDICO'],
   permissions: [
     'admission:read',
     'nursing-note:read',
@@ -82,7 +82,7 @@ const mockChiefNurseUser = {
   firstName: 'Carmen',
   lastName: 'Flores',
   salutation: 'SRA',
-  roles: ['CHIEF_NURSE'],
+  roles: ['JEFE_ENFERMERIA'],
   permissions: [
     'admission:read',
     'nursing-note:read',
@@ -141,7 +141,7 @@ const mockNursingNotes = [
       salutation: 'LICDA',
       firstName: 'Ana',
       lastName: 'Lopez',
-      roles: ['NURSE']
+      roles: ['ENFERMERO']
     },
     updatedBy: null,
     canEdit: false
@@ -157,7 +157,7 @@ const mockNursingNotes = [
       salutation: 'LICDA',
       firstName: 'Ana',
       lastName: 'Lopez',
-      roles: ['NURSE']
+      roles: ['ENFERMERO']
     },
     updatedBy: null,
     canEdit: false
@@ -186,7 +186,7 @@ const mockVitalSigns = [
       salutation: 'LICDA',
       firstName: 'Ana',
       lastName: 'Lopez',
-      roles: ['NURSE']
+      roles: ['ENFERMERO']
     },
     updatedBy: null,
     canEdit: false
@@ -210,7 +210,7 @@ const mockVitalSigns = [
       salutation: 'LICDA',
       firstName: 'Ana',
       lastName: 'Lopez',
-      roles: ['NURSE']
+      roles: ['ENFERMERO']
     },
     updatedBy: null,
     canEdit: false

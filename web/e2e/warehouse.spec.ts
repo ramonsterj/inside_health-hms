@@ -33,7 +33,7 @@ const adminUser = {
   firstName: 'Admin',
   lastName: 'User',
   salutation: 'Dr.',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: [],
   status: 'ACTIVE',
   emailVerified: true,
@@ -52,7 +52,7 @@ const nurseUser = {
   firstName: 'Ana',
   lastName: 'Lopez',
   salutation: 'Lic.',
-  roles: ['NURSE'],
+  roles: ['ENFERMERO'],
   permissions: [
     'admission:read',
     'medical-order:read',
@@ -79,7 +79,7 @@ const maintenanceUser = {
   firstName: 'Mario',
   lastName: 'Fix',
   salutation: 'Sr.',
-  roles: ['MAINTENANCE'],
+  roles: ['MANTENIMIENTO'],
   permissions: [
     'warehouse:read',
     'warehouse-transfer:create',
@@ -183,7 +183,7 @@ const mockMedicationOrder = {
   discontinuedAt: null,
   discontinuedBy: null,
   createdAt: '2026-01-24T10:00:00',
-  createdBy: { id: 2, salutation: 'Dra.', firstName: 'Maria', lastName: 'Garcia', roles: ['DOCTOR'] },
+  createdBy: { id: 2, salutation: 'Dra.', firstName: 'Maria', lastName: 'Garcia', roles: ['MEDICO'] },
   updatedAt: '2026-01-24T10:00:00',
   updatedBy: null
 }

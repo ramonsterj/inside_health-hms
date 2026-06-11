@@ -163,7 +163,7 @@ test.describe('Session Expiration', () => {
                 lastName: 'User',
                 status: 'ACTIVE',
                 mustChangePassword: false,
-                roles: [{ id: 1, code: 'ADMIN', name: 'Admin' }],
+                roles: [{ id: 1, code: 'ADMINISTRADOR', name: 'Admin' }],
                 permissions: ['patient:read']
               }
             }
@@ -415,7 +415,7 @@ test.describe('Session Expiration', () => {
                 email: 'admin@example.com',
                 status: 'ACTIVE',
                 mustChangePassword: false,
-                roles: ['ADMIN'],
+                roles: ['ADMINISTRADOR'],
                 permissions: []
               }
             }
@@ -436,7 +436,7 @@ test.describe('Session Expiration', () => {
               email: 'admin@example.com',
               status: 'ACTIVE',
               mustChangePassword: false,
-              roles: ['ADMIN'],
+              roles: ['ADMINISTRADOR'],
               permissions: []
             }
           })
@@ -495,7 +495,7 @@ test.describe('Session Expiration', () => {
               email: 'admin@example.com',
               status: 'ACTIVE',
               mustChangePassword: false,
-              roles: ['ADMIN'],
+              roles: ['ADMINISTRADOR'],
               permissions: []
             }
           })
@@ -564,7 +564,7 @@ test.describe('Session Expiration', () => {
                 email: 'admin@example.com',
                 status: 'ACTIVE',
                 mustChangePassword: false,
-                roles: ['ADMIN'],
+                roles: ['ADMINISTRADOR'],
                 permissions: []
               }
             }
@@ -584,7 +584,7 @@ test.describe('Session Expiration', () => {
               email: 'admin@example.com',
               status: 'ACTIVE',
               mustChangePassword: false,
-              roles: ['ADMIN'],
+              roles: ['ADMINISTRADOR'],
               permissions: []
             }
           })

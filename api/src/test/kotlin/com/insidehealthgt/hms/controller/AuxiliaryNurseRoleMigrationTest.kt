@@ -50,15 +50,15 @@ class AuxiliaryNurseRoleMigrationTest : AbstractIntegrationTest() {
 
         assertEquals(expected, granted, "AUXILIAR_ENFERMERIA grant set must match AC-2 exactly")
 
-        // Explicit exclusions (AC-2): the three guarded actions, progress-note authoring, and
-        // admission:update (which gates discharge / admission edit / consulting-physician changes —
-        // out of the notes/vitals-only scope).
+        // Explicit exclusions (AC-2): the three guarded actions, progress-note authoring,
+        // admission update, and discharge — all out of the notes/vitals-only scope.
         val forbidden = setOf(
             "medication-administration:create",
             "medical-order:mark-in-progress",
             "medical-order:upload-document",
             "progress-note:create",
             "admission:update",
+            "admission:discharge",
         )
         forbidden.forEach { code ->
             assertTrue(code !in granted, "AUXILIAR_ENFERMERIA must NOT hold $code")

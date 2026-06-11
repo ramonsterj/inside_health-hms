@@ -2,6 +2,7 @@ package com.insidehealthgt.hms.service
 
 import com.insidehealthgt.hms.dto.request.AddConsultingPhysicianRequest
 import com.insidehealthgt.hms.dto.request.CreateAdmissionRequest
+import com.insidehealthgt.hms.dto.request.DischargeAdmissionRequest
 import com.insidehealthgt.hms.dto.request.UpdateAdmissionRequest
 import com.insidehealthgt.hms.dto.response.AdmissionDetailResponse
 import com.insidehealthgt.hms.dto.response.AdmissionListResponse
@@ -25,12 +26,11 @@ import com.insidehealthgt.hms.repository.PatientRepository
 import com.insidehealthgt.hms.repository.RoomRepository
 import com.insidehealthgt.hms.repository.TriageCodeRepository
 import com.insidehealthgt.hms.repository.UserRepository
-import com.insidehealthgt.hms.security.CustomUserDetails
+import com.insidehealthgt.hms.security.CurrentUserProvider
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.security.access.AccessDeniedException
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -50,6 +50,7 @@ class AdmissionService(
     private val eventPublisher: ApplicationEventPublisher,
     private val messageService: MessageService,
     private val patientService: PatientService,
+    private val currentUserProvider: CurrentUserProvider,
 ) {
 
     @Transactional(readOnly = true)
@@ -258,15 +259,22 @@ class AdmissionService(
     }
 
     @Transactional
-    fun dischargePatient(id: Long): AdmissionDetailResponse {
+    fun dischargePatient(id: Long, request: DischargeAdmissionRequest): AdmissionDetailResponse {
         val admission = findById(id)
 
         if (admission.isDischarged()) {
             throw BadRequestException(messageService.errorAdmissionAlreadyDischarged())
         }
 
+        // A discharge comment is mandatory for everyone permitted to discharge
+        // (ADMINISTRADOR and MEDICO_RESIDENTE — see admission:discharge grants).
+        if (request.dischargeNote.isNullOrBlank()) {
+            throw BadRequestException(messageService.errorAdmissionDischargeNoteRequired())
+        }
+
         admission.status = AdmissionStatus.DISCHARGED
         admission.dischargeDate = LocalDateTime.now()
+        admission.dischargeNote = request.dischargeNote.trim()
 
         val savedAdmission = admissionRepository.save(admission)
 
@@ -460,7 +468,7 @@ class AdmissionService(
     }
 
     private fun resolveResident(request: CreateAdmissionRequest): User {
-        val principal = SecurityContextHolder.getContext().authentication?.principal as? CustomUserDetails
+        val principal = currentUserProvider.currentUserDetails()
             ?: throw BadRequestException(messageService.errorAdmissionResidentRoleRequired())
 
         // ADMINISTRADOR is the only exception: admins are not residents, so they must

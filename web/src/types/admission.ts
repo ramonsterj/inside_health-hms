@@ -55,6 +55,7 @@ export interface AdmissionDetail {
   resident: Doctor
   admissionDate: string
   dischargeDate: string | null
+  dischargeNote: string | null
   status: AdmissionStatus
   type: AdmissionType
   inventory: string | null

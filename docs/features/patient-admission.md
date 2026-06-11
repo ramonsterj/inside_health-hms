@@ -50,7 +50,7 @@ Register hospital admissions starting from the patient list view. Staff selects 
 | View admissions | PERSONAL_ADMINISTRATIVO, ADMINISTRADOR | `admission:read` | List and view details |
 | Create admission | MEDICO_RESIDENTE, ADMINISTRADOR | `admission:create` | Register new admission. **Only a `MEDICO_RESIDENTE` may admit** — the resident slot is auto-bound to the authenticated user. `ADMINISTRADOR` is the sole exception: an admin is not a resident, so they must explicitly pick the resident doctor (`residentId` in the request) and the picked user must carry `MEDICO_RESIDENTE`. `MEDICO`, `PERSONAL_ADMINISTRATIVO`, and every other role are blocked: those holding `admission:create` but lacking the role get 400 `error.admission.resident.role.required`; those without the permission get 403. |
 | Update admission | PERSONAL_ADMINISTRATIVO, ADMINISTRADOR | `admission:update` | Edit admission details |
-| Discharge patient | PERSONAL_ADMINISTRATIVO, ADMINISTRADOR | `admission:update` | Change status to DISCHARGED |
+| Discharge patient | MEDICO_RESIDENTE, ADMINISTRADOR | `admission:discharge` | Change status to DISCHARGED. **Only `MEDICO_RESIDENTE` and `ADMINISTRADOR` may discharge** — every other role (incl. `PERSONAL_ADMINISTRATIVO` / `JEFE_ENFERMERIA`, even though they hold `admission:update`) gets 403. A discharge comment is **mandatory for every caller**. |
 | Delete admission | ADMINISTRADOR | `admission:delete` | Soft delete only |
 | Upload consent | PERSONAL_ADMINISTRATIVO, ADMINISTRADOR | `admission:upload-consent` | Upload consent document |
 | View consent | PERSONAL_ADMINISTRATIVO, ADMINISTRADOR | `admission:view-consent` | Download consent document |
@@ -113,9 +113,21 @@ Register hospital admissions starting from the patient list view. Staff selects 
 
 ### Discharge Flow
 
-- Discharge button on admission detail view
+- Discharge button on admission detail view (visible only to holders of `admission:discharge`)
+- Opens a wide (700px, responsive to 90vw) dialog whose `dischargeNote` field is the shared
+  **`RichTextEditor`** (the same Quill-based formatting editor used by progress notes, nursing notes,
+  and clinical history — bold / italic / underline / ordered + unordered lists, with DOMPurify paste
+  sanitization). The note is stored as sanitized HTML in a single `TEXT` column on `admissions`.
+- The note is **mandatory for every caller permitted to discharge** (`MEDICO_RESIDENTE` and
+  `ADMINISTRADOR`). A blank/missing note returns 400 `error.admission.discharge.note.required`. The
+  frontend validates against the editor's projected plain text (so a visually empty `<p><br></p>`
+  still counts as blank), and the check is enforced at the service layer too, so it holds for direct
+  API calls.
 - Sets status to DISCHARGED
 - Sets dischargeDate to current timestamp
+- Stores the trimmed `dischargeNote` (captured at discharge time, before the discharge-protection
+  lock); rendered read-only via the same `RichTextEditor` (sanitized HTML) on the detail view for
+  discharged admissions
 - Room available beds automatically incremented
 
 > Alternate list views (cards, grouping) are specified in [admissions-list-view.md](./admissions-list-view.md).
@@ -195,11 +207,13 @@ Register hospital admissions starting from the patient list view. Staff selects 
 ### Discharge
 
 **Happy Path:**
-- Given an ACTIVE admission, when discharged, then status becomes DISCHARGED, dischargeDate is set to now, and room's available beds increase by 1.
+- Given an ACTIVE admission, when discharged by a `MEDICO_RESIDENTE` or `ADMINISTRADOR` with a non-blank `dischargeNote`, then status becomes DISCHARGED, dischargeDate is set to now, the trimmed note is stored and returned, and room's available beds increase by 1.
 
 **Edge Cases:**
 - When admission is already DISCHARGED, then return 400 with "Already discharged" error.
-- When user lacks `admission:update` permission, then return 403 Forbidden.
+- When a permitted caller (`MEDICO_RESIDENTE` / `ADMINISTRADOR`) discharges with a blank or missing `dischargeNote`, then return 400 `error.admission.discharge.note.required`.
+- When a user holding `admission:update` but not `admission:discharge` (e.g. `PERSONAL_ADMINISTRATIVO` / `JEFE_ENFERMERIA`) attempts to discharge, then return 403 Forbidden.
+- When user lacks `admission:discharge` permission, then return 403 Forbidden.
 
 ### Delete (Admin Only)
 
@@ -257,7 +271,7 @@ Register hospital admissions starting from the patient list view. Staff selects 
 | GET | `/api/v1/admissions/{id}` | - | `AdmissionDetailResponse` | Yes | Get admission details |
 | POST | `/api/v1/admissions` | `CreateAdmissionRequest` | `AdmissionDetailResponse` | Yes | Create new admission |
 | PUT | `/api/v1/admissions/{id}` | `UpdateAdmissionRequest` | `AdmissionDetailResponse` | Yes | Update admission |
-| POST | `/api/v1/admissions/{id}/discharge` | - | `AdmissionDetailResponse` | Yes | Discharge patient |
+| POST | `/api/v1/admissions/{id}/discharge` | `DischargeAdmissionRequest` (optional body) | `AdmissionDetailResponse` | Yes | Discharge patient (`admission:discharge`; MEDICO_RESIDENTE / ADMINISTRADOR only); `dischargeNote` mandatory for all callers |
 | DELETE | `/api/v1/admissions/{id}` | - | - | Yes | Soft delete admission |
 | POST | `/api/v1/admissions/{id}/consent` | `MultipartFile` | `AdmissionDetailResponse` | Yes | Upload consent document |
 | GET | `/api/v1/admissions/{id}/consent` | - | `byte[]` | Yes | Download consent document |
@@ -339,6 +353,7 @@ Register hospital admissions starting from the patient list view. Staff selects 
   },
   "admissionDate": "2026-01-23T10:30:00",
   "dischargeDate": null,
+  "dischargeNote": null,
   "status": "ACTIVE",
   "inventory": "Wallet, phone, glasses",
   "hasConsentDocument": true,
@@ -461,6 +476,8 @@ Register hospital admissions starting from the patient list view. Staff selects 
 | `V024__create_admission_consent_documents_table.sql` | Creates consent document storage table |
 | `V025__add_admission_permissions.sql` | Adds permissions for admission, triage-code, room resources |
 | `V026__create_admission_consulting_physicians_table.sql` | Creates consulting physicians junction table |
+| `V130__add_admission_discharge_note.sql` | Adds nullable `admissions.discharge_note` |
+| `V131__add_admission_discharge_permission.sql` | Adds dedicated `admission:discharge` permission (granted to ADMINISTRADOR + MEDICO_RESIDENTE only) |
 
 ### Schema
 
@@ -509,6 +526,7 @@ CREATE TABLE admissions (
     treating_physician_id BIGINT NOT NULL REFERENCES users(id),
     admission_date TIMESTAMP NOT NULL,
     discharge_date TIMESTAMP,
+    discharge_note TEXT,  -- V130: mandatory for every discharge (enforced in service)
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',  -- ACTIVE, DISCHARGED
     inventory TEXT,
     -- BaseEntity fields
@@ -568,6 +586,10 @@ INSERT INTO permissions (code, name, description, resource, action, created_at, 
 ('admission:delete', 'Delete Admission', 'Delete admissions', 'admission', 'delete', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('admission:upload-consent', 'Upload Consent', 'Upload consent documents', 'admission', 'upload-consent', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('admission:view-consent', 'View Consent', 'View consent documents', 'admission', 'view-consent', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- V131__add_admission_discharge_permission.sql
+INSERT INTO permissions (code, name, description, resource, action, created_at, updated_at) VALUES
+('admission:discharge', 'Dar Alta de Admisión', 'Dar de alta a pacientes admitidos', 'admission', 'discharge', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Assign ADMINISTRADOR full access to all new resources
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)

@@ -2,6 +2,7 @@ package com.insidehealthgt.hms.controller
 
 import com.insidehealthgt.hms.dto.request.AddConsultingPhysicianRequest
 import com.insidehealthgt.hms.dto.request.CreateAdmissionRequest
+import com.insidehealthgt.hms.dto.request.DischargeAdmissionRequest
 import com.insidehealthgt.hms.dto.request.UpdateAdmissionRequest
 import com.insidehealthgt.hms.dto.response.AdmissionDetailResponse
 import com.insidehealthgt.hms.dto.response.AdmissionDocumentResponse
@@ -103,9 +104,12 @@ class AdmissionController(
     }
 
     @PostMapping("/{id}/discharge")
-    @PreAuthorize("hasAuthority('admission:update')")
-    fun dischargePatient(@PathVariable id: Long): ResponseEntity<ApiResponse<AdmissionDetailResponse>> {
-        val admission = admissionService.dischargePatient(id)
+    @PreAuthorize("hasAuthority('admission:discharge')")
+    fun dischargePatient(
+        @PathVariable id: Long,
+        @RequestBody(required = false) request: DischargeAdmissionRequest?,
+    ): ResponseEntity<ApiResponse<AdmissionDetailResponse>> {
+        val admission = admissionService.dischargePatient(id, request ?: DischargeAdmissionRequest())
         return ResponseEntity.ok(ApiResponse.success(admission))
     }
 

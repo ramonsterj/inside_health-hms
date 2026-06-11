@@ -154,7 +154,7 @@ class AdmissionDocumentControllerTest : AbstractIntegrationTest() {
     @Test
     fun `upload consent document fails for discharged admission`() {
         val admissionId = createAdmissionAndGetId()
-        dischargeAdmission(admissionId, administrativeStaffToken)
+        dischargeAdmission(admissionId, residentToken)
 
         val mockFile = MockMultipartFile(
             "file",

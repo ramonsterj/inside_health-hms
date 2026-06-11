@@ -8,7 +8,7 @@ const mockAdminUser = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: [
     'user:read',
     'user:create',
@@ -30,7 +30,7 @@ const mockUserWithPhone = {
   email: 'testuser@example.com',
   firstName: 'Test',
   lastName: 'User',
-  roles: ['USER'],
+  roles: ['USUARIO'],
   permissions: [],
   status: 'ACTIVE',
   emailVerified: true,
@@ -42,9 +42,9 @@ const mockUserWithPhone = {
 }
 
 const mockRoles = [
-  { id: 1, name: 'Admin', code: 'ADMIN', description: 'Administrator' },
-  { id: 2, name: 'User', code: 'USER', description: 'Regular user' },
-  { id: 3, name: 'Doctor', code: 'DOCTOR', description: 'Doctor' }
+  { id: 1, name: 'Admin', code: 'ADMINISTRADOR', description: 'Administrator' },
+  { id: 2, name: 'User', code: 'USUARIO', description: 'Regular user' },
+  { id: 3, name: 'Doctor', code: 'MEDICO', description: 'Doctor' }
 ]
 
 const mockUsersPage = {
@@ -55,7 +55,7 @@ const mockUsersPage = {
       email: 'testuser@example.com',
       firstName: 'Test',
       lastName: 'User',
-      roles: ['USER'],
+      roles: ['USUARIO'],
       status: 'ACTIVE',
       createdAt: '2026-01-15T10:00:00Z'
     }
@@ -76,7 +76,7 @@ const mockMultipleUsersPage = {
       email: 'testuser@example.com',
       firstName: 'Test',
       lastName: 'User',
-      roles: ['USER'],
+      roles: ['USUARIO'],
       status: 'ACTIVE',
       createdAt: '2026-01-15T10:00:00Z'
     },
@@ -86,7 +86,7 @@ const mockMultipleUsersPage = {
       email: 'doctor1@example.com',
       firstName: 'Maria',
       lastName: 'Garcia',
-      roles: ['DOCTOR'],
+      roles: ['MEDICO'],
       status: 'ACTIVE',
       createdAt: '2026-01-16T10:00:00Z'
     },
@@ -96,7 +96,7 @@ const mockMultipleUsersPage = {
       email: 'suspended@example.com',
       firstName: 'Suspended',
       lastName: 'User',
-      roles: ['USER'],
+      roles: ['USUARIO'],
       status: 'SUSPENDED',
       createdAt: '2026-01-17T10:00:00Z'
     }
@@ -117,7 +117,7 @@ const mockDeletedUsersPage = {
       email: 'deleted@example.com',
       firstName: 'Deleted',
       lastName: 'User',
-      roles: ['USER'],
+      roles: ['USUARIO'],
       status: 'ACTIVE',
       createdAt: '2026-01-10T10:00:00Z'
     }
@@ -328,7 +328,7 @@ test.describe('User Management - Phone Number Primary Flag', () => {
                 email: newEmail,
                 firstName: '',
                 lastName: '',
-                roles: ['USER'],
+                roles: ['USUARIO'],
                 status: 'ACTIVE',
                 createdAt: new Date().toISOString()
               }
@@ -353,7 +353,7 @@ test.describe('User Management - Phone Number Primary Flag', () => {
           email: requestBody.email,
           firstName: requestBody.firstName || '',
           lastName: requestBody.lastName || '',
-          roles: requestBody.roles || ['USER'],
+          roles: requestBody.roles || ['USUARIO'],
           permissions: [],
           status: 'ACTIVE',
           emailVerified: false,
@@ -733,7 +733,7 @@ test.describe('User Management - Create User', () => {
               email: newEmail,
               firstName: '',
               lastName: '',
-              roles: ['USER'],
+              roles: ['USUARIO'],
               permissions: [],
               status: 'ACTIVE',
               emailVerified: false,
@@ -1177,7 +1177,7 @@ test.describe('User Management - Delete and Restore', () => {
           email: 'admin@example.com',
           firstName: 'Admin',
           lastName: 'User',
-          roles: ['ADMIN'],
+          roles: ['ADMINISTRADOR'],
           status: 'ACTIVE',
           createdAt: '2026-01-01T00:00:00Z'
         },
@@ -1187,7 +1187,7 @@ test.describe('User Management - Delete and Restore', () => {
           email: 'testuser@example.com',
           firstName: 'Test',
           lastName: 'User',
-          roles: ['USER'],
+          roles: ['USUARIO'],
           status: 'ACTIVE',
           createdAt: '2026-01-15T10:00:00Z'
         }

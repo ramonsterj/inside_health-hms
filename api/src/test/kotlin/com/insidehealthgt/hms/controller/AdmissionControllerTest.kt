@@ -48,7 +48,8 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
 
         // Only a resident (auto-bound to self) or an admin (who picks a resident)
         // may register an admission. Most creation POSTs below go through this
-        // resident; admin-staff keeps driving the read/update/discharge flows.
+        // resident; admin-staff keeps driving the read/update flows. Discharge is
+        // restricted to ADMINISTRADOR / MEDICO_RESIDENTE (see admission:discharge).
         val (residentUsr, residentTkn) = createResidentUser()
         residentUser = residentUsr
         residentToken = residentTkn
@@ -405,7 +406,9 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
 
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/discharge")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"dischargeNote": "Discharged (test)"}"""),
         ).andExpect(status().isOk)
 
         mockMvc.perform(
@@ -449,7 +452,9 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
         // Discharge the patient
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/discharge")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"dischargeNote": "Discharged (test)"}"""),
         ).andExpect(status().isOk)
 
         // Psychologist should no longer see the discharged admission
@@ -512,7 +517,9 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
         // Discharge the patient
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/discharge")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"dischargeNote": "Discharged (test)"}"""),
         ).andExpect(status().isOk)
 
         // Psychologist cannot access discharged admission
@@ -592,6 +599,35 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
+    fun `resident discharge permission should not allow admission update`() {
+        val createRequest = createValidAdmissionRequest()
+        val createResult = mockMvc.perform(
+            post("/api/v1/admissions")
+                .header("Authorization", "Bearer $residentToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest)),
+        ).andReturn()
+
+        val admissionId = objectMapper.readTree(createResult.response.contentAsString)
+            .get("data").get("id").asLong()
+
+        val updateRequest = UpdateAdmissionRequest(
+            triageCodeId = triageCodeId,
+            roomId = roomId,
+            treatingPhysicianId = doctorUser.id!!,
+            inventory = "Resident should not update metadata",
+        )
+
+        mockMvc.perform(
+            put("/api/v1/admissions/$admissionId")
+                .header("Authorization", "Bearer $residentToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)),
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
     fun `update admission should fail for discharged admission`() {
         val createRequest = createValidAdmissionRequest()
         val createResult = mockMvc.perform(
@@ -606,7 +642,9 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
 
         mockMvc.perform(
             post("/api/v1/admissions/$admissionId/discharge")
-                .header("Authorization", "Bearer $administrativeStaffToken"),
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"dischargeNote": "Discharged (test)"}"""),
         ).andExpect(status().isOk)
 
         val updateRequest = UpdateAdmissionRequest(
@@ -739,7 +777,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
             type = AdmissionType.AMBULATORY,
             admissionDate = now.minusDays(10),
         )
-        dischargeAdmission(oldest, administrativeStaffToken)
+        dischargeAdmission(oldest, adminToken)
         val middle = createAdmission(
             token = residentToken,
             patientId = patientId,
@@ -747,7 +785,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
             type = AdmissionType.AMBULATORY,
             admissionDate = now.minusDays(5),
         )
-        dischargeAdmission(middle, administrativeStaffToken)
+        dischargeAdmission(middle, adminToken)
         // Newest, still active (HOSPITALIZATION needs a room + triage code).
         val newest = createAdmission(
             token = residentToken,
@@ -783,7 +821,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
             type = AdmissionType.ELECTROSHOCK_THERAPY,
             admissionDate = now.minusDays(2),
         )
-        dischargeAdmission(electroshock, administrativeStaffToken)
+        dischargeAdmission(electroshock, adminToken)
         createAdmission(
             token = residentToken,
             patientId = patientId,
@@ -837,7 +875,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
             type = AdmissionType.AMBULATORY,
             admissionDate = now.minusDays(3),
         )
-        dischargeAdmission(a1, administrativeStaffToken)
+        dischargeAdmission(a1, adminToken)
         val a2 = createAdmission(
             token = residentToken,
             patientId = patientId,
@@ -845,7 +883,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
             type = AdmissionType.AMBULATORY,
             admissionDate = now.minusDays(2),
         )
-        dischargeAdmission(a2, administrativeStaffToken)
+        dischargeAdmission(a2, adminToken)
         createAdmission(
             token = residentToken,
             patientId = patientId,
@@ -882,7 +920,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
             type = AdmissionType.AMBULATORY,
             admissionDate = now.minusDays(3),
         )
-        dischargeAdmission(discharged, administrativeStaffToken)
+        dischargeAdmission(discharged, adminToken)
         // Active admission with doctorUser as treating physician → doctorUser is "assigned".
         createAdmission(
             token = residentToken,
@@ -925,7 +963,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
             type = AdmissionType.AMBULATORY,
             admissionDate = now.minusDays(4),
         )
-        dischargeAdmission(discharged, administrativeStaffToken)
+        dischargeAdmission(discharged, adminToken)
 
         // No active admission → psychologist is denied, exactly like the patient detail page.
         mockMvc.perform(
@@ -979,7 +1017,7 @@ class AdmissionControllerTest : AbstractIntegrationTest() {
             type = AdmissionType.AMBULATORY,
             admissionDate = now.minusDays(2),
         )
-        dischargeAdmission(kept, administrativeStaffToken)
+        dischargeAdmission(kept, adminToken)
         val deleted = createAdmission(
             token = residentToken,
             patientId = patientId,

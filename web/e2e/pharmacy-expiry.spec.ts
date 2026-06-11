@@ -8,7 +8,7 @@ const mockPharmacistAdmin = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: [],
   status: 'ACTIVE',
   emailVerified: true,
@@ -22,7 +22,7 @@ const mockNurseNoExpiry = {
   email: 'nurse@example.com',
   firstName: 'Ana',
   lastName: 'Lopez',
-  roles: ['NURSE'],
+  roles: ['ENFERMERO'],
   // `room:occupancy-view` is granted so the post-redirect destination
   // (nurse → /dashboard → /bed-occupancy, the default landing for nursing
   // roles) can resolve. Without it the router thrashes between dashboard and

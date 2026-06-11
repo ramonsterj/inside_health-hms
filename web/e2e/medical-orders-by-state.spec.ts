@@ -17,7 +17,7 @@ const mockAdminStaffUser = {
   firstName: 'Maria',
   lastName: 'Garcia',
   salutation: 'Sra.',
-  roles: ['ADMINISTRATIVE_STAFF'],
+  roles: ['PERSONAL_ADMINISTRATIVO'],
   permissions: [
     'admission:read',
     'medical-order:read',
@@ -36,7 +36,7 @@ const mockNurseUser = {
   firstName: 'Ana',
   lastName: 'Lopez',
   salutation: 'Lic.',
-  roles: ['NURSE'],
+  roles: ['ENFERMERO'],
   permissions: [
     'admission:read',
     'medical-order:read',
@@ -56,7 +56,7 @@ const mockDoctorWithEmergency = {
   firstName: 'Maria',
   lastName: 'Garcia',
   salutation: 'Dra.',
-  roles: ['DOCTOR'],
+  roles: ['MEDICO'],
   permissions: [
     'admission:read',
     'medical-order:read',

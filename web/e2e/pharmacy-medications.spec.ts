@@ -8,7 +8,7 @@ const mockPharmacistAdmin = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   // Admin bypasses hasPermission, but list anyway for symmetry
   permissions: [
     'medication:read',
@@ -31,7 +31,7 @@ const mockNurseReadOnly = {
   email: 'nurse@example.com',
   firstName: 'Ana',
   lastName: 'Lopez',
-  roles: ['NURSE'],
+  roles: ['ENFERMERO'],
   permissions: ['medication:read', 'inventory-lot:read'],
   status: 'ACTIVE',
   emailVerified: true,
@@ -45,7 +45,7 @@ const mockUserNoPharmacy = {
   email: 'psych@example.com',
   firstName: 'Pablo',
   lastName: 'Solis',
-  roles: ['PSYCHOLOGIST'],
+  roles: ['PSICOLOGO'],
   permissions: ['admission:read'],
   status: 'ACTIVE',
   emailVerified: true,

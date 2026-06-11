@@ -4,7 +4,7 @@
 -- Mirrors what V111 inserts in prod. R__seed_01 truncates inventory_items, so
 -- the workbook rows seeded by the versioned migration need to be re-inserted
 -- after the categories are recreated in R__seed_02.
--- SEED-BUNDLE-VERSION: 2026-06-09-real-rooms
+-- SEED-BUNDLE-VERSION: 2026-06-10-discharge-admin-resident-only
 -- ============================================================================
 
 SET session_replication_role = replica;

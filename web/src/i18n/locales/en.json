@@ -488,6 +488,10 @@
       "name": "Update Admission",
       "description": "Modify admissions"
     },
+    "admission:discharge": {
+      "name": "Discharge Admission",
+      "description": "Discharge admitted patients"
+    },
     "admission:delete": {
       "name": "Delete Admission",
       "description": "Delete admissions"
@@ -1979,6 +1983,15 @@
     "discharged": "Patient discharged successfully.",
     "confirmDischarge": "Are you sure you want to discharge this patient?",
     "confirmDelete": "Are you sure you want to delete this admission?",
+    "dischargeDialog": {
+      "title": "Discharge Patient"
+    },
+    "dischargeNote": {
+      "title": "Discharge Note",
+      "label": "Discharge note",
+      "placeholder": "Enter the patient's discharge note",
+      "required": "A comment is required when discharging the patient."
+    },
     "statuses": {
       "ACTIVE": "Active",
       "DISCHARGED": "Discharged"

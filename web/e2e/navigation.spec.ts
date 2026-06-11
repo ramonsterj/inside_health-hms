@@ -50,7 +50,7 @@ test.describe('Navigation with mock auth', () => {
             id: 1,
             username: 'testuser',
             email: 'test@example.com',
-            roles: ['USER']
+            roles: ['USUARIO']
           }
         })
       })

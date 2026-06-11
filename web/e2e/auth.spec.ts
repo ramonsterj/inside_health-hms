@@ -266,7 +266,7 @@ test.describe('Authentication - Force Password Change', () => {
     email: 'admin@example.com',
     firstName: 'Admin',
     lastName: 'User',
-    roles: ['ADMIN'],
+    roles: ['ADMINISTRADOR'],
     permissions: [],
     status: 'ACTIVE',
     emailVerified: true,

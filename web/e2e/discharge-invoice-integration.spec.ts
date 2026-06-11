@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { confirmDialogAccept, waitForOverlaysToClear } from './utils/test-helpers'
+import { waitForOverlaysToClear } from './utils/test-helpers'
 
 const mockAdminUser = {
   id: 1,
@@ -7,10 +7,11 @@ const mockAdminUser = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: [
     'admission:read',
     'admission:update',
+    'admission:discharge',
     'billing:read',
     'billing:create',
     'invoice:read',
@@ -28,7 +29,7 @@ const mockReadOnlyUser = {
   email: 'viewer@example.com',
   firstName: 'View',
   lastName: 'Only',
-  roles: ['USER'],
+  roles: ['USUARIO'],
   permissions: ['admission:read', 'billing:read', 'invoice:read'],
   status: 'ACTIVE',
   emailVerified: true,
@@ -42,7 +43,7 @@ const mockNoBillingUser = {
   email: 'nurse@example.com',
   firstName: 'Nurse',
   lastName: 'User',
-  roles: ['NURSE'],
+  roles: ['ENFERMERO'],
   permissions: ['admission:read'],
   status: 'ACTIVE',
   emailVerified: true,
@@ -249,7 +250,9 @@ test.describe('Discharge-to-Invoice Integration', () => {
     await waitForOverlaysToClear(page)
 
     await page.getByRole('button', { name: /Discharge|Alta/i }).click()
-    await confirmDialogAccept(page)
+    // A discharge comment is mandatory for everyone, so fill the rich-text note before confirming.
+    await page.locator('.rich-text-editor .ql-editor').fill('Stable, discharged home')
+    await page.getByRole('button', { name: /Discharge|Alta/i }).last().click()
 
     await expect(page.getByText(/discharged|dado de alta/i).first()).toBeVisible({
       timeout: 10000
@@ -425,7 +428,7 @@ test.describe('Discharge-to-Invoice Integration', () => {
       email: 'billing@example.com',
       firstName: 'Billing',
       lastName: 'Staff',
-      roles: ['USER'],
+      roles: ['USUARIO'],
       permissions: ['admission:read', 'billing:read']
     }
 
@@ -622,7 +625,9 @@ test.describe('Discharge-to-Invoice Integration', () => {
     await waitForOverlaysToClear(page)
 
     await page.getByRole('button', { name: /Discharge|Alta/i }).click()
-    await confirmDialogAccept(page)
+    // A discharge comment is mandatory for everyone, so fill the rich-text note before confirming.
+    await page.locator('.rich-text-editor .ql-editor').fill('Stable, discharged home')
+    await page.getByRole('button', { name: /Discharge|Alta/i }).last().click()
 
     await expect(page.getByText(/discharged|dado de alta/i).first()).toBeVisible({
       timeout: 10000

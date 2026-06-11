@@ -14,7 +14,7 @@
 -- repopulate it (we hit this in PR #53). Whenever any R__seed_*.sql is
 -- modified, bump the SEED-BUNDLE-VERSION line below in ALL nine files
 -- (01, 02, 02b, 03, 04, 05, 06, 07, 08) so they re-run together.
--- SEED-BUNDLE-VERSION: 2026-06-09-real-rooms
+-- SEED-BUNDLE-VERSION: 2026-06-10-discharge-admin-resident-only
 -- ============================================================================
 
 SET session_replication_role = replica;
@@ -152,7 +152,7 @@ WHERE r.code = 'MEDICO'
     'user:read',
     'patient:read', 'patient:update',
     'triage-code:read', 'room:read',
-    'admission:read', 'admission:update',
+    'admission:read',
     'admission:view-consent', 'admission:view-documents', 'admission:download-documents',
     'clinical-history:create', 'clinical-history:read',
     'progress-note:create', 'progress-note:read',
@@ -167,7 +167,9 @@ WHERE r.code = 'MEDICO'
   )
   AND r.deleted_at IS NULL AND p.deleted_at IS NULL;
 
--- RESIDENT_DOCTOR: clones DOCTOR plus admission:create (V114).
+-- RESIDENT_DOCTOR: clones DOCTOR plus admission:create (V114) and
+-- admission:discharge (V131). Residents may discharge with a mandatory note,
+-- but they do not inherit the broader admission:update permission.
 -- lab-catalog:read is inherited via the DOCTOR clone below (V125).
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT
@@ -187,6 +189,15 @@ SELECT
     CURRENT_TIMESTAMP
 FROM permissions p
 WHERE p.code = 'admission:create';
+
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
+SELECT
+    (SELECT id FROM roles WHERE code = 'MEDICO_RESIDENTE'),
+    p.id,
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+FROM permissions p
+WHERE p.code = 'admission:discharge';
 
 -- RESIDENT_DOCTOR also gets room:occupancy-view (V118): the bed occupancy
 -- screen is the default dashboard for residents. Not cloned from DOCTOR, which
@@ -248,9 +259,9 @@ WHERE r.code = 'ENFERMERO'
 -- AUXILIARY_NURSE: vital signs + nursing notes only, plus read-only context.
 -- Explicit SUBSET of NURSE — no medication-administration:create,
 -- medical-order:mark-in-progress, medical-order:upload-document,
--- progress-note:create, or admission:update (which would let an auxiliary
--- discharge patients / edit admissions). Service-layer guards enforce the three
--- denied clinical actions; the discharge/edit denial is by omission of the grant.
+-- progress-note:create, admission:update, or admission:discharge. Service-layer
+-- guards enforce the three denied clinical actions; discharge/edit denial is by
+-- omission of the grants.
 -- Source: V117. Spec: docs/features/nursing-roles-split.md.
 INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
 SELECT r.id, p.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP

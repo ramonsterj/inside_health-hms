@@ -70,6 +70,7 @@ export const PERMISSION_CODES = [
   'admission:create',
   'admission:read',
   'admission:update',
+  'admission:discharge',
   'admission:delete',
   'admission:upload-consent',
   'admission:view-consent',

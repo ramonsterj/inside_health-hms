@@ -13,7 +13,7 @@ const mockAdminUser = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: [
     'admission:read',
     'psychotherapy-activity:read',
@@ -34,7 +34,7 @@ const mockPsychologistUser = {
   firstName: 'Sofia',
   lastName: 'Martinez',
   salutation: 'LICDA',
-  roles: ['PSYCHOLOGIST'],
+  roles: ['PSICOLOGO'],
   permissions: [
     'admission:read',
     'psychotherapy-activity:read',
@@ -55,7 +55,7 @@ const mockDoctorUser = {
   firstName: 'Maria',
   lastName: 'Garcia',
   salutation: 'DR',
-  roles: ['DOCTOR'],
+  roles: ['MEDICO'],
   permissions: [
     'admission:read',
     'psychotherapy-activity:read',
@@ -75,7 +75,7 @@ const mockNurseUser = {
   firstName: 'Ana',
   lastName: 'Lopez',
   salutation: 'LICDA',
-  roles: ['NURSE'],
+  roles: ['ENFERMERO'],
   permissions: [
     'admission:read',
     'psychotherapy-activity:read',
@@ -150,7 +150,7 @@ const mockActivities = [
       salutation: 'LICDA',
       firstName: 'Sofia',
       lastName: 'Martinez',
-      roles: ['PSYCHOLOGIST']
+      roles: ['PSICOLOGO']
     }
   },
   {
@@ -164,7 +164,7 @@ const mockActivities = [
       salutation: 'LICDA',
       firstName: 'Sofia',
       lastName: 'Martinez',
-      roles: ['PSYCHOLOGIST']
+      roles: ['PSICOLOGO']
     }
   },
   {
@@ -178,7 +178,7 @@ const mockActivities = [
       salutation: 'LICDA',
       firstName: 'Sofia',
       lastName: 'Martinez',
-      roles: ['PSYCHOLOGIST']
+      roles: ['PSICOLOGO']
     }
   }
 ]
@@ -428,7 +428,7 @@ test.describe('Psychotherapy Activities - Hospitalization', () => {
         salutation: 'LICDA',
         firstName: 'Sofia',
         lastName: 'Martinez',
-        roles: ['PSYCHOLOGIST']
+        roles: ['PSICOLOGO']
       }
     }
 

@@ -13,7 +13,7 @@ const mockAdminUser = {
   email: 'admin@example.com',
   firstName: 'Admin',
   lastName: 'User',
-  roles: ['ADMIN'],
+  roles: ['ADMINISTRADOR'],
   permissions: [
     'admission:read',
     'clinical-history:create',
@@ -44,7 +44,7 @@ const mockChiefNurseUser = {
   firstName: 'Carmen',
   lastName: 'Flores',
   salutation: 'SRA',
-  roles: ['CHIEF_NURSE'],
+  roles: ['JEFE_ENFERMERIA'],
   permissions: [
     'admission:read',
     'clinical-history:read',
@@ -65,7 +65,7 @@ const mockDoctorUser = {
   firstName: 'Maria',
   lastName: 'Garcia',
   salutation: 'Dra.',
-  roles: ['DOCTOR'],
+  roles: ['MEDICO'],
   permissions: [
     'admission:read',
     'clinical-history:create',
@@ -89,7 +89,7 @@ const mockNurseUser = {
   firstName: 'Ana',
   lastName: 'Lopez',
   salutation: 'Lic.',
-  roles: ['NURSE'],
+  roles: ['ENFERMERO'],
   permissions: [
     'admission:read',
     'clinical-history:read',
@@ -144,7 +144,7 @@ const mockProgressNote = {
     salutation: 'Dra.',
     firstName: 'Maria',
     lastName: 'Garcia',
-    roles: ['DOCTOR']
+    roles: ['MEDICO']
   },
   updatedAt: '2026-01-24T09:00:00',
   updatedBy: {
@@ -152,7 +152,7 @@ const mockProgressNote = {
     salutation: 'Dra.',
     firstName: 'Maria',
     lastName: 'Garcia',
-    roles: ['DOCTOR']
+    roles: ['MEDICO']
   },
   canEdit: false
 }
@@ -167,7 +167,7 @@ const mockEditedProgressNote = {
     salutation: null,
     firstName: 'Admin',
     lastName: 'User',
-    roles: ['ADMIN']
+    roles: ['ADMINISTRADOR']
   },
   canEdit: true
 }
