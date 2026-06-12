@@ -2081,7 +2081,17 @@
     "view": "View",
     "download": "Download",
     "delete": "Delete",
-    "viewer": "Document Viewer",
+    "viewer": {
+      "title": "Document Viewer",
+      "pageIndicator": "Page {current} of {total}",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "fitWidth": "Fit to width",
+      "fitPage": "Fit to page",
+      "renderError": "The document could not be displayed. Please download it to view."
+    },
     "file": "File",
     "selectFile": "Select File",
     "type": "Document Type",

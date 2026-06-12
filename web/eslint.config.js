@@ -150,6 +150,14 @@ export default tseslint.config(
             "CallExpression[callee.object.callee.property.name='toISOString'][callee.property.name='split']",
           message:
             "Use toApiDate() from '@/utils/format' instead of toISOString().split('T') — the inline form has a UTC-shift bug in Guatemala (UTC-6)."
+        },
+        // Documents must never open in a new tab/window — the customer's
+        // Chromebooks can't afford the extra renderer process. Use the in-app
+        // FileViewerDialog instead. See docs/features/in-app-document-viewer.md.
+        {
+          selector: "CallExpression[callee.object.name='window'][callee.property.name='open']",
+          message:
+            'Do not open documents in a new tab — render them in-app with FileViewerDialog (src/components/viewer). See docs/features/in-app-document-viewer.md.'
         }
       ],
 
@@ -186,6 +194,11 @@ export default tseslint.config(
             "VElement[name='inputicon'] VAttribute[key.name='class'] > VLiteral[value=/pi-search/]",
           message:
             'Build search fields with <SearchInput> from @/components/common — not a raw IconField + InputText. SearchInput provides the debounced 3-character autocomplete every search field must have. See docs/architecture/SEARCH.md.'
+        },
+        {
+          selector: "CallExpression[callee.object.name='window'][callee.property.name='open']",
+          message:
+            'Do not open documents in a new tab — render them in-app with FileViewerDialog (src/components/viewer). See docs/features/in-app-document-viewer.md.'
         }
       ]
     }
