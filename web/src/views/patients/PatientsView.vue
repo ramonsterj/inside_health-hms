@@ -7,9 +7,6 @@ import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
-import InputText from 'primevue/inputtext'
-import IconField from 'primevue/iconfield'
-import InputIcon from 'primevue/inputicon'
 import Dialog from 'primevue/dialog'
 import FileUpload from 'primevue/fileupload'
 import { useToast } from 'primevue/usetoast'
@@ -19,6 +16,7 @@ import { useAuthStore } from '@/stores/auth'
 import type { PatientSummary } from '@/types'
 import { MAX_ID_DOCUMENT_SIZE, ACCEPTED_ID_DOCUMENT_TYPES } from '@/validation/patient'
 import { getFullName } from '@/utils/format'
+import SearchInput from '@/components/common/SearchInput.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -32,7 +30,6 @@ const authStore = useAuthStore()
 const first = ref(0)
 const rows = ref(20)
 const searchQuery = ref('')
-const searchTimeout = ref<ReturnType<typeof setTimeout> | null>(null)
 const showUploadDialog = ref(false)
 const selectedPatientForUpload = ref<PatientSummary | null>(null)
 const uploadLoading = ref(false)
@@ -55,14 +52,10 @@ async function loadPatients() {
   }
 }
 
-function onSearch() {
-  if (searchTimeout.value) {
-    clearTimeout(searchTimeout.value)
-  }
-  searchTimeout.value = setTimeout(() => {
-    first.value = 0
-    loadPatients()
-  }, 300)
+function onSearch(term: string) {
+  searchQuery.value = term
+  first.value = 0
+  loadPatients()
 }
 
 function onPageChange() {
@@ -179,15 +172,7 @@ async function onFileUpload(event: { files: File | File[] }) {
     <Card class="search-card">
       <template #content>
         <div class="search-bar">
-          <IconField>
-            <InputIcon class="pi pi-search" />
-            <InputText
-              v-model="searchQuery"
-              :placeholder="t('patient.search')"
-              @input="onSearch"
-              class="search-input"
-            />
-          </IconField>
+          <SearchInput :placeholder="t('patient.search')" width="300px" @search="onSearch" />
         </div>
       </template>
     </Card>

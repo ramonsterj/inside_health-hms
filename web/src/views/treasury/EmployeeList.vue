@@ -9,12 +9,12 @@ import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
-import InputText from 'primevue/inputtext'
 import ToggleSwitch from 'primevue/toggleswitch'
 import Dialog from 'primevue/dialog'
 import Textarea from 'primevue/textarea'
 import DatePicker from 'primevue/datepicker'
 import Message from 'primevue/message'
+import SearchInput from '@/components/common/SearchInput.vue'
 import EmployeeForm from '@/components/treasury/EmployeeForm.vue'
 import { useTreasuryEmployeeStore } from '@/stores/treasuryEmployee'
 import { useAuthStore } from '@/stores/auth'
@@ -32,7 +32,8 @@ const canConfigure = computed(() => authStore.hasPermission('treasury:configure'
 
 const filterType = ref<string | null>(null)
 const filterActive = ref(true)
-const filterSearch = ref('')
+const committedSearch = ref('')
+const searchInputRef = ref<{ reset: () => void } | null>(null)
 
 const showForm = ref(false)
 const selectedEmployee = ref<TreasuryEmployee | null>(null)
@@ -60,17 +61,23 @@ async function loadEmployees() {
     await employeeStore.fetchEmployees({
       type: filterType.value ?? undefined,
       activeOnly: filterActive.value,
-      search: filterSearch.value || undefined
+      search: committedSearch.value || undefined
     })
   } catch (error) {
     showError(error)
   }
 }
 
+function onSearch(term: string) {
+  committedSearch.value = term
+  loadEmployees()
+}
+
 function clearFilters() {
   filterType.value = null
   filterActive.value = true
-  filterSearch.value = ''
+  committedSearch.value = ''
+  searchInputRef.value?.reset()
   loadEmployees()
 }
 
@@ -184,10 +191,10 @@ function compensationDisplay(employee: TreasuryEmployee): string {
           </div>
           <div class="filter-field filter-search">
             <label>{{ t('common.search') }}</label>
-            <InputText
-              v-model="filterSearch"
+            <SearchInput
+              ref="searchInputRef"
               :placeholder="t('common.search')"
-              @keydown.enter="loadEmployees"
+              @search="onSearch"
             />
           </div>
           <div class="filter-toggle">

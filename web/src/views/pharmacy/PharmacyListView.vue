@@ -7,11 +7,11 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
-import InputText from 'primevue/inputtext'
 import Tag from 'primevue/tag'
 import Tabs from 'primevue/tabs'
 import TabList from 'primevue/tablist'
 import Tab from 'primevue/tab'
+import SearchInput from '@/components/common/SearchInput.vue'
 import { usePharmacyStore } from '@/stores/pharmacy'
 import { useAuthStore } from '@/stores/auth'
 import { useErrorHandler } from '@/composables/useErrorHandler'
@@ -58,6 +58,11 @@ async function load() {
 function onFilterChange() {
   first.value = 0
   load()
+}
+
+function onSearch(term: string) {
+  search.value = term
+  onFilterChange()
 }
 
 function viewMedication(id: number) {
@@ -107,12 +112,10 @@ function viewMedication(id: number) {
             :placeholder="t('pharmacy.medication.controlled')"
             @change="onFilterChange"
           />
-          <InputText
-            v-model="search"
+          <SearchInput
             :placeholder="t('pharmacy.medication.searchPlaceholder')"
-            @keyup.enter="onFilterChange"
+            @search="onSearch"
           />
-          <Button icon="pi pi-search" severity="secondary" outlined @click="onFilterChange" />
         </div>
 
         <DataTable

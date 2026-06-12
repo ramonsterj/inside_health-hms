@@ -175,6 +175,17 @@ export default tseslint.config(
           selector: "CallExpression[callee.name='d'][arguments.length>=1]",
           message:
             "Use formatDate / formatTime / formatDateTime from '@/utils/format' instead of vue-i18n's d() — there is no datetimeFormats config and d() falls back to browser locale."
+        },
+        // Search fields must use the shared <SearchInput> so the platform-wide
+        // as-you-type behavior (debounced, fires after 3 characters) is guaranteed
+        // and any new search field inherits it. Hand-rolled IconField search boxes
+        // (an <InputIcon class="pi pi-search"> next to an <InputText>) are banned.
+        // See docs/architecture/SEARCH.md.
+        {
+          selector:
+            "VElement[name='inputicon'] VAttribute[key.name='class'] > VLiteral[value=/pi-search/]",
+          message:
+            'Build search fields with <SearchInput> from @/components/common — not a raw IconField + InputText. SearchInput provides the debounced 3-character autocomplete every search field must have. See docs/architecture/SEARCH.md.'
         }
       ]
     }
@@ -184,6 +195,14 @@ export default tseslint.config(
     files: ['src/utils/format.ts'],
     rules: {
       'no-restricted-syntax': 'off',
+      'vue/no-restricted-syntax': 'off'
+    }
+  },
+  {
+    // SearchInput is the sanctioned implementation of the search box, so it is
+    // the one place allowed to use the IconField search-icon pattern directly.
+    files: ['src/components/common/SearchInput.vue'],
+    rules: {
       'vue/no-restricted-syntax': 'off'
     }
   },

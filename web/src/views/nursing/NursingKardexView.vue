@@ -3,10 +3,10 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import Button from 'primevue/button'
-import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import Paginator from 'primevue/paginator'
 import KardexPatientCard from '@/components/nursing/kardex/KardexPatientCard.vue'
+import SearchInput from '@/components/common/SearchInput.vue'
 import { useKardexStore } from '@/stores/kardex'
 import { AdmissionType } from '@/types/admission'
 
@@ -18,7 +18,6 @@ const first = ref(0)
 const rows = ref(20)
 const typeFilter = ref<AdmissionType | null>(null)
 const searchQuery = ref('')
-let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
 const typeOptions = computed(() => [
   { label: t('kardex.allTypes'), value: null },
@@ -43,12 +42,10 @@ function onFilterChange() {
   loadKardex()
 }
 
-function onSearchInput() {
-  if (searchTimeout) clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    first.value = 0
-    loadKardex()
-  }, 300)
+function onSearch(term: string) {
+  searchQuery.value = term
+  first.value = 0
+  loadKardex()
 }
 
 function onPageChange(event: { first: number; rows: number }) {
@@ -74,7 +71,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   kardexStore.stopAutoRefresh()
-  if (searchTimeout) clearTimeout(searchTimeout)
 })
 </script>
 
@@ -98,11 +94,10 @@ onUnmounted(() => {
     </div>
 
     <div class="filter-bar">
-      <InputText
-        v-model="searchQuery"
+      <SearchInput
         :placeholder="t('kardex.searchPlaceholder')"
         class="search-input"
-        @input="onSearchInput"
+        @search="onSearch"
       />
       <Select
         v-model="typeFilter"

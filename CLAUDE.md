@@ -264,6 +264,28 @@ permissionName(p.code, p.name)            // permissions.<code>.name
 {{ role.description }}    {{ permission.name }}    optionLabel="name"
 ```
 
+### 11. Search Fields (As-You-Type, 3-char trigger)
+
+Every search box searches **as the user types** — debounced (300 ms), firing once the trimmed
+term is **≥ 3 characters**; clearing the box re-shows everything. No button / Enter press.
+Full guide: [`docs/architecture/SEARCH.md`](docs/architecture/SEARCH.md).
+
+- **Always use `<SearchInput>`** (`web/src/components/common/SearchInput.vue`) — the only
+  sanctioned search box. It wraps `useDebouncedSearch` and emits `@search="(term: string) => void"`
+  (`''` = cleared). **Never** build a search box from a raw `<InputText>` + `IconField`/`pi-search`.
+- An **ESLint guard** (`vue/no-restricted-syntax`) bans the hand-rolled IconField search pattern;
+  behavior is pinned by `useDebouncedSearch.spec.ts` + `SearchInput.spec.ts`.
+- **Client-side** instant filters (e.g. Bed Occupancy) intentionally skip the 3-char floor so
+  short room-number searches work — keep those live.
+
+```vue
+<!-- ✅ CORRECT -->
+<SearchInput :placeholder="t('patient.search')" @search="onSearch" />
+
+<!-- ❌ WRONG — bypasses the debounced 3-char autocomplete, flagged by ESLint -->
+<IconField><InputIcon class="pi pi-search" /><InputText v-model="q" @input="onSearch" /></IconField>
+```
+
 ---
 
 ## 🔒 SECURITY RULES

@@ -9,9 +9,9 @@ import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
-import InputText from 'primevue/inputtext'
 import DatePicker from 'primevue/datepicker'
 import Dialog from 'primevue/dialog'
+import SearchInput from '@/components/common/SearchInput.vue'
 import ExpenseForm from '@/components/treasury/ExpenseForm.vue'
 import ExpensePaymentDialog from '@/components/treasury/ExpensePaymentDialog.vue'
 import { useExpenseStore } from '@/stores/expense'
@@ -39,7 +39,8 @@ const filterStatus = ref<string | null>(null)
 const filterCategory = ref<string | null>(null)
 const filterFrom = ref<Date | null>(null)
 const filterTo = ref<Date | null>(null)
-const filterSearch = ref<string>('')
+const committedSearch = ref<string>('')
+const searchInputRef = ref<{ reset: () => void } | null>(null)
 
 // Dialogs
 const showExpenseForm = ref(false)
@@ -79,7 +80,7 @@ async function loadExpenses() {
       category: filterCategory.value ?? undefined,
       from: toApiDate(filterFrom.value) ?? undefined,
       to: toApiDate(filterTo.value) ?? undefined,
-      search: filterSearch.value || undefined
+      search: committedSearch.value || undefined
     })
   } catch (error) {
     showError(error)
@@ -97,12 +98,21 @@ function applyFilters() {
   loadExpenses()
 }
 
+// Search auto-fires (debounced, 3-char min) via SearchInput; date/category
+// filters still apply on the Filter button.
+function onSearch(term: string) {
+  committedSearch.value = term
+  currentPage.value = 0
+  loadExpenses()
+}
+
 function clearFilters() {
   filterStatus.value = null
   filterCategory.value = null
   filterFrom.value = null
   filterTo.value = null
-  filterSearch.value = ''
+  committedSearch.value = ''
+  searchInputRef.value?.reset()
   currentPage.value = 0
   loadExpenses()
 }
@@ -253,10 +263,10 @@ function canRecordPayment(expense: Expense): boolean {
           </div>
           <div class="filter-field filter-search">
             <label>{{ t('common.search') }}</label>
-            <InputText
-              v-model="filterSearch"
+            <SearchInput
+              ref="searchInputRef"
               :placeholder="t('common.search')"
-              @keydown.enter="applyFilters"
+              @search="onSearch"
             />
           </div>
           <div class="filter-actions">
