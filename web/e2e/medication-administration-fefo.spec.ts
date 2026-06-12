@@ -38,7 +38,18 @@ const mockAdminUser = {
   lastName: 'User',
   salutation: 'Dr.',
   roles: ['ADMINISTRADOR'],
-  permissions: [],
+  // ADMINISTRADOR holds every permission via migrations; hasPermission() is a pure
+  // lookup with no role bypass. The admin-only lot override is gated on
+  // inventory-lot:update, so the mock must carry it (plus the administer-flow grants).
+  permissions: [
+    'admission:read',
+    'medical-order:read',
+    'medication-administration:create',
+    'medication-administration:read',
+    'medication:read',
+    'inventory-lot:read',
+    'inventory-lot:update'
+  ],
   status: 'ACTIVE',
   emailVerified: true,
   createdAt: '2026-01-01T00:00:00Z',

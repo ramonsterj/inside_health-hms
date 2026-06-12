@@ -10,7 +10,15 @@ const mockAdmin = {
   firstName: 'Admin',
   lastName: 'User',
   roles: ['ADMINISTRADOR'],
-  permissions: [],
+  // ADMINISTRADOR holds every permission via migrations; hasPermission() is a pure
+  // lookup with no role bypass, so the mock must list the grants the page exercises.
+  permissions: [
+    'medication:read',
+    'medication:update',
+    'inventory-lot:read',
+    'inventory-lot:create',
+    'inventory-lot:update'
+  ],
   status: 'ACTIVE',
   emailVerified: true,
   createdAt: '2026-01-01T00:00:00Z',

@@ -150,6 +150,14 @@ export default tseslint.config(
             "CallExpression[callee.object.callee.property.name='toISOString'][callee.property.name='split']",
           message:
             "Use toApiDate() from '@/utils/format' instead of toISOString().split('T') — the inline form has a UTC-shift bug in Guatemala (UTC-6)."
+        },
+        // Documents must never open in a new tab/window — the customer's
+        // Chromebooks can't afford the extra renderer process. Use the in-app
+        // FileViewerDialog instead. See docs/features/in-app-document-viewer.md.
+        {
+          selector: "CallExpression[callee.object.name='window'][callee.property.name='open']",
+          message:
+            'Do not open documents in a new tab — render them in-app with FileViewerDialog (src/components/viewer). See docs/features/in-app-document-viewer.md.'
         }
       ],
 
@@ -175,6 +183,11 @@ export default tseslint.config(
           selector: "CallExpression[callee.name='d'][arguments.length>=1]",
           message:
             "Use formatDate / formatTime / formatDateTime from '@/utils/format' instead of vue-i18n's d() — there is no datetimeFormats config and d() falls back to browser locale."
+        },
+        {
+          selector: "CallExpression[callee.object.name='window'][callee.property.name='open']",
+          message:
+            'Do not open documents in a new tab — render them in-app with FileViewerDialog (src/components/viewer). See docs/features/in-app-document-viewer.md.'
         }
       ]
     }
