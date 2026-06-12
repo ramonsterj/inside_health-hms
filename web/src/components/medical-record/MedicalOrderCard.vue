@@ -11,6 +11,7 @@ import {
   MedicalOrderStatus,
   MedicalOrderCategory,
   RESULTS_BEARING_CATEGORIES,
+  SEVERITY_BY_STATUS,
   isTerminalStatus,
   canDiscontinueStatus,
   canUploadResultDocument,
@@ -77,6 +78,19 @@ const isResultsBearingCategory = computed(() =>
   RESULTS_BEARING_CATEGORIES.includes(props.order.category)
 )
 const requiresAuthorization = computed(() => categoryRequiresAuthorization(props.order.category))
+
+// Status-driven left-border accent. Shares SEVERITY_BY_STATUS with MedicalOrderStateBadge so
+// the dominant color cue always matches the badge — a pending (SOLICITADO) order reads neutral,
+// a rejected (NO_AUTORIZADO) order reads danger, and only AUTORIZADO/ACTIVA read green.
+const accentClass = computed(() => `accent-${SEVERITY_BY_STATUS[props.order.status]}`)
+
+// True only for an auth-required order still awaiting an authorization decision.
+const isPendingAuthorization = computed(
+  () => requiresAuthorization.value && props.order.status === MedicalOrderStatus.SOLICITADO
+)
+const showAuthorizationInfo = computed(
+  () => props.order.authorizedAt !== null && props.order.status !== MedicalOrderStatus.DESCONTINUADO
+)
 
 // Medication administration only makes sense for AUTORIZADO medication orders.
 const canAdminister = computed(
@@ -329,7 +343,7 @@ async function deleteDocument(doc: MedicalOrderDocument) {
 </script>
 
 <template>
-  <Card class="medical-order-card" :class="{ discontinued: isTerminal }">
+  <Card class="medical-order-card" :class="[accentClass, { discontinued: isTerminal }]">
     <template #content>
       <div class="order-content">
         <!-- Header Row -->
@@ -394,8 +408,16 @@ async function deleteDocument(doc: MedicalOrderDocument) {
           </span>
         </div>
 
-        <!-- Authorized Info -->
-        <div v-if="order.authorizedAt" class="meta-row">
+        <!-- Pending Authorization (auth-required order awaiting a decision). Explicit, primary
+             cue so a SOLICITADO order is never read as approved from the green accent alone. -->
+        <div v-if="isPendingAuthorization" class="pending-auth-info">
+          <i class="pi pi-hourglass"></i>
+          {{ t('medicalRecord.medicalOrder.pendingAuthorization') }}
+        </div>
+
+        <!-- Authorized Info — keep audit metadata through normal post-authorization states, but
+             suppress it for discontinued-after-authorize orders so they don't read as active. -->
+        <div v-if="showAuthorizationInfo" class="meta-row">
           <i
             class="pi pi-check-circle"
             style="color: var(--p-green-600); margin-right: 0.25rem"
@@ -627,12 +649,47 @@ async function deleteDocument(doc: MedicalOrderDocument) {
 <style scoped>
 .medical-order-card {
   background: var(--p-surface-card);
-  border-left: 4px solid var(--p-green-500);
+  /* Color comes from the status-driven .accent-* class; default to neutral as a fallback. */
+  border-left: 4px solid var(--p-gray-400);
+}
+
+/* Status-driven accent, mapped from SEVERITY_BY_STATUS (mirrors the state badge severities). */
+.medical-order-card.accent-success {
+  border-left-color: var(--p-green-500);
+}
+.medical-order-card.accent-info {
+  border-left-color: var(--p-blue-500);
+}
+.medical-order-card.accent-danger {
+  border-left-color: var(--p-red-500);
+}
+.medical-order-card.accent-warn {
+  border-left-color: var(--p-orange-500);
+}
+.medical-order-card.accent-contrast {
+  border-left-color: var(--p-surface-700);
+}
+.medical-order-card.accent-secondary {
+  border-left-color: var(--p-gray-400);
 }
 
 .medical-order-card.discontinued {
-  border-left-color: var(--p-gray-400);
   opacity: 0.8;
+}
+
+.pending-auth-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--p-blue-700);
+  padding: 0.5rem;
+  background: var(--p-blue-50);
+  border-radius: var(--p-border-radius);
+}
+
+.pending-auth-info i {
+  font-size: 0.875rem;
 }
 
 .order-content {

@@ -14,6 +14,7 @@ import { useErrorHandler } from '@/composables/useErrorHandler'
 import {
   MedicalOrderCategory,
   MedicalOrderStatus,
+  isTerminalStatus,
   type MedicalOrderResponse
 } from '@/types/medicalRecord'
 import { AdmissionStatus } from '@/types/admission'
@@ -43,6 +44,13 @@ const loading = computed(() => medicalOrderStore.loading)
 const isActive = computed(() => props.admissionStatus === AdmissionStatus.ACTIVE)
 const canCreate = computed(() => authStore.hasPermission('medical-order:create') && isActive.value)
 const canUpdate = computed(() => authStore.hasPermission('medical-order:update') && isActive.value)
+
+// Terminal orders (NO_AUTORIZADO / RESULTADOS_RECIBIDOS / DESCONTINUADO) are read-only —
+// the backend 400s any edit — so hide "Editar" for them. Otherwise the edit dialog shows
+// a misleading "already authorized and billed" notice for a merely rejected order.
+function canEditOrder(order: MedicalOrderResponse): boolean {
+  return canUpdate.value && !isTerminalStatus(order.status)
+}
 
 const statusOptions = computed(() => [
   { label: t('common.all'), value: 'ALL' },
@@ -238,7 +246,7 @@ function handleOrderSaved() {
               v-for="order in filteredOrders?.[category]"
               :key="order.id"
               :order="order"
-              :canEdit="canUpdate"
+              :canEdit="canEditOrder(order)"
               :admissionActive="isActive"
               @edit="openEditDialog(order)"
               @discontinue="handleDiscontinue(order)"

@@ -130,6 +130,69 @@ describe('MedicalOrderFormDialog lab branch', () => {
     expect(vm.panelNotice?.tests).toContain('Panel de drogas en sangre')
   })
 
+  it('locks the category select and shows the locked-on-edit hint in edit mode', async () => {
+    const wrapper = mount(MedicalOrderFormDialog, {
+      props: {
+        visible: true,
+        admissionId: 1,
+        order: {
+          id: 9,
+          admissionId: 1,
+          category: MedicalOrderCategory.ORDENES_MEDICAS,
+          status: MedicalOrderStatus.ACTIVA,
+          labProvider: null,
+          labTests: [],
+          labTotal: null,
+          startDate: '2026-06-03',
+          endDate: null,
+          medication: null,
+          dosage: null,
+          route: null,
+          frequency: null,
+          schedule: null,
+          observations: null,
+          authorizedAt: null,
+          authorizedBy: null,
+          inProgressAt: null,
+          inProgressBy: null,
+          resultsReceivedAt: null,
+          resultsReceivedBy: null,
+          rejectedAt: null,
+          rejectedBy: null,
+          rejectionReason: null,
+          emergencyAuthorized: false,
+          emergencyReason: null,
+          emergencyReasonNote: null,
+          emergencyAt: null,
+          emergencyBy: null,
+          discontinuedAt: null,
+          discontinuedBy: null,
+          inventoryItemId: null,
+          inventoryItemName: null,
+          documentCount: 0,
+          createdAt: null,
+          updatedAt: null,
+          createdBy: null,
+          updatedBy: null
+        }
+      },
+      global: { plugins: [PrimeVue, i18n()], directives: { tooltip: {} } }
+    })
+    await flushPromises()
+
+    // The Dialog teleports its content to document.body.
+    expect((wrapper.vm as unknown as { isEditMode: boolean }).isEditMode).toBe(true)
+    const category = document.body.querySelector('#category')
+    expect(category?.classList.contains('p-disabled')).toBe(true)
+    expect(document.body.textContent).toContain("Category can't be changed when editing.")
+  })
+
+  it('does not show the category lock hint when creating', async () => {
+    mountDialog()
+    await flushPromises()
+    expect(document.body.textContent).not.toContain("Category can't be changed when editing.")
+  })
+
   it('locks lab fields when editing an already-authorized order (AC14)', async () => {
     const wrapper = mount(MedicalOrderFormDialog, {
       props: {

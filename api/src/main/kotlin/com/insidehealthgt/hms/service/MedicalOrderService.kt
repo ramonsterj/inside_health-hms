@@ -240,22 +240,26 @@ class MedicalOrderService(
             throw BadRequestException("Cannot update a medical order in a terminal state (${order.status})")
         }
 
-        val willBeLab = request.category == MedicalOrderCategory.LABORATORIOS
-        val wasLab = order.labProvider != null || order.labTests.isNotEmpty()
+        // The category is the order's identity — changing it on edit would replace the order
+        // rather than edit it (and would silently drop a lab order's recorded provider/lines).
+        // Safety net behind the disabled UI control.
+        if (request.category != order.category) {
+            throw BadRequestException("Cannot change the category of an existing medical order")
+        }
 
-        // AC14: provider/line snapshots are immutable once the order has produced its bill.
-        // Lab lines may only be (re)built or cleared while SOLICITADO (terminal states are
-        // already blocked above; this also rejects AUTORIZADO / EN_PROCESO /
-        // RESULTADOS_RECIBIDOS). Guards both becoming a lab order and an existing lab order
-        // changing to another category (which would drop its already-recorded lines).
-        if ((willBeLab || wasLab) && order.status != MedicalOrderStatus.SOLICITADO) {
+        val isLab = request.category == MedicalOrderCategory.LABORATORIOS
+
+        // AC14: a lab order's provider/test snapshots are immutable once it leaves SOLICITADO
+        // (the snapshot has already produced its bill). Reject only an actual provider/test
+        // change on a non-SOLICITADO lab order; scalar/observation edits stay allowed.
+        if (isLab && order.status != MedicalOrderStatus.SOLICITADO && labLinesChanged(request, order)) {
             throw BadRequestException(
                 "Lab provider and tests can only be changed while the order is in SOLICITADO; " +
                     "current state is ${order.status}",
             )
         }
 
-        val inventoryItem = if (willBeLab) {
+        val inventoryItem = if (isLab) {
             null
         } else {
             request.inventoryItemId?.let { itemId ->
@@ -275,19 +279,29 @@ class MedicalOrderService(
         order.observations = request.observations
         order.inventoryItem = inventoryItem
 
-        if (willBeLab) {
+        // Lab lines are (re)built only while SOLICITADO; on an authorized/in-process lab order
+        // the guard above already rejected any line change, so the snapshotted lines are left
+        // untouched and only the scalar fields above are updated.
+        if (isLab && order.status == MedicalOrderStatus.SOLICITADO) {
             softDeleteLabLines(order)
             order.labProvider = null
             buildLabLines(request, order)
-        } else if (wasLab) {
-            // Changing a lab order to another category: drop the now-stale provider/lines so
-            // the order is never left in a mixed shape.
-            softDeleteLabLines(order)
-            order.labProvider = null
         }
 
         val saved = medicalOrderRepository.save(order)
         return buildResponse(saved)
+    }
+
+    /**
+     * True when the request would change the lab order's provider or its set of provider-tests
+     * versus the order's current provider + active line snapshots. Compares as sets so test
+     * order / duplicates don't register as a change (AC14).
+     */
+    private fun labLinesChanged(request: UpdateMedicalOrderRequest, order: MedicalOrder): Boolean {
+        if (request.labProviderId != order.labProvider?.id) return true
+        val requested = request.labProviderTestIds?.toSet().orEmpty()
+        val current = order.labTests.filter { it.deletedAt == null }.map { it.labProviderTestId }.toSet()
+        return requested != current
     }
 
     private fun softDeleteLabLines(order: MedicalOrder) {
