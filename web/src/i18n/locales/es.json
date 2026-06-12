@@ -2223,6 +2223,7 @@
       "add": "Agregar Orden",
       "addFirst": "Agregar Primera Orden",
       "edit": "Editar Orden Medica",
+      "categoryLockedOnEdit": "La categoría no se puede cambiar al editar.",
       "empty": "No hay órdenes médicas registradas.",
       "created": "Orden médica creada éxitosamente.",
       "updated": "Orden médica actualizada éxitosamente.",
@@ -2233,6 +2234,7 @@
       "orderedBy": "Ordenado por",
       "discontinuedBy": "Descontinuado por",
       "authorizedBy": "Autorizado por",
+      "pendingAuthorization": "Pendiente de autorización",
       "inProgressBy": "Marcado en proceso por",
       "resultsReceivedBy": "Resultados subidos por",
       "actions": {

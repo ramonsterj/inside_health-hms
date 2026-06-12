@@ -419,9 +419,13 @@ function closeDialog() {
           :options="categoryOptions"
           optionLabel="label"
           optionValue="value"
+          :disabled="isEditMode"
           :class="{ 'p-invalid': errors.category }"
           class="w-full"
         />
+        <small v-if="isEditMode" class="field-hint">
+          {{ t('medicalRecord.medicalOrder.categoryLockedOnEdit') }}
+        </small>
         <Message v-if="errors.category" severity="error" :closable="false">
           {{ errors.category }}
         </Message>
@@ -670,6 +674,11 @@ function closeDialog() {
 .form-field label {
   font-weight: 500;
   color: var(--p-text-color);
+}
+
+.field-hint {
+  color: var(--p-text-muted-color);
+  font-size: 0.8125rem;
 }
 
 .form-row {

@@ -2223,6 +2223,7 @@
       "add": "Add Order",
       "addFirst": "Add First Order",
       "edit": "Edit Medical Order",
+      "categoryLockedOnEdit": "Category can't be changed when editing.",
       "empty": "No medical orders recorded.",
       "created": "Medical order created successfully.",
       "updated": "Medical order updated successfully.",
@@ -2233,6 +2234,7 @@
       "orderedBy": "Ordered by",
       "discontinuedBy": "Discontinued by",
       "authorizedBy": "Authorized by",
+      "pendingAuthorization": "Pending authorization",
       "inProgressBy": "Marked in progress by",
       "resultsReceivedBy": "Results uploaded by",
       "actions": {

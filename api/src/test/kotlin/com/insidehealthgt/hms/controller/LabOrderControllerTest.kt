@@ -118,6 +118,31 @@ class LabOrderControllerTest : AbstractIntegrationTest() {
         org.junit.jupiter.api.Assertions.assertEquals(0, total.compareTo(chargeTotal))
     }
 
+    @Test
+    fun `rejecting a lab order creates no charge and leaves authorization fields null`() {
+        val tests = clonyTests().take(3)
+        val orderId = createLabOrder(clony().id!!, tests.map { it.id!! })
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/reject")
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"reason":"Sin cobertura"}"""),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("NO_AUTORIZADO"))
+            .andExpect(jsonPath("$.data.rejectedAt").exists())
+            .andExpect(jsonPath("$.data.authorizedAt").doesNotExist())
+            .andExpect(jsonPath("$.data.authorizedBy").doesNotExist())
+
+        // Billing fires only on authorization — a rejected lab order bills nothing (cross-ref AC3).
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/charges").header("Authorization", "Bearer $adminToken"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.length()").value(0))
+    }
+
     // ============ AC7: cross-provider line rejected ============
 
     @Test
@@ -322,8 +347,9 @@ class LabOrderControllerTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `changing a lab order to another category clears its provider and lines`() {
-        val orderId = createLabOrder(clony().id!!, clonyTests().take(2).map { it.id!! })
+    fun `changing a lab order to another category on update is rejected and leaves provider and lines intact`() {
+        val tests = clonyTests().take(2)
+        val orderId = createLabOrder(clony().id!!, tests.map { it.id!! })
 
         mockMvc.perform(
             put("/api/v1/admissions/$admissionId/medical-orders/$orderId")
@@ -339,11 +365,50 @@ class LabOrderControllerTest : AbstractIntegrationTest() {
                     ),
                 ),
         )
+            .andExpect(status().isBadRequest)
+
+        // The order is unchanged: still a LABORATORIOS order with its provider + lines.
+        mockMvc.perform(
+            get("/api/v1/admissions/$admissionId/medical-orders/$orderId")
+                .header("Authorization", "Bearer $adminToken"),
+        )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.data.category").value("ORDENES_MEDICAS"))
-            .andExpect(jsonPath("$.data.labProvider").doesNotExist())
-            .andExpect(jsonPath("$.data.labTests").isEmpty)
-            .andExpect(jsonPath("$.data.labTotal").doesNotExist())
+            .andExpect(jsonPath("$.data.category").value("LABORATORIOS"))
+            .andExpect(jsonPath("$.data.labProvider.name").value("CLONY"))
+            .andExpect(jsonPath("$.data.labTests.length()").value(tests.size))
+    }
+
+    @Test
+    fun `editing observations on an authorized lab order succeeds and leaves lines intact`() {
+        val tests = clonyTests().take(2)
+        val orderId = createLabOrder(clony().id!!, tests.map { it.id!! })
+
+        mockMvc.perform(
+            post("/api/v1/admissions/$admissionId/medical-orders/$orderId/authorize")
+                .header("Authorization", "Bearer $adminToken"),
+        ).andExpect(status().isOk)
+
+        // Re-send the same provider + tests (as the disabled UI does) but change observations.
+        mockMvc.perform(
+            put("/api/v1/admissions/$admissionId/medical-orders/$orderId")
+                .header("Authorization", "Bearer $adminToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        CreateMedicalOrderRequest(
+                            category = MedicalOrderCategory.LABORATORIOS,
+                            startDate = LocalDate.now(),
+                            labProviderId = clony().id,
+                            labProviderTestIds = tests.map { it.id!! },
+                            observations = "Updated clinical observations",
+                        ),
+                    ),
+                ),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("AUTORIZADO"))
+            .andExpect(jsonPath("$.data.observations").value("Updated clinical observations"))
+            .andExpect(jsonPath("$.data.labTests.length()").value(tests.size))
     }
 
     private fun createLabOrder(providerId: Long, testIds: List<Long>): Long {

@@ -84,6 +84,20 @@ export const RESULT_UPLOADABLE_STATES: readonly MedicalOrderStatus[] = [
   MedicalOrderStatus.RESULTADOS_RECIBIDOS
 ] as const
 
+// Semantic severity per status. Single source of truth shared by the state badge
+// (Tag `severity`) and the order card's status-driven left-border accent, so the card's
+// dominant color cue always agrees with the badge and never presents an unauthorized
+// order as approved.
+export const SEVERITY_BY_STATUS: Record<MedicalOrderStatus, string> = {
+  [MedicalOrderStatus.ACTIVA]: 'success',
+  [MedicalOrderStatus.SOLICITADO]: 'info',
+  [MedicalOrderStatus.NO_AUTORIZADO]: 'danger',
+  [MedicalOrderStatus.AUTORIZADO]: 'success',
+  [MedicalOrderStatus.EN_PROCESO]: 'warn',
+  [MedicalOrderStatus.RESULTADOS_RECIBIDOS]: 'contrast',
+  [MedicalOrderStatus.DESCONTINUADO]: 'secondary'
+}
+
 export function isTerminalStatus(status: MedicalOrderStatus): boolean {
   return TERMINAL_STATES.includes(status)
 }
