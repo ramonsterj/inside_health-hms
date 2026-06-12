@@ -15,6 +15,9 @@ data class CreateMedicationAdministrationRequest(
     @field:Min(value = 1, message = "Quantity must be at least 1")
     val quantity: Int = 1,
 
-    /** ADMINISTRADOR-only override of FEFO lot selection. Non-admin senders receive 403. */
+    /**
+     * Override of FEFO lot selection, gated on the `inventory-lot:update` permission.
+     * Senders without it receive 403.
+     */
     val lotId: Long? = null,
 )

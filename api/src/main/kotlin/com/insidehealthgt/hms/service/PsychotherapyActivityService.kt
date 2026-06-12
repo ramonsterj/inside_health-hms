@@ -14,6 +14,7 @@ import com.insidehealthgt.hms.repository.PsychotherapyActivityRepository
 import com.insidehealthgt.hms.repository.PsychotherapyCategoryRepository
 import com.insidehealthgt.hms.repository.UserRepository
 import com.insidehealthgt.hms.security.CurrentUserProvider
+import com.insidehealthgt.hms.security.SystemRole
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -74,7 +75,7 @@ class PsychotherapyActivityService(
     fun createActivity(admissionId: Long, request: CreatePsychotherapyActivityRequest): PsychotherapyActivityResponse {
         // Verify PSICOLOGO role
         val currentUser = currentUserProvider.currentUserDetailsOrThrow()
-        if (!currentUser.hasRole("PSICOLOGO")) {
+        if (!currentUser.hasRole(SystemRole.PSICOLOGO)) {
             throw ForbiddenException(messageService.errorPsychotherapyActivityOnlyPsychologist())
         }
 

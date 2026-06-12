@@ -24,6 +24,18 @@ function setAuth(roles: string[], permissions: string[]) {
   auth.$patch({ user: { roles, permissions } } as never)
 }
 
+// ADMINISTRADOR holds every permission via migrations (no admin bypass in hasPermission anymore),
+// so admin mounts must enumerate the per-section read permissions the hub gates on.
+const ADMIN_SECTION_PERMISSIONS = [
+  'clinical-history:read',
+  'progress-note:read',
+  'medical-order:read',
+  'nursing-note:read',
+  'vital-sign:read',
+  'admission:read',
+  'psychotherapy-activity:read'
+]
+
 const CHILD_STUBS = {
   ClinicalHistoryView: true,
   ProgressNoteList: true,
@@ -43,7 +55,7 @@ async function mountHub(opts: {
   type?: AdmissionType
 }) {
   setActivePinia(createPinia())
-  setAuth(opts.roles ?? ['ADMINISTRADOR'], opts.permissions ?? [])
+  setAuth(opts.roles ?? ['ADMINISTRADOR'], opts.permissions ?? ADMIN_SECTION_PERMISSIONS)
 
   const wrapper = mount(MedicalRecordHub, {
     props: {

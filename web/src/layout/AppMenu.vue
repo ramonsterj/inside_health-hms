@@ -18,6 +18,47 @@ export interface MenuItem {
   command?: (event: { originalEvent: Event; item: MenuItem }) => void
 }
 
+// Administration menu, gated per item. An item is shown only when the user holds ALL of its
+// listed permissions. Reference-data items require both the route's `:read` (so the link is
+// actually reachable — the list routes redirect without it) AND the `:create` (manage)
+// permission, since clinical roles hold the `:read` for their wizards/forms and that alone must
+// not drive admin-menu visibility. The user item likewise gates on the management `user:create`
+// rather than `user:read`, which clinical roles hold for staff dropdowns.
+const ADMIN_MENU_ITEMS: Array<MenuItem & { permission: string | string[] }> = [
+  { permission: 'user:create', label: 'nav.users', icon: 'pi pi-fw pi-users', to: '/users' },
+  { permission: 'role:read', label: 'nav.roles', icon: 'pi pi-fw pi-shield', to: '/roles' },
+  {
+    permission: ['triage-code:read', 'triage-code:create'],
+    label: 'nav.triageCodes',
+    icon: 'pi pi-fw pi-tags',
+    to: '/admin/triage-codes'
+  },
+  {
+    permission: ['room:read', 'room:create'],
+    label: 'nav.rooms',
+    icon: 'pi pi-fw pi-th-large',
+    to: '/admin/rooms'
+  },
+  {
+    permission: ['psychotherapy-category:read', 'psychotherapy-category:create'],
+    label: 'nav.activityCategories',
+    icon: 'pi pi-fw pi-heart',
+    to: '/admin/psychotherapy-categories'
+  },
+  {
+    permission: ['inventory-category:read', 'inventory-category:create'],
+    label: 'nav.inventoryCategories',
+    icon: 'pi pi-fw pi-list',
+    to: '/admin/inventory-categories'
+  },
+  {
+    permission: 'audit:read',
+    label: 'nav.auditLogs',
+    icon: 'pi pi-fw pi-history',
+    to: '/audit-logs'
+  }
+]
+
 const authStore = useAuthStore()
 
 const model = computed<MenuItem[]>(() => {
@@ -243,47 +284,16 @@ const model = computed<MenuItem[]>(() => {
     })
   }
 
-  // Admin section - only visible to admins
-  if (authStore.isAdmin) {
+  // Admin section - each item requires ALL of its permission(s); hidden when empty.
+  const adminItems = ADMIN_MENU_ITEMS.filter(item =>
+    (Array.isArray(item.permission) ? item.permission : [item.permission]).every(p =>
+      authStore.hasPermission(p)
+    )
+  ).map(({ permission: _permission, ...item }) => item)
+  if (adminItems.length > 0) {
     items.push({
       label: 'nav.administration',
-      items: [
-        {
-          label: 'nav.users',
-          icon: 'pi pi-fw pi-users',
-          to: '/users'
-        },
-        {
-          label: 'nav.roles',
-          icon: 'pi pi-fw pi-shield',
-          to: '/roles'
-        },
-        {
-          label: 'nav.triageCodes',
-          icon: 'pi pi-fw pi-tags',
-          to: '/admin/triage-codes'
-        },
-        {
-          label: 'nav.rooms',
-          icon: 'pi pi-fw pi-th-large',
-          to: '/admin/rooms'
-        },
-        {
-          label: 'nav.activityCategories',
-          icon: 'pi pi-fw pi-heart',
-          to: '/admin/psychotherapy-categories'
-        },
-        {
-          label: 'nav.inventoryCategories',
-          icon: 'pi pi-fw pi-list',
-          to: '/admin/inventory-categories'
-        },
-        {
-          label: 'nav.auditLogs',
-          icon: 'pi pi-fw pi-history',
-          to: '/audit-logs'
-        }
-      ]
+      items: adminItems
     })
   }
 

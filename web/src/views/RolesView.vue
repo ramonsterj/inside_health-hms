@@ -142,6 +142,7 @@ async function saveEditedRole() {
 }
 
 function openPermissionsDialog(role: Role) {
+  if (role.isSystem) return
   permissionsRoleId.value = role.id
   permissionsRoleName.value = roleName(role.code, role.name)
   selectedPermissions.value = role.permissions.map(p => p.code)
@@ -309,7 +310,10 @@ function displayRoleName(role: Role): string {
                   text
                   rounded
                   @click="openPermissionsDialog(data)"
-                  v-tooltip.top="t('roles.tooltips.permissions')"
+                  :disabled="data.isSystem"
+                  v-tooltip.top="
+                    data.isSystem ? t('roles.tooltips.systemRole') : t('roles.tooltips.permissions')
+                  "
                 />
                 <Button
                   icon="pi pi-trash"

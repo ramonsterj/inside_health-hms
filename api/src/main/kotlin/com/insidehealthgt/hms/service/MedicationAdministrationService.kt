@@ -96,11 +96,12 @@ class MedicationAdministrationService(
             throw BadRequestException(messageService.errorMedicationOrderDiscontinued())
         }
 
-        // Admin-only override: nurses sending lotId receive 403.
+        // Lot override is gated on the `inventory-lot:update` permission (held by ADMINISTRADOR
+        // via V104); nurses sending lotId without it receive 403.
         if (request.lotId != null) {
             val ud = currentUserProvider.currentUserDetails()
-            val isAdmin = ud?.hasRole("ADMINISTRADOR") == true || ud?.hasPermission("inventory-lot:update") == true
-            if (!isAdmin) {
+            val canOverrideLot = ud?.hasPermission("inventory-lot:update") == true
+            if (!canOverrideLot) {
                 throw ForbiddenException(messageService.errorMedicationLotOverrideForbidden())
             }
         }

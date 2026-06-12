@@ -23,12 +23,13 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
- * Edit policy: only ADMINISTRADOR can update existing vital signs; doctors, nurses, and
- * chief nurses are append-only. The `@PreAuthorize("hasAuthority('vital-sign:update')")`
- * on the controller is the first gate (only ADMINISTRADOR holds the permission after V097).
- * `assertAdmin()` here is intentional defense-in-depth so the rule continues to hold
- * if the permission is later widened. Discharge protection blocks all writes — including
- * for ADMINISTRADOR — and is enforced unconditionally.
+ * Edit policy: only holders of the `vital-sign:update` permission can update existing vital signs;
+ * doctors, nurses, and chief nurses are append-only. The
+ * `@PreAuthorize("hasAuthority('vital-sign:update')")` on the controller is the first gate (only
+ * ADMINISTRADOR holds the permission after V097). `assertCanUpdate()` here re-checks the same
+ * permission as intentional defense-in-depth — the permission, not a role, is the contract.
+ * Discharge protection blocks all writes — including for permission holders — and is enforced
+ * unconditionally.
  *
  * This matches the policy already in place for nursing notes and progress notes — see
  * `docs/features/nursing-module.md` revision 1.4 for the rationale.
@@ -162,7 +163,7 @@ class VitalSignService(
             )
 
         val currentUser = currentUserProvider.currentUserDetailsOrThrow()
-        assertAdmin(currentUser)
+        assertCanUpdate(currentUser)
 
         val recordedAt = request.recordedAt ?: vitalSign.recordedAt
         validateRecordedAt(recordedAt, admission)
@@ -206,14 +207,14 @@ class VitalSignService(
         }
     }
 
-    private fun assertAdmin(currentUser: CustomUserDetails) {
-        if (!currentUser.hasRole("ADMINISTRADOR")) {
+    private fun assertCanUpdate(currentUser: CustomUserDetails) {
+        if (!currentUser.hasPermission("vital-sign:update")) {
             throw ForbiddenException(messageService.errorForbidden())
         }
     }
 
     private fun computeCanEdit(currentUser: CustomUserDetails, admissionActive: Boolean): Boolean =
-        admissionActive && currentUser.hasRole("ADMINISTRADOR")
+        admissionActive && currentUser.hasPermission("vital-sign:update")
 
     private fun buildResponse(
         vitalSign: VitalSign,

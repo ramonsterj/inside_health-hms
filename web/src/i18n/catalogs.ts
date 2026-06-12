@@ -16,19 +16,9 @@
  * to es.json + en.json — the guards will fail until you do.
  */
 
-// roles.code — the 10 system roles (Spanish codes after V127).
-export const ROLE_CODES = [
-  'ADMINISTRADOR',
-  'USUARIO',
-  'PERSONAL_ADMINISTRATIVO',
-  'MEDICO',
-  'ENFERMERO',
-  'JEFE_ENFERMERIA',
-  'PSICOLOGO',
-  'MEDICO_RESIDENTE',
-  'AUXILIAR_ENFERMERIA',
-  'MANTENIMIENTO'
-] as const
+// roles.code — the 10 system roles (Spanish codes after V127). Single source of truth in
+// constants/roles.ts (SYSTEM_ROLES); re-exported here so the catalog guard keeps covering them.
+export { ROLE_CODES } from '@/constants/roles'
 
 // permissions.code — every seeded permission (medication:bulk-import removed by V112).
 export const PERMISSION_CODES = [

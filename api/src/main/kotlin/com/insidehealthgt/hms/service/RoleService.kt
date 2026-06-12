@@ -88,6 +88,10 @@ class RoleService(private val roleRepository: RoleRepository, private val permis
         val role = roleRepository.findByIdWithPermissions(id)
             ?: throw ResourceNotFoundException("Role not found with id: $id")
 
+        if (role.isSystem) {
+            throw BadRequestException("System role permissions cannot be modified")
+        }
+
         val permissions = permissionRepository.findAllByCodeIn(permissionCodes)
         validatePermissionCodes(permissionCodes, permissions.map { it.code })
 

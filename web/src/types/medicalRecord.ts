@@ -3,6 +3,7 @@
  * Matches backend DTOs from the medical record feature.
  */
 import type { AdmissionStatus } from './admission'
+import { SYSTEM_ROLES } from '@/constants/roles'
 
 // Enums matching backend
 export enum MedicalOrderCategory {
@@ -99,12 +100,12 @@ export function canUploadResultDocument(
 }
 
 const MEDICAL_ORDER_BROAD_ROLES = [
-  'ADMINISTRADOR',
-  'MEDICO',
-  'MEDICO_RESIDENTE',
-  'ENFERMERO',
-  'JEFE_ENFERMERIA',
-  'PERSONAL_ADMINISTRATIVO'
+  SYSTEM_ROLES.ADMINISTRADOR,
+  SYSTEM_ROLES.MEDICO,
+  SYSTEM_ROLES.MEDICO_RESIDENTE,
+  SYSTEM_ROLES.ENFERMERO,
+  SYSTEM_ROLES.JEFE_ENFERMERIA,
+  SYSTEM_ROLES.PERSONAL_ADMINISTRATIVO
 ]
 
 export function isPsychologistOutOfOrderScope(
@@ -112,7 +113,7 @@ export function isPsychologistOutOfOrderScope(
   user: { roles?: string[] } | null | undefined
 ): boolean {
   const roles = user?.roles ?? []
-  if (!roles.includes('PSICOLOGO')) return false
+  if (!roles.includes(SYSTEM_ROLES.PSICOLOGO)) return false
   if (MEDICAL_ORDER_BROAD_ROLES.some(r => roles.includes(r))) return false
   return category !== MedicalOrderCategory.PRUEBAS_PSICOMETRICAS
 }

@@ -51,7 +51,7 @@ class CustomUserDetails(private val user: User) : UserDetails {
      * them through.
      */
     fun isAuxiliaryNurseOnly(): Boolean {
-        if (!hasRole("AUXILIAR_ENFERMERIA")) return false
+        if (!hasRole(SystemRole.AUXILIAR_ENFERMERIA)) return false
         return getRoleCodes().none { it in ELEVATED_NURSING_ROLES }
     }
 
@@ -69,7 +69,12 @@ class CustomUserDetails(private val user: User) : UserDetails {
 
     private companion object {
         /** Roles that, when stacked with AUXILIAR_ENFERMERIA, lift the auxiliary-only restriction. */
-        val ELEVATED_NURSING_ROLES =
-            setOf("ENFERMERO", "JEFE_ENFERMERIA", "MEDICO", "MEDICO_RESIDENTE", "ADMINISTRADOR")
+        val ELEVATED_NURSING_ROLES = setOf(
+            SystemRole.ENFERMERO,
+            SystemRole.JEFE_ENFERMERIA,
+            SystemRole.MEDICO,
+            SystemRole.MEDICO_RESIDENTE,
+            SystemRole.ADMINISTRADOR,
+        )
     }
 }

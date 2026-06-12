@@ -12,15 +12,16 @@ import type {
   UsernameAvailabilityResponse
 } from '@/types'
 import type { ForceChangePasswordFormData } from '@/validation/user'
+import { SYSTEM_ROLES } from '@/constants/roles'
 
 // Roles that, when stacked with AUXILIAR_ENFERMERIA, lift the auxiliary-only restriction.
 // Kept in sync with `CustomUserDetails.ELEVATED_NURSING_ROLES` on the backend.
 const ELEVATED_NURSING_ROLES = [
-  'ENFERMERO',
-  'JEFE_ENFERMERIA',
-  'MEDICO',
-  'MEDICO_RESIDENTE',
-  'ADMINISTRADOR'
+  SYSTEM_ROLES.ENFERMERO,
+  SYSTEM_ROLES.JEFE_ENFERMERIA,
+  SYSTEM_ROLES.MEDICO,
+  SYSTEM_ROLES.MEDICO_RESIDENTE,
+  SYSTEM_ROLES.ADMINISTRADOR
 ]
 
 export const useAuthStore = defineStore('auth', () => {
@@ -28,14 +29,14 @@ export const useAuthStore = defineStore('auth', () => {
   const loading = ref(false)
 
   const isAuthenticated = computed(() => !!user.value && tokenStorage.hasTokens())
-  const isAdmin = computed(() => user.value?.roles?.includes('ADMINISTRADOR') ?? false)
+  const isAdmin = computed(() => user.value?.roles?.includes(SYSTEM_ROLES.ADMINISTRADOR) ?? false)
   const mustChangePassword = computed(() => user.value?.mustChangePassword ?? false)
 
+  // Pure permission lookup — no role bypass. ADMINISTRADOR holds every permission via migrations
+  // (pinned by the backend SystemRoleCoverageTest), so the bypass is unnecessary and a role-based
+  // shortcut here would diverge from the permission-gated backend.
   function hasPermission(permission: string): boolean {
-    if (!user.value) return false
-    // Admins have all permissions
-    if (user.value.roles?.includes('ADMINISTRADOR')) return true
-    return user.value.permissions?.includes(permission) ?? false
+    return user.value?.permissions?.includes(permission) ?? false
   }
 
   function hasRole(role: string): boolean {
@@ -50,7 +51,7 @@ export const useAuthStore = defineStore('auth', () => {
    * role grants the underlying permission. See docs/features/nursing-roles-split.md.
    */
   const isAuxiliaryNurseOnly = computed(() => {
-    if (!hasRole('AUXILIAR_ENFERMERIA')) return false
+    if (!hasRole(SYSTEM_ROLES.AUXILIAR_ENFERMERIA)) return false
     return !ELEVATED_NURSING_ROLES.some(role => hasRole(role))
   })
 

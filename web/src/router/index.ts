@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { tokenStorage } from '@/utils/tokenStorage'
 import AppLayout from '@/layout/AppLayout.vue'
+import { SYSTEM_ROLES } from '@/constants/roles'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,11 +41,11 @@ const router = createRouter({
             // occupancy screen as their default dashboard. Admins are never
             // auto-redirected — they keep the standard dashboard. The seeded
             // admin no longer carries MEDICO_RESIDENTE after V122.
-            const BED_OCCUPANCY_HOME_ROLES = [
-              'ENFERMERO',
-              'JEFE_ENFERMERIA',
-              'AUXILIAR_ENFERMERIA',
-              'MEDICO_RESIDENTE'
+            const BED_OCCUPANCY_HOME_ROLES: string[] = [
+              SYSTEM_ROLES.ENFERMERO,
+              SYSTEM_ROLES.JEFE_ENFERMERIA,
+              SYSTEM_ROLES.AUXILIAR_ENFERMERIA,
+              SYSTEM_ROLES.MEDICO_RESIDENTE
             ]
             if (
               !authStore.isAdmin &&
@@ -83,20 +84,23 @@ const router = createRouter({
         {
           path: 'users',
           name: 'users',
+          // user:read is held by clinical roles for staff dropdowns; the user
+          // management screen (create/edit/reset/delete) must gate on a
+          // management-level permission instead.
           component: () => import('@/views/UsersView.vue'),
-          meta: { requiresAdmin: true }
+          meta: { requiresPermission: 'user:create' }
         },
         {
           path: 'roles',
           name: 'roles',
           component: () => import('@/views/RolesView.vue'),
-          meta: { requiresAdmin: true }
+          meta: { requiresPermission: 'role:read' }
         },
         {
           path: 'audit-logs',
           name: 'audit-logs',
           component: () => import('@/views/AuditLogsView.vue'),
-          meta: { requiresAdmin: true }
+          meta: { requiresPermission: 'audit:read' }
         },
         // Patient routes
         {
@@ -483,11 +487,6 @@ router.beforeEach(async (to, _from, next) => {
     return next({ name: 'forcePasswordChange' })
   }
 
-  // Admin routes - redirect to dashboard if not admin
-  if (to.meta.requiresAdmin && !authStore.isAdmin) {
-    return next({ name: 'dashboard' })
-  }
-
   // Permission-based routes - redirect to dashboard if user lacks permission
   if (to.meta.requiresPermission && !authStore.hasPermission(to.meta.requiresPermission)) {
     return next({ name: 'dashboard' })
@@ -503,7 +502,6 @@ declare module 'vue-router' {
   interface RouteMeta {
     guest?: boolean
     requiresAuth?: boolean
-    requiresAdmin?: boolean
     requiresPermission?: string
     forcePasswordChange?: boolean
   }

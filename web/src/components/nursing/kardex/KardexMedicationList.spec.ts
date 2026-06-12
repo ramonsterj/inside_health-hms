@@ -92,8 +92,8 @@ describe('KardexMedicationList — Administer button gating', () => {
     expect(wrapper.findAllComponents(Button)).toHaveLength(1)
   })
 
-  it('shows the Administer button for an admin (all permissions implied)', () => {
-    const wrapper = mountList(['ADMINISTRADOR'], [])
+  it('shows the Administer button for a user holding medication-administration:create', () => {
+    const wrapper = mountList(['ADMINISTRADOR'], ['medication-administration:create'])
 
     expect(wrapper.findAllComponents(Button)).toHaveLength(1)
   })
