@@ -9,6 +9,7 @@ import com.insidehealthgt.hms.repository.RoleDefaultWarehouseRepository
 import com.insidehealthgt.hms.repository.UserWarehouseRepository
 import com.insidehealthgt.hms.repository.WarehouseRepository
 import com.insidehealthgt.hms.security.CustomUserDetails
+import com.insidehealthgt.hms.security.SystemRole
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -120,12 +121,22 @@ class WarehouseScopeService(
 
     private companion object {
         /** Roles that may use any warehouse as a transfer/charge source. */
-        val ALL_WAREHOUSE_ROLES = setOf("ADMINISTRADOR", "PERSONAL_ADMINISTRATIVO")
+        val ALL_WAREHOUSE_ROLES = setOf(SystemRole.ADMINISTRADOR, SystemRole.PERSONAL_ADMINISTRATIVO)
 
         /** Roles that fall back to ENFERMERIA when no default mapping exists. */
-        val ALL_OR_FALLBACK_ROLES = setOf("ADMINISTRADOR", "PERSONAL_ADMINISTRATIVO", "MEDICO", "MEDICO_RESIDENTE")
+        val ALL_OR_FALLBACK_ROLES = setOf(
+            SystemRole.ADMINISTRADOR,
+            SystemRole.PERSONAL_ADMINISTRATIVO,
+            SystemRole.MEDICO,
+            SystemRole.MEDICO_RESIDENTE,
+        )
 
         /** Roles that can view every warehouse in the stock view. */
-        val READ_ALL_ROLES = setOf("ADMINISTRADOR", "PERSONAL_ADMINISTRATIVO", "MEDICO", "MEDICO_RESIDENTE")
+        val READ_ALL_ROLES = setOf(
+            SystemRole.ADMINISTRADOR,
+            SystemRole.PERSONAL_ADMINISTRATIVO,
+            SystemRole.MEDICO,
+            SystemRole.MEDICO_RESIDENTE,
+        )
     }
 }

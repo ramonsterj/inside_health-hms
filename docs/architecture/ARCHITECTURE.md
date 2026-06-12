@@ -445,7 +445,7 @@ The application uses a **database-driven role and permission system** with fine-
 - **Permissions** follow a `resource:action` naming convention (e.g., `user:create`, `role:delete`)
 - **Users can have multiple roles** (many-to-many relationship)
 - **Roles have multiple permissions** (many-to-many relationship)
-- **System roles** (ADMIN, USER) cannot be deleted but can have permissions modified
+- **System roles** (e.g. ADMIN/ADMINISTRADOR, USER/USUARIO) cannot be deleted, updated, or have their permissions modified at runtime — `RoleService.update`/`delete`/`assignPermissions` reject any role with `is_system = TRUE`. System-role grants are managed exclusively through Flyway migrations
 
 **Default Permissions** (seeded via migration):
 | Permission | Description |

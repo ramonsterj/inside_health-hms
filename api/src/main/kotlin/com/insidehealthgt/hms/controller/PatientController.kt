@@ -7,6 +7,7 @@ import com.insidehealthgt.hms.dto.response.PageResponse
 import com.insidehealthgt.hms.dto.response.PatientResponse
 import com.insidehealthgt.hms.dto.response.PatientSummaryResponse
 import com.insidehealthgt.hms.security.CustomUserDetails
+import com.insidehealthgt.hms.security.SystemRole
 import com.insidehealthgt.hms.service.PatientService
 import jakarta.validation.Valid
 import org.springframework.data.domain.Pageable
@@ -75,14 +76,14 @@ class PatientController(private val patientService: PatientService) {
     // carries MEDICO_RESIDENTE (or ADMINISTRADOR) must see every patient, since residents
     // run the full ward — not just the patients they personally admitted.
     private fun resolveDoctorId(currentUser: CustomUserDetails): Long? {
-        val isStandaloneDoctor = currentUser.hasRole("MEDICO") &&
-            !currentUser.hasRole("ADMINISTRADOR") &&
-            !currentUser.hasRole("MEDICO_RESIDENTE")
+        val isStandaloneDoctor = currentUser.hasRole(SystemRole.MEDICO) &&
+            !currentUser.hasRole(SystemRole.ADMINISTRADOR) &&
+            !currentUser.hasRole(SystemRole.MEDICO_RESIDENTE)
         return if (isStandaloneDoctor) currentUser.id else null
     }
 
     private fun resolveActiveAdmissionsOnly(currentUser: CustomUserDetails): Boolean =
-        currentUser.hasRole("PSICOLOGO") && !currentUser.hasRole("ADMINISTRADOR")
+        currentUser.hasRole(SystemRole.PSICOLOGO) && !currentUser.hasRole(SystemRole.ADMINISTRADOR)
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('patient:update')")

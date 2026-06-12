@@ -26,6 +26,7 @@ import com.insidehealthgt.hms.repository.MedicalOrderLabTestRepository
 import com.insidehealthgt.hms.repository.MedicalOrderRepository
 import com.insidehealthgt.hms.repository.UserRepository
 import com.insidehealthgt.hms.security.CurrentUserProvider
+import com.insidehealthgt.hms.security.SystemRole
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
@@ -517,7 +518,7 @@ class MedicalOrderService(
     private fun isPsychologistOnly(): Boolean {
         val details = currentUserProvider.currentUserDetails()
         return details != null &&
-            details.hasRole("PSICOLOGO") &&
+            details.hasRole(SystemRole.PSICOLOGO) &&
             MEDICAL_ORDER_BROAD_ROLES.none { details.hasRole(it) }
     }
 
@@ -609,12 +610,12 @@ class MedicalOrderService(
 
     companion object {
         private val MEDICAL_ORDER_BROAD_ROLES = setOf(
-            "ADMINISTRADOR",
-            "MEDICO",
-            "MEDICO_RESIDENTE",
-            "ENFERMERO",
-            "JEFE_ENFERMERIA",
-            "PERSONAL_ADMINISTRATIVO",
+            SystemRole.ADMINISTRADOR,
+            SystemRole.MEDICO,
+            SystemRole.MEDICO_RESIDENTE,
+            SystemRole.ENFERMERO,
+            SystemRole.JEFE_ENFERMERIA,
+            SystemRole.PERSONAL_ADMINISTRATIVO,
         )
     }
 }

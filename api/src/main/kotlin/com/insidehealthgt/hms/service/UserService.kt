@@ -19,6 +19,7 @@ import com.insidehealthgt.hms.repository.UserRepository
 import com.insidehealthgt.hms.repository.UserWarehouseRepository
 import com.insidehealthgt.hms.repository.WarehouseRepository
 import com.insidehealthgt.hms.security.CurrentUserProvider
+import com.insidehealthgt.hms.security.SystemRole
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -172,7 +173,7 @@ class UserService(
         )
 
         // Assign roles
-        val roleCodes = request.roleCodes.ifEmpty { listOf("USUARIO") }
+        val roleCodes = request.roleCodes.ifEmpty { listOf(SystemRole.USUARIO) }
         val roles = roleRepository.findAllByCodeIn(roleCodes)
         validateRoleCodes(roleCodes, roles.map { it.code })
         user.roles.addAll(roles)
@@ -214,7 +215,7 @@ class UserService(
         val savedUser = userRepository.save(user)
 
         // Warehouse assignments only apply to MAINTENANCE users (FR-10).
-        if (request.assignedWarehouseIds != null && savedUser.roles.any { it.code == MAINTENANCE_ROLE }) {
+        if (request.assignedWarehouseIds != null && savedUser.roles.any { it.code == SystemRole.MANTENIMIENTO }) {
             reconcileWarehouseAssignments(savedUser, request.assignedWarehouseIds)
         }
 
@@ -314,9 +315,5 @@ class UserService(
             )
             user.addPhoneNumber(phone)
         }
-    }
-
-    private companion object {
-        const val MAINTENANCE_ROLE = "MANTENIMIENTO"
     }
 }

@@ -24,6 +24,7 @@ import { extractApiErrorMessage } from '@/utils/errorUtils'
 import { formatDate } from '@/utils/format'
 import PhoneNumberInput from '@/components/users/PhoneNumberInput.vue'
 import UserWarehousesAssignmentField from '@/components/users/UserWarehousesAssignmentField.vue'
+import { SYSTEM_ROLES } from '@/constants/roles'
 import type {
   User,
   CreateUserRequest,
@@ -81,7 +82,7 @@ const newUser = reactive<Omit<CreateUserRequest, 'phoneNumbers'>>({
   firstName: '',
   lastName: '',
   salutation: null,
-  roleCodes: ['USUARIO'],
+  roleCodes: [SYSTEM_ROLES.USUARIO],
   status: UserStatus.ACTIVE
 })
 const newUserUsername = toRef(newUser, 'username')
@@ -100,7 +101,7 @@ const editUserAssignedWarehouseIds = ref<number[]>([])
 const editUserLoading = ref(false)
 
 const editUserHasMaintenanceRole = computed(() =>
-  (editUser.roleCodes ?? []).includes('MANTENIMIENTO')
+  (editUser.roleCodes ?? []).includes(SYSTEM_ROLES.MANTENIMIENTO)
 )
 const editUser = reactive<Omit<AdminUpdateUserRequest, 'phoneNumbers'>>({
   firstName: '',
@@ -275,7 +276,7 @@ async function restoreUser(user: User) {
 }
 
 function getRoleSeverity(role: string): 'danger' | 'info' {
-  return role === 'ADMINISTRADOR' ? 'danger' : 'info'
+  return role === SYSTEM_ROLES.ADMINISTRADOR ? 'danger' : 'info'
 }
 
 // Locale-aware display label for a role code. Falls back to the raw code
@@ -312,7 +313,7 @@ function openAddUserDialog() {
   newUser.firstName = ''
   newUser.lastName = ''
   newUser.salutation = null
-  newUser.roleCodes = ['USUARIO']
+  newUser.roleCodes = [SYSTEM_ROLES.USUARIO]
   newUser.status = UserStatus.ACTIVE
   // Initialize with one empty phone entry to make it clear at least one is required
   newUserPhoneNumbers.value = [

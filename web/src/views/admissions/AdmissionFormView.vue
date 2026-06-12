@@ -24,6 +24,7 @@ import {
   admissionTypeRequiresRoom,
   admissionTypeRequiresTriageCode
 } from '@/types/admission'
+import { SYSTEM_ROLES } from '@/constants/roles'
 
 const { t } = useI18n()
 const { triageCodeLabel } = useCodeLabels()
@@ -39,9 +40,9 @@ const roomStore = useRoomStore()
 // admission. Admins are not residents, so they must explicitly pick the resident
 // doctor the admission is recorded under. Everyone else sees a banner and a
 // disabled submit button.
-const isAdmin = computed(() => authStore.hasRole('ADMINISTRADOR'))
+const isAdmin = computed(() => authStore.hasRole(SYSTEM_ROLES.ADMINISTRADOR))
 const canRegisterAdmission = computed(
-  () => isAdmin.value || (authStore.user?.roles?.includes('MEDICO_RESIDENTE') ?? false)
+  () => isAdmin.value || (authStore.user?.roles?.includes(SYSTEM_ROLES.MEDICO_RESIDENTE) ?? false)
 )
 
 const loading = ref(false)

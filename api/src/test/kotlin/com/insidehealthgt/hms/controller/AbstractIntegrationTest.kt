@@ -50,6 +50,7 @@ import com.insidehealthgt.hms.repository.TriageCodeRepository
 import com.insidehealthgt.hms.repository.UserPhoneNumberRepository
 import com.insidehealthgt.hms.repository.UserRepository
 import com.insidehealthgt.hms.repository.VitalSignRepository
+import com.insidehealthgt.hms.security.SystemRole
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -320,7 +321,7 @@ abstract class AbstractIntegrationTest {
     // picking a resident (residentId), not by being one. The shared createAdmission
     // helper supplies that residentId automatically.
     protected fun createAdminUser(): Pair<User, String> = createUserWithRole(
-        roleCode = "ADMINISTRADOR",
+        roleCode = SystemRole.ADMINISTRADOR,
         username = "admin",
         email = "admin@example.com",
         password = "admin123",
@@ -329,7 +330,7 @@ abstract class AbstractIntegrationTest {
     )
 
     protected fun createResidentUser(): Pair<User, String> = createUserWithRole(
-        roleCode = "MEDICO_RESIDENTE",
+        roleCode = SystemRole.MEDICO_RESIDENTE,
         username = "resident",
         email = "resident@example.com",
         password = "password123",
@@ -339,7 +340,7 @@ abstract class AbstractIntegrationTest {
     )
 
     protected fun createDoctorUser(): Pair<User, String> = createUserWithRole(
-        roleCode = "MEDICO",
+        roleCode = SystemRole.MEDICO,
         username = "doctor",
         email = "doctor@example.com",
         password = "password123",
@@ -349,7 +350,7 @@ abstract class AbstractIntegrationTest {
     )
 
     protected fun createNurseUser(): Pair<User, String> = createUserWithRole(
-        roleCode = "ENFERMERO",
+        roleCode = SystemRole.ENFERMERO,
         username = "nurse",
         email = "nurse@example.com",
         password = "password123",
@@ -358,7 +359,7 @@ abstract class AbstractIntegrationTest {
     )
 
     protected fun createChiefNurseUser(): Pair<User, String> = createUserWithRole(
-        roleCode = "JEFE_ENFERMERIA",
+        roleCode = SystemRole.JEFE_ENFERMERIA,
         username = "chiefnurse",
         email = "chiefnurse@example.com",
         password = "password123",
@@ -371,7 +372,7 @@ abstract class AbstractIntegrationTest {
     // Fixtures that need an admission register it through the admin or resident
     // token via the shared createAdmission helper.
     protected fun createAdminStaffUser(): Pair<User, String> = createUserWithRole(
-        roleCode = "PERSONAL_ADMINISTRATIVO",
+        roleCode = SystemRole.PERSONAL_ADMINISTRATIVO,
         username = "receptionist",
         email = "receptionist@example.com",
         password = "password123",
@@ -380,7 +381,7 @@ abstract class AbstractIntegrationTest {
     )
 
     protected fun createPsychologistUser(): Pair<User, String> = createUserWithRole(
-        roleCode = "PSICOLOGO",
+        roleCode = SystemRole.PSICOLOGO,
         username = "psychologist",
         email = "psychologist@example.com",
         password = "password123",
@@ -428,8 +429,8 @@ abstract class AbstractIntegrationTest {
     // shared createAdmission helper so admin-token callers can satisfy the new
     // "admins must pick a resident" rule without each suite seeding one.
     protected fun ensureFixtureResidentId(): Long {
-        userRepository.findByRoleCode("MEDICO_RESIDENTE").firstOrNull()?.let { return it.id!! }
-        val role = roleRepository.findByCode("MEDICO_RESIDENTE")!!
+        userRepository.findByRoleCode(SystemRole.MEDICO_RESIDENTE).firstOrNull()?.let { return it.id!! }
+        val role = roleRepository.findByCode(SystemRole.MEDICO_RESIDENTE)!!
         val resident = User(
             username = "fixture_resident",
             email = "fixture.resident@example.com",

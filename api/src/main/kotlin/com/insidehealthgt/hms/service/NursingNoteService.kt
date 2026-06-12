@@ -19,14 +19,15 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * Edit policy: only ADMINISTRADOR can update existing nursing notes; doctors, nurses, and
- * chief nurses are append-only. The `@PreAuthorize("hasAuthority('nursing-note:update')")`
- * on the controller is the first gate (only ADMINISTRADOR holds the permission after V096).
- * `assertAdmin()` here is intentional defense-in-depth so the rule continues to hold
- * if the permission is later widened. Discharge protection blocks all writes — including
- * for ADMINISTRADOR — and is enforced unconditionally.
+ * Edit policy: only holders of the `nursing-note:update` permission can update existing nursing
+ * notes; doctors, nurses, and chief nurses are append-only. The
+ * `@PreAuthorize("hasAuthority('nursing-note:update')")` on the controller is the first gate (only
+ * ADMINISTRADOR holds the permission after V096). `assertCanUpdate()` here re-checks the same
+ * permission as intentional defense-in-depth — the permission, not a role, is the contract, so a
+ * future role granted `nursing-note:update` works end to end. Discharge protection blocks all
+ * writes — including for permission holders — and is enforced unconditionally.
  *
- * Vital signs follow a different pattern (24h creator window with admin override) — see
+ * Vital signs follow a different pattern (24h creator window with permission override) — see
  * VitalSignService.
  */
 @Service
@@ -99,7 +100,7 @@ class NursingNoteService(
             ?: throw ResourceNotFoundException(messageService.errorNursingNoteNotFound(noteId, admissionId))
 
         val currentUser = currentUserProvider.currentUserDetailsOrThrow()
-        assertAdmin(currentUser)
+        assertCanUpdate(currentUser)
 
         note.description = request.description
 
@@ -117,14 +118,14 @@ class NursingNoteService(
         }
     }
 
-    private fun assertAdmin(currentUser: CustomUserDetails) {
-        if (!currentUser.hasRole("ADMINISTRADOR")) {
+    private fun assertCanUpdate(currentUser: CustomUserDetails) {
+        if (!currentUser.hasPermission("nursing-note:update")) {
             throw ForbiddenException(messageService.errorForbidden())
         }
     }
 
     private fun computeCanEdit(currentUser: CustomUserDetails, admissionActive: Boolean): Boolean =
-        admissionActive && currentUser.hasRole("ADMINISTRADOR")
+        admissionActive && currentUser.hasPermission("nursing-note:update")
 
     private fun buildResponse(
         note: NursingNote,

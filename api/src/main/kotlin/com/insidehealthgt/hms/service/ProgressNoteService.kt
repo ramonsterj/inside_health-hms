@@ -19,12 +19,13 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * Edit policy: only ADMINISTRADOR can update existing progress notes; doctors, nurses, and
- * chief nurses are append-only. The `@PreAuthorize("hasAuthority('progress-note:update')")`
- * on the controller is the first gate (only ADMINISTRADOR holds the permission after V096).
- * `assertAdmin()` here is intentional defense-in-depth so the rule continues to hold
- * if the permission is later widened. Discharge protection blocks all writes — including
- * for ADMINISTRADOR — and is enforced unconditionally.
+ * Edit policy: only holders of the `progress-note:update` permission can update existing progress
+ * notes; doctors, nurses, and chief nurses are append-only. The
+ * `@PreAuthorize("hasAuthority('progress-note:update')")` on the controller is the first gate (only
+ * ADMINISTRADOR holds the permission after V096). `assertCanUpdate()` here re-checks the same
+ * permission as intentional defense-in-depth — the permission, not a role, is the contract.
+ * Discharge protection blocks all writes — including for permission holders — and is enforced
+ * unconditionally.
  */
 @Service
 class ProgressNoteService(
@@ -99,7 +100,7 @@ class ProgressNoteService(
             ?: throw ResourceNotFoundException("Progress note not found with id: $noteId for admission: $admissionId")
 
         val currentUser = currentUserProvider.currentUserDetailsOrThrow()
-        assertAdmin(currentUser)
+        assertCanUpdate(currentUser)
 
         note.subjectiveData = request.subjectiveData
         note.objectiveData = request.objectiveData
@@ -120,14 +121,14 @@ class ProgressNoteService(
         }
     }
 
-    private fun assertAdmin(currentUser: CustomUserDetails) {
-        if (!currentUser.hasRole("ADMINISTRADOR")) {
+    private fun assertCanUpdate(currentUser: CustomUserDetails) {
+        if (!currentUser.hasPermission("progress-note:update")) {
             throw ForbiddenException(messageService.errorForbidden())
         }
     }
 
     private fun computeCanEdit(currentUser: CustomUserDetails, admissionActive: Boolean): Boolean =
-        admissionActive && currentUser.hasRole("ADMINISTRADOR")
+        admissionActive && currentUser.hasPermission("progress-note:update")
 
     private fun buildResponse(
         note: ProgressNote,

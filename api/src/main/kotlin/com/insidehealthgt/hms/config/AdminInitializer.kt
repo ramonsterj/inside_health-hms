@@ -4,6 +4,7 @@ import com.insidehealthgt.hms.entity.User
 import com.insidehealthgt.hms.entity.UserStatus
 import com.insidehealthgt.hms.repository.RoleRepository
 import com.insidehealthgt.hms.repository.UserRepository
+import com.insidehealthgt.hms.security.SystemRole
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.ApplicationArguments
@@ -28,7 +29,7 @@ class AdminInitializer(
         val adminUsername = "admin"
 
         val existingAdmin = userRepository.findByEmail(adminEmail)
-        val adminRole = roleRepository.findByCode("ADMINISTRADOR")
+        val adminRole = roleRepository.findByCode(SystemRole.ADMINISTRADOR)
 
         if (existingAdmin == null) {
             val admin = User(
@@ -57,7 +58,7 @@ class AdminInitializer(
                 logger.info("Admin password hash updated")
             }
 
-            if (adminRole != null && !existingAdmin.hasRole("ADMINISTRADOR")) {
+            if (adminRole != null && !existingAdmin.hasRole(SystemRole.ADMINISTRADOR)) {
                 existingAdmin.roles.add(adminRole)
                 needsSave = true
                 logger.info("ADMINISTRADOR role assigned to existing admin user")
