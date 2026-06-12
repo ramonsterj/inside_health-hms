@@ -8,8 +8,8 @@ import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
 import Tag from 'primevue/tag'
-import InputText from 'primevue/inputtext'
 import ToggleSwitch from 'primevue/toggleswitch'
+import SearchInput from '@/components/common/SearchInput.vue'
 import { useWarehouseStore } from '@/stores/warehouse'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import { useCodeLabels } from '@/composables/useCodeLabels'
@@ -75,6 +75,11 @@ function onFilterChange() {
   loadStock()
 }
 
+function onSearch(term: string) {
+  searchTerm.value = term
+  onFilterChange()
+}
+
 function onPageChange() {
   loadStock()
 }
@@ -128,17 +133,15 @@ function onPageChange() {
     <Card v-else>
       <template #content>
         <div class="filters">
-          <InputText
-            v-model="searchTerm"
+          <SearchInput
             :placeholder="t('warehouse.stock.searchPlaceholder')"
-            @keyup.enter="onFilterChange"
-            style="width: 250px"
+            width="250px"
+            @search="onSearch"
           />
           <div class="toggle-item">
             <label>{{ t('warehouse.stock.lowStockOnly') }}</label>
             <ToggleSwitch v-model="lowStockOnly" @change="onFilterChange" />
           </div>
-          <Button icon="pi pi-search" severity="secondary" outlined @click="onFilterChange" />
         </div>
 
         <DataTable

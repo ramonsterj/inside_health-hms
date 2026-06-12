@@ -10,7 +10,7 @@ import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
-import InputText from 'primevue/inputtext'
+import SearchInput from '@/components/common/SearchInput.vue'
 import { useInventoryItemStore } from '@/stores/inventoryItem'
 import { useInventoryCategoryStore } from '@/stores/inventoryCategory'
 import { useAuthStore } from '@/stores/auth'
@@ -71,6 +71,11 @@ async function loadItems() {
 function onFilterChange() {
   first.value = 0
   loadItems()
+}
+
+function onSearch(term: string) {
+  searchTerm.value = term
+  onFilterChange()
 }
 
 function onPageChange() {
@@ -157,13 +162,11 @@ async function deleteItem(id: number) {
             @change="onFilterChange"
             style="width: 200px"
           />
-          <InputText
-            v-model="searchTerm"
+          <SearchInput
             :placeholder="t('inventory.item.searchPlaceholder')"
-            @keyup.enter="onFilterChange"
-            style="width: 250px"
+            width="250px"
+            @search="onSearch"
           />
-          <Button icon="pi pi-search" severity="secondary" outlined @click="onFilterChange" />
         </div>
 
         <DataTable

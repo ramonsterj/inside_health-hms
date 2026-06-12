@@ -24,6 +24,7 @@ import { extractApiErrorMessage } from '@/utils/errorUtils'
 import { formatDate } from '@/utils/format'
 import PhoneNumberInput from '@/components/users/PhoneNumberInput.vue'
 import UserWarehousesAssignmentField from '@/components/users/UserWarehousesAssignmentField.vue'
+import SearchInput from '@/components/common/SearchInput.vue'
 import { SYSTEM_ROLES } from '@/constants/roles'
 import type {
   User,
@@ -33,9 +34,6 @@ import type {
   Role
 } from '@/types'
 import { UserStatus, Salutation, PhoneType } from '@/types'
-
-// Constants
-const SEARCH_DEBOUNCE_MS = 300
 
 const { t, te } = useI18n()
 const { roleName } = useCodeLabels()
@@ -53,7 +51,6 @@ const statusFilter = ref<UserStatus | null>(null)
 const showDeleted = ref(false)
 const searchQuery = ref('')
 const roleFilter = ref<string | null>(null)
-let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
 const filterStatusOptions = computed(() => [
   { label: t('users.filters.allStatuses'), value: null },
@@ -183,14 +180,10 @@ async function loadUsers() {
   }
 }
 
-function onSearchInput() {
-  if (searchTimeout) {
-    clearTimeout(searchTimeout)
-  }
-  searchTimeout = setTimeout(() => {
-    first.value = 0
-    loadUsers()
-  }, SEARCH_DEBOUNCE_MS)
+function onSearch(term: string) {
+  searchQuery.value = term
+  first.value = 0
+  loadUsers()
 }
 
 function onRoleFilterChange() {
@@ -574,13 +567,12 @@ async function saveEditedUser() {
         <div class="filter-bar">
           <div class="filter-item search-item">
             <label for="searchQuery">{{ t('users.filters.search') }}</label>
-            <InputText
-              id="searchQuery"
-              v-model="searchQuery"
+            <SearchInput
+              input-id="searchQuery"
               :placeholder="t('users.filters.searchPlaceholder')"
               :disabled="showDeleted"
-              @input="onSearchInput"
               class="search-input"
+              @search="onSearch"
             />
           </div>
           <div class="filter-item">

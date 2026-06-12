@@ -8,6 +8,7 @@
     "edit": "Editar",
     "create": "Crear",
     "search": "Buscar",
+    "searchMinChars": "Escribe al menos {min} letras para buscar",
     "filter": "Filtrar",
     "actions": "Acciones",
     "yes": "Si",
