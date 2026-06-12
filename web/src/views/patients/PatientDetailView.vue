@@ -5,11 +5,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { useErrorHandler } from '@/composables/useErrorHandler'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
-import Dialog from 'primevue/dialog'
 import ProgressSpinner from 'primevue/progressspinner'
 import { usePatientStore } from '@/stores/patient'
 import { useAuthStore } from '@/stores/auth'
 import AuditInfo from '@/components/common/AuditInfo.vue'
+import FileViewerDialog from '@/components/viewer/FileViewerDialog.vue'
 import PatientAdmissionsHistory from '@/components/patients/PatientAdmissionsHistory.vue'
 import { formatDate } from '@/utils/format'
 
@@ -23,9 +23,7 @@ const authStore = useAuthStore()
 const patientId = computed(() => Number(route.params.id))
 const patient = computed(() => patientStore.currentPatient)
 const loading = ref(false)
-const showIdDocumentDialog = ref(false)
-const idDocumentUrl = ref<string | null>(null)
-const idDocumentType = ref<string | null>(null)
+const showIdDocumentViewer = ref(false)
 
 const canEdit = computed(() => authStore.hasPermission('patient:update'))
 const canViewId = computed(() => authStore.hasPermission('patient:view-id'))
@@ -59,15 +57,12 @@ function goBack() {
   router.push({ name: 'patients' })
 }
 
-async function viewIdDocument() {
-  try {
-    const blob = await patientStore.downloadIdDocument(patientId.value)
-    idDocumentUrl.value = URL.createObjectURL(blob)
-    idDocumentType.value = blob.type
-    showIdDocumentDialog.value = true
-  } catch (error) {
-    showError(error)
-  }
+function viewIdDocument() {
+  showIdDocumentViewer.value = true
+}
+
+function fetchIdDocument(): Promise<Blob> {
+  return patientStore.downloadIdDocument(patientId.value)
 }
 
 async function downloadIdDocument() {
@@ -83,15 +78,6 @@ async function downloadIdDocument() {
     URL.revokeObjectURL(url)
   } catch (error) {
     showError(error)
-  }
-}
-
-function closeIdDocumentDialog() {
-  showIdDocumentDialog.value = false
-  if (idDocumentUrl.value) {
-    URL.revokeObjectURL(idDocumentUrl.value)
-    idDocumentUrl.value = null
-    idDocumentType.value = null
   }
 }
 
@@ -253,32 +239,13 @@ function formatUserName(
       </div>
     </template>
 
-    <!-- ID Document Preview Dialog -->
-    <Dialog
-      v-model:visible="showIdDocumentDialog"
-      :header="t('patient.idDocument')"
-      :modal="true"
-      :style="{ width: '80vw', maxWidth: '800px' }"
-      :breakpoints="{ '640px': '95vw' }"
-      @hide="closeIdDocumentDialog"
-    >
-      <div class="document-preview">
-        <iframe
-          v-if="idDocumentUrl && idDocumentType === 'application/pdf'"
-          :src="idDocumentUrl"
-          class="document-pdf"
-        />
-        <img
-          v-else-if="idDocumentUrl"
-          :src="idDocumentUrl"
-          :alt="t('patient.idDocument')"
-          class="document-image"
-        />
-      </div>
-      <template #footer>
-        <Button :label="t('common.close')" @click="closeIdDocumentDialog" />
-      </template>
-    </Dialog>
+    <!-- ID Document Viewer -->
+    <FileViewerDialog
+      v-model:visible="showIdDocumentViewer"
+      :title="t('patient.idDocument')"
+      :downloadFileName="`patient-${patientId}-id-document`"
+      :fetchBlob="fetchIdDocument"
+    />
   </div>
 </template>
 
@@ -392,25 +359,6 @@ function formatUserName(
 .no-document p {
   color: var(--text-color-secondary);
   margin-bottom: 1rem;
-}
-
-.document-preview {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-}
-
-.document-image {
-  max-width: 100%;
-  max-height: 70vh;
-  object-fit: contain;
-}
-
-.document-pdf {
-  width: 100%;
-  height: 70vh;
-  border: none;
 }
 
 @media (max-width: 768px) {

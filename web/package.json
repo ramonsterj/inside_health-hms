@@ -34,6 +34,7 @@
     "axios": "^1.13.5",
     "chart.js": "^4.5.1",
     "dompurify": "^3.3.1",
+    "pdfjs-dist": "^6.0.227",
     "pinia": "^3.0.4",
     "primeicons": "^7.0.0",
     "primevue": "^4.5.4",

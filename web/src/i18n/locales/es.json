@@ -2080,7 +2080,17 @@
     "view": "Ver",
     "download": "Descargar",
     "delete": "Eliminar",
-    "viewer": "Visor de Documentos",
+    "viewer": {
+      "title": "Visor de Documentos",
+      "pageIndicator": "Página {current} de {total}",
+      "previousPage": "Página anterior",
+      "nextPage": "Página siguiente",
+      "zoomIn": "Acercar",
+      "zoomOut": "Alejar",
+      "fitWidth": "Ajustar al ancho",
+      "fitPage": "Ajustar a la página",
+      "renderError": "No se pudo mostrar el documento. Por favor descárguelo para verlo."
+    },
     "file": "Archivo",
     "selectFile": "Seleccionar Archivo",
     "type": "Tipo de Documento",
